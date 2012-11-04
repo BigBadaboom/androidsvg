@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">AndroidSVG</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
+    <string name="dummy_button2">Button 2</string>
+    <string name="dummy_button1">Button 1</string>
+
+</resources>
