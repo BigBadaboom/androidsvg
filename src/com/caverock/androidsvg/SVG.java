@@ -8,11 +8,18 @@ import java.util.List;
 
 import android.content.Context;
 import android.content.res.AssetManager;
+import android.graphics.Canvas;
 import android.graphics.Matrix;
+import android.graphics.Paint;
+import android.graphics.Picture;
+import android.graphics.RectF;
+import android.util.Log;
 
 public class SVG
 {
    private static final String  TAG = "AndroidSVG";
+   
+   private SVG.SvgElement  rootElement = null;
 
 
    protected SVG()
@@ -51,6 +58,18 @@ public class SVG
    }
 
 
+   public SVG.SvgElement getRootElement()
+   {
+      return rootElement;
+   }
+
+
+   public void setRootElement(SVG.SvgElement rootElement)
+   {
+      this.rootElement = rootElement;
+   }
+
+
    //===============================================================================
    // Object sub-types used in the SVG object tree
 
@@ -64,10 +83,12 @@ public class SVG
       public boolean  hasFill; 
       public SvgPaint fill;
       public float    fillOpacity;
+
       public boolean  hasStroke; 
       public SvgPaint stroke;
       public float    strokeOpacity;
       public float    strokeWidth;
+
       public float    opacity; // master opacity of both stroke and fill
       
       public Style()
@@ -118,11 +139,16 @@ public class SVG
    //===============================================================================
    // The objects in the SVG object tree
 
-   protected static class SvgElement
+   protected static abstract class SvgElement
    {
       public String       id;
       public SvgContainer parent;
       public Style        style;
+      
+      public String  toString()
+      {
+         return this.getClass().getSimpleName();
+      }
    }
 
    protected static class SvgContainer extends SvgElement
@@ -140,8 +166,8 @@ public class SVG
 
    protected static class Svg extends SvgContainer
    {
-      public float width;
-      public float height;
+      public Float width;
+      public Float height;
       public Box   viewBox;
    }
 
@@ -152,25 +178,43 @@ public class SVG
 
    // One of the element types that can cause graphics to be drawn onto the target canvas.
    // Specifically: ‘circle’, ‘ellipse’, ‘image’, ‘line’, ‘path’, ‘polygon’, ‘polyline’, ‘rect’, ‘text’ and ‘use’.
-   private static class GraphicsElement extends SvgElement
+   private static abstract class GraphicsElement extends SvgElement
    {
       public Matrix transform;
    }
 
    protected static class Use extends GraphicsElement
    {
-      public SvgElement ref;
+      public SvgElement href;
    }
 
 
    protected static class Rect extends GraphicsElement
    {
-      public float x = 0;
-      public float y = 0;
-      public float width = 0;
-      public float height = 0;
-      public float rx = 0;
-      public float ry = 0;
+      public Float x;
+      public Float y;
+      public Float width;
+      public Float height;
+      public Float rx;
+      public Float ry;
    }
+
+
+   //===============================================================================
+   // SVG document rendering
+
+   public Picture  getPicture()
+   {
+      Picture             picture = new Picture();
+      Canvas              canvas = picture.beginRecording(1000, 1000);  // FIXME
+      SVGAndroidRenderer  renderer= new SVGAndroidRenderer(canvas);
+
+      renderer.render(rootElement);
+
+      picture.endRecording();
+      return picture;
+   }
+
+
 
 }

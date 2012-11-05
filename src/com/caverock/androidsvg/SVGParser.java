@@ -22,6 +22,7 @@ import android.util.Log;
 import com.caverock.androidsvg.SVG.Box;
 import com.caverock.androidsvg.SVG.Colour;
 import com.caverock.androidsvg.SVG.Style;
+import com.caverock.androidsvg.SVG.SvgElement;
 
 /**
  * SVG parser code. Used by SVG class. Should not be called directly.
@@ -342,6 +343,20 @@ public class SVGParser extends DefaultHandler
    {
       super.endDocument();
 /**/Log.d(TAG, "<svg> DOCUMENT END!");
+// Dump document
+dumpNode(svgDocument.getRootElement(), "");
+   }
+
+
+   private void dumpNode(SVG.SvgElement elem, String indent)
+   {
+      Log.d(TAG, indent+elem);
+      if (elem instanceof SVG.SvgContainer) {
+         indent = indent+"  ";
+         for (SVG.SvgElement child: ((SVG.SvgContainer) elem).children) {
+            dumpNode(child, indent);
+         }
+      }
    }
 
 
@@ -354,10 +369,14 @@ public class SVGParser extends DefaultHandler
       SVG.Svg  obj = new SVG.Svg();
       obj.parent = currentElement;
       obj.style = new Style();
-      parseAttributesSVG(obj, attributes);
+      parseAttributesCore(obj, attributes);
       parseAttributesStyle(obj, attributes);
-      if (currentElement != null)
+      parseAttributesSVG(obj, attributes);
+      if (currentElement == null) {
+         svgDocument.setRootElement(obj);
+      } else {
          currentElement.addChild(obj);
+      }
       currentElement = obj;
    }
 
@@ -380,6 +399,25 @@ public class SVGParser extends DefaultHandler
                break;
             case viewBox:
                obj.viewBox = parseViewBox(val);
+               break;
+         }
+      }
+   }
+
+
+   //=========================================================================
+   // Attribute parsing
+
+
+   private void  parseAttributesCore(SVG.SvgElement obj, Attributes attributes) throws SAXException
+   {
+      AttributesImpl attr = new AttributesImpl(attributes);
+      
+      for (int i=0; i<attr.getLength(); i++)
+      {
+         if (SVGAttr.fromString(attr.getLocalName(i)) == SVGAttr.id) {
+               obj.id = attr.getValue(i).trim();
+/**/Log.d(TAG, "<svg> id="+obj.id);
                break;
          }
       }
@@ -439,14 +477,142 @@ public class SVGParser extends DefaultHandler
    }
 
 
+   private void  parseAttributesTransform(SVG.SvgElement obj, Attributes attributes) throws SAXException
+   {
+/**/Log.d(TAG, "parseAttributesTransform");
+      AttributesImpl attr = new AttributesImpl(attributes);
+      
+      for (int i=0; i<attr.getLength(); i++)
+      {
+         if (SVGAttr.fromString(attr.getLocalName(i)) == SVGAttr.transform) {
+            ListTokeniser tok = new ListTokeniser(attr.getValue(i).trim());
+            while (tok.hasMoreTokens()) {
+               String  val = tok.nextToken();
+/**/Log.d(TAG, ">>>"+val);
+               int bracket1 = val.indexOf('(');
+               int bracket2 = val.indexOf(')');
+               if (bracket1 > bracket2) {
+                  throw new SAXException("Invalid transform attribute: "+val);
+               }
+               String fn = val.substring(0, bracket1).trim();
+               String pars = val.substring(bracket1+1, bracket2).trim();
+/**/Log.d(TAG, ">>>"+fn+"("+pars+")");
+               ListTokeniser parstok = new ListTokeniser(pars);
+               if (fn.equals("matrix")) {
+                  if (parstok.countTokens() == 6) {
+                     matrixMatrix(obj, Float.parseFloat(parstok.nextToken()), Float.parseFloat(parstok.nextToken()),
+                                       Float.parseFloat(parstok.nextToken()), Float.parseFloat(parstok.nextToken()),
+                                       Float.parseFloat(parstok.nextToken()), Float.parseFloat(parstok.nextToken()));
+                     continue;
+                  } else if parstok.countTokens() == 3) {
+               } else if (fn.equals("translate")) {
+                  if (parstok.countTokens() == 1) {
+                     matrixTranslate(obj, Float.parseFloat(parstok.nextToken()), 0f);
+                     continue;
+                  } else if parstok.countTokens() == 2) {
+                     matrixTranslate(obj, Float.parseFloat(parstok.nextToken()), Float.parseFloat(parstok.nextToken()));
+                     continue;
+                  }
+               } else if (fn.equals("scale")) {
+                  if (parstok.countTokens() == 1) {
+                     float sx = Float.parseFloat(parstok.nextToken());
+                     matrixScale(obj, sx, sx);
+                     continue;
+                  } else if parstok.countTokens() == 2) {
+                     matrixScale(obj, Float.parseFloat(parstok.nextToken()), Float.parseFloat(parstok.nextToken()));
+                     continue;
+                  }
+               } else if (fn.equals("rotate")) {
+                  if (parstok.countTokens() == 1) {
+                     matrixRotate(obj, Float.parseFloat(parstok.nextToken()));
+                     continue;
+                  } else if parstok.countTokens() == 3) {
+                     float ang = Float.parseFloat(parstok.nextToken());
+                     float cx = Float.parseFloat(parstok.nextToken());
+                     float cy = Float.parseFloat(parstok.nextToken());
+                     matrixTranslate(obj, cx, cy);
+                     matrixRotate(obj, ang);
+                     matrixTranslate(obj, -cx, -cy);
+                     continue;
+                  }
+               } else if (fn.equals("skewX")) {
+                  if (parstok.countTokens() == 1) {
+                     matrixSkewX(obj, Float.parseFloat(parstok.nextToken()));
+                     continue;
+                  }
+               } else if (fn.equals("skewY")) {
+                  if (parstok.countTokens() == 1) {
+                     matrixSkewY(obj, Float.parseFloat(parstok.nextToken()));
+                     continue;
+                  }
+               }
+               throw new SAXException("Invalid transform attribute: "+val);
+            }
+         }
+      }
+   }
+
+
+   private void matrixTranslate(SvgElement obj, float tx, float ty)
+   {
+      // TODO Auto-generated method stub
+      
+   }
+
+
+   private void matrixRotate(SvgElement obj, float angle)
+   {
+      // TODO Auto-generated method stub
+      
+   }
+
+
+   private void matrixScale(SvgElement obj, float sx, float sy)
+   {
+      // TODO Auto-generated method stub
+      
+   }
+
+
+   private void matrixMatrix(SvgElement obj, float a, float b, float c, float d, float e, float f)
+   {
+      // TODO Auto-generated method stub
+      
+   }
+
+
+   private void matrixSkewX(SvgElement obj, float skewAngle)
+   {
+      // TODO Auto-generated method stub
+      
+   }
+
+
+   private void matrixSkewY(SvgElement obj, float skewAngle)
+   {
+      // TODO Auto-generated method stub
+      
+   }
+
+
    //=========================================================================
    // <g> group element
 
 
-   private void  g(Attributes attributes)
+   private void  g(Attributes attributes) throws SAXException
    {
 /**/Log.d(TAG, "<g>");
-     
+      if (currentElement == null)
+         throw new SAXException("Invalid document. Root element must be <svg>");
+      SVG.Group  obj = new SVG.Group();
+      obj.parent = currentElement;
+      obj.style = new Style();
+      parseAttributesCore(obj, attributes);
+      parseAttributesStyle(obj, attributes);
+      parseAttributesTransform(obj, attributes);
+      parseAttributesG(obj, attributes);
+      currentElement.addChild(obj);
+      currentElement = obj;
    }
 
 
@@ -462,11 +628,14 @@ public class SVGParser extends DefaultHandler
    private void  rect(Attributes attributes) throws SAXException
    {
 /**/Log.d(TAG, "<rect>");
+      if (currentElement == null)
+         throw new SAXException("Invalid document. Root element must be <svg>");
       SVG.Rect  obj = new SVG.Rect();
       obj.parent = currentElement;
       obj.style = new Style();
-      parseAttributesRect(obj, attributes);
+      parseAttributesCore(obj, attributes);
       parseAttributesStyle(obj, attributes);
+      parseAttributesRect(obj, attributes);
       currentElement.addChild(obj);     
    }
 
@@ -490,18 +659,26 @@ public class SVGParser extends DefaultHandler
                break;
             case width:
                obj.width = parseLength(val);
+               if (obj.width < 0)
+                  throw new SAXException("Invalid <rect> element. Width cannot be negative");
 /**/Log.d(TAG, "<rect> width="+obj.width);
                break;
             case height:
                obj.height = parseLength(val);
+               if (obj.height < 0)
+                  throw new SAXException("Invalid <rect> element. Height cannot be negative");
 /**/Log.d(TAG, "<rect> height="+obj.height);
                break;
             case rx:
                obj.rx = parseLength(val);
+               if (obj.rx < 0)
+                  throw new SAXException("Invalid <rect> element. rx cannot be negative");
 /**/Log.d(TAG, "<rect> rx="+obj.rx);
                break;
             case ry:
                obj.ry = parseLength(val);
+               if (obj.ry < 0)
+                  throw new SAXException("Invalid <rect> element. ry cannot be negative");
 /**/Log.d(TAG, "<rect> ry="+obj.ry);
                break;
          }
@@ -593,9 +770,22 @@ public class SVGParser extends DefaultHandler
          int start = 0;
          int pos = 0;
          boolean skipWs = false;
+         boolean inBrackets = false;
          while (pos < src.length())
          {
             char c = src.charAt(pos);
+            if (inBrackets) {
+               if (c == ')') {
+                  inBrackets = false;
+               }
+               pos++;
+               continue;
+            }
+            if (c == '(') {
+               inBrackets = true;
+               pos++;
+               continue;
+            }
             if (c == ',') {
                list.add(src.substring(start, pos));
                skipWs = true;

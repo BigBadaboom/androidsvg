@@ -4,7 +4,9 @@ package com.caverock.androidsvg.testapp;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.util.Log;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
+import android.widget.Toast;
 
 
 /**
@@ -17,6 +19,14 @@ public class TestActivity extends Activity
 {
    SVGImageView  svgView = null;
 
+   GestureDetector  gesture;
+
+   String[] fileList = {"sample_6.4.svg",
+                        "sample_9.2_rect01.svg",
+                        "sample_9.2_rect02.svg",
+                        "Android_robot.svg"};
+   int  whichFile = 0;
+
 
    @Override
    protected void onCreate(Bundle savedInstanceState)
@@ -25,6 +35,37 @@ public class TestActivity extends Activity
       setContentView(R.layout.activity_main);
       
       svgView = (SVGImageView) findViewById(R.id.svg_view);
+
+      initSwipes();
+
+      if (savedInstanceState != null)
+      {
+         whichFile = savedInstanceState.getInt("whichFile");
+      }
+   }
+
+
+
+   private void initSwipes()
+   {
+      GestureDetector.SimpleOnGestureListener   gListener = new GestureDetector.SimpleOnGestureListener() {
+         
+         @Override
+         public boolean  onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY)
+         {
+            if (velocityX > 1000f && whichFile > 0) {
+               svgView.setSVGAsset(fileList[--whichFile]);
+               Toast.makeText(getApplicationContext(), fileList[whichFile], Toast.LENGTH_SHORT).show();
+               return true;
+            } else if (velocityX < -1000f && whichFile < (fileList.length-1)) {
+               svgView.setSVGAsset(fileList[++whichFile]);
+               Toast.makeText(getApplicationContext(), fileList[whichFile], Toast.LENGTH_SHORT).show();
+               return true;
+            }
+            return false;
+         }
+      };
+      this.gesture = new GestureDetector(this, gListener);
    }
 
 
@@ -37,9 +78,26 @@ public class TestActivity extends Activity
       if (svgView == null)
          return;
 
-      svgView.setSVGAsset("sample_6.4.svg");
-      //svgView.setSVGAsset("rect01.svg");
-      //svgView.setSVGAsset("Android_robot.svg");
+      svgView.setSVGAsset(fileList[whichFile]);
+      Toast.makeText(getApplicationContext(), fileList[whichFile], Toast.LENGTH_SHORT).show();
    }
+
+
+
+   @Override
+   public boolean onTouchEvent(MotionEvent event)
+   {
+      return gesture.onTouchEvent(event);
+   }
+
+
+   @Override
+   protected void onSaveInstanceState(Bundle outState)
+   {
+      super.onSaveInstanceState(outState);
+      outState.putInt("whichFile",  whichFile);
+   }
+
+
 
 }

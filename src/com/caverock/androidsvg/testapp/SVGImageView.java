@@ -42,8 +42,8 @@ public class SVGImageView extends View
    @Override
    protected void onDraw(Canvas canvas)
    {
-      //if (picture == null)
-      //   return;
+      if (picture == null)
+         return;
 /*
       RectF bounds = svg.getElementById("bounds").getBoundingBox();
       if (bounds == null) {
@@ -71,6 +71,13 @@ public class SVGImageView extends View
       bmcanvas.drawPicture(picture);
       canvas.drawBitmap(bm, 0, 0, paint);
 */
+      if (this.bm == null) {
+          this.bm = Bitmap.createBitmap(this.width, this.height, Bitmap.Config.ARGB_8888);
+      }
+      Canvas bmcanvas = new Canvas(this.bm);
+      bmcanvas.drawRGB(255, 255, 255);  // Clear bg to white
+      bmcanvas.drawPicture(picture);
+      canvas.drawBitmap(bm, 0, 0, paint);
    }
 
 
@@ -91,7 +98,7 @@ public class SVGImageView extends View
       try
       {
          this.svg = SVG.getFromAsset(getContext().getAssets(), svgPath);
-         //this.picture = this.svg.getPicture();
+         this.picture = this.svg.getPicture();
          invalidate();
       }
       catch (Exception e)
@@ -107,7 +114,7 @@ public class SVGImageView extends View
       try
       {
          this.svg = SVG.getFromResource(this.getContext(), resId);
-         //this.picture = this.svg.getPicture();
+         this.picture = this.svg.getPicture();
          invalidate();
       }
       catch (Exception e)
