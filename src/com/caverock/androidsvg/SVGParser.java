@@ -17,12 +17,15 @@ import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.AttributesImpl;
 import org.xml.sax.helpers.DefaultHandler;
 
+import android.graphics.Matrix;
 import android.util.Log;
 
 import com.caverock.androidsvg.SVG.Box;
 import com.caverock.androidsvg.SVG.Colour;
+import com.caverock.androidsvg.SVG.Length;
 import com.caverock.androidsvg.SVG.Style;
 import com.caverock.androidsvg.SVG.SvgElement;
+import com.caverock.androidsvg.SVG.Unit;
 
 /**
  * SVG parser code. Used by SVG class. Should not be called directly.
@@ -504,13 +507,14 @@ dumpNode(svgDocument.getRootElement(), "");
                                        Float.parseFloat(parstok.nextToken()), Float.parseFloat(parstok.nextToken()),
                                        Float.parseFloat(parstok.nextToken()), Float.parseFloat(parstok.nextToken()));
                      continue;
-                  } else if parstok.countTokens() == 3) {
+                  }
                } else if (fn.equals("translate")) {
                   if (parstok.countTokens() == 1) {
                      matrixTranslate(obj, Float.parseFloat(parstok.nextToken()), 0f);
                      continue;
-                  } else if parstok.countTokens() == 2) {
-                     matrixTranslate(obj, Float.parseFloat(parstok.nextToken()), Float.parseFloat(parstok.nextToken()));
+                  } else if (parstok.countTokens() == 2) {
+                     float tx = Float.parseFloat(parstok.nextToken());
+                     matrixTranslate(obj, tx, Float.parseFloat(parstok.nextToken()));
                      continue;
                   }
                } else if (fn.equals("scale")) {
@@ -518,15 +522,16 @@ dumpNode(svgDocument.getRootElement(), "");
                      float sx = Float.parseFloat(parstok.nextToken());
                      matrixScale(obj, sx, sx);
                      continue;
-                  } else if parstok.countTokens() == 2) {
-                     matrixScale(obj, Float.parseFloat(parstok.nextToken()), Float.parseFloat(parstok.nextToken()));
+                  } else if (parstok.countTokens() == 2) {
+                     float sx = Float.parseFloat(parstok.nextToken());
+                     matrixScale(obj, sx, Float.parseFloat(parstok.nextToken()));
                      continue;
                   }
                } else if (fn.equals("rotate")) {
                   if (parstok.countTokens() == 1) {
                      matrixRotate(obj, Float.parseFloat(parstok.nextToken()));
                      continue;
-                  } else if parstok.countTokens() == 3) {
+                  } else if (parstok.countTokens() == 3) {
                      float ang = Float.parseFloat(parstok.nextToken());
                      float cx = Float.parseFloat(parstok.nextToken());
                      float cy = Float.parseFloat(parstok.nextToken());
@@ -555,15 +560,15 @@ dumpNode(svgDocument.getRootElement(), "");
 
    private void matrixTranslate(SvgElement obj, float tx, float ty)
    {
-      // TODO Auto-generated method stub
-      
+      Matrix m = new Matrix();
+      m.setTranslate(tx,  ty);
    }
 
 
    private void matrixRotate(SvgElement obj, float angle)
    {
-      // TODO Auto-generated method stub
-      
+      Matrix m = new Matrix();
+      m.setRotate(angle);
    }
 
 
@@ -659,25 +664,25 @@ dumpNode(svgDocument.getRootElement(), "");
                break;
             case width:
                obj.width = parseLength(val);
-               if (obj.width < 0)
+               if (obj.width.isNegative())
                   throw new SAXException("Invalid <rect> element. Width cannot be negative");
 /**/Log.d(TAG, "<rect> width="+obj.width);
                break;
             case height:
                obj.height = parseLength(val);
-               if (obj.height < 0)
+               if (obj.height.isNegative())
                   throw new SAXException("Invalid <rect> element. Height cannot be negative");
 /**/Log.d(TAG, "<rect> height="+obj.height);
                break;
             case rx:
                obj.rx = parseLength(val);
-               if (obj.rx < 0)
+               if (obj.rx.isNegative())
                   throw new SAXException("Invalid <rect> element. rx cannot be negative");
 /**/Log.d(TAG, "<rect> rx="+obj.rx);
                break;
             case ry:
                obj.ry = parseLength(val);
-               if (obj.ry < 0)
+               if (obj.ry.isNegative())
                   throw new SAXException("Invalid <rect> element. ry cannot be negative");
 /**/Log.d(TAG, "<rect> ry="+obj.ry);
                break;
@@ -695,40 +700,32 @@ dumpNode(svgDocument.getRootElement(), "");
     * Parse an SVG 'Length' value (usually a coordinate).
     * Spec says: length ::= number ("em" | "ex" | "px" | "in" | "cm" | "mm" | "pt" | "pc" | "%")?
     */
-   private float  parseLength(String val) throws SAXException
+   private Length  parseLength(String val) throws SAXException
    {
       if (val.length() == 0)
          throw new SAXException("Invalid length value (empty string)");
-      int  end = val.length();
-      float  multiplier = 1.0f;
-      float  divisor = 1.0f;
-      if (val.endsWith("px")) {
-         end -= 2;
-      } else if (val.endsWith("em")) {
-         end -= 2;
-      } else if (val.endsWith("ex")) {
-         end -= 2;
-      } else if (val.endsWith("in")) {
-         end -= 2;
-         multiplier = dpi;
-      } else if (val.endsWith("cm")) {
-         end -= 2;
-         multiplier = dpi;
-         divisor = 2.54f;
-      } else if (val.endsWith("mm")) {
-         end -= 2;
-         multiplier = dpi;
-         divisor = 25.4f;
-      } else if (val.endsWith("pt")) {
-         end -= 2;
-      } else if (val.endsWith("pc")) {
-         end -= 2;
-      } else if (val.endsWith("%")) {
+      int   end = val.length();
+      Unit  unit = null;
+      char  lastChar = val.charAt(end-1);
+
+      if (lastChar == '%') {
          end -= 1;
+         unit = Unit.percent;
+      } else if (end > 2 && Character.isLetter(lastChar) && Character.isLetter(val.charAt(end-2))) {
+         String unitStr = val.substring(end-2);
+         if ("px|em|ex|in|cm|mm|pt|pc".indexOf(unitStr) >= 0) {
+           end -= 2;
+           unit = Unit.fromString(unitStr);
+         } else {
+            throw new SAXException("Invalid length unit specifier: "+val);
+         }
       }
       try
       {
-         return (Float.parseFloat(val.substring(0, end)) * multiplier) / divisor;
+         float scalar = Float.parseFloat(val.substring(0, end));
+         if (unit == null)
+            unit = Unit.none;
+         return new Length(scalar, unit);
       }
       catch (NumberFormatException e)
       {

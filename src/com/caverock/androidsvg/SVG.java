@@ -10,10 +10,7 @@ import android.content.Context;
 import android.content.res.AssetManager;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
-import android.graphics.Paint;
 import android.graphics.Picture;
-import android.graphics.RectF;
-import android.util.Log;
 
 public class SVG
 {
@@ -21,6 +18,34 @@ public class SVG
    
    private SVG.SvgElement  rootElement = null;
 
+   public enum Unit
+   {
+      px,
+      em,
+      ex,
+      in,
+      cm,
+      mm,
+      pt,
+      pc,
+      percent,
+      none,
+      error;
+
+      public static Unit  fromString(String str)
+      {
+         if (str.equals("%"))
+            return percent;
+         try
+         {
+            return valueOf(str);
+         } 
+         catch (Exception e)
+         {
+            return error;
+         }
+      }
+}
 
    protected SVG()
    {
@@ -87,7 +112,7 @@ public class SVG
       public boolean  hasStroke; 
       public SvgPaint stroke;
       public float    strokeOpacity;
-      public float    strokeWidth;
+      public Length   strokeWidth;
 
       public float    opacity; // master opacity of both stroke and fill
       
@@ -99,7 +124,7 @@ public class SVG
          hasStroke = false;
          stroke = new Colour(0);  // black
          strokeOpacity = 1f;
-         strokeWidth = 1f;
+         strokeWidth = new Length(1f);
          opacity = 1f;
       }
 
@@ -111,7 +136,7 @@ public class SVG
          hasStroke = inherit.hasStroke;
          stroke = inherit.stroke;
          strokeOpacity = inherit.strokeOpacity;
-         strokeWidth = 1f;
+         strokeWidth = new Length(1f);
          opacity = inherit.opacity;
       }
    }
@@ -135,6 +160,45 @@ public class SVG
          return String.format("%02x%02x%02x", (colour>>16)&0xFF, (colour>>8)&0xFF, colour&0xFF);
       }
    }
+
+   protected static class Length
+   {
+      float  value = 0;;
+      Unit   unit = Unit.none;
+
+      public Length(float value, Unit unit)
+      {
+         this.value = value;
+         this.unit = unit;
+      }
+
+      public Length(float value)
+      {
+         this.value = value;
+         this.unit = Unit.none;
+      }
+
+      public float floatValue()
+      {
+         return value;
+      }
+
+      public float floatValue(int dpi)
+      {
+         return value;   // FIXME
+      }
+
+      public boolean isZero()
+      {
+         return value == 0f;
+      }
+
+      public boolean isNegative()
+      {
+         return value < 0f;
+      }
+   }
+
 
    //===============================================================================
    // The objects in the SVG object tree
@@ -166,9 +230,9 @@ public class SVG
 
    protected static class Svg extends SvgContainer
    {
-      public Float width;
-      public Float height;
-      public Box   viewBox;
+      public Length width;
+      public Length height;
+      public Box    viewBox;
    }
 
    // An SVG element that can contain other elements.
@@ -191,12 +255,12 @@ public class SVG
 
    protected static class Rect extends GraphicsElement
    {
-      public Float x;
-      public Float y;
-      public Float width;
-      public Float height;
-      public Float rx;
-      public Float ry;
+      public Length x;
+      public Length y;
+      public Length width;
+      public Length height;
+      public Length rx;
+      public Length ry;
    }
 
 
