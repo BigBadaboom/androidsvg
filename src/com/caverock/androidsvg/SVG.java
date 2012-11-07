@@ -103,26 +103,38 @@ public class SVG
       public float  minX, minY, width, height;
    }
 
+
+   public static final long SPECIFIED_FILL           = (1<<0);
+   public static final long SPECIFIED_FILL_OPACITY   = (1<<1);
+   public static final long SPECIFIED_STROKE         = (1<<2);
+   public static final long SPECIFIED_STROKE_OPACITY = (1<<3);
+   public static final long SPECIFIED_STROKE_WIDTH   = (1<<4);
+   public static final long SPECIFIED_OPACITY        = (1<<5);
+
    public static class  Style
    {
-      public boolean  hasFill; 
+      // Which properties have been explicity specified by this element
+      public long     specifiedFlags;
+
+      public boolean  hasFill;
       public SvgPaint fill;
-      public float    fillOpacity;
+      public Float    fillOpacity;
 
       public boolean  hasStroke; 
       public SvgPaint stroke;
-      public float    strokeOpacity;
+      public Float    strokeOpacity;
       public Length   strokeWidth;
 
-      public float    opacity; // master opacity of both stroke and fill
+      public Float    opacity; // master opacity of both stroke and fill
       
       public Style()
       {
+         specifiedFlags = 0;
          hasFill = true;
          fill = new Colour(0);  // black
          fillOpacity = 1f;
          hasStroke = false;
-         stroke = new Colour(0);  // black
+         stroke = null;         // none
          strokeOpacity = 1f;
          strokeWidth = new Length(1f);
          opacity = 1f;
@@ -130,6 +142,8 @@ public class SVG
 
       public Style(Style inherit)
       {
+         // Not inherited: display, 
+         specifiedFlags = 0;
          hasFill = inherit.hasFill;
          fill = inherit.fill;
          fillOpacity = inherit.fillOpacity;
@@ -142,7 +156,7 @@ public class SVG
    }
 
    // What fill or stroke is
-   protected static class SvgPaint
+   protected abstract static class SvgPaint
    {
    }
 
@@ -218,12 +232,10 @@ public class SVG
    protected static class SvgContainer extends SvgElement
    {
       public String id;
-      public List<SvgElement> children;
-      
+      public List<SvgElement> children = new ArrayList<SvgElement>();
+
       public void addChild(SvgElement elem)
       {
-         if (children == null)
-            children = new ArrayList<SvgElement>();
          children.add(elem);
       }
    }
@@ -235,16 +247,28 @@ public class SVG
       public Box    viewBox;
    }
 
-   // An SVG element that can contain other elements.
-   protected static class Group extends SvgContainer
+   protected interface Transformable
    {
+      public void setTransform(Matrix matrix);
+   }
+
+   // An SVG element that can contain other elements.
+   protected static class Group extends SvgContainer implements Transformable
+   {
+      public Matrix transform;
+
+      @Override
+      public void setTransform(Matrix transform) { this.transform = transform; }
    }
 
    // One of the element types that can cause graphics to be drawn onto the target canvas.
    // Specifically: ‘circle’, ‘ellipse’, ‘image’, ‘line’, ‘path’, ‘polygon’, ‘polyline’, ‘rect’, ‘text’ and ‘use’.
-   private static abstract class GraphicsElement extends SvgElement
+   protected static abstract class GraphicsElement extends SvgElement implements Transformable
    {
       public Matrix transform;
+
+      @Override
+      public void setTransform(Matrix transform) { this.transform = transform; }
    }
 
    protected static class Use extends GraphicsElement
@@ -261,6 +285,21 @@ public class SVG
       public Length height;
       public Length rx;
       public Length ry;
+   }
+
+
+   protected static class Line extends GraphicsElement
+   {
+      public Length x1;
+      public Length y1;
+      public Length x2;
+      public Length y2;
+   }
+
+
+   protected static class PolyLine extends GraphicsElement
+   {
+      public Length[] points;
    }
 
 

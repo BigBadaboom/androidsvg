@@ -315,6 +315,8 @@ public class SVGParser extends DefaultHandler
          g(attributes);
       } else if (localName.equalsIgnoreCase(TAG_RECT)) {
          rect(attributes);
+      } else if (localName.equalsIgnoreCase(TAG_LINE)) {
+         line(attributes);
       }
    }
 
@@ -371,7 +373,7 @@ dumpNode(svgDocument.getRootElement(), "");
 /**/Log.d(TAG, "<svg>");
       SVG.Svg  obj = new SVG.Svg();
       obj.parent = currentElement;
-      obj.style = new Style();
+      obj.style = (obj.parent == null) ? new Style() : new Style(obj.parent.style);
       parseAttributesCore(obj, attributes);
       parseAttributesStyle(obj, attributes);
       parseAttributesSVG(obj, attributes);
@@ -386,12 +388,10 @@ dumpNode(svgDocument.getRootElement(), "");
    
    private void  parseAttributesSVG(SVG.Svg obj, Attributes attributes) throws SAXException
    {
-      AttributesImpl attr = new AttributesImpl(attributes);
-      
-      for (int i=0; i<attr.getLength(); i++)
+      for (int i=0; i<attributes.getLength(); i++)
       {
-         String val = attr.getValue(i).trim();
-         switch (SVGAttr.fromString(attr.getLocalName(i)))
+         String val = attributes.getValue(i).trim();
+         switch (SVGAttr.fromString(attributes.getLocalName(i)))
          {
             case width:
                obj.width = parseLength(val);
@@ -409,198 +409,6 @@ dumpNode(svgDocument.getRootElement(), "");
 
 
    //=========================================================================
-   // Attribute parsing
-
-
-   private void  parseAttributesCore(SVG.SvgElement obj, Attributes attributes) throws SAXException
-   {
-      AttributesImpl attr = new AttributesImpl(attributes);
-      
-      for (int i=0; i<attr.getLength(); i++)
-      {
-         if (SVGAttr.fromString(attr.getLocalName(i)) == SVGAttr.id) {
-               obj.id = attr.getValue(i).trim();
-/**/Log.d(TAG, "<svg> id="+obj.id);
-               break;
-         }
-      }
-   }
-
-
-   private void  parseAttributesStyle(SVG.SvgElement obj, Attributes attributes) throws SAXException
-   {
-/**/Log.d(TAG, "parseAttributesStyle "+obj.style);
-      AttributesImpl attr = new AttributesImpl(attributes);
-      
-      for (int i=0; i<attr.getLength(); i++)
-      {
-         String val = attr.getValue(i).trim();
-         switch (SVGAttr.fromString(attr.getLocalName(i)))
-         {
-            case fill:
-               if (val.equals("none")) {
-                  obj.style.hasFill = false;
-                  break;
-               } else  if (val.startsWith("url")) {
-                  //gradient
-               } else {
-                  obj.style.fill = parseColour(val);
-               }
-/**/Log.d(TAG, "<?> style.fill="+obj.style.fill);
-               obj.style.hasFill = true;
-               break;
-
-            case fill_opacity:
-               obj.style.fillOpacity = parseFloat(val);
-               break;
-
-            case stroke:
-               if (val.equals("none")) {
-                  obj.style.hasStroke = false;
-                  break;
-               } else  if (val.startsWith("url")) {
-                  //gradient
-               } else {
-                  obj.style.stroke = parseColour(val);
-               }
-/**/Log.d(TAG, "<?> style.stroke="+obj.style.stroke);
-               obj.style.hasStroke = true;
-               break;
-
-            case stroke_opacity:
-               obj.style.strokeOpacity = parseFloat(val);
-               break;
-
-            case stroke_width:
-               obj.style.strokeWidth = parseLength(val);
-/**/Log.d(TAG, "<?> style.strokewidth="+obj.style.strokeWidth);
-               break;
-         }
-      }
-   }
-
-
-   private void  parseAttributesTransform(SVG.SvgElement obj, Attributes attributes) throws SAXException
-   {
-/**/Log.d(TAG, "parseAttributesTransform");
-      AttributesImpl attr = new AttributesImpl(attributes);
-      
-      for (int i=0; i<attr.getLength(); i++)
-      {
-         if (SVGAttr.fromString(attr.getLocalName(i)) == SVGAttr.transform) {
-            ListTokeniser tok = new ListTokeniser(attr.getValue(i).trim());
-            while (tok.hasMoreTokens()) {
-               String  val = tok.nextToken();
-/**/Log.d(TAG, ">>>"+val);
-               int bracket1 = val.indexOf('(');
-               int bracket2 = val.indexOf(')');
-               if (bracket1 > bracket2) {
-                  throw new SAXException("Invalid transform attribute: "+val);
-               }
-               String fn = val.substring(0, bracket1).trim();
-               String pars = val.substring(bracket1+1, bracket2).trim();
-/**/Log.d(TAG, ">>>"+fn+"("+pars+")");
-               ListTokeniser parstok = new ListTokeniser(pars);
-               if (fn.equals("matrix")) {
-                  if (parstok.countTokens() == 6) {
-                     matrixMatrix(obj, Float.parseFloat(parstok.nextToken()), Float.parseFloat(parstok.nextToken()),
-                                       Float.parseFloat(parstok.nextToken()), Float.parseFloat(parstok.nextToken()),
-                                       Float.parseFloat(parstok.nextToken()), Float.parseFloat(parstok.nextToken()));
-                     continue;
-                  }
-               } else if (fn.equals("translate")) {
-                  if (parstok.countTokens() == 1) {
-                     matrixTranslate(obj, Float.parseFloat(parstok.nextToken()), 0f);
-                     continue;
-                  } else if (parstok.countTokens() == 2) {
-                     float tx = Float.parseFloat(parstok.nextToken());
-                     matrixTranslate(obj, tx, Float.parseFloat(parstok.nextToken()));
-                     continue;
-                  }
-               } else if (fn.equals("scale")) {
-                  if (parstok.countTokens() == 1) {
-                     float sx = Float.parseFloat(parstok.nextToken());
-                     matrixScale(obj, sx, sx);
-                     continue;
-                  } else if (parstok.countTokens() == 2) {
-                     float sx = Float.parseFloat(parstok.nextToken());
-                     matrixScale(obj, sx, Float.parseFloat(parstok.nextToken()));
-                     continue;
-                  }
-               } else if (fn.equals("rotate")) {
-                  if (parstok.countTokens() == 1) {
-                     matrixRotate(obj, Float.parseFloat(parstok.nextToken()));
-                     continue;
-                  } else if (parstok.countTokens() == 3) {
-                     float ang = Float.parseFloat(parstok.nextToken());
-                     float cx = Float.parseFloat(parstok.nextToken());
-                     float cy = Float.parseFloat(parstok.nextToken());
-                     matrixTranslate(obj, cx, cy);
-                     matrixRotate(obj, ang);
-                     matrixTranslate(obj, -cx, -cy);
-                     continue;
-                  }
-               } else if (fn.equals("skewX")) {
-                  if (parstok.countTokens() == 1) {
-                     matrixSkewX(obj, Float.parseFloat(parstok.nextToken()));
-                     continue;
-                  }
-               } else if (fn.equals("skewY")) {
-                  if (parstok.countTokens() == 1) {
-                     matrixSkewY(obj, Float.parseFloat(parstok.nextToken()));
-                     continue;
-                  }
-               }
-               throw new SAXException("Invalid transform attribute: "+val);
-            }
-         }
-      }
-   }
-
-
-   private void matrixTranslate(SvgElement obj, float tx, float ty)
-   {
-      Matrix m = new Matrix();
-      m.setTranslate(tx,  ty);
-   }
-
-
-   private void matrixRotate(SvgElement obj, float angle)
-   {
-      Matrix m = new Matrix();
-      m.setRotate(angle);
-   }
-
-
-   private void matrixScale(SvgElement obj, float sx, float sy)
-   {
-      // TODO Auto-generated method stub
-      
-   }
-
-
-   private void matrixMatrix(SvgElement obj, float a, float b, float c, float d, float e, float f)
-   {
-      // TODO Auto-generated method stub
-      
-   }
-
-
-   private void matrixSkewX(SvgElement obj, float skewAngle)
-   {
-      // TODO Auto-generated method stub
-      
-   }
-
-
-   private void matrixSkewY(SvgElement obj, float skewAngle)
-   {
-      // TODO Auto-generated method stub
-      
-   }
-
-
-   //=========================================================================
    // <g> group element
 
 
@@ -611,7 +419,7 @@ dumpNode(svgDocument.getRootElement(), "");
          throw new SAXException("Invalid document. Root element must be <svg>");
       SVG.Group  obj = new SVG.Group();
       obj.parent = currentElement;
-      obj.style = new Style();
+      obj.style = new Style(obj.parent.style);
       parseAttributesCore(obj, attributes);
       parseAttributesStyle(obj, attributes);
       parseAttributesTransform(obj, attributes);
@@ -627,7 +435,7 @@ dumpNode(svgDocument.getRootElement(), "");
 
 
    //=========================================================================
-   // <g> group element
+   // <rect> element
 
 
    private void  rect(Attributes attributes) throws SAXException
@@ -637,7 +445,7 @@ dumpNode(svgDocument.getRootElement(), "");
          throw new SAXException("Invalid document. Root element must be <svg>");
       SVG.Rect  obj = new SVG.Rect();
       obj.parent = currentElement;
-      obj.style = new Style();
+      obj.style = new Style(obj.parent.style);
       parseAttributesCore(obj, attributes);
       parseAttributesStyle(obj, attributes);
       parseAttributesRect(obj, attributes);
@@ -647,44 +455,83 @@ dumpNode(svgDocument.getRootElement(), "");
 
    private void  parseAttributesRect(SVG.Rect obj, Attributes attributes) throws SAXException
    {
-      AttributesImpl attr = new AttributesImpl(attributes);
-      
-      for (int i=0; i<attr.getLength(); i++)
+      for (int i=0; i<attributes.getLength(); i++)
       {
-         String val = attr.getValue(i).trim();
-         switch (SVGAttr.fromString(attr.getLocalName(i)))
+         String val = attributes.getValue(i).trim();
+         switch (SVGAttr.fromString(attributes.getLocalName(i)))
          {
             case x:
                obj.x = parseLength(val);
-/**/Log.d(TAG, "<rect> x="+obj.x);
                break;
             case y:
                obj.y = parseLength(val);
-/**/Log.d(TAG, "<rect> y="+obj.y);
                break;
             case width:
                obj.width = parseLength(val);
                if (obj.width.isNegative())
                   throw new SAXException("Invalid <rect> element. Width cannot be negative");
-/**/Log.d(TAG, "<rect> width="+obj.width);
                break;
             case height:
                obj.height = parseLength(val);
                if (obj.height.isNegative())
                   throw new SAXException("Invalid <rect> element. Height cannot be negative");
-/**/Log.d(TAG, "<rect> height="+obj.height);
                break;
             case rx:
                obj.rx = parseLength(val);
                if (obj.rx.isNegative())
                   throw new SAXException("Invalid <rect> element. rx cannot be negative");
-/**/Log.d(TAG, "<rect> rx="+obj.rx);
                break;
             case ry:
                obj.ry = parseLength(val);
                if (obj.ry.isNegative())
                   throw new SAXException("Invalid <rect> element. ry cannot be negative");
-/**/Log.d(TAG, "<rect> ry="+obj.ry);
+               break;
+         }
+      }
+   }
+
+
+   //=========================================================================
+   // <line> element
+
+
+   private void  line(Attributes attributes) throws SAXException
+   {
+/**/Log.d(TAG, "<line>");
+      if (currentElement == null)
+         throw new SAXException("Invalid document. Root element must be <svg>");
+      SVG.Line  obj = new SVG.Line();
+      obj.parent = currentElement;
+      obj.style = new Style(obj.parent.style);
+      parseAttributesCore(obj, attributes);
+      parseAttributesStyle(obj, attributes);
+      parseAttributesLine(obj, attributes);
+      currentElement.addChild(obj);     
+   }
+
+
+   private void  parseAttributesLine(SVG.Line obj, Attributes attributes) throws SAXException
+   {
+      for (int i=0; i<attributes.getLength(); i++)
+      {
+         String val = attributes.getValue(i).trim();
+         switch (SVGAttr.fromString(attributes.getLocalName(i)))
+         {
+            case x1:
+               obj.x1 = parseLength(val);
+/**/Log.d(TAG, "<line> x1="+obj.x1);
+               break;
+            case y1:
+               obj.y1 = parseLength(val);
+/**/Log.d(TAG, "<line> y1="+obj.y1);
+               break;
+            case x2:
+               obj.x2 = parseLength(val);
+/**/Log.d(TAG, "<line> x2="+obj.x2);
+               break;
+            case y2:
+               obj.y2 = parseLength(val);
+/**/Log.d(TAG, "<line> y2="+obj.y2);
                break;
          }
       }
@@ -694,6 +541,166 @@ dumpNode(svgDocument.getRootElement(), "");
    //=========================================================================
    // Attribute parsing
    //=========================================================================
+
+
+   private void  parseAttributesCore(SVG.SvgElement obj, Attributes attributes) throws SAXException
+   {
+      for (int i=0; i<attributes.getLength(); i++)
+      {
+         if (SVGAttr.fromString(attributes.getLocalName(i)) == SVGAttr.id) {
+               obj.id = attributes.getValue(i).trim();
+/**/Log.d(TAG, "<svg> id="+obj.id);
+               break;
+         }
+      }
+   }
+
+
+   private void  parseAttributesStyle(SVG.SvgElement obj, Attributes attributes) throws SAXException
+   {
+/**/Log.d(TAG, "parseAttributesStyle "+obj.style);
+      for (int i=0; i<attributes.getLength(); i++)
+      {
+         String val = attributes.getValue(i).trim();
+         switch (SVGAttr.fromString(attributes.getLocalName(i)))
+         {
+            case fill:
+               obj.style.specifiedFlags |= SVG.SPECIFIED_FILL;
+               if (val.equals("none")) {
+                  obj.style.hasFill = false;
+                  break;
+               } else  if (val.startsWith("url")) {
+                  //gradient
+               } else {
+                  obj.style.fill = parseColour(val);
+               }
+/**/Log.d(TAG, "<?> style.fill="+obj.style.fill);
+               obj.style.hasFill = true;
+               break;
+
+            case fill_opacity:
+               obj.style.fillOpacity = parseFloat(val);
+               obj.style.specifiedFlags |= SVG.SPECIFIED_FILL_OPACITY;
+               break;
+
+            case stroke:
+               obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE;
+               if (val.equals("none")) {
+                  obj.style.hasStroke = false;
+                  break;
+               } else  if (val.startsWith("url")) {
+                  //gradient
+               } else {
+                  obj.style.stroke = parseColour(val);
+               }
+/**/Log.d(TAG, "<?> style.stroke="+obj.style.stroke);
+               obj.style.hasStroke = true;
+               break;
+
+            case stroke_opacity:
+               obj.style.strokeOpacity = parseFloat(val);
+               obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE_OPACITY;
+               break;
+
+            case stroke_width:
+               obj.style.strokeWidth = parseLength(val);
+               obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE_WIDTH;
+               break;
+         }
+      }
+   }
+
+
+   private void  parseAttributesTransform(SVG.Transformable obj, Attributes attributes) throws SAXException
+   {
+/**/Log.d(TAG, "parseAttributesTransform");
+      for (int i=0; i<attributes.getLength(); i++)
+      {
+         if (SVGAttr.fromString(attributes.getLocalName(i)) == SVGAttr.transform) {
+            ListTokeniser tok = new ListTokeniser(attributes.getValue(i).trim());
+            Matrix  matrix = new Matrix();
+
+            while (tok.hasMoreTokens())
+            {
+               String  val = tok.nextToken();
+               int bracket1 = val.indexOf('(');
+               int bracket2 = val.indexOf(')');
+               if (bracket1 > bracket2) {
+                  throw new SAXException("Invalid transform attribute: "+val);
+               }
+               String fn = val.substring(0, bracket1).trim();
+               String pars = val.substring(bracket1+1, bracket2).trim();
+/**/Log.d(TAG, ">>>"+fn+"("+pars+")");
+               ListTokeniser parstok = new ListTokeniser(pars);
+
+               if (fn.equals("matrix")) {
+                  if (parstok.countTokens() == 6) {
+                     float[] vals = new float[9];
+                     vals[0] = Float.parseFloat(parstok.nextToken());
+                     vals[3] = Float.parseFloat(parstok.nextToken());
+                     vals[1] = Float.parseFloat(parstok.nextToken());
+                     vals[4] = Float.parseFloat(parstok.nextToken());
+                     vals[2] = Float.parseFloat(parstok.nextToken());
+                     vals[5] = Float.parseFloat(parstok.nextToken());
+                     vals[6] = 0f;
+                     vals[7] = 0f;
+                     vals[8] = 1f;
+                     Matrix m = new Matrix();
+                     m.getValues(vals);
+                     matrix.preConcat(m);
+                     continue;
+                  }
+               } else if (fn.equals("translate")) {
+                  if (parstok.countTokens() == 1) {
+                     matrix.preTranslate(Float.parseFloat(parstok.nextToken()), 0f);
+                     continue;
+                  } else if (parstok.countTokens() == 2) {
+                     float tx = Float.parseFloat(parstok.nextToken());
+                     matrix.preTranslate(tx, Float.parseFloat(parstok.nextToken()));
+                     continue;
+                  }
+               } else if (fn.equals("scale")) {
+                  if (parstok.countTokens() == 1) {
+                     float sx = Float.parseFloat(parstok.nextToken());
+                     matrix.preScale(sx, sx);
+                     continue;
+                  } else if (parstok.countTokens() == 2) {
+                     float sx = Float.parseFloat(parstok.nextToken());
+                     matrix.preScale(sx, Float.parseFloat(parstok.nextToken()));
+                     continue;
+                  }
+               } else if (fn.equals("rotate")) {
+                  if (parstok.countTokens() == 1) {
+                     matrix.preRotate(Float.parseFloat(parstok.nextToken()));
+                     continue;
+                  } else if (parstok.countTokens() == 3) {
+                     float ang = Float.parseFloat(parstok.nextToken());
+                     float cx = Float.parseFloat(parstok.nextToken());
+                     float cy = Float.parseFloat(parstok.nextToken());
+                     matrix.preRotate(ang, cx, cy);
+                     continue;
+                  }
+               } else if (fn.equals("skewX")) {
+                  if (parstok.countTokens() == 1) {
+                     float ang = Float.parseFloat(parstok.nextToken());
+                     matrix.preSkew((float) Math.tan(Math.toRadians(ang)), 0f);
+/**/Log.d(TAG, "skewX "+matrix);
+                     continue;
+                  }
+               } else if (fn.equals("skewY")) {
+                  if (parstok.countTokens() == 1) {
+                     float ang = Float.parseFloat(parstok.nextToken());
+                     matrix.preSkew(0f, (float) Math.tan(Math.toRadians(ang)));
+/**/Log.d(TAG, "skewY "+matrix);
+                  }
+               }
+               else
+                  throw new SAXException("Invalid transform attribute: "+val);
+            }
+            obj.setTransform(matrix);
+         }
+      }
+   }
 
 
    /*

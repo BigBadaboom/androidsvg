@@ -22,8 +22,14 @@ public class TestActivity extends Activity
    GestureDetector  gesture;
 
    String[] fileList = {"sample_6.4.svg",
+                        "sample_7.3_InitialCoords.svg",
+                        "sample_7.4_NewCoordSys.svg",
+                        "sample_7.4_RotateScale.svg",
+                        "sample_7.4_Skew.svg",
+                        "sample_7.5_Nested.svg",
                         "sample_9.2_rect01.svg",
                         "sample_9.2_rect02.svg",
+                        "sample_9.5_line01.svg",
                         "Android_robot.svg"};
    int  whichFile = 0;
 
