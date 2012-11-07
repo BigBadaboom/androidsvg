@@ -51,6 +51,7 @@ public class SVGParser extends DefaultHandler
    private static final String  TAG_LINEARGRADIENT = "linearGradient";
    private static final String  TAG_PATH           = "path";
    private static final String  TAG_POLYGON        = "polygon";
+   private static final String  TAG_POLYLINE       = "polyline";
    private static final String  TAG_RADIALGRADIENT = "radialGradient";
    private static final String  TAG_RECT           = "rect";
    private static final String  TAG_STOP           = "stop";
@@ -317,6 +318,8 @@ public class SVGParser extends DefaultHandler
          rect(attributes);
       } else if (localName.equalsIgnoreCase(TAG_LINE)) {
          line(attributes);
+      } else if (localName.equalsIgnoreCase(TAG_POLYLINE)) {
+         polyline(attributes);
       }
    }
 
@@ -533,6 +536,46 @@ dumpNode(svgDocument.getRootElement(), "");
                obj.y2 = parseLength(val);
 /**/Log.d(TAG, "<line> y2="+obj.y2);
                break;
+         }
+      }
+   }
+
+
+   //=========================================================================
+   // <polyline> element
+
+
+   private void  polyline(Attributes attributes) throws SAXException
+   {
+/**/Log.d(TAG, "<polyline>");
+      if (currentElement == null)
+         throw new SAXException("Invalid document. Root element must be <svg>");
+      SVG.PolyLine  obj = new SVG.PolyLine();
+      obj.parent = currentElement;
+      obj.style = new Style(obj.parent.style);
+      parseAttributesCore(obj, attributes);
+      parseAttributesStyle(obj, attributes);
+      parseAttributesPolyLine(obj, attributes);
+      currentElement.addChild(obj);     
+   }
+
+
+   private void  parseAttributesPolyLine(SVG.PolyLine obj, Attributes attributes) throws SAXException
+   {
+      for (int i=0; i<attributes.getLength(); i++)
+      {
+         if (SVGAttr.fromString(attributes.getLocalName(i)) == SVGAttr.points)
+         {
+            ListTokeniser tok = new ListTokeniser(attributes.getValue(i).trim());
+            int n = tok.countTokens();
+/**/Log.d(TAG, "<polyline> n="+n);
+            if (n % 2 == 1)
+               throw new SAXException("Invalid <polyline> points attribute. There should be an even number of coordinates.");
+            obj.points = new float[n]; 
+            for (int j=0; j<n; j++) {
+               obj.points[j] = parseFloat(tok.nextToken());
+/**/Log.d(TAG, "<polyline> points["+j+"]="+obj.points[j]);
+            }
          }
       }
    }

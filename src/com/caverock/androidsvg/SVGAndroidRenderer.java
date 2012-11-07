@@ -5,6 +5,7 @@ import java.util.Stack;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.RectF;
 import android.util.Log;
 
@@ -52,6 +53,8 @@ public class SVGAndroidRenderer
          render((SVG.Rect) obj);
       } else if  (obj instanceof SVG.Line) {
          render((SVG.Line) obj);
+      } else if  (obj instanceof SVG.PolyLine) {
+         render((SVG.PolyLine) obj);
       }
 
       // Restore paint styles
@@ -152,6 +155,32 @@ public class SVGAndroidRenderer
       updatePaintsFromStyle(obj.style);
 
       canvas.drawLine(_x1, _y1, _x2, _y2, strokePaint);
+
+   }
+
+
+   public void render(SVG.PolyLine obj)
+   {
+/**/Log.d(TAG, "PolyLine render");
+
+      if (obj.transform != null)
+         canvas.concat(obj.transform);
+
+      if (!obj.style.hasStroke)
+         return;
+
+      int  numPoints = obj.points.length;
+      if (numPoints < 4)
+         return;
+
+      updatePaintsFromStyle(obj.style);
+
+      Path  path = new Path();
+      path.moveTo(obj.points[0], obj.points[1]);
+      for (int i=2; i<numPoints; i+=2) {
+         path.lineTo(obj.points[i], obj.points[i+1]);
+      }
+      canvas.drawPath(path, strokePaint);
 
    }
 

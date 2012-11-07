@@ -299,7 +299,7 @@ public class SVG
 
    protected static class PolyLine extends GraphicsElement
    {
-      public Length[] points;
+      public float[] points;
    }
 
 
