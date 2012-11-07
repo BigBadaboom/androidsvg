@@ -20,6 +20,7 @@ public class TestActivity extends Activity
    SVGImageView  svgView = null;
 
    GestureDetector  gesture;
+   Toast            currentToast;
 
    String[] fileList = {"sample_6.4.svg",
                         "sample_7.3_InitialCoords.svg",
@@ -61,13 +62,31 @@ public class TestActivity extends Activity
          @Override
          public boolean  onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY)
          {
-            if (velocityX > 1000f && whichFile > 0) {
-               svgView.setSVGAsset(fileList[--whichFile]);
-               Toast.makeText(getApplicationContext(), fileList[whichFile], Toast.LENGTH_SHORT).show();
+            if (velocityX > 1000f) {
+               // Decrement file index
+               whichFile = (--whichFile + fileList.length) % fileList.length;
+
+               // Update the view
+               svgView.setSVGAsset(fileList[whichFile]);
+
+               // Show the filename as a Toast
+               if (currentToast != null)
+                  currentToast.cancel();
+               currentToast = Toast.makeText(getApplicationContext(), fileList[whichFile], Toast.LENGTH_SHORT);
+               currentToast.show();
                return true;
-            } else if (velocityX < -1000f && whichFile < (fileList.length-1)) {
-               svgView.setSVGAsset(fileList[++whichFile]);
-               Toast.makeText(getApplicationContext(), fileList[whichFile], Toast.LENGTH_SHORT).show();
+            } else if (velocityX < -1000f) {
+               // Increment file index
+               whichFile = ++whichFile % fileList.length;
+               
+               // Update the view
+               svgView.setSVGAsset(fileList[whichFile]);
+
+               // Show the filename as a Toast
+               if (currentToast != null)
+                  currentToast.cancel();
+               currentToast = Toast.makeText(getApplicationContext(), fileList[whichFile], Toast.LENGTH_SHORT);
+               currentToast.show();
                return true;
             }
             return false;
