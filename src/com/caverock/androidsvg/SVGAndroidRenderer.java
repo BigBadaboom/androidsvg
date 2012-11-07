@@ -51,6 +51,10 @@ public class SVGAndroidRenderer
          render((SVG.Group) obj);
       } else if  (obj instanceof SVG.Rect) {
          render((SVG.Rect) obj);
+      } else if  (obj instanceof SVG.Circle) {
+         render((SVG.Circle) obj);
+      } else if  (obj instanceof SVG.Ellipse) {
+         render((SVG.Ellipse) obj);
       } else if  (obj instanceof SVG.Line) {
          render((SVG.Line) obj);
       } else if  (obj instanceof SVG.Polygon) {
@@ -133,6 +137,60 @@ public class SVGAndroidRenderer
          } else {
             canvas.drawRoundRect(new RectF(_x, _y, _x + obj.width.floatValue(dpi), _y + obj.height.floatValue(dpi)), _rx, _ry, strokePaint);
          }
+      }
+
+   }
+
+
+   public void render(SVG.Circle obj)
+   {
+/**/Log.d(TAG, "Circle render");
+      if (obj.r == null || obj.r.isZero())
+         return;
+
+      if (obj.transform != null)
+         canvas.concat(obj.transform);
+
+      float _cx, _cy, _r;
+      _cx = (obj.cx != null) ? obj.cx.floatValue(dpi) : 0f;
+      _cy = (obj.cy != null) ? obj.cy.floatValue(dpi) : 0f;
+      _r = obj.r.floatValue(dpi);
+
+      updatePaintsFromStyle(obj.style);
+
+      if (obj.style.hasFill) {
+         canvas.drawCircle(_cx, _cy, _r, fillPaint);
+      }
+      if (obj.style.hasStroke) {
+         canvas.drawCircle(_cx, _cy, _r, strokePaint);
+      }
+
+   }
+
+
+   public void render(SVG.Ellipse obj)
+   {
+/**/Log.d(TAG, "Ellipse render");
+      if (obj.rx == null || obj.ry == null || obj.rx.isZero() || obj.ry.isZero())
+         return;
+
+      if (obj.transform != null)
+         canvas.concat(obj.transform);
+
+      float _cx, _cy, _rx, _ry;
+      _cx = (obj.cx != null) ? obj.cx.floatValue(dpi) : 0f;
+      _cy = (obj.cy != null) ? obj.cy.floatValue(dpi) : 0f;
+      _rx = obj.rx.floatValue(dpi);
+      _ry = obj.ry.floatValue(dpi);
+      RectF oval = new RectF(_cx-_rx, _cy-_ry, _cx+_rx, _cy+_ry);
+
+      updatePaintsFromStyle(obj.style);
+
+      if (obj.style.hasFill) {
+         canvas.drawOval(oval, fillPaint);
+      }
+      if (obj.style.hasStroke) {
+         canvas.drawOval(oval, strokePaint);
       }
 
    }

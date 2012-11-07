@@ -17,6 +17,7 @@ import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.AttributesImpl;
 import org.xml.sax.helpers.DefaultHandler;
 
+import android.annotation.SuppressLint;
 import android.graphics.Matrix;
 import android.util.Log;
 
@@ -45,7 +46,9 @@ public class SVGParser extends DefaultHandler
 
    // Define SVG tags
    private static final String  TAG_SVG            = "svg";
+   private static final String  TAG_CIRCLE         = "circle";
    private static final String  TAG_DEFS           = "defs";
+   private static final String  TAG_ELLIPSE        = "ellipse";
    private static final String  TAG_G              = "g";
    private static final String  TAG_LINE           = "line";
    private static final String  TAG_LINEARGRADIENT = "linearGradient";
@@ -316,6 +319,10 @@ public class SVGParser extends DefaultHandler
          g(attributes);
       } else if (localName.equalsIgnoreCase(TAG_RECT)) {
          rect(attributes);
+      } else if (localName.equalsIgnoreCase(TAG_CIRCLE)) {
+         circle(attributes);
+      } else if (localName.equalsIgnoreCase(TAG_ELLIPSE)) {
+         ellipse(attributes);
       } else if (localName.equalsIgnoreCase(TAG_LINE)) {
          line(attributes);
       } else if (localName.equalsIgnoreCase(TAG_POLYLINE)) {
@@ -329,7 +336,6 @@ public class SVGParser extends DefaultHandler
    @Override
    public void characters(char[] ch, int start, int length) throws SAXException
    {
-      // TODO Auto-generated method stub
       super.characters(ch, start, length);
    }
 
@@ -408,6 +414,8 @@ dumpNode(svgDocument.getRootElement(), "");
             case viewBox:
                obj.viewBox = parseViewBox(val);
                break;
+            default:
+               break;
          }
       }
    }
@@ -453,6 +461,7 @@ dumpNode(svgDocument.getRootElement(), "");
       obj.style = new Style(obj.parent.style);
       parseAttributesCore(obj, attributes);
       parseAttributesStyle(obj, attributes);
+      parseAttributesTransform(obj, attributes);
       parseAttributesRect(obj, attributes);
       currentElement.addChild(obj);     
    }
@@ -491,6 +500,103 @@ dumpNode(svgDocument.getRootElement(), "");
                if (obj.ry.isNegative())
                   throw new SAXException("Invalid <rect> element. ry cannot be negative");
                break;
+            default:
+               break;
+         }
+      }
+   }
+
+
+   //=========================================================================
+   // <circle> element
+
+
+   private void  circle(Attributes attributes) throws SAXException
+   {
+/**/Log.d(TAG, "<circle>");
+      if (currentElement == null)
+         throw new SAXException("Invalid document. Root element must be <svg>");
+      SVG.Circle  obj = new SVG.Circle();
+      obj.parent = currentElement;
+      obj.style = new Style(obj.parent.style);
+      parseAttributesCore(obj, attributes);
+      parseAttributesStyle(obj, attributes);
+      parseAttributesTransform(obj, attributes);
+      parseAttributesCircle(obj, attributes);
+      currentElement.addChild(obj);     
+   }
+
+
+   private void  parseAttributesCircle(SVG.Circle obj, Attributes attributes) throws SAXException
+   {
+      for (int i=0; i<attributes.getLength(); i++)
+      {
+         String val = attributes.getValue(i).trim();
+         switch (SVGAttr.fromString(attributes.getLocalName(i)))
+         {
+            case cx:
+               obj.cx = parseLength(val);
+               break;
+            case cy:
+               obj.cy = parseLength(val);
+               break;
+            case r:
+               obj.r = parseLength(val);
+               if (obj.r.isNegative())
+                  throw new SAXException("Invalid <circle> element. r cannot be negative");
+               break;
+            default:
+               break;
+         }
+      }
+   }
+
+
+   //=========================================================================
+   // <ellipse> element
+
+
+   private void  ellipse(Attributes attributes) throws SAXException
+   {
+/**/Log.d(TAG, "<ellipse>");
+      if (currentElement == null)
+         throw new SAXException("Invalid document. Root element must be <svg>");
+      SVG.Ellipse  obj = new SVG.Ellipse();
+      obj.parent = currentElement;
+      obj.style = new Style(obj.parent.style);
+      parseAttributesCore(obj, attributes);
+      parseAttributesStyle(obj, attributes);
+      parseAttributesTransform(obj, attributes);
+      parseAttributesEllipse(obj, attributes);
+      currentElement.addChild(obj);     
+   }
+
+
+   private void  parseAttributesEllipse(SVG.Ellipse obj, Attributes attributes) throws SAXException
+   {
+      for (int i=0; i<attributes.getLength(); i++)
+      {
+         String val = attributes.getValue(i).trim();
+         switch (SVGAttr.fromString(attributes.getLocalName(i)))
+         {
+            case cx:
+               obj.cx = parseLength(val);
+               break;
+            case cy:
+               obj.cy = parseLength(val);
+               break;
+            case rx:
+               obj.rx = parseLength(val);
+               if (obj.rx.isNegative())
+                  throw new SAXException("Invalid <ellipse> element. rx cannot be negative");
+               break;
+            case ry:
+               obj.ry = parseLength(val);
+               if (obj.ry.isNegative())
+                  throw new SAXException("Invalid <ellipse> element. ry cannot be negative");
+               break;
+            default:
+               break;
          }
       }
    }
@@ -510,6 +616,7 @@ dumpNode(svgDocument.getRootElement(), "");
       obj.style = new Style(obj.parent.style);
       parseAttributesCore(obj, attributes);
       parseAttributesStyle(obj, attributes);
+      parseAttributesTransform(obj, attributes);
       parseAttributesLine(obj, attributes);
       currentElement.addChild(obj);     
    }
@@ -538,6 +645,8 @@ dumpNode(svgDocument.getRootElement(), "");
                obj.y2 = parseLength(val);
 /**/Log.d(TAG, "<line> y2="+obj.y2);
                break;
+            default:
+               break;
          }
       }
    }
@@ -557,6 +666,7 @@ dumpNode(svgDocument.getRootElement(), "");
       obj.style = new Style(obj.parent.style);
       parseAttributesCore(obj, attributes);
       parseAttributesStyle(obj, attributes);
+      parseAttributesTransform(obj, attributes);
       parseAttributesPolyLine(obj, attributes);
       currentElement.addChild(obj);     
    }
@@ -598,6 +708,7 @@ dumpNode(svgDocument.getRootElement(), "");
       obj.style = new Style(obj.parent.style);
       parseAttributesCore(obj, attributes);
       parseAttributesStyle(obj, attributes);
+      parseAttributesTransform(obj, attributes);
       parseAttributesPolyLine(obj, attributes); // reuse of polyline "points" parser
       currentElement.addChild(obj);     
    }
@@ -670,6 +781,8 @@ dumpNode(svgDocument.getRootElement(), "");
             case stroke_width:
                obj.style.strokeWidth = parseLength(val);
                obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE_WIDTH;
+               break;
+            default:
                break;
          }
       }
@@ -947,7 +1060,6 @@ dumpNode(svgDocument.getRootElement(), "");
       val = val.toLowerCase();
       if (val.startsWith("rgb("))
       {
-         int end = val.indexOf(')');
          ListTokeniser tok = new ListTokeniser(val.substring(4, val.indexOf(')')));
          try
          {

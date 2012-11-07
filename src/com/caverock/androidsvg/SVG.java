@@ -288,6 +288,23 @@ public class SVG
    }
 
 
+   protected static class Circle extends GraphicsElement
+   {
+      public Length cx;
+      public Length cy;
+      public Length r;
+   }
+
+
+   protected static class Ellipse extends GraphicsElement
+   {
+      public Length cx;
+      public Length cy;
+      public Length rx;
+      public Length ry;
+   }
+
+
    protected static class Line extends GraphicsElement
    {
       public Length x1;
