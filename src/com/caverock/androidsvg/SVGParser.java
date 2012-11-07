@@ -320,6 +320,8 @@ public class SVGParser extends DefaultHandler
          line(attributes);
       } else if (localName.equalsIgnoreCase(TAG_POLYLINE)) {
          polyline(attributes);
+      } else if (localName.equalsIgnoreCase(TAG_POLYGON)) {
+         polygon(attributes);
       }
    }
 
@@ -560,6 +562,9 @@ dumpNode(svgDocument.getRootElement(), "");
    }
 
 
+   /*
+    *  Parse the "points" attribute. Used by both <polyline> and <polygon>.
+    */
    private void  parseAttributesPolyLine(SVG.PolyLine obj, Attributes attributes) throws SAXException
    {
       for (int i=0; i<attributes.getLength(); i++)
@@ -568,16 +573,33 @@ dumpNode(svgDocument.getRootElement(), "");
          {
             ListTokeniser tok = new ListTokeniser(attributes.getValue(i).trim());
             int n = tok.countTokens();
-/**/Log.d(TAG, "<polyline> n="+n);
             if (n % 2 == 1)
                throw new SAXException("Invalid <polyline> points attribute. There should be an even number of coordinates.");
             obj.points = new float[n]; 
             for (int j=0; j<n; j++) {
                obj.points[j] = parseFloat(tok.nextToken());
-/**/Log.d(TAG, "<polyline> points["+j+"]="+obj.points[j]);
             }
          }
       }
+   }
+
+
+   //=========================================================================
+   // <polygon> element
+
+
+   private void  polygon(Attributes attributes) throws SAXException
+   {
+/**/Log.d(TAG, "<polygon>");
+      if (currentElement == null)
+         throw new SAXException("Invalid document. Root element must be <svg>");
+      SVG.Polygon  obj = new SVG.Polygon();
+      obj.parent = currentElement;
+      obj.style = new Style(obj.parent.style);
+      parseAttributesCore(obj, attributes);
+      parseAttributesStyle(obj, attributes);
+      parseAttributesPolyLine(obj, attributes); // reuse of polyline "points" parser
+      currentElement.addChild(obj);     
    }
 
 
@@ -601,7 +623,7 @@ dumpNode(svgDocument.getRootElement(), "");
 
    private void  parseAttributesStyle(SVG.SvgElement obj, Attributes attributes) throws SAXException
    {
-/**/Log.d(TAG, "parseAttributesStyle "+obj.style);
+/**/Log.d(TAG, "parseAttributesStyle");
       for (int i=0; i<attributes.getLength(); i++)
       {
          String val = attributes.getValue(i).trim();

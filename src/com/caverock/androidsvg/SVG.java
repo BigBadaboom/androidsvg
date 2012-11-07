@@ -303,6 +303,11 @@ public class SVG
    }
 
 
+   protected static class Polygon extends PolyLine
+   {
+   }
+
+
    //===============================================================================
    // SVG document rendering
 

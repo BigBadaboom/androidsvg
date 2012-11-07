@@ -53,6 +53,8 @@ public class SVGAndroidRenderer
          render((SVG.Rect) obj);
       } else if  (obj instanceof SVG.Line) {
          render((SVG.Line) obj);
+      } else if  (obj instanceof SVG.Polygon) {
+         render((SVG.Polygon) obj);
       } else if  (obj instanceof SVG.PolyLine) {
          render((SVG.PolyLine) obj);
       }
@@ -140,11 +142,11 @@ public class SVGAndroidRenderer
    {
 /**/Log.d(TAG, "Line render");
 
-      if (obj.transform != null)
-         canvas.concat(obj.transform);
-
       if (!obj.style.hasStroke)
          return;
+
+      if (obj.transform != null)
+         canvas.concat(obj.transform);
 
       float _x1, _y1, _x2, _y2;
       _x1 = (obj.x1 != null) ? obj.x1.floatValue(dpi) : 0f;
@@ -155,7 +157,6 @@ public class SVGAndroidRenderer
       updatePaintsFromStyle(obj.style);
 
       canvas.drawLine(_x1, _y1, _x2, _y2, strokePaint);
-
    }
 
 
@@ -163,11 +164,11 @@ public class SVGAndroidRenderer
    {
 /**/Log.d(TAG, "PolyLine render");
 
-      if (obj.transform != null)
-         canvas.concat(obj.transform);
-
       if (!obj.style.hasStroke)
          return;
+
+      if (obj.transform != null)
+         canvas.concat(obj.transform);
 
       int  numPoints = obj.points.length;
       if (numPoints < 4)
@@ -181,7 +182,36 @@ public class SVGAndroidRenderer
          path.lineTo(obj.points[i], obj.points[i+1]);
       }
       canvas.drawPath(path, strokePaint);
+   }
 
+
+   public void render(SVG.Polygon obj)
+   {
+/**/Log.d(TAG, "Polygon render");
+
+      if (!obj.style.hasStroke && !obj.style.hasFill)
+         return;
+
+      if (obj.transform != null)
+         canvas.concat(obj.transform);
+
+      int  numPoints = obj.points.length;
+      if (numPoints < 4)
+         return;
+
+      updatePaintsFromStyle(obj.style);
+
+      Path  path = new Path();
+      path.moveTo(obj.points[0], obj.points[1]);
+      for (int i=2; i<numPoints; i+=2) {
+         path.lineTo(obj.points[i], obj.points[i+1]);
+      }
+      path.close();
+      
+      if (obj.style.hasFill)
+         canvas.drawPath(path, fillPaint);
+      if (obj.style.hasStroke)
+         canvas.drawPath(path, strokePaint);
    }
 
 

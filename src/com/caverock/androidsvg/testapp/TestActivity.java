@@ -31,6 +31,7 @@ public class TestActivity extends Activity
                         "sample_9.2_rect02.svg",
                         "sample_9.5_line01.svg",
                         "sample_9.6_polyline01.svg",
+                        "sample_9.7_polygon01.svg",
                         "Android_robot.svg"};
    int  whichFile = 0;
 
