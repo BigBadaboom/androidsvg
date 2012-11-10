@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -18,7 +19,6 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import android.graphics.Matrix;
 import android.graphics.Path;
-import android.graphics.RectF;
 import android.util.Log;
 
 import com.caverock.androidsvg.SVG.Box;
@@ -110,6 +110,7 @@ public class SVGParser extends DefaultHandler
 
 
    private static HashMap<String, Integer> colourKeywords = new HashMap<String, Integer>();
+   private static HashMap<String, Length> fontSizeKeywords = new HashMap<String, Length>();
 
    static {
       colourKeywords.put("aliceblue", 0xf0f8ff);
@@ -259,6 +260,16 @@ public class SVGParser extends DefaultHandler
       colourKeywords.put("whitesmoke", 0xf5f5f5);
       colourKeywords.put("yellow", 0xffff00);
       colourKeywords.put("yellowgreen", 0x9acd32);
+
+      fontSizeKeywords.put("xx-small", new Length(0.694f, Unit.pt));
+      fontSizeKeywords.put("x-small", new Length(0.833f, Unit.pt));
+      fontSizeKeywords.put("small", new Length(10.0f, Unit.pt));
+      fontSizeKeywords.put("medium", new Length(12.0f, Unit.pt));
+      fontSizeKeywords.put("large", new Length(14.4f, Unit.pt));
+      fontSizeKeywords.put("x-large", new Length(17.3f, Unit.pt));
+      fontSizeKeywords.put("xx-large", new Length(20.7f, Unit.pt));
+      fontSizeKeywords.put("smaller", new Length(0.833f, Unit.percent));
+      fontSizeKeywords.put("larger", new Length(1.2f, Unit.percent));
    }
 
 
@@ -333,6 +344,8 @@ public class SVGParser extends DefaultHandler
          polygon(attributes);
       } else if (localName.equalsIgnoreCase(TAG_TEXT)) {
          text(attributes);
+      } else if (localName.equalsIgnoreCase(TAG_TSPAN)) {
+         tspan(attributes);
       }
    }
 
@@ -341,6 +354,10 @@ public class SVGParser extends DefaultHandler
    public void characters(char[] ch, int start, int length) throws SAXException
    {
       super.characters(ch, start, length);
+
+      if (currentElement instanceof SVG.Text || currentElement instanceof SVG.TSpan) {
+         ((SVG.SvgContainer) currentElement).addChild(new SVG.TextSequence( new String(ch, start, length) ));
+      }
    }
 
 
@@ -350,9 +367,10 @@ public class SVGParser extends DefaultHandler
       super.endElement(uri, localName, qName);
 
       if (localName.equalsIgnoreCase(TAG_SVG) ||
-          localName.equalsIgnoreCase(TAG_G)) {
+          localName.equalsIgnoreCase(TAG_G) ||
+          localName.equalsIgnoreCase(TAG_TEXT) ||
+          localName.equalsIgnoreCase(TAG_TSPAN)) {
          currentElement = currentElement.parent;
-         //styleStack.pop();
       }
 
    }
@@ -368,12 +386,12 @@ dumpNode(svgDocument.getRootElement(), "");
    }
 
 
-   private void dumpNode(SVG.SvgElement elem, String indent)
+   private void dumpNode(SVG.SvgObject elem, String indent)
    {
       Log.d(TAG, indent+elem);
       if (elem instanceof SVG.SvgContainer) {
          indent = indent+"  ";
-         for (SVG.SvgElement child: ((SVG.SvgContainer) elem).children) {
+         for (SVG.SvgObject child: ((SVG.SvgContainer) elem).children) {
             dumpNode(child, indent);
          }
       }
@@ -410,7 +428,6 @@ dumpNode(svgDocument.getRootElement(), "");
          {
             case width:
                obj.width = parseLength(val);
-/**/Log.d(TAG, "<svg> width="+obj.width);
                break;
             case height:
                obj.height = parseLength(val);
@@ -440,15 +457,15 @@ dumpNode(svgDocument.getRootElement(), "");
       parseAttributesCore(obj, attributes);
       parseAttributesStyle(obj, attributes);
       parseAttributesTransform(obj, attributes);
-      parseAttributesG(obj, attributes);
+      //parseAttributesG(obj, attributes);
       currentElement.addChild(obj);
       currentElement = obj;
    }
 
 
-   private void  parseAttributesG(SVG.Group obj, Attributes attributes) throws SAXException
-   {
-   }
+   //private void  parseAttributesG(SVG.Group obj, Attributes attributes) throws SAXException
+   //{
+   //}
 
 
    //=========================================================================
@@ -776,21 +793,50 @@ dumpNode(svgDocument.getRootElement(), "");
       parseAttributesStyle(obj, attributes);
       parseAttributesTransform(obj, attributes);
       parseAttributesText(obj, attributes);
-      currentElement.addChild(obj);     
+      currentElement.addChild(obj);
+      currentElement = obj;
    }
 
 
-   private void  parseAttributesText(SVG.Text obj, Attributes attributes) throws SAXException
+   private void  parseAttributesText(SVG.TextContainer obj, Attributes attributes) throws SAXException
    {
       for (int i=0; i<attributes.getLength(); i++)
       {
          String val = attributes.getValue(i).trim();
          switch (SVGAttr.fromString(attributes.getLocalName(i)))
          {
+            case x:
+               obj.x = parseLengthList(val);
+               break;
+            case y:
+               obj.y = parseLengthList(val);
+               break;
             default:
                break;
          }
       }
+   }
+
+
+   //=========================================================================
+   // <tspan> element
+
+
+   private void  tspan(Attributes attributes) throws SAXException
+   {
+/**/Log.d(TAG, "<tspan>");
+      if (currentElement == null)
+         throw new SAXException("Invalid document. Root element must be <svg>");
+      if (!(currentElement instanceof SVG.TextContainer))
+         throw new SAXException("Invalid document. <tspan> elements are only valid inside <text> or <other <tspan>s.");
+      SVG.TSpan  obj = new SVG.TSpan();
+      obj.parent = currentElement;
+      obj.style = new Style(obj.parent.style);
+      parseAttributesCore(obj, attributes);
+      parseAttributesStyle(obj, attributes);
+      parseAttributesText(obj, attributes);
+      currentElement.addChild(obj);
+      currentElement = obj;
    }
 
 
@@ -805,7 +851,7 @@ dumpNode(svgDocument.getRootElement(), "");
       {
          if (SVGAttr.fromString(attributes.getLocalName(i)) == SVGAttr.id) {
                obj.id = attributes.getValue(i).trim();
-/**/Log.d(TAG, "<svg> id="+obj.id);
+//Log.d(TAG, "<svg> id="+obj.id);
                break;
          }
       }
@@ -814,7 +860,7 @@ dumpNode(svgDocument.getRootElement(), "");
 
    private void  parseAttributesStyle(SVG.SvgElement obj, Attributes attributes) throws SAXException
    {
-/**/Log.d(TAG, "parseAttributesStyle");
+//Log.d(TAG, "parseAttributesStyle");
       for (int i=0; i<attributes.getLength(); i++)
       {
          String val = attributes.getValue(i).trim();
@@ -830,7 +876,7 @@ dumpNode(svgDocument.getRootElement(), "");
                } else {
                   obj.style.fill = parseColour(val);
                }
-/**/Log.d(TAG, "<?> style.fill="+obj.style.fill);
+//Log.d(TAG, "<?> style.fill="+obj.style.fill);
                obj.style.hasFill = true;
                break;
 
@@ -849,7 +895,7 @@ dumpNode(svgDocument.getRootElement(), "");
                } else {
                   obj.style.stroke = parseColour(val);
                }
-/**/Log.d(TAG, "<?> style.stroke="+obj.style.stroke);
+//Log.d(TAG, "<?> style.stroke="+obj.style.stroke);
                obj.style.hasStroke = true;
                break;
 
@@ -862,6 +908,22 @@ dumpNode(svgDocument.getRootElement(), "");
                obj.style.strokeWidth = parseLength(val);
                obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE_WIDTH;
                break;
+
+            case opacity:
+               obj.style.opacity = parseFloat(val);
+               obj.style.specifiedFlags |= SVG.SPECIFIED_OPACITY;
+               break;
+
+            case font_family:
+               obj.style.fontFamily = val;
+               obj.style.specifiedFlags |= SVG.SPECIFIED_FONT_FAMILY;
+               break;
+
+            case font_size:
+               obj.style.fontSize = parseFontSize(val);
+               obj.style.specifiedFlags |= SVG.SPECIFIED_FONT_SIZE;
+               break;
+
             default:
                break;
          }
@@ -871,7 +933,7 @@ dumpNode(svgDocument.getRootElement(), "");
 
    private void  parseAttributesTransform(SVG.Transformable obj, Attributes attributes) throws SAXException
    {
-/**/Log.d(TAG, "parseAttributesTransform");
+//Log.d(TAG, "parseAttributesTransform");
       for (int i=0; i<attributes.getLength(); i++)
       {
          if (SVGAttr.fromString(attributes.getLocalName(i)) == SVGAttr.transform) {
@@ -888,7 +950,7 @@ dumpNode(svgDocument.getRootElement(), "");
                }
                String fn = val.substring(0, bracket1).trim();
                String pars = val.substring(bracket1+1, bracket2).trim();
-/**/Log.d(TAG, ">>>"+fn+"("+pars+")");
+//Log.d(TAG, ">>>"+fn+"("+pars+")");
                ListTokeniser parstok = new ListTokeniser(pars);
 
                if (fn.equals("matrix")) {
@@ -942,14 +1004,14 @@ dumpNode(svgDocument.getRootElement(), "");
                   if (parstok.countTokens() == 1) {
                      float ang = Float.parseFloat(parstok.nextToken());
                      matrix.preSkew((float) Math.tan(Math.toRadians(ang)), 0f);
-/**/Log.d(TAG, "skewX "+matrix);
+//Log.d(TAG, "skewX "+matrix);
                      continue;
                   }
                } else if (fn.equals("skewY")) {
                   if (parstok.countTokens() == 1) {
                      float ang = Float.parseFloat(parstok.nextToken());
                      matrix.preSkew(0f, (float) Math.tan(Math.toRadians(ang)));
-/**/Log.d(TAG, "skewY "+matrix);
+//Log.d(TAG, "skewY "+matrix);
                   }
                }
                else
@@ -996,6 +1058,25 @@ dumpNode(svgDocument.getRootElement(), "");
       {
          throw new SAXException("Invalid length value: "+val, e);
       }
+   }
+
+
+   /*
+    * Parse a list of Length/Coords
+    */
+   private List<Length>  parseLengthList(String val) throws SAXException
+   {
+      if (val.length() == 0)
+         throw new SAXException("Invalid length list (empty string)");
+
+      List<Length>  coords = new ArrayList<Length>(1);
+      ListTokeniser tok = new ListTokeniser(val);
+
+      while (tok.hasMoreTokens())
+      {
+         coords.add(parseLength(tok.nextToken()));
+      }
+      return coords;
    }
 
 
@@ -1188,10 +1269,23 @@ dumpNode(svgDocument.getRootElement(), "");
    private Colour  parseColourKeyword(String name) throws SAXException
    {
 //Log.d(TAG, "parseColourKeyword: "+name);
-      Integer  col = colourKeywords.get(name);
+      Integer  col = colourKeywords.get(name.toLowerCase());
       if (col == null)
          throw new SAXException("Invalid colour keyword: "+name);
       return new Colour(col.intValue());
+   }
+
+
+   // Parse a font size keywaord or numerical value
+   private Length  parseFontSize(String val) throws SAXException
+   {
+/**/Log.d(TAG, "parseFontSize: "+val);
+
+      Length  size = fontSizeKeywords.get(val.toLowerCase());
+      if (size == null) {
+         size = parseLength(val);
+      }
+      return size;
    }
 
 
@@ -1493,7 +1587,7 @@ dumpNode(svgDocument.getRootElement(), "");
 
    private static void arcTo(Path path, float lastX, float lastY, float rx, float ry, float angle, boolean largeArcFlag, boolean sweepFlag, float x, float y)
    {
-/**/Log.d(TAG,  "arcto: "+lastX+" "+lastY+" "+rx+" "+ry+" "+angle+" "+largeArcFlag+" "+sweepFlag+" "+x+" "+y);
+//Log.d(TAG,  "arcto: "+lastX+" "+lastY+" "+rx+" "+ry+" "+angle+" "+largeArcFlag+" "+sweepFlag+" "+x+" "+y);
 
       if (lastX == x && lastY == y) {
          // If the endpoints (x, y) and (x0, y0) are identical, then this

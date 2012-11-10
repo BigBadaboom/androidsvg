@@ -30,8 +30,8 @@ public class TestActivity extends Activity
                         "sample_7.4_Skew.svg",
                         "sample_7.5_Nested.svg",
                         "sample_8.3_triangle01.svg",
-                        "sample_8.3_cubic01.svg",
-                        "sample_8.3_cubic02.svg",
+                        "sample_8.3_cubic01b.svg",
+                        "sample_8.3_cubic02b.svg",
                         "sample_8.3_quad01.svg",
                         "sample_8.3_arcs01.svg",
                         "sample_8.3_arcs02.svg",
@@ -42,6 +42,8 @@ public class TestActivity extends Activity
                         "sample_9.5_line01.svg",
                         "sample_9.6_polyline01.svg",
                         "sample_9.7_polygon01.svg",
+                        "sample_10.4_text01.svg",
+                        "sample_10.5_tspan01.svg",
                         "Android_robot.svg"};
    int  whichFile = 0;
 

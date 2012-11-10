@@ -3,10 +3,11 @@ package com.caverock.androidsvg;
 import java.util.Stack;
 
 import android.graphics.Canvas;
-import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.PointF;
 import android.graphics.RectF;
+import android.graphics.Typeface;
 import android.util.Log;
 
 import com.caverock.androidsvg.SVG.Style;
@@ -31,13 +32,15 @@ public class SVGAndroidRenderer
 
       fillPaint = new Paint();
       fillPaint.setStyle(Paint.Style.FILL);
+      fillPaint.setTypeface(Typeface.DEFAULT);
 
       strokePaint = new Paint();
       strokePaint.setStyle(Paint.Style.STROKE);
+      strokePaint.setTypeface(Typeface.DEFAULT);
    }
 
 
-   public void  render(SVG.SvgElement obj)
+   public void  render(SVG.SvgObject obj)
    {
       // Save matrix and clip
       canvas.save();
@@ -63,6 +66,8 @@ public class SVGAndroidRenderer
          render((SVG.Polygon) obj);
       } else if  (obj instanceof SVG.PolyLine) {
          render((SVG.PolyLine) obj);
+      } else if  (obj instanceof SVG.Text) {
+         render((SVG.Text) obj);
       }
 
       // Restore paint styles
@@ -77,7 +82,7 @@ public class SVGAndroidRenderer
    public void render(SVG.Svg obj)
    {
 /**/Log.d(TAG, "Svg render");         
-      for (SVG.SvgElement child: obj.children) {
+      for (SVG.SvgObject child: obj.children) {
          render(child);
       }
    }
@@ -92,7 +97,7 @@ public class SVGAndroidRenderer
 
       updatePaintsFromStyle(obj.style);
 
-      for (SVG.SvgElement child: obj.children) {
+      for (SVG.SvgObject child: obj.children) {
          render(child);
       }
    }
@@ -294,6 +299,75 @@ public class SVGAndroidRenderer
    }
 
 
+   public void render(SVG.Text obj)
+   {
+/**/Log.d(TAG, "Text render");
+
+      if (obj.transform != null)
+         canvas.concat(obj.transform);
+
+      updatePaintsFromStyle(obj.style);
+
+      // Get the first coordinate pair from the lists in the x and y properties.
+      float  x = (obj.x == null || obj.x.size() == 0) ? 0f : obj.x.remove(0).floatValue(dpi);
+      float  y = (obj.y == null || obj.y.size() == 0) ? 0f : obj.y.remove(0).floatValue(dpi);
+      PointF currentTextPosition = new PointF(x, y);
+
+      for (SVG.SvgObject child: obj.children) {
+         renderText(child, obj, currentTextPosition);
+      }
+
+   }
+
+
+   public void  renderText(SVG.SvgObject obj, SVG.SvgElement parent, PointF currentTextPosition)
+   {
+      if (obj instanceof SVG.TSpan)
+      {
+         // Save matrix and clip
+         canvas.save();
+         // Save paint styles
+         paintStack.push(fillPaint);
+         paintStack.push(strokePaint);
+
+         SVG.TSpan tspan = (SVG.TSpan) obj; 
+
+         updatePaintsFromStyle(tspan.style);
+
+         for (SVG.SvgObject child: tspan.children) {
+            renderText(child, tspan, currentTextPosition);
+         }
+
+         // Restore paint styles
+         strokePaint = paintStack.pop();
+         fillPaint = paintStack.pop();
+         // Restore matrix and clip
+         canvas.restore();
+      }
+      else if  (obj instanceof SVG.TextSequence)
+      {
+         SVG.TextSequence  ts = (SVG.TextSequence) obj;
+         drawText(ts, parent, currentTextPosition);
+      }
+      else if  (obj instanceof SVG.TRef)
+      {
+         // TODO
+      }
+   }
+
+
+   private void drawText(SVG.TextSequence ts, SVG.SvgElement parentObj, PointF currentTextPosition)
+   {
+      if (parentObj.style.hasFill)
+         canvas.drawText(ts.text, currentTextPosition.x, currentTextPosition.y, fillPaint);
+      if (parentObj.style.hasStroke)
+         canvas.drawText(ts.text, currentTextPosition.x, currentTextPosition.y, strokePaint);
+
+      // Update the current text position
+      currentTextPosition.x += fillPaint.measureText(ts.text);
+   }
+
+
    //==============================================================================
 
 
@@ -316,13 +390,28 @@ public class SVGAndroidRenderer
             int col = ((SVG.Colour)style.stroke).colour;
             col = clamp(style.strokeOpacity) << 24 | col;
             strokePaint.setColor( col );
-/**/Log.d(TAG, String.format("Setting stroke colour to %x",col));
          }
       }
 
       if ((style.specifiedFlags & SVG.SPECIFIED_STROKE_WIDTH) != 0)
       {
          strokePaint.setStrokeWidth(style.strokeWidth.floatValue(dpi));
+      }
+
+      if ((style.specifiedFlags & SVG.SPECIFIED_OPACITY) != 0)
+      {
+         // NYI
+      }
+
+      if ((style.specifiedFlags & SVG.SPECIFIED_FONT_FAMILY) != 0)
+      {
+         // NYI
+      }
+
+      if ((style.specifiedFlags & SVG.SPECIFIED_FONT_SIZE) != 0)
+      {
+         fillPaint.setTextSize(style.fontSize.floatValue(dpi));
+         strokePaint.setTextSize(style.fontSize.floatValue(dpi));
       }
 
    }

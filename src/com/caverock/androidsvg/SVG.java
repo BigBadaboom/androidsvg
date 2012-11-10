@@ -16,7 +16,7 @@ public class SVG
 {
    private static final String  TAG = "AndroidSVG";
    
-   private SVG.SvgElement  rootElement = null;
+   private SVG.SvgObject  rootElement = null;
 
    public enum Unit
    {
@@ -83,13 +83,13 @@ public class SVG
    }
 
 
-   public SVG.SvgElement getRootElement()
+   public SVG.SvgObject getRootElement()
    {
       return rootElement;
    }
 
 
-   public void setRootElement(SVG.SvgElement rootElement)
+   public void setRootElement(SVG.SvgObject rootElement)
    {
       this.rootElement = rootElement;
    }
@@ -110,6 +110,8 @@ public class SVG
    public static final long SPECIFIED_STROKE_OPACITY = (1<<3);
    public static final long SPECIFIED_STROKE_WIDTH   = (1<<4);
    public static final long SPECIFIED_OPACITY        = (1<<5);
+   public static final long SPECIFIED_FONT_FAMILY    = (1<<6);
+   public static final long SPECIFIED_FONT_SIZE      = (1<<7);
 
    public static class  Style
    {
@@ -126,6 +128,9 @@ public class SVG
       public Length   strokeWidth;
 
       public Float    opacity; // master opacity of both stroke and fill
+
+      public String   fontFamily;
+      public Length   fontSize;
       
       public Style()
       {
@@ -138,6 +143,8 @@ public class SVG
          strokeOpacity = 1f;
          strokeWidth = new Length(1f);
          opacity = 1f;
+         fontFamily = null;
+         fontSize = new Length(12, Unit.pt);
       }
 
       public Style(Style inherit)
@@ -152,6 +159,8 @@ public class SVG
          strokeOpacity = inherit.strokeOpacity;
          strokeWidth = new Length(1f);
          opacity = inherit.opacity;
+         fontFamily = inherit.fontFamily;
+         fontSize = inherit.fontSize;
       }
    }
 
@@ -217,11 +226,10 @@ public class SVG
    //===============================================================================
    // The objects in the SVG object tree
 
-   protected static abstract class SvgElement
+   // Any object that can be part of the tree
+   protected static class SvgObject
    {
-      public String       id;
       public SvgContainer parent;
-      public Style        style;
       
       public String  toString()
       {
@@ -229,12 +237,18 @@ public class SVG
       }
    }
 
+   // Any object in the tree that corresponds to an SVG element
+   protected static abstract class SvgElement extends SvgObject
+   {
+      public String       id;
+      public Style        style;
+   }
+
    protected static class SvgContainer extends SvgElement
    {
-      public String id;
-      public List<SvgElement> children = new ArrayList<SvgElement>();
+      public List<SvgObject> children = new ArrayList<SvgObject>();
 
-      public void addChild(SvgElement elem)
+      public void addChild(SvgObject elem)
       {
          children.add(elem);
       }
@@ -273,7 +287,7 @@ public class SVG
 
    protected static class Use extends GraphicsElement
    {
-      public SvgElement href;
+      public String href;
    }
 
 
@@ -332,8 +346,46 @@ public class SVG
    }
 
 
-   protected static class Text extends GraphicsElement
+   protected static class TextContainer extends SvgContainer
    {
+      public List<Length> x;
+      public List<Length> y;
+   }
+
+
+   protected static class Text extends TextContainer implements Transformable
+   {
+      public Matrix transform;
+
+      @Override
+      public void setTransform(Matrix transform) { this.transform = transform; }
+   }
+
+
+   protected static class TSpan extends TextContainer
+   {
+   }
+
+
+   protected static class TextSequence extends SvgObject
+   {
+      String text;
+      
+      public TextSequence(String text)
+      {
+         this.text = text;
+      }
+      
+      public String  toString()
+      {
+         return this.getClass().getSimpleName() + " '"+text+"'";
+      }
+   }
+
+
+   protected static class TRef extends SvgElement
+   {
+      String href;
    }
 
 
