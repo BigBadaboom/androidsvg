@@ -331,6 +331,8 @@ public class SVGParser extends DefaultHandler
          polyline(attributes);
       } else if (localName.equalsIgnoreCase(TAG_POLYGON)) {
          polygon(attributes);
+      } else if (localName.equalsIgnoreCase(TAG_TEXT)) {
+         text(attributes);
       }
    }
 
@@ -755,6 +757,40 @@ dumpNode(svgDocument.getRootElement(), "");
       parseAttributesTransform(obj, attributes);
       parseAttributesPolyLine(obj, attributes); // reuse of polyline "points" parser
       currentElement.addChild(obj);     
+   }
+
+
+   //=========================================================================
+   // <text> element
+
+
+   private void  text(Attributes attributes) throws SAXException
+   {
+/**/Log.d(TAG, "<text>");
+      if (currentElement == null)
+         throw new SAXException("Invalid document. Root element must be <svg>");
+      SVG.Text  obj = new SVG.Text();
+      obj.parent = currentElement;
+      obj.style = new Style(obj.parent.style);
+      parseAttributesCore(obj, attributes);
+      parseAttributesStyle(obj, attributes);
+      parseAttributesTransform(obj, attributes);
+      parseAttributesText(obj, attributes);
+      currentElement.addChild(obj);     
+   }
+
+
+   private void  parseAttributesText(SVG.Text obj, Attributes attributes) throws SAXException
+   {
+      for (int i=0; i<attributes.getLength(); i++)
+      {
+         String val = attributes.getValue(i).trim();
+         switch (SVGAttr.fromString(attributes.getLocalName(i)))
+         {
+            default:
+               break;
+         }
+      }
    }
 
 
@@ -1462,16 +1498,17 @@ dumpNode(svgDocument.getRootElement(), "");
       if (lastX == x && lastY == y) {
          // If the endpoints (x, y) and (x0, y0) are identical, then this
          // is equivalent to omitting the elliptical arc segment entirely.
+         // (behaviour specified by the spec)
          return;
       }
 
-      // Handle degenerate case
+      // Handle degenerate case (behaviour specified by the spec)
       if (rx == 0 || ry == 0) {
          path.lineTo(x, y);
          return;
       }
 
-      // Sign of the radii is ignored
+      // Sign of the radii is ignored (behaviour specified by the spec)
       rx = Math.abs(rx);
       ry = Math.abs(ry);
 
@@ -1561,7 +1598,14 @@ dumpNode(svgDocument.getRootElement(), "");
       m.postTranslate((float) cx, (float) cy);
       m.mapPoints(bezierPoints);
 
-      // Finally add the resultant bezier curves to the path
+      // The last point in the bezier set should match exactly the last coord pair in the arc (ie: x,y). But
+      // considering all the mathematical manipulation we have been doing, it is bound to be off by a tiny
+      // fraction. Experiments show that it can be up to around 0.00002.  So why don't we just set it to
+      // exactly what it ought to be.
+      bezierPoints[bezierPoints.length-2] = x;
+      bezierPoints[bezierPoints.length-1] = y;
+
+      // Final step is to add the bezier curves to the path
       for (int i=0; i<bezierPoints.length; i+=6)
       {
          path.cubicTo(bezierPoints[i], bezierPoints[i+1], bezierPoints[i+2], bezierPoints[i+3], bezierPoints[i+4], bezierPoints[i+5]);

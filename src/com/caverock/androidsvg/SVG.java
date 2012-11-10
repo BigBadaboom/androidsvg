@@ -332,6 +332,11 @@ public class SVG
    }
 
 
+   protected static class Text extends GraphicsElement
+   {
+   }
+
+
    //===============================================================================
    // SVG document rendering
 
