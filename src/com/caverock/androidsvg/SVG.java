@@ -277,6 +277,13 @@ public class SVG
    }
 
 
+   protected static class Path extends GraphicsElement
+   {
+      public android.graphics.Path  path;
+      public Float                  pathLength;
+   }
+
+
    protected static class Rect extends GraphicsElement
    {
       public Length x;

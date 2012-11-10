@@ -49,6 +49,8 @@ public class SVGAndroidRenderer
          render((SVG.Svg) obj);
       } else if  (obj instanceof SVG.Group) {
          render((SVG.Group) obj);
+      } else if  (obj instanceof SVG.Path) {
+         render((SVG.Path) obj);
       } else if  (obj instanceof SVG.Rect) {
          render((SVG.Rect) obj);
       } else if  (obj instanceof SVG.Circle) {
@@ -93,6 +95,25 @@ public class SVGAndroidRenderer
       for (SVG.SvgElement child: obj.children) {
          render(child);
       }
+   }
+
+
+   public void render(SVG.Path obj)
+   {
+/**/Log.d(TAG, "Path render");
+
+      if (!obj.style.hasStroke && !obj.style.hasFill)
+         return;
+
+      if (obj.transform != null)
+         canvas.concat(obj.transform);
+
+      updatePaintsFromStyle(obj.style);
+
+      if (obj.style.hasFill)
+         canvas.drawPath(obj.path, fillPaint);
+      if (obj.style.hasStroke)
+         canvas.drawPath(obj.path, strokePaint);
    }
 
 

@@ -14,18 +14,17 @@ import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
-import org.xml.sax.helpers.AttributesImpl;
 import org.xml.sax.helpers.DefaultHandler;
 
-import android.annotation.SuppressLint;
 import android.graphics.Matrix;
+import android.graphics.Path;
+import android.graphics.RectF;
 import android.util.Log;
 
 import com.caverock.androidsvg.SVG.Box;
 import com.caverock.androidsvg.SVG.Colour;
 import com.caverock.androidsvg.SVG.Length;
 import com.caverock.androidsvg.SVG.Style;
-import com.caverock.androidsvg.SVG.SvgElement;
 import com.caverock.androidsvg.SVG.Unit;
 
 /**
@@ -77,6 +76,7 @@ public class SVGParser extends DefaultHandler
       href,
       id,
       opacity,
+      pathLength,
       points,
       r,
       rx, ry,
@@ -283,7 +283,7 @@ public class SVGParser extends DefaultHandler
       }
       catch (SAXException e)
       {
-         throw new SVGParseException("Invalid SVG file", e);
+         throw new SVGParseException("Invalid SVG file: "+e.getMessage(), e);
       }
       catch (ParserConfigurationException e)
       {
@@ -317,6 +317,8 @@ public class SVGParser extends DefaultHandler
          svg(attributes);
       } else if (localName.equalsIgnoreCase(TAG_G)) {
          g(attributes);
+      } else if (localName.equalsIgnoreCase(TAG_PATH)) {
+         path(attributes);
       } else if (localName.equalsIgnoreCase(TAG_RECT)) {
          rect(attributes);
       } else if (localName.equalsIgnoreCase(TAG_CIRCLE)) {
@@ -448,6 +450,48 @@ dumpNode(svgDocument.getRootElement(), "");
 
 
    //=========================================================================
+   // <path> element
+
+
+   private void  path(Attributes attributes) throws SAXException
+   {
+/**/Log.d(TAG, "<path>");
+      if (currentElement == null)
+         throw new SAXException("Invalid document. Root element must be <svg>");
+      SVG.Path  obj = new SVG.Path();
+      obj.parent = currentElement;
+      obj.style = new Style(obj.parent.style);
+      parseAttributesCore(obj, attributes);
+      parseAttributesStyle(obj, attributes);
+      parseAttributesTransform(obj, attributes);
+      parseAttributesPath(obj, attributes);
+      currentElement.addChild(obj);     
+   }
+
+
+   private void  parseAttributesPath(SVG.Path obj, Attributes attributes) throws SAXException
+   {
+      for (int i=0; i<attributes.getLength(); i++)
+      {
+         String val = attributes.getValue(i).trim();
+         switch (SVGAttr.fromString(attributes.getLocalName(i)))
+         {
+            case d:
+               obj.path = parsePath(val);
+               break;
+            case pathLength:
+               obj.pathLength = parseFloat(val);
+               if (obj.pathLength < 0f)
+                  throw new SAXException("Invalid <path> element. pathLength cannot be negative");
+               break;
+            default:
+               break;
+         }
+      }
+   }
+
+
+   //=========================================================================
    // <rect> element
 
 
@@ -483,12 +527,12 @@ dumpNode(svgDocument.getRootElement(), "");
             case width:
                obj.width = parseLength(val);
                if (obj.width.isNegative())
-                  throw new SAXException("Invalid <rect> element. Width cannot be negative");
+                  throw new SAXException("Invalid <rect> element. width cannot be negative");
                break;
             case height:
                obj.height = parseLength(val);
                if (obj.height.isNegative())
-                  throw new SAXException("Invalid <rect> element. Height cannot be negative");
+                  throw new SAXException("Invalid <rect> element. height cannot be negative");
                break;
             case rx:
                obj.rx = parseLength(val);
@@ -1035,7 +1079,7 @@ dumpNode(svgDocument.getRootElement(), "");
    private Colour  parseColour(String val) throws SAXException
    {
       if (val.length() == 0)
-         throw new SAXException("Invalid colour value \""+val+"\"");
+         throw new SAXException("Bad colour value \""+val+"\"");
       if (val.charAt(0) == '#')
       {
          try
@@ -1047,14 +1091,14 @@ dumpNode(svgDocument.getRootElement(), "");
                int h1 = threehex & 0xf00;
                int h2 = threehex & 0x0f0;
                int h3 = threehex & 0x00f;
-               return new Colour(h1<<20|h1<<16|h2<<12|h2<<8|h3<<4|h3);
+               return new Colour(h1<<16|h1<<12|h2<<8|h2<<4|h3<<4|h3);
             } else {
-               throw new SAXException("Invalid hex colour value");
+               throw new SAXException("Bad hex colour value: "+val);
             }
          }
          catch (NumberFormatException e)
          {
-            throw new SAXException("Invalid colour value");
+            throw new SAXException("Bad colour value: "+val);
          }
       }
       val = val.toLowerCase();
@@ -1070,7 +1114,7 @@ dumpNode(svgDocument.getRootElement(), "");
          }
          catch (Exception e)
          {
-            throw new SAXException("Invalid viewBox definition - should have four numbers");
+            throw new SAXException("Bad rgb() colour definition - should have three numbers");
          }
          
       }
@@ -1117,6 +1161,468 @@ dumpNode(svgDocument.getRootElement(), "");
 
    //=========================================================================
 
+
+   // Parse the string that defines a path.
+   private Path  parsePath(String val) throws SAXException
+   {
+/**/Log.d(TAG, "parsePath: "+val);
+      PathTokeniser tok = new PathTokeniser(val);
+
+      char    pathCommand = '?';
+      float   currentX = 0f, currentY = 0f;    // The last point visited in the subpath
+      float   lastMoveX = 0f, lastMoveY = 0f;  // The initial point of current subpath
+      float   lastControlX = 0f, lastControlY = 0f;  // Last control point of the just completed bezier curve.
+      float   x,y, x1,y1, x2,y2;
+      float   rx,ry, xAxisRotation;
+      boolean largeArcFlag, sweepFlag;
+      boolean startOfPath = true;              // Are we at the start of the whole path?
+      Path    path = new Path();
+
+      try
+      {
+         while (tok.hasMoreTokens())
+         {
+            if (isCommandLetter(tok.peekToken()))
+               pathCommand = tok.nextToken().charAt(0);
+
+            if (startOfPath && pathCommand != 'M' && pathCommand != 'm')
+               return path;  // Invalid path - doesn't start with a move
+
+            switch (pathCommand)
+            {
+                  // Move
+               case 'M':
+               case 'm':
+                  x = parseFloat(tok.nextToken());
+                  y = parseFloat(tok.nextToken());
+                  // Relative moveto at the start of a path is treated as an absolute moveto.
+                  if (pathCommand=='m' && !startOfPath) {
+                     x += currentX;
+                     y += currentY;
+                  }
+                  path.moveTo(x, y);
+                  currentX = lastMoveX = lastControlX = x;
+                  currentY = lastMoveY = lastControlY = y;
+                  // Any subsequent coord pairs should be treated as a lineto.
+                  pathCommand = (pathCommand=='m') ? 'l' : 'L';
+                  break;
+
+                  // Line
+               case 'L':
+               case 'l':
+                  x = parseFloat(tok.nextToken());
+                  y = parseFloat(tok.nextToken());
+                  if (pathCommand=='l') {
+                     x += currentX;
+                     y += currentY;
+                  }
+                  path.lineTo(x, y);
+                  currentX = lastControlX = x;
+                  currentY = lastControlY = y;
+                  break;
+
+                  // Cubic bezier
+               case 'C':
+               case 'c':
+                  x1 = parseFloat(tok.nextToken());
+                  y1 = parseFloat(tok.nextToken());
+                  x2 = parseFloat(tok.nextToken());
+                  y2 = parseFloat(tok.nextToken());
+                  x = parseFloat(tok.nextToken());
+                  y = parseFloat(tok.nextToken());
+                  if (pathCommand=='c') {
+                     x += currentX;
+                     y += currentY;
+                     x1 += currentX;
+                     y1 += currentY;
+                     x2 += currentX;
+                     y2 += currentY;
+                  }
+                  path.cubicTo(x1, y1, x2, y2, x, y);
+                  lastControlX = x2;
+                  lastControlY = y2;
+                  currentX = x;
+                  currentY = y;
+                  break;
+
+                  // Smooth curve (first control point calculated)
+               case 'S':
+               case 's':
+                  x1 = 2 * currentX - lastControlX;
+                  y1 = 2 * currentY - lastControlY;
+                  x2 = parseFloat(tok.nextToken());
+                  y2 = parseFloat(tok.nextToken());
+                  x = parseFloat(tok.nextToken());
+                  y = parseFloat(tok.nextToken());
+                  if (pathCommand=='c') {
+                     x += currentX;
+                     y += currentY;
+                     x2 += currentX;
+                     y2 += currentY;
+                  }
+                  path.cubicTo(x1, y1, x2, y2, x, y);
+                  lastControlX = x2;
+                  lastControlY = y2;
+                  currentX = x;
+                  currentY = y;
+                  break;
+
+                  // Close path
+               case 'Z':
+               case 'z':
+                  path.close();
+                  currentX = lastControlX = lastMoveX;
+                  currentY = lastControlY = lastMoveY;
+                  break;
+
+                  // Horizontal line
+               case 'H':
+               case 'h':
+                  x = parseFloat(tok.nextToken());
+                  if (pathCommand=='h') {
+                     x += currentX;
+                  }
+                  path.lineTo(x, currentY);
+                  currentX = lastControlX = x;
+                  break;
+
+                  // Vertical line
+               case 'V':
+               case 'v':
+                  y = parseFloat(tok.nextToken());
+                  if (pathCommand=='v') {
+                     y += currentY;
+                  }
+                  path.lineTo(currentX, y);
+                  currentY = lastControlY = y;
+                  break;
+
+                  // Quadratic bezier
+               case 'Q':
+               case 'q':
+                  x1 = parseFloat(tok.nextToken());
+                  y1 = parseFloat(tok.nextToken());
+                  x = parseFloat(tok.nextToken());
+                  y = parseFloat(tok.nextToken());
+                  if (pathCommand=='q') {
+                     x += currentX;
+                     y += currentY;
+                     x1 += currentX;
+                     y1 += currentY;
+                  }
+                  path.quadTo(x1, y1, x, y);
+                  lastControlX = x1;
+                  lastControlY = y1;
+                  currentX = x;
+                  currentY = y;
+                  break;
+
+                  // Smooth quadratic bezier
+               case 'T':
+               case 't':
+                  x1 = 2 * currentX - lastControlX;
+                  y1 = 2 * currentY - lastControlY;
+                  x = parseFloat(tok.nextToken());
+                  y = parseFloat(tok.nextToken());
+                  if (pathCommand=='t') {
+                     x += currentX;
+                     y += currentY;
+                  }
+                  path.quadTo(x1, y1, x, y);
+                  lastControlX = x1;
+                  lastControlY = y1;
+                  currentX = x;
+                  currentY = y;
+                  break;
+
+                  // Arc
+               case 'A':
+               case 'a':
+                  rx = parseFloat(tok.nextToken());
+                  ry = parseFloat(tok.nextToken());
+                  xAxisRotation = parseFloat(tok.nextToken());
+                  largeArcFlag = ("0".equals(tok.nextToken())) ? false : true;
+                  sweepFlag = ("0".equals(tok.nextToken())) ? false : true;
+                  x = parseFloat(tok.nextToken());
+                  y = parseFloat(tok.nextToken());
+                  if (pathCommand=='a') {
+                     x += currentX;
+                     y += currentY;
+                  }
+                  arcTo(path, currentX, currentY, rx, ry, xAxisRotation, largeArcFlag, sweepFlag, x, y);
+                  currentX = lastControlX = x;
+                  currentY = lastControlY = y;
+                  break;
+
+               default:
+                  return path;
+            }
+            startOfPath = false;
+         }
+         return path;
+      }
+      catch (NoSuchElementException e)
+      {
+         throw new SAXException("Invalid <path> data");
+      }
+   }
+
+
+   private boolean  isCommandLetter(String s)
+   {
+      return (s.length() == 1 && Character.isLetter(s.charAt(0)));
+   }
+
+
+   /*
+    * Tokenises SVG path data.
+    */
+   private class PathTokeniser
+   {
+      private int nextToken = 0;
+      private ArrayList<String>  list = new ArrayList<String>();
+      
+      public PathTokeniser(String src)
+      {
+         int start = 0;
+         int pos = 0;
+         boolean skipWs = false;
+         while (pos < src.length())
+         {
+            char c = src.charAt(pos);
+            if (Character.isLetter(c)) {
+               if (!skipWs && pos>start) {
+//Log.d(TAG, "pt0: "+src.substring(start, pos));
+                  list.add(src.substring(start, pos));
+               }
+//Log.d(TAG, "pt1: "+c);
+               list.add(String.valueOf(c));
+               skipWs = true;
+            } else if (c == ',' || Character.isWhitespace(c)) {
+               if (!skipWs) {
+//Log.d(TAG, "pt2: "+src.substring(start, pos));
+                  list.add(src.substring(start, pos));
+                  skipWs = true;
+               }
+               skipWs = true;
+            } else if (skipWs) {
+               skipWs = false;
+               start = pos;
+            }
+            pos++;
+         }
+         if (!skipWs) {
+//Log.d(TAG, "pt3: "+src.substring(start, pos));
+            list.add(src.substring(start, pos));
+         }
+      }
+      
+      public boolean hasMoreTokens()
+      {
+         return nextToken < list.size();
+      }
+      
+      public String nextToken()
+      {
+         if (nextToken == list.size())
+            throw new NoSuchElementException();
+         return list.get(nextToken++);
+      }
+
+      public String peekToken()
+      {
+         if (nextToken == list.size())
+            throw new NoSuchElementException();
+         return list.get(nextToken);
+      }
+
+      public int countTokens()
+      {
+         return list.size() - nextToken;
+      }
+   }
+
+
+   //=========================================================================
+   // Handling of Arcs
+
+   /*
+    * SVG arc representation uses "endpoint parameterisation" where we specify the endpoint of the arc.
+    * This is to be consistent with the other path commands.  However we need to convert this to "centre point
+    * parameterisation" in order to calculate the arc. Handily, the SVG spec provides all the required maths
+    * in section "F.6 Elliptical arc implementation notes".
+    * 
+    * Some of this code has been borrowed from the Batik library (Apache-2 license).
+    */
+
+   private static void arcTo(Path path, float lastX, float lastY, float rx, float ry, float angle, boolean largeArcFlag, boolean sweepFlag, float x, float y)
+   {
+/**/Log.d(TAG,  "arcto: "+lastX+" "+lastY+" "+rx+" "+ry+" "+angle+" "+largeArcFlag+" "+sweepFlag+" "+x+" "+y);
+
+      if (lastX == x && lastY == y) {
+         // If the endpoints (x, y) and (x0, y0) are identical, then this
+         // is equivalent to omitting the elliptical arc segment entirely.
+         return;
+      }
+
+      // Handle degenerate case
+      if (rx == 0 || ry == 0) {
+         path.lineTo(x, y);
+         return;
+      }
+
+      // Sign of the radii is ignored
+      rx = Math.abs(rx);
+      ry = Math.abs(ry);
+
+      // Convert angle from degrees to radians
+      float  angleRad = (float) Math.toRadians(angle % 360.0);
+      double cosAngle = Math.cos(angleRad);
+      double sinAngle = Math.sin(angleRad);
+      
+      // We simplify the calculations by transforming the arc so that the origin is at the
+      // midpoint calculated above followed by a rotation to line up the coordinate axes
+      // with the axes of the ellipse.
+
+      // Compute the midpoint of the line between the current and the end point
+      double dx2 = (lastX - x) / 2.0;
+      double dy2 = (lastY - y) / 2.0;
+
+      // Step 1 : Compute (x1', y1') - the transformed start point
+      double x1 = (cosAngle * dx2 + sinAngle * dy2);
+      double y1 = (-sinAngle * dx2 + cosAngle * dy2);
+
+      double rx_sq = rx * rx;
+      double ry_sq = ry * ry;
+      double x1_sq = x1 * x1;
+      double y1_sq = y1 * y1;
+
+      // Check that radii are large enough.
+      // If they are not, the spec says to scale them up so they are.
+      // This is to compensate for potential rounding errors/differences between SVG implementations.
+      double radiiCheck = x1_sq / rx_sq + y1_sq / ry_sq;
+      if (radiiCheck > 1) {
+         rx = (float) Math.sqrt(radiiCheck) * rx;
+         ry = (float) Math.sqrt(radiiCheck) * ry;
+         rx_sq = rx * rx;
+         ry_sq = ry * ry;
+      }
+
+      // Step 2 : Compute (cx1, cy1) - the transformed centre point
+      double sign = (largeArcFlag == sweepFlag) ? -1 : 1;
+      double sq = ((rx_sq * ry_sq) - (rx_sq * y1_sq) - (ry_sq * x1_sq)) / ((rx_sq * y1_sq) + (ry_sq * x1_sq));
+      sq = (sq < 0) ? 0 : sq;
+      double coef = (sign * Math.sqrt(sq));
+      double cx1 = coef * ((rx * y1) / ry);
+      double cy1 = coef * -((ry * x1) / rx);
+
+      // Step 3 : Compute (cx, cy) from (cx1, cy1)
+      double sx2 = (lastX + x) / 2.0;
+      double sy2 = (lastY + y) / 2.0;
+      double cx = sx2 + (cosAngle * cx1 - sinAngle * cy1);
+      double cy = sy2 + (sinAngle * cx1 + cosAngle * cy1);
+
+      // Step 4 : Compute the angleStart (angle1) and the angleExtent (dangle)
+      double ux = (x1 - cx1) / rx;
+      double uy = (y1 - cy1) / ry;
+      double vx = (-x1 - cx1) / rx;
+      double vy = (-y1 - cy1) / ry;
+      double p, n;
+
+      // Compute the angle start
+      n = Math.sqrt((ux * ux) + (uy * uy));
+      p = ux; // (1 * ux) + (0 * uy)
+      sign = (uy < 0) ? -1.0 : 1.0;
+      double angleStart = Math.toDegrees(sign * Math.acos(p / n));
+
+      // Compute the angle extent
+      n = Math.sqrt((ux * ux + uy * uy) * (vx * vx + vy * vy));
+      p = ux * vx + uy * vy;
+      sign = (ux * vy - uy * vx < 0) ? -1.0 : 1.0;
+      double angleExtent = Math.toDegrees(sign * Math.acos(p / n));
+      if (!sweepFlag && angleExtent > 0) {
+         angleExtent -= 360f;
+      } else if (sweepFlag && angleExtent < 0) {
+         angleExtent += 360f;
+      }
+      angleExtent %= 360f;
+      angleStart %= 360f;
+
+      // Many elliptical arc implementations including the Java2D and Android ones, only
+      // support arcs that are axis aligned.  Therefore we need to substitute the arc
+      // with bezier curves.  The following method call will generate the beziers for
+      // a unit circle that covers the arc angles we want.
+      float[]  bezierPoints = arcToBeziers(angleStart, angleExtent);
+
+      // Calculate a transformation matrix that will move and scale these bezier points to the correct location.
+      Matrix m = new Matrix();
+      m.postScale(rx, ry);
+      m.postRotate(angle);
+      m.postTranslate((float) cx, (float) cy);
+      m.mapPoints(bezierPoints);
+
+      // Finally add the resultant bezier curves to the path
+      for (int i=0; i<bezierPoints.length; i+=6)
+      {
+         path.cubicTo(bezierPoints[i], bezierPoints[i+1], bezierPoints[i+2], bezierPoints[i+3], bezierPoints[i+4], bezierPoints[i+5]);
+      }
+   }
+
+
+   /*
+    * Generate the control points and endpoints for a set of bezier curves that match
+    * a circular arc starting from angle 'angleStart' and sweep the angle 'angleExtent'.
+    * The circle the arc follows will be centred on (0,0) and have a radius of 1.0.
+    * 
+    * Each bezier can cover no more than 90 degrees, so the arc will be divided evenly
+    * into a maximum of four curves.
+    * 
+    * The resulting control points will later be scaled and rotated to match the final
+    * arc required.
+    * 
+    * The returned array has the format [x0,y0, x1,y1,...] and excludes the start point
+    * of the arc.
+    */
+   private static float[]  arcToBeziers(double angleStart, double angleExtent)
+   {
+//Log.d(TAG, "arcToBeziers: "+angleStart+" "+angleExtent);
+      int    numSegments = (int) Math.ceil(Math.abs(angleExtent) / 90.0);
+      
+      angleStart = Math.toRadians(angleStart);
+      angleExtent = Math.toRadians(angleExtent);
+      float  angleIncrement = (float) (angleExtent / numSegments);
+      
+      // The length of each control point vector is given by the following formula.
+      double  controlLength = 4.0 / 3.0 * Math.sin(angleIncrement / 2.0) / (1.0 + Math.cos(angleIncrement / 2.0));
+      
+      float[] coords = new float[numSegments * 6];
+      int     pos = 0;
+
+//Log.d(TAG, "arcToBeziers: num="+numSegments+" contLen="+controlLength);
+      for (int i=0; i<numSegments; i++)
+      {
+         double  angle = angleStart + i * angleIncrement;
+         // Calculate the control vector at this angle
+         double  dx = Math.cos(angle);
+         double  dy = Math.sin(angle);
+         // First control point
+         coords[pos++]   = (float) (dx - controlLength * dy);
+         coords[pos++] = (float) (dy + controlLength * dx);
+//Log.d(TAG, "arcToBeziers: x1,y1 = "+coords[pos-2]+","+coords[pos-1]);
+         // Second control point
+         angle += angleIncrement;
+         dx = Math.cos(angle);
+         dy = Math.sin(angle);
+         coords[pos++] = (float) (dx + controlLength * dy);
+         coords[pos++] = (float) (dy - controlLength * dx);
+//Log.d(TAG, "arcToBeziers: x2,y2 = "+coords[pos-2]+","+coords[pos-1]);
+         // Endpoint of bezier
+         coords[pos++] = (float) dx;
+         coords[pos++] = (float) dy;
+//Log.d(TAG, "arcToBeziers: x,y = "+coords[pos-2]+","+coords[pos-1]);
+      }
+      return coords;
+   }
 
 
 
