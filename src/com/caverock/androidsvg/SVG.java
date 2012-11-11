@@ -16,7 +16,7 @@ public class SVG
 {
    private static final String  TAG = "AndroidSVG";
    
-   private SVG.SvgObject  rootElement = null;
+   private Svg  rootElement = null;
 
    public enum Unit
    {
@@ -89,7 +89,7 @@ public class SVG
    }
 
 
-   public void setRootElement(SVG.SvgObject rootElement)
+   public void setRootElement(SVG.Svg rootElement)
    {
       this.rootElement = rootElement;
    }
@@ -105,49 +105,69 @@ public class SVG
 
 
    public static final long SPECIFIED_FILL            = (1<<0);
-   public static final long SPECIFIED_FILL_OPACITY    = (1<<1);
-   public static final long SPECIFIED_STROKE          = (1<<2);
-   public static final long SPECIFIED_STROKE_OPACITY  = (1<<3);
-   public static final long SPECIFIED_STROKE_WIDTH    = (1<<4);
-   public static final long SPECIFIED_OPACITY         = (1<<5);
-   public static final long SPECIFIED_FONT_FAMILY     = (1<<6);
-   public static final long SPECIFIED_FONT_SIZE       = (1<<7);
-   public static final long SPECIFIED_FONT_WEIGHT     = (1<<8);
-   public static final long SPECIFIED_FONT_STYLE      = (1<<9);
-   public static final long SPECIFIED_TEXT_DECORATION = (1<<10);
+   public static final long SPECIFIED_FILL_RULE       = (1<<1);
+   public static final long SPECIFIED_FILL_OPACITY    = (1<<2);
+   public static final long SPECIFIED_STROKE          = (1<<3);
+   public static final long SPECIFIED_STROKE_OPACITY  = (1<<4);
+   public static final long SPECIFIED_STROKE_WIDTH    = (1<<5);
+   public static final long SPECIFIED_STROKE_LINECAP  = (1<<6);
+   public static final long SPECIFIED_OPACITY         = (1<<7);
+   public static final long SPECIFIED_FONT_FAMILY     = (1<<8);
+   public static final long SPECIFIED_FONT_SIZE       = (1<<9);
+   public static final long SPECIFIED_FONT_WEIGHT     = (1<<10);
+   public static final long SPECIFIED_FONT_STYLE      = (1<<11);
+   public static final long SPECIFIED_TEXT_DECORATION = (1<<12);
+
 
    public static class  Style
    {
       // Which properties have been explicity specified by this element
-      public long     specifiedFlags;
+      public long      specifiedFlags;
 
-      public boolean  hasFill;
-      public SvgPaint fill;
-      public Float    fillOpacity;
+      public boolean   hasFill;
+      public SvgPaint  fill;
+      public FillRule  fillRule;
+      public Float     fillOpacity;
 
-      public boolean  hasStroke; 
-      public SvgPaint stroke;
-      public Float    strokeOpacity;
-      public Length   strokeWidth;
+      public boolean   hasStroke; 
+      public SvgPaint  stroke;
+      public Float     strokeOpacity;
+      public Length    strokeWidth;
+      public LineCaps  strokeLineCap;
 
-      public Float    opacity; // master opacity of both stroke and fill
+      public Float     opacity; // master opacity of both stroke and fill
 
-      public String   fontFamily;
-      public Length   fontSize;
-      public String   fontWeight;
-      public String   fontStyle;
-      public String   textDecoration;
+      public String    fontFamily;
+      public Length    fontSize;
+      public String    fontWeight;
+      public String    fontStyle;
+      public String    textDecoration;
+
+      public enum FillRule
+      {
+         NonZero,
+         EvenOdd
+      }
+      
+      public enum LineCaps
+      {
+         Butt,
+         Round,
+         Square
+      }
       
       public Style()
       {
          specifiedFlags = 0;
          hasFill = true;
          fill = new Colour(0);  // black
+         fillRule = FillRule.NonZero;
          fillOpacity = 1f;
          hasStroke = false;
          stroke = null;         // none
          strokeOpacity = 1f;
          strokeWidth = new Length(1f);
+         strokeLineCap = LineCaps.Butt;
          opacity = 1f;
          fontFamily = null;
          fontSize = new Length(12, Unit.pt);
@@ -162,11 +182,13 @@ public class SVG
          specifiedFlags = 0;
          hasFill = inherit.hasFill;
          fill = inherit.fill;
+         fillRule = inherit.fillRule;
          fillOpacity = inherit.fillOpacity;
          hasStroke = inherit.hasStroke;
          stroke = inherit.stroke;
          strokeOpacity = inherit.strokeOpacity;
          strokeWidth = inherit.strokeWidth;
+         strokeLineCap = inherit.strokeLineCap;
          opacity = inherit.opacity;
          fontFamily = inherit.fontFamily;
          fontSize = inherit.fontSize;
@@ -238,11 +260,13 @@ public class SVG
    //===============================================================================
    // The objects in the SVG object tree
 
+
    // Any object that can be part of the tree
    protected static class SvgObject
    {
+      public SVG          document;
       public SvgContainer parent;
-      
+
       public String  toString()
       {
          return this.getClass().getSimpleName();
@@ -252,8 +276,8 @@ public class SVG
    // Any object in the tree that corresponds to an SVG element
    protected static abstract class SvgElement extends SvgObject
    {
-      public String       id;
-      public Style        style;
+      public String  id;
+      public Style   style;
    }
 
    protected static class SvgContainer extends SvgElement
@@ -268,15 +292,16 @@ public class SVG
 
    protected static class Svg extends SvgContainer
    {
-      public Length width;
-      public Length height;
-      public Box    viewBox;
+      public Length  width;
+      public Length  height;
+      public Box     viewBox;
    }
 
    protected interface Transformable
    {
       public void setTransform(Matrix matrix);
    }
+
 
    // An SVG element that can contain other elements.
    protected static class Group extends SvgContainer implements Transformable
@@ -286,6 +311,14 @@ public class SVG
       @Override
       public void setTransform(Matrix transform) { this.transform = transform; }
    }
+
+
+   // A <defs> object contains objects that are not rendered directly, but are instead
+   // referenced from other parts of the file.
+   protected static class Defs extends Group
+   {
+   }
+
 
    // One of the element types that can cause graphics to be drawn onto the target canvas.
    // Specifically: ‘circle’, ‘ellipse’, ‘image’, ‘line’, ‘path’, ‘polygon’, ‘polyline’, ‘rect’, ‘text’ and ‘use’.
@@ -297,9 +330,14 @@ public class SVG
       public void setTransform(Matrix transform) { this.transform = transform; }
    }
 
+
    protected static class Use extends GraphicsElement
    {
       public String href;
+      public Length x;
+      public Length y;
+      public Length width;
+      public Length height;
    }
 
 
@@ -417,5 +455,45 @@ public class SVG
    }
 
 
+   public SvgObject  resolveIRI(String iri)
+   {
+      if (iri.length() > 1 && iri.startsWith("#"))
+      {
+         return getElementById(iri.substring(1));
+      }
+      return null;
+   }
+
+
+   public SvgObject  getElementById(String id)
+   {
+      if (id.equals(rootElement.id))
+         return rootElement;
+
+      // Search the object tree for a node with id property that matches 'id'
+      return getElementById(rootElement, id);
+   }
+
+
+   private SvgElement  getElementById(SvgContainer obj, String id)
+   {
+      if (id.equals(obj.id))
+         return obj;
+      for (SvgObject child: obj.children)
+      {
+         if (!(child instanceof SvgElement))
+            continue;
+         SvgElement  childElem = (SvgElement) child;
+         if (id.equals(childElem.id))
+            return childElem;
+         if (child instanceof SvgContainer)
+         {
+            SvgElement  found = getElementById((SvgContainer) child, id);
+            if (found != null)
+               return found;
+         }
+      }
+      return null;
+   }
 
 }

@@ -51,8 +51,12 @@ public class SVGAndroidRenderer
 
       if (obj instanceof SVG.Svg) {
          render((SVG.Svg) obj);
+      } else if (obj instanceof SVG.Defs) {
+         // do nothing
       } else if (obj instanceof SVG.Group) {
          render((SVG.Group) obj);
+      } else if (obj instanceof SVG.Use) {
+         render((SVG.Use) obj);
       } else if (obj instanceof SVG.Path) {
          render((SVG.Path) obj);
       } else if (obj instanceof SVG.Rect) {
@@ -112,6 +116,27 @@ public class SVGAndroidRenderer
 
       for (SVG.SvgObject child: obj.children) {
          render(child);
+      }
+   }
+
+
+   public void render(SVG.Use obj)
+   {
+/**/Log.d(TAG, "Use render");
+
+      if (obj.transform != null) {
+         canvas.concat(obj.transform);
+      }
+
+      // TODO handle x,y attr - concat to transform
+
+      updatePaintsFromStyle(obj.style);
+
+      // Locate the referenced object
+      SVG.SvgObject  ref = obj.document.resolveIRI(obj.href);
+/**/Log.d(TAG, "Use: ref="+ref);
+      if (ref != null) {
+         render(ref);
       }
    }
 
@@ -467,6 +492,11 @@ public class SVGAndroidRenderer
          }
       }
 
+      if ((style.specifiedFlags & SVG.SPECIFIED_FILL_RULE) != 0)
+      {
+         // Not supported by Android? It always uses a non-zero winding rule.
+      }
+
       if ((style.specifiedFlags & SVG.SPECIFIED_STROKE) != 0 ||
           (style.specifiedFlags & SVG.SPECIFIED_STROKE_OPACITY) != 0)
       {
@@ -481,6 +511,24 @@ public class SVGAndroidRenderer
       if ((style.specifiedFlags & SVG.SPECIFIED_STROKE_WIDTH) != 0)
       {
          strokePaint.setStrokeWidth(style.strokeWidth.floatValue(dpi));
+      }
+
+      if ((style.specifiedFlags & SVG.SPECIFIED_STROKE_LINECAP) != 0)
+      {
+         switch (style.strokeLineCap)
+         {
+            case Butt:
+               strokePaint.setStrokeCap(Paint.Cap.BUTT);
+               break;
+            case Round:
+               strokePaint.setStrokeCap(Paint.Cap.ROUND);
+               break;
+            case Square:
+               strokePaint.setStrokeCap(Paint.Cap.SQUARE);
+               break;
+            default:
+               break;
+         }
       }
 
       if ((style.specifiedFlags & SVG.SPECIFIED_OPACITY) != 0)

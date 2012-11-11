@@ -60,6 +60,7 @@ public class SVGParser extends DefaultHandler
    private static final String  TAG_TEXT           = "text";
    private static final String  TAG_TEXTPATH       = "textPath";
    private static final String  TAG_TSPAN          = "tspan";
+   private static final String  TAG_USE            = "use";
 
    // Supported SVG attributes
    private enum  SVGAttr
@@ -68,6 +69,7 @@ public class SVGParser extends DefaultHandler
       fx, fy,
       d,
       fill,
+      fill_rule,
       fill_opacity,
       // Font properties
       font_family, font_size, font_weight, font_style, // font, font_size_adjust, font_stretch, font_variant,  
@@ -81,7 +83,7 @@ public class SVGParser extends DefaultHandler
       r,
       rx, ry,
       stroke,
-      stroke_fill,
+      //stroke_fill,
       stroke_linecap,
       stroke_opacity,
       stroke_width,
@@ -344,6 +346,10 @@ public class SVGParser extends DefaultHandler
          svg(attributes);
       } else if (localName.equalsIgnoreCase(TAG_G)) {
          g(attributes);
+      } else if (localName.equalsIgnoreCase(TAG_DEFS)) {
+         defs(attributes);
+      } else if (localName.equalsIgnoreCase(TAG_USE)) {
+         use(attributes);
       } else if (localName.equalsIgnoreCase(TAG_PATH)) {
          path(attributes);
       } else if (localName.equalsIgnoreCase(TAG_RECT)) {
@@ -396,6 +402,7 @@ public class SVGParser extends DefaultHandler
       super.endElement(uri, localName, qName);
 
       if (localName.equalsIgnoreCase(TAG_SVG) ||
+          localName.equalsIgnoreCase(TAG_DEFS) ||
           localName.equalsIgnoreCase(TAG_G) ||
           localName.equalsIgnoreCase(TAG_TEXT) ||
           localName.equalsIgnoreCase(TAG_TSPAN)) {
@@ -434,6 +441,7 @@ dumpNode(svgDocument.getRootElement(), "");
    {
 /**/Log.d(TAG, "<svg>");
       SVG.Svg  obj = new SVG.Svg();
+      obj.document = svgDocument;
       obj.parent = currentElement;
       obj.style = (obj.parent == null) ? new Style() : new Style(obj.parent.style);
       parseAttributesCore(obj, attributes);
@@ -481,20 +489,91 @@ dumpNode(svgDocument.getRootElement(), "");
       if (currentElement == null)
          throw new SAXException("Invalid document. Root element must be <svg>");
       SVG.Group  obj = new SVG.Group();
+      obj.document = svgDocument;
       obj.parent = currentElement;
       obj.style = new Style(obj.parent.style);
       parseAttributesCore(obj, attributes);
       parseAttributesStyle(obj, attributes);
       parseAttributesTransform(obj, attributes);
-      //parseAttributesG(obj, attributes);
       currentElement.addChild(obj);
       currentElement = obj;
    }
 
 
-   //private void  parseAttributesG(SVG.Group obj, Attributes attributes) throws SAXException
-   //{
-   //}
+   //=========================================================================
+   // <defs> group element
+
+
+   private void  defs(Attributes attributes) throws SAXException
+   {
+/**/Log.d(TAG, "<defs>");
+      if (currentElement == null)
+         throw new SAXException("Invalid document. Root element must be <svg>");
+      SVG.Defs  obj = new SVG.Defs();
+      obj.document = svgDocument;
+      obj.parent = currentElement;
+      obj.style = new Style(obj.parent.style);
+      parseAttributesCore(obj, attributes);
+      parseAttributesStyle(obj, attributes);
+      parseAttributesTransform(obj, attributes);
+      currentElement.addChild(obj);
+      currentElement = obj;
+   }
+
+
+   //=========================================================================
+   // <use> group element
+
+
+   private void  use(Attributes attributes) throws SAXException
+   {
+/**/Log.d(TAG, "<use>");
+      if (currentElement == null)
+         throw new SAXException("Invalid document. Root element must be <svg>");
+      SVG.Use  obj = new SVG.Use();
+      obj.document = svgDocument;
+      obj.parent = currentElement;
+      obj.style = new Style(obj.parent.style);
+      parseAttributesCore(obj, attributes);
+      parseAttributesStyle(obj, attributes);
+      parseAttributesTransform(obj, attributes);
+      parseAttributesUse(obj, attributes);
+      currentElement.addChild(obj);
+   }
+
+
+   private void  parseAttributesUse(SVG.Use obj, Attributes attributes) throws SAXException
+   {
+      for (int i=0; i<attributes.getLength(); i++)
+      {
+         String val = attributes.getValue(i).trim();
+         switch (SVGAttr.fromString(attributes.getLocalName(i)))
+         {
+            case x:
+               obj.x = parseLength(val);
+               break;
+            case y:
+               obj.y = parseLength(val);
+               break;
+            case width:
+               obj.width = parseLength(val);
+               if (obj.width.isNegative())
+                  throw new SAXException("Invalid <use> element. width cannot be negative");
+               break;
+            case height:
+               obj.height = parseLength(val);
+               if (obj.height.isNegative())
+                  throw new SAXException("Invalid <use> element. height cannot be negative");
+               break;
+            case href:
+/**/Log.d(TAG,"***Use/href: "+attributes.getQName(i)+" "+attributes.getURI(i));
+               obj.href = val;
+               break;
+            default:
+               break;
+         }
+      }
+   }
 
 
    //=========================================================================
@@ -507,6 +586,7 @@ dumpNode(svgDocument.getRootElement(), "");
       if (currentElement == null)
          throw new SAXException("Invalid document. Root element must be <svg>");
       SVG.Path  obj = new SVG.Path();
+      obj.document = svgDocument;
       obj.parent = currentElement;
       obj.style = new Style(obj.parent.style);
       parseAttributesCore(obj, attributes);
@@ -549,6 +629,7 @@ dumpNode(svgDocument.getRootElement(), "");
       if (currentElement == null)
          throw new SAXException("Invalid document. Root element must be <svg>");
       SVG.Rect  obj = new SVG.Rect();
+      obj.document = svgDocument;
       obj.parent = currentElement;
       obj.style = new Style(obj.parent.style);
       parseAttributesCore(obj, attributes);
@@ -609,6 +690,7 @@ dumpNode(svgDocument.getRootElement(), "");
       if (currentElement == null)
          throw new SAXException("Invalid document. Root element must be <svg>");
       SVG.Circle  obj = new SVG.Circle();
+      obj.document = svgDocument;
       obj.parent = currentElement;
       obj.style = new Style(obj.parent.style);
       parseAttributesCore(obj, attributes);
@@ -654,6 +736,7 @@ dumpNode(svgDocument.getRootElement(), "");
       if (currentElement == null)
          throw new SAXException("Invalid document. Root element must be <svg>");
       SVG.Ellipse  obj = new SVG.Ellipse();
+      obj.document = svgDocument;
       obj.parent = currentElement;
       obj.style = new Style(obj.parent.style);
       parseAttributesCore(obj, attributes);
@@ -704,6 +787,7 @@ dumpNode(svgDocument.getRootElement(), "");
       if (currentElement == null)
          throw new SAXException("Invalid document. Root element must be <svg>");
       SVG.Line  obj = new SVG.Line();
+      obj.document = svgDocument;
       obj.parent = currentElement;
       obj.style = new Style(obj.parent.style);
       parseAttributesCore(obj, attributes);
@@ -754,6 +838,7 @@ dumpNode(svgDocument.getRootElement(), "");
       if (currentElement == null)
          throw new SAXException("Invalid document. Root element must be <svg>");
       SVG.PolyLine  obj = new SVG.PolyLine();
+      obj.document = svgDocument;
       obj.parent = currentElement;
       obj.style = new Style(obj.parent.style);
       parseAttributesCore(obj, attributes);
@@ -796,6 +881,7 @@ dumpNode(svgDocument.getRootElement(), "");
       if (currentElement == null)
          throw new SAXException("Invalid document. Root element must be <svg>");
       SVG.Polygon  obj = new SVG.Polygon();
+      obj.document = svgDocument;
       obj.parent = currentElement;
       obj.style = new Style(obj.parent.style);
       parseAttributesCore(obj, attributes);
@@ -816,6 +902,7 @@ dumpNode(svgDocument.getRootElement(), "");
       if (currentElement == null)
          throw new SAXException("Invalid document. Root element must be <svg>");
       SVG.Text  obj = new SVG.Text();
+      obj.document = svgDocument;
       obj.parent = currentElement;
       obj.style = new Style(obj.parent.style);
       parseAttributesCore(obj, attributes);
@@ -859,6 +946,7 @@ dumpNode(svgDocument.getRootElement(), "");
       if (!(currentElement instanceof SVG.TextContainer))
          throw new SAXException("Invalid document. <tspan> elements are only valid inside <text> or <other <tspan>s.");
       SVG.TSpan  obj = new SVG.TSpan();
+      obj.document = svgDocument;
       obj.parent = currentElement;
       obj.style = new Style(obj.parent.style);
       parseAttributesCore(obj, attributes);
@@ -909,6 +997,11 @@ dumpNode(svgDocument.getRootElement(), "");
                obj.style.hasFill = true;
                break;
 
+            case fill_rule:
+               obj.style.fillRule = parseFillRule(val);
+               obj.style.specifiedFlags |= SVG.SPECIFIED_FILL_RULE;
+               break;
+
             case fill_opacity:
                obj.style.fillOpacity = parseFloat(val);
                obj.style.specifiedFlags |= SVG.SPECIFIED_FILL_OPACITY;
@@ -936,6 +1029,11 @@ dumpNode(svgDocument.getRootElement(), "");
             case stroke_width:
                obj.style.strokeWidth = parseLength(val);
                obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE_WIDTH;
+               break;
+
+            case stroke_linecap:
+               obj.style.strokeLineCap = parseStrokeLineCap(val);
+               obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE_LINECAP;
                break;
 
             case opacity:
@@ -1340,7 +1438,7 @@ dumpNode(svgDocument.getRootElement(), "");
 
       String  wt = fontWeightKeywords.get(val.toLowerCase());
       if (wt == null) {
-         throw new SAXException("Invalid font-weight keyword: "+val);
+         throw new SAXException("Invalid font-weight property: "+val);
       }
       return wt;
    }
@@ -1356,7 +1454,7 @@ dumpNode(svgDocument.getRootElement(), "");
          return val;
       if ("italic".equals(val) || "oblique".equals(val))
          return "italic";
-      throw new SAXException("Invalid font-style keyword: "+val);
+      throw new SAXException("Invalid font-style property: "+val);
    }
 
 
@@ -1370,7 +1468,37 @@ dumpNode(svgDocument.getRootElement(), "");
          return "none";
       if ("underline".equals(val) || "line-through".equals(val))
          return val;
-      throw new SAXException("Invalid text-decoration keyword: "+val);
+      throw new SAXException("Invalid text-decoration property: "+val);
+   }
+
+
+   // Parse fill rule
+   private Style.FillRule  parseFillRule(String val) throws SAXException
+   {
+/**/Log.d(TAG, "parseFillRule: "+val);
+
+      val = val.toLowerCase();
+      if ("nonzero".equals(val))
+         return Style.FillRule.NonZero;
+      if ("evenodd".equals(val))
+         return Style.FillRule.EvenOdd;
+      throw new SAXException("Invalid fill-rule property: "+val);
+   }
+
+
+   // Parse stroke-linecap
+   private Style.LineCaps  parseStrokeLineCap(String val) throws SAXException
+   {
+/**/Log.d(TAG, "parseStrokeLineCap: "+val);
+
+      val = val.toLowerCase();
+      if ("butt".equals(val))
+         return Style.LineCaps.Butt;
+      if ("round".equals(val))
+         return Style.LineCaps.Round;
+      if ("square".equals(val))
+         return Style.LineCaps.Square;
+      throw new SAXException("Invalid stroke-linecap property: "+val);
    }
 
 
