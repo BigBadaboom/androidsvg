@@ -356,8 +356,21 @@ public class SVGParser extends DefaultHandler
       super.characters(ch, start, length);
 
       if (currentElement instanceof SVG.Text || currentElement instanceof SVG.TSpan) {
-         ((SVG.SvgContainer) currentElement).addChild(new SVG.TextSequence( new String(ch, start, length) ));
+
+         // The SAX parser can pass us several text nodes in a row. If this happens, we
+         // want to collapse them all into one SVG.TextSequence node
+         SVG.SvgContainer  parent = (SVG.SvgContainer) currentElement;
+         int  numOlderSiblings = parent.children.size();
+         SVG.SvgObject  previousSibling = (numOlderSiblings == 0) ? null : parent.children.get(numOlderSiblings-1);
+         if (previousSibling instanceof SVG.TextSequence) {
+            // Last sibling was a TextSequence also, so merge them.
+            ((SVG.TextSequence) previousSibling).text += new String(ch, start, length);
+         } else {
+            // Add a new TextSequence to the child node list
+            ((SVG.SvgContainer) currentElement).addChild(new SVG.TextSequence( new String(ch, start, length) ));
+         }
       }
+
    }
 
 

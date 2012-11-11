@@ -1,28 +1,30 @@
 package com.caverock.androidsvg;
 
+
+import java.util.Iterator;
 import java.util.Stack;
 
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.graphics.PointF;
 import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.util.Log;
 
 import com.caverock.androidsvg.SVG.Style;
 
+
 public class SVGAndroidRenderer
 {
    private static final String  TAG = "SVGAndroidRenderer";
-   
+
    private int     dpi = 90;    // dots per inch. Needed for accurate conversion of length values that have real world units, such as "cm".
 
    // Renderer state
    private Canvas  canvas;
    private Paint   fillPaint;
    private Paint   strokePaint;
-   
+
    private Stack<Paint> paintStack = new Stack<Paint>();   // So we can save/restore style when dealing with nested objects
 
 
@@ -45,43 +47,54 @@ public class SVGAndroidRenderer
       // Save matrix and clip
       canvas.save();
       // Save paint styles
-      paintStack.push(fillPaint);
-      paintStack.push(strokePaint);
+      paintsPush();
 
       if (obj instanceof SVG.Svg) {
          render((SVG.Svg) obj);
-      } else if  (obj instanceof SVG.Group) {
+      } else if (obj instanceof SVG.Group) {
          render((SVG.Group) obj);
-      } else if  (obj instanceof SVG.Path) {
+      } else if (obj instanceof SVG.Path) {
          render((SVG.Path) obj);
-      } else if  (obj instanceof SVG.Rect) {
+      } else if (obj instanceof SVG.Rect) {
          render((SVG.Rect) obj);
-      } else if  (obj instanceof SVG.Circle) {
+      } else if (obj instanceof SVG.Circle) {
          render((SVG.Circle) obj);
-      } else if  (obj instanceof SVG.Ellipse) {
+      } else if (obj instanceof SVG.Ellipse) {
          render((SVG.Ellipse) obj);
-      } else if  (obj instanceof SVG.Line) {
+      } else if (obj instanceof SVG.Line) {
          render((SVG.Line) obj);
-      } else if  (obj instanceof SVG.Polygon) {
+      } else if (obj instanceof SVG.Polygon) {
          render((SVG.Polygon) obj);
-      } else if  (obj instanceof SVG.PolyLine) {
+      } else if (obj instanceof SVG.PolyLine) {
          render((SVG.PolyLine) obj);
-      } else if  (obj instanceof SVG.Text) {
+      } else if (obj instanceof SVG.Text) {
          render((SVG.Text) obj);
       }
 
       // Restore paint styles
-      strokePaint = paintStack.pop();
-      fillPaint = paintStack.pop();
+      paintsPop();
       // Restore matrix and clip
       canvas.restore();
    }
 
 
+   private void  paintsPush()
+   {
+      paintStack.push(new Paint(fillPaint));
+      paintStack.push(new Paint(strokePaint));
+   }
+
+
+   private void  paintsPop()
+   {
+      strokePaint = paintStack.pop();
+      fillPaint = paintStack.pop();
+   }
+
 
    public void render(SVG.Svg obj)
    {
-/**/Log.d(TAG, "Svg render");         
+/**/Log.d(TAG, "Svg render");
       for (SVG.SvgObject child: obj.children) {
          render(child);
       }
@@ -150,14 +163,16 @@ public class SVGAndroidRenderer
 
       updatePaintsFromStyle(obj.style);
 
-      if (obj.style.hasFill) {
+      if (obj.style.hasFill)
+      {
          if (_rx == 0f || _ry == 0f) {
             canvas.drawRect(_x, _y, _x + obj.width.floatValue(dpi), _y + obj.height.floatValue(dpi), fillPaint);
          } else {
             canvas.drawRoundRect(new RectF(_x, _y, _x + obj.width.floatValue(dpi), _y + obj.height.floatValue(dpi)), _rx, _ry, fillPaint);
          }
       }
-      if (obj.style.hasStroke) {
+      if (obj.style.hasStroke)
+      {
          if (_rx == 0f || _ry == 0f) {
             canvas.drawRect(_x, _y, _x + obj.width.floatValue(dpi), _y + obj.height.floatValue(dpi), strokePaint);
          } else {
@@ -291,11 +306,24 @@ public class SVGAndroidRenderer
          path.lineTo(obj.points[i], obj.points[i+1]);
       }
       path.close();
-      
+
       if (obj.style.hasFill)
          canvas.drawPath(path, fillPaint);
       if (obj.style.hasStroke)
          canvas.drawPath(path, strokePaint);
+   }
+
+
+   private static class TextRenderContext
+   {
+      float x;
+      float y;
+
+      public TextRenderContext(float x, float y)
+      {
+         this.x = x;
+         this.y = y;
+      }
    }
 
 
@@ -311,42 +339,48 @@ public class SVGAndroidRenderer
       // Get the first coordinate pair from the lists in the x and y properties.
       float  x = (obj.x == null || obj.x.size() == 0) ? 0f : obj.x.remove(0).floatValue(dpi);
       float  y = (obj.y == null || obj.y.size() == 0) ? 0f : obj.y.remove(0).floatValue(dpi);
-      PointF currentTextPosition = new PointF(x, y);
+      TextRenderContext currentTextPosition = new TextRenderContext(x, y);
 
-      for (SVG.SvgObject child: obj.children) {
-         renderText(child, obj, currentTextPosition);
+      boolean isFirstNode = true;
+      for (Iterator<SVG.SvgObject> iterator = obj.children.iterator(); iterator.hasNext(); isFirstNode = false)
+      {
+         SVG.SvgObject child = iterator.next();
+         renderText(child, obj, currentTextPosition, isFirstNode, !iterator.hasNext());
       }
 
    }
 
 
-   public void  renderText(SVG.SvgObject obj, SVG.SvgElement parent, PointF currentTextPosition)
+   public void  renderText(SVG.SvgObject obj, SVG.SvgElement parent, TextRenderContext currentTextPosition, boolean isFirstNode, boolean isLastNode)
    {
       if (obj instanceof SVG.TSpan)
       {
+/**/Log.d(TAG, "TSpan render");
          // Save matrix and clip
          canvas.save();
          // Save paint styles
-         paintStack.push(fillPaint);
-         paintStack.push(strokePaint);
+         paintsPush();
 
          SVG.TSpan tspan = (SVG.TSpan) obj; 
 
          updatePaintsFromStyle(tspan.style);
 
-         for (SVG.SvgObject child: tspan.children) {
-            renderText(child, tspan, currentTextPosition);
+         isFirstNode = true;
+         for (Iterator<SVG.SvgObject> iterator = tspan.children.iterator(); iterator.hasNext(); isFirstNode=false) {
+            SVG.SvgObject child = iterator.next();
+            renderText(child, tspan, currentTextPosition, isFirstNode, !iterator.hasNext());
          }
 
          // Restore paint styles
-         strokePaint = paintStack.pop();
-         fillPaint = paintStack.pop();
+         paintsPop();
          // Restore matrix and clip
          canvas.restore();
       }
       else if  (obj instanceof SVG.TextSequence)
       {
-         SVG.TextSequence  ts = (SVG.TextSequence) obj;
+/**/Log.d(TAG, "TextSequence render");
+         String ts = ((SVG.TextSequence) obj).text;
+         ts = trimmer(ts, isFirstNode, isLastNode);
          drawText(ts, parent, currentTextPosition);
       }
       else if  (obj instanceof SVG.TRef)
@@ -356,19 +390,56 @@ public class SVGAndroidRenderer
    }
 
 
-   private void drawText(SVG.TextSequence ts, SVG.SvgElement parentObj, PointF currentTextPosition)
+   private void drawText(String ts, SVG.SvgElement parentObj, TextRenderContext currentTextPosition)
    {
       if (parentObj.style.hasFill)
-         canvas.drawText(ts.text, currentTextPosition.x, currentTextPosition.y, fillPaint);
+         canvas.drawText(ts, currentTextPosition.x, currentTextPosition.y, fillPaint);
       if (parentObj.style.hasStroke)
-         canvas.drawText(ts.text, currentTextPosition.x, currentTextPosition.y, strokePaint);
+         canvas.drawText(ts, currentTextPosition.x, currentTextPosition.y, strokePaint);
 
       // Update the current text position
-      currentTextPosition.x += fillPaint.measureText(ts.text);
+      currentTextPosition.x += fillPaint.measureText(ts);
    }
 
 
-   //==============================================================================
+   // Trim whitespace chars appropriately depending on where the node is
+   // relative to other text nodes.
+   private String trimmer(String str, boolean isFirstNode, boolean isLastNode)
+   {
+      int len = str.length();
+      int offset = 0;
+
+      if (len == 0)
+         return str;
+
+      char[] chars = str.toCharArray();
+
+      while (offset < len && chars[offset] <= ' ') {
+         offset++;
+         len--;
+      }
+      while (offset < len && chars[offset + len - 1] <= ' ') {
+         len--;
+      }
+
+      // Allow one space at the start if this wasn't the first node
+      if (offset > 0 && !isFirstNode)
+      {
+         chars[--offset] = ' ';
+         len++;
+      }
+      // Allow one space at the end if this wasn't the last node
+      if ((offset + len) < str.length() && !isLastNode)
+      {
+         chars[offset + len] = ' ';
+         len++;
+      }
+
+      return new String(chars, offset, len);
+   }
+
+
+   // ==============================================================================
 
 
    private void updatePaintsFromStyle(Style style)
@@ -376,20 +447,22 @@ public class SVGAndroidRenderer
       if ((style.specifiedFlags & SVG.SPECIFIED_FILL) != 0 ||
           (style.specifiedFlags & SVG.SPECIFIED_FILL_OPACITY) != 0)
       {
-         if (style.fill instanceof SVG.Colour) {
-            int col = ((SVG.Colour)style.fill).colour;
+         if (style.fill instanceof SVG.Colour)
+         {
+            int col = ((SVG.Colour) style.fill).colour;
             col = clamp(style.fillOpacity) << 24 | col;
-            fillPaint.setColor( col );
+            fillPaint.setColor(col);
          }
       }
 
       if ((style.specifiedFlags & SVG.SPECIFIED_STROKE) != 0 ||
           (style.specifiedFlags & SVG.SPECIFIED_STROKE_OPACITY) != 0)
       {
-         if (style.stroke instanceof SVG.Colour) {
-            int col = ((SVG.Colour)style.stroke).colour;
+         if (style.stroke instanceof SVG.Colour)
+         {
+            int col = ((SVG.Colour) style.stroke).colour;
             col = clamp(style.strokeOpacity) << 24 | col;
-            strokePaint.setColor( col );
+            strokePaint.setColor(col);
          }
       }
 
@@ -422,7 +495,5 @@ public class SVGAndroidRenderer
       int  i = (int)(val * 256f);
       return (i<0) ? 0 : (i>255) ? 255 : i;
    }
-
-
 
 }

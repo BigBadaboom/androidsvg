@@ -378,7 +378,7 @@ public class SVG
       
       public String  toString()
       {
-         return this.getClass().getSimpleName() + " '"+text+"'";
+         return this.getClass().getSimpleName() + " '"+text.trim()+"'";
       }
    }
 
