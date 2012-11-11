@@ -487,6 +487,24 @@ public class SVGAndroidRenderer
          strokePaint.setTextSize(style.fontSize.floatValue(dpi));
       }
 
+      if ((style.specifiedFlags & SVG.SPECIFIED_FONT_WEIGHT) != 0 ||
+          (style.specifiedFlags & SVG.SPECIFIED_FONT_STYLE) != 0)
+      {
+         Typeface  font = Typeface.create(Typeface.DEFAULT,  getTypefaceStyle(style));
+         fillPaint.setTypeface(font);
+         strokePaint.setTypeface(font);
+      }
+
+   }
+
+
+   private int  getTypefaceStyle(Style style)
+   {
+      boolean  italic = "italic".equals(style.fontStyle);
+      if ("bold".equals(style.fontWeight)) {
+         return italic ? Typeface.BOLD_ITALIC : Typeface.BOLD;
+      }
+      return italic ? Typeface.ITALIC : Typeface.NORMAL;
    }
 
 

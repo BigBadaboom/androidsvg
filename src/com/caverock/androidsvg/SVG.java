@@ -112,6 +112,8 @@ public class SVG
    public static final long SPECIFIED_OPACITY        = (1<<5);
    public static final long SPECIFIED_FONT_FAMILY    = (1<<6);
    public static final long SPECIFIED_FONT_SIZE      = (1<<7);
+   public static final long SPECIFIED_FONT_WEIGHT    = (1<<8);
+   public static final long SPECIFIED_FONT_STYLE     = (1<<9);
 
    public static class  Style
    {
@@ -131,6 +133,8 @@ public class SVG
 
       public String   fontFamily;
       public Length   fontSize;
+      public String   fontWeight;
+      public String   fontStyle;
       
       public Style()
       {
@@ -145,6 +149,8 @@ public class SVG
          opacity = 1f;
          fontFamily = null;
          fontSize = new Length(12, Unit.pt);
+         fontWeight = "normal";
+         fontStyle = "normal";
       }
 
       public Style(Style inherit)
@@ -157,10 +163,12 @@ public class SVG
          hasStroke = inherit.hasStroke;
          stroke = inherit.stroke;
          strokeOpacity = inherit.strokeOpacity;
-         strokeWidth = new Length(1f);
+         strokeWidth = inherit.strokeWidth;
          opacity = inherit.opacity;
          fontFamily = inherit.fontFamily;
          fontSize = inherit.fontSize;
+         fontWeight = inherit.fontWeight;
+         fontStyle = inherit.fontStyle;
       }
    }
 

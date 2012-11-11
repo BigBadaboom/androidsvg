@@ -70,7 +70,7 @@ public class SVGParser extends DefaultHandler
       fill,
       fill_opacity,
       // Font properties
-      font, font_family, font_size, // font_size_adjust, font_stretch, font_style, font_variant, font_weight,  
+      font_family, font_size, font_weight, font_style, // font, font_size_adjust, font_stretch, font_variant,  
       gradientTransform,
       height,
       href,
@@ -111,6 +111,7 @@ public class SVGParser extends DefaultHandler
 
    private static HashMap<String, Integer> colourKeywords = new HashMap<String, Integer>();
    private static HashMap<String, Length> fontSizeKeywords = new HashMap<String, Length>();
+   private static HashMap<String, String> fontWeightKeywords = new HashMap<String, String>();
 
    static {
       colourKeywords.put("aliceblue", 0xf0f8ff);
@@ -270,6 +271,20 @@ public class SVGParser extends DefaultHandler
       fontSizeKeywords.put("xx-large", new Length(20.7f, Unit.pt));
       fontSizeKeywords.put("smaller", new Length(0.833f, Unit.percent));
       fontSizeKeywords.put("larger", new Length(1.2f, Unit.percent));
+
+      fontWeightKeywords.put("normal", "normal");
+      fontWeightKeywords.put("bold", "bold");
+      fontWeightKeywords.put("bolder", "bold");
+      fontWeightKeywords.put("lighter", "normal");
+      fontWeightKeywords.put("100", "normal");
+      fontWeightKeywords.put("200", "normal");
+      fontWeightKeywords.put("300", "normal");
+      fontWeightKeywords.put("400", "normal");
+      fontWeightKeywords.put("500", "normal");
+      fontWeightKeywords.put("600", "bold");
+      fontWeightKeywords.put("700", "bold");
+      fontWeightKeywords.put("800", "bold");
+      fontWeightKeywords.put("900", "bold");
    }
 
 
@@ -937,6 +952,16 @@ dumpNode(svgDocument.getRootElement(), "");
                obj.style.specifiedFlags |= SVG.SPECIFIED_FONT_SIZE;
                break;
 
+            case font_weight:
+               obj.style.fontWeight = val.toLowerCase();
+               obj.style.specifiedFlags |= SVG.SPECIFIED_FONT_WEIGHT;
+               break;
+
+            case font_style:
+               obj.style.fontStyle = parseFontStyle(val);
+               obj.style.specifiedFlags |= SVG.SPECIFIED_FONT_STYLE;
+               break;
+
             default:
                break;
          }
@@ -1289,7 +1314,7 @@ dumpNode(svgDocument.getRootElement(), "");
    }
 
 
-   // Parse a font size keywaord or numerical value
+   // Parse a font size keyword or numerical value
    private Length  parseFontSize(String val) throws SAXException
    {
 /**/Log.d(TAG, "parseFontSize: "+val);
@@ -1299,6 +1324,33 @@ dumpNode(svgDocument.getRootElement(), "");
          size = parseLength(val);
       }
       return size;
+   }
+
+
+   // Parse a font weight keyword or numerical value
+   private String  parseFontWeight(String val) throws SAXException
+   {
+/**/Log.d(TAG, "parseFontWeight: "+val);
+
+      String  wt = fontWeightKeywords.get(val.toLowerCase());
+      if (wt == null) {
+         throw new SAXException("Invalid font weight keyword: "+val);
+      }
+      return wt;
+   }
+
+
+   // Parse a font style keyword
+   private String  parseFontStyle(String val) throws SAXException
+   {
+/**/Log.d(TAG, "parseFontStyle: "+val);
+
+      val = val.toLowerCase();
+      if ("normal".equals(val))
+         return val;
+      if ("italic".equals(val) || "oblique".equals(val))
+         return "italic";
+      throw new SAXException("Invalid font style keyword: "+val);
    }
 
 
@@ -1579,10 +1631,10 @@ dumpNode(svgDocument.getRootElement(), "");
          return list.get(nextToken);
       }
 
-      public int countTokens()
-      {
-         return list.size() - nextToken;
-      }
+      //public int countTokens()
+      //{
+      //   return list.size() - nextToken;
+      //}
    }
 
 
