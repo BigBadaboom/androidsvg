@@ -85,7 +85,8 @@ public class SVGParser extends DefaultHandler
       stroke_linecap,
       stroke_opacity,
       stroke_width,
-      style,
+      //style,
+      text_decoration,
       transform,
       viewBox,
       width,
@@ -962,6 +963,11 @@ dumpNode(svgDocument.getRootElement(), "");
                obj.style.specifiedFlags |= SVG.SPECIFIED_FONT_STYLE;
                break;
 
+            case text_decoration:
+               obj.style.textDecoration = parseTextDecoration(val);
+               obj.style.specifiedFlags |= SVG.SPECIFIED_TEXT_DECORATION;
+               break;
+
             default:
                break;
          }
@@ -1334,7 +1340,7 @@ dumpNode(svgDocument.getRootElement(), "");
 
       String  wt = fontWeightKeywords.get(val.toLowerCase());
       if (wt == null) {
-         throw new SAXException("Invalid font weight keyword: "+val);
+         throw new SAXException("Invalid font-weight keyword: "+val);
       }
       return wt;
    }
@@ -1350,7 +1356,21 @@ dumpNode(svgDocument.getRootElement(), "");
          return val;
       if ("italic".equals(val) || "oblique".equals(val))
          return "italic";
-      throw new SAXException("Invalid font style keyword: "+val);
+      throw new SAXException("Invalid font-style keyword: "+val);
+   }
+
+
+   // Parse a text decoration keyword
+   private String  parseTextDecoration(String val) throws SAXException
+   {
+/**/Log.d(TAG, "parseTextDecoration: "+val);
+
+      val = val.toLowerCase();
+      if ("none".equals(val) || "overline".equals(val) || "blink".equals(val))
+         return "none";
+      if ("underline".equals(val) || "line-through".equals(val))
+         return val;
+      throw new SAXException("Invalid text-decoration keyword: "+val);
    }
 
 

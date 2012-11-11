@@ -104,16 +104,17 @@ public class SVG
    }
 
 
-   public static final long SPECIFIED_FILL           = (1<<0);
-   public static final long SPECIFIED_FILL_OPACITY   = (1<<1);
-   public static final long SPECIFIED_STROKE         = (1<<2);
-   public static final long SPECIFIED_STROKE_OPACITY = (1<<3);
-   public static final long SPECIFIED_STROKE_WIDTH   = (1<<4);
-   public static final long SPECIFIED_OPACITY        = (1<<5);
-   public static final long SPECIFIED_FONT_FAMILY    = (1<<6);
-   public static final long SPECIFIED_FONT_SIZE      = (1<<7);
-   public static final long SPECIFIED_FONT_WEIGHT    = (1<<8);
-   public static final long SPECIFIED_FONT_STYLE     = (1<<9);
+   public static final long SPECIFIED_FILL            = (1<<0);
+   public static final long SPECIFIED_FILL_OPACITY    = (1<<1);
+   public static final long SPECIFIED_STROKE          = (1<<2);
+   public static final long SPECIFIED_STROKE_OPACITY  = (1<<3);
+   public static final long SPECIFIED_STROKE_WIDTH    = (1<<4);
+   public static final long SPECIFIED_OPACITY         = (1<<5);
+   public static final long SPECIFIED_FONT_FAMILY     = (1<<6);
+   public static final long SPECIFIED_FONT_SIZE       = (1<<7);
+   public static final long SPECIFIED_FONT_WEIGHT     = (1<<8);
+   public static final long SPECIFIED_FONT_STYLE      = (1<<9);
+   public static final long SPECIFIED_TEXT_DECORATION = (1<<10);
 
    public static class  Style
    {
@@ -135,6 +136,7 @@ public class SVG
       public Length   fontSize;
       public String   fontWeight;
       public String   fontStyle;
+      public String   textDecoration;
       
       public Style()
       {
@@ -151,6 +153,7 @@ public class SVG
          fontSize = new Length(12, Unit.pt);
          fontWeight = "normal";
          fontStyle = "normal";
+         textDecoration = "none";
       }
 
       public Style(Style inherit)
@@ -169,6 +172,7 @@ public class SVG
          fontSize = inherit.fontSize;
          fontWeight = inherit.fontWeight;
          fontStyle = inherit.fontStyle;
+         textDecoration = inherit.textDecoration;
       }
    }
 

@@ -416,23 +416,35 @@ public class SVGAndroidRenderer
 
       while (offset < len && chars[offset] <= ' ') {
          offset++;
-         len--;
       }
-      while (offset < len && chars[offset + len - 1] <= ' ') {
+      len -= offset;
+      while (len > 0 && chars[offset + len - 1] <= ' ') {
          len--;
       }
 
       // Allow one space at the start if this wasn't the first node
-      if (offset > 0 && !isFirstNode)
+      if (len == 0)
       {
-         chars[--offset] = ' ';
-         len++;
+         if (!isFirstNode && !isLastNode)
+         {
+            chars[0] = ' ';
+            offset = 0;
+            len = 1;
+         }
       }
-      // Allow one space at the end if this wasn't the last node
-      if ((offset + len) < str.length() && !isLastNode)
+      else
       {
-         chars[offset + len] = ' ';
-         len++;
+         if (offset > 0 && !isFirstNode)
+         {
+            chars[--offset] = ' ';
+            len++;
+         }
+         // Allow one space at the end if this wasn't the last node
+         if ((offset + len) < str.length() && !isLastNode)
+         {
+            chars[offset + len] = ' ';
+            len++;
+         }
       }
 
       return new String(chars, offset, len);
@@ -493,6 +505,14 @@ public class SVGAndroidRenderer
          Typeface  font = Typeface.create(Typeface.DEFAULT,  getTypefaceStyle(style));
          fillPaint.setTypeface(font);
          strokePaint.setTypeface(font);
+      }
+
+      if ((style.specifiedFlags & SVG.SPECIFIED_TEXT_DECORATION) != 0)
+      {
+         fillPaint.setStrikeThruText(style.textDecoration.equals("line-through"));
+         //strokePaint.setStrikeThruText(style.textDecoration.equals("line-through"));  // Bug in Android (39511) - can't stroke an underline
+         fillPaint.setUnderlineText(style.textDecoration.equals("underline"));
+         //strokePaint.setUnderlineText(style.textDecoration.equals("underline"));
       }
 
    }
