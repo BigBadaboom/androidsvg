@@ -13,7 +13,7 @@
   ]]></style>
   <defs>
     <line id="line1" x1="-125" x2="125" y1="0" y2="0" fill="none" />
-    <g id="circles">
+    <g id="circles" fill="#ffcccc" stroke="none">
       <circle id="circle1" cx="-125" cy="0" r="8"/>
       <circle id="circle2" cx="125" cy="0" r="8"/>
     </g>

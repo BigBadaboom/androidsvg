@@ -443,7 +443,6 @@ dumpNode(svgDocument.getRootElement(), "");
       SVG.Svg  obj = new SVG.Svg();
       obj.document = svgDocument;
       obj.parent = currentElement;
-      obj.style = (obj.parent == null) ? new Style() : new Style(obj.parent.style);
       parseAttributesCore(obj, attributes);
       parseAttributesStyle(obj, attributes);
       parseAttributesSVG(obj, attributes);
@@ -491,7 +490,6 @@ dumpNode(svgDocument.getRootElement(), "");
       SVG.Group  obj = new SVG.Group();
       obj.document = svgDocument;
       obj.parent = currentElement;
-      obj.style = new Style(obj.parent.style);
       parseAttributesCore(obj, attributes);
       parseAttributesStyle(obj, attributes);
       parseAttributesTransform(obj, attributes);
@@ -512,7 +510,6 @@ dumpNode(svgDocument.getRootElement(), "");
       SVG.Defs  obj = new SVG.Defs();
       obj.document = svgDocument;
       obj.parent = currentElement;
-      obj.style = new Style(obj.parent.style);
       parseAttributesCore(obj, attributes);
       parseAttributesStyle(obj, attributes);
       parseAttributesTransform(obj, attributes);
@@ -533,7 +530,6 @@ dumpNode(svgDocument.getRootElement(), "");
       SVG.Use  obj = new SVG.Use();
       obj.document = svgDocument;
       obj.parent = currentElement;
-      obj.style = new Style(obj.parent.style);
       parseAttributesCore(obj, attributes);
       parseAttributesStyle(obj, attributes);
       parseAttributesTransform(obj, attributes);
@@ -588,7 +584,6 @@ dumpNode(svgDocument.getRootElement(), "");
       SVG.Path  obj = new SVG.Path();
       obj.document = svgDocument;
       obj.parent = currentElement;
-      obj.style = new Style(obj.parent.style);
       parseAttributesCore(obj, attributes);
       parseAttributesStyle(obj, attributes);
       parseAttributesTransform(obj, attributes);
@@ -631,7 +626,6 @@ dumpNode(svgDocument.getRootElement(), "");
       SVG.Rect  obj = new SVG.Rect();
       obj.document = svgDocument;
       obj.parent = currentElement;
-      obj.style = new Style(obj.parent.style);
       parseAttributesCore(obj, attributes);
       parseAttributesStyle(obj, attributes);
       parseAttributesTransform(obj, attributes);
@@ -692,7 +686,6 @@ dumpNode(svgDocument.getRootElement(), "");
       SVG.Circle  obj = new SVG.Circle();
       obj.document = svgDocument;
       obj.parent = currentElement;
-      obj.style = new Style(obj.parent.style);
       parseAttributesCore(obj, attributes);
       parseAttributesStyle(obj, attributes);
       parseAttributesTransform(obj, attributes);
@@ -738,7 +731,6 @@ dumpNode(svgDocument.getRootElement(), "");
       SVG.Ellipse  obj = new SVG.Ellipse();
       obj.document = svgDocument;
       obj.parent = currentElement;
-      obj.style = new Style(obj.parent.style);
       parseAttributesCore(obj, attributes);
       parseAttributesStyle(obj, attributes);
       parseAttributesTransform(obj, attributes);
@@ -789,7 +781,6 @@ dumpNode(svgDocument.getRootElement(), "");
       SVG.Line  obj = new SVG.Line();
       obj.document = svgDocument;
       obj.parent = currentElement;
-      obj.style = new Style(obj.parent.style);
       parseAttributesCore(obj, attributes);
       parseAttributesStyle(obj, attributes);
       parseAttributesTransform(obj, attributes);
@@ -840,7 +831,6 @@ dumpNode(svgDocument.getRootElement(), "");
       SVG.PolyLine  obj = new SVG.PolyLine();
       obj.document = svgDocument;
       obj.parent = currentElement;
-      obj.style = new Style(obj.parent.style);
       parseAttributesCore(obj, attributes);
       parseAttributesStyle(obj, attributes);
       parseAttributesTransform(obj, attributes);
@@ -883,7 +873,6 @@ dumpNode(svgDocument.getRootElement(), "");
       SVG.Polygon  obj = new SVG.Polygon();
       obj.document = svgDocument;
       obj.parent = currentElement;
-      obj.style = new Style(obj.parent.style);
       parseAttributesCore(obj, attributes);
       parseAttributesStyle(obj, attributes);
       parseAttributesTransform(obj, attributes);
@@ -904,7 +893,6 @@ dumpNode(svgDocument.getRootElement(), "");
       SVG.Text  obj = new SVG.Text();
       obj.document = svgDocument;
       obj.parent = currentElement;
-      obj.style = new Style(obj.parent.style);
       parseAttributesCore(obj, attributes);
       parseAttributesStyle(obj, attributes);
       parseAttributesTransform(obj, attributes);
@@ -948,7 +936,6 @@ dumpNode(svgDocument.getRootElement(), "");
       SVG.TSpan  obj = new SVG.TSpan();
       obj.document = svgDocument;
       obj.parent = currentElement;
-      obj.style = new Style(obj.parent.style);
       parseAttributesCore(obj, attributes);
       parseAttributesStyle(obj, attributes);
       parseAttributesText(obj, attributes);
@@ -986,15 +973,13 @@ dumpNode(svgDocument.getRootElement(), "");
             case fill:
                obj.style.specifiedFlags |= SVG.SPECIFIED_FILL;
                if (val.equals("none")) {
-                  obj.style.hasFill = false;
-                  break;
+                  obj.style.fill = null;
                } else  if (val.startsWith("url")) {
                   //gradient
                } else {
                   obj.style.fill = parseColour(val);
                }
 //Log.d(TAG, "<?> style.fill="+obj.style.fill);
-               obj.style.hasFill = true;
                break;
 
             case fill_rule:
@@ -1010,15 +995,12 @@ dumpNode(svgDocument.getRootElement(), "");
             case stroke:
                obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE;
                if (val.equals("none")) {
-                  obj.style.hasStroke = false;
-                  break;
                } else  if (val.startsWith("url")) {
                   //gradient
                } else {
                   obj.style.stroke = parseColour(val);
                }
 //Log.d(TAG, "<?> style.stroke="+obj.style.stroke);
-               obj.style.hasStroke = true;
                break;
 
             case stroke_opacity:

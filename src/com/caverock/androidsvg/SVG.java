@@ -134,18 +134,18 @@ public class SVG
    public static final long SPECIFIED_FONT_STYLE      = (1<<11);
    public static final long SPECIFIED_TEXT_DECORATION = (1<<12);
 
+   public static final long SPECIFIED_ALL = 0xffffffff;
 
-   public static class  Style
+
+   public static class  Style implements Cloneable
    {
       // Which properties have been explicity specified by this element
-      public long      specifiedFlags;
+      public long      specifiedFlags = 0;
 
-      public boolean   hasFill;
       public SvgPaint  fill;
       public FillRule  fillRule;
       public Float     fillOpacity;
 
-      public boolean   hasStroke; 
       public SvgPaint  stroke;
       public Float     strokeOpacity;
       public Length    strokeWidth;
@@ -172,50 +172,31 @@ public class SVG
          Square
       }
       
-      public Style()
+      public static Style  getDefaultStyle()
       {
-         specifiedFlags = 0;
-         hasFill = true;
-         fill = new Colour(0);  // black
-         fillRule = FillRule.NonZero;
-         fillOpacity = 1f;
-         hasStroke = false;
-         stroke = null;         // none
-         strokeOpacity = 1f;
-         strokeWidth = new Length(1f);
-         strokeLineCap = LineCaps.Butt;
-         opacity = 1f;
-         fontFamily = null;
-         fontSize = new Length(12, Unit.pt);
-         fontWeight = "normal";
-         fontStyle = "normal";
-         textDecoration = "none";
+         Style  def = new Style();
+         def.specifiedFlags = SPECIFIED_ALL;
+         def.fill = new Colour(0);  // black
+         def.fillRule = FillRule.NonZero;
+         def.fillOpacity = 1f;
+         def.stroke = null;         // none
+         def.strokeOpacity = 1f;
+         def.strokeWidth = new Length(1f);
+         def.strokeLineCap = LineCaps.Butt;
+         def.opacity = 1f;
+         def.fontFamily = null;
+         def.fontSize = new Length(12, Unit.pt);
+         def.fontWeight = "normal";
+         def.fontStyle = "normal";
+         def.textDecoration = "none";
+         return def;
       }
 
-      public Style(Style inherit)
-      {
-         // Not inherited: display, 
-         specifiedFlags = 0;
-         hasFill = inherit.hasFill;
-         fill = inherit.fill;
-         fillRule = inherit.fillRule;
-         fillOpacity = inherit.fillOpacity;
-         hasStroke = inherit.hasStroke;
-         stroke = inherit.stroke;
-         strokeOpacity = inherit.strokeOpacity;
-         strokeWidth = inherit.strokeWidth;
-         strokeLineCap = inherit.strokeLineCap;
-         opacity = inherit.opacity;
-         fontFamily = inherit.fontFamily;
-         fontSize = inherit.fontSize;
-         fontWeight = inherit.fontWeight;
-         fontStyle = inherit.fontStyle;
-         textDecoration = inherit.textDecoration;
-      }
    }
 
+
    // What fill or stroke is
-   protected abstract static class SvgPaint
+   protected abstract static class SvgPaint implements Cloneable
    {
    }
 
@@ -234,7 +215,7 @@ public class SVG
       }
    }
 
-   protected static class Length
+   protected static class Length implements Cloneable
    {
       float  value = 0;;
       Unit   unit = Unit.px;
@@ -365,8 +346,8 @@ public class SVG
    // Any object in the tree that corresponds to an SVG element
    protected static abstract class SvgElement extends SvgObject
    {
-      public String  id;
-      public Style   style;
+      public String  id = null;
+      public Style   style = new Style();
    }
 
    protected static class SvgContainer extends SvgElement
