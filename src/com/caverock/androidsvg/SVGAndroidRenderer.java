@@ -112,9 +112,7 @@ public class SVGAndroidRenderer
 
    public void  render(SVG.SvgObject obj)
    {
-      // Save matrix and clip
-      canvas.save();
-      // Save paint styles
+      // Save state
       statePush();
 
       if (obj instanceof SVG.Svg) {
@@ -143,10 +141,8 @@ public class SVGAndroidRenderer
          render((SVG.Text) obj);
       }
 
-      // Restore paint styles
+      // Restore state
       statePop();
-      // Restore matrix and clip
-      canvas.restore();
    }
 
 
@@ -155,12 +151,18 @@ public class SVGAndroidRenderer
 
    private void  statePush()
    {
+      // Save matrix and clip
+      canvas.save();
+      // Save style state
       stateStack.push((RendererState) state.clone());
    }
 
 
    private void  statePop()
    {
+      // Restore matrix and clip
+      canvas.restore();
+      // Restore style state
       state = stateStack.pop();
    }
 
@@ -465,9 +467,7 @@ public class SVGAndroidRenderer
       if (obj instanceof SVG.TSpan)
       {
 /**/Log.d(TAG, "TSpan render");
-         // Save matrix and clip
-         canvas.save();
-         // Save paint styles
+         // Save state
          statePush();
 
          SVG.TSpan tspan = (SVG.TSpan) obj; 
@@ -480,10 +480,8 @@ public class SVGAndroidRenderer
             renderText(child, tspan, currentTextPosition, isFirstNode, !iterator.hasNext());
          }
 
-         // Restore paint styles
+         // Restore state
          statePop();
-         // Restore matrix and clip
-         canvas.restore();
       }
       else if  (obj instanceof SVG.TextSequence)
       {
