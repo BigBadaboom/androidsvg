@@ -127,12 +127,13 @@ public class SVG
    public static final long SPECIFIED_STROKE_OPACITY  = (1<<4);
    public static final long SPECIFIED_STROKE_WIDTH    = (1<<5);
    public static final long SPECIFIED_STROKE_LINECAP  = (1<<6);
-   public static final long SPECIFIED_OPACITY         = (1<<7);
-   public static final long SPECIFIED_FONT_FAMILY     = (1<<8);
-   public static final long SPECIFIED_FONT_SIZE       = (1<<9);
-   public static final long SPECIFIED_FONT_WEIGHT     = (1<<10);
-   public static final long SPECIFIED_FONT_STYLE      = (1<<11);
-   public static final long SPECIFIED_TEXT_DECORATION = (1<<12);
+   public static final long SPECIFIED_STROKE_LINEJOIN = (1<<7);
+   public static final long SPECIFIED_OPACITY         = (1<<8);
+   public static final long SPECIFIED_FONT_FAMILY     = (1<<9);
+   public static final long SPECIFIED_FONT_SIZE       = (1<<10);
+   public static final long SPECIFIED_FONT_WEIGHT     = (1<<11);
+   public static final long SPECIFIED_FONT_STYLE      = (1<<12);
+   public static final long SPECIFIED_TEXT_DECORATION = (1<<13);
 
    public static final long SPECIFIED_ALL = 0xffffffff;
 
@@ -150,6 +151,7 @@ public class SVG
       public Float     strokeOpacity;
       public Length    strokeWidth;
       public LineCaps  strokeLineCap;
+      public LineJoin  strokeLineJoin;
 
       public Float     opacity; // master opacity of both stroke and fill
 
@@ -172,6 +174,13 @@ public class SVG
          Square
       }
       
+      public enum LineJoin
+      {
+         Miter,
+         Round,
+         Bevel
+      }
+      
       public static Style  getDefaultStyle()
       {
          Style  def = new Style();
@@ -183,6 +192,7 @@ public class SVG
          def.strokeOpacity = 1f;
          def.strokeWidth = new Length(1f);
          def.strokeLineCap = LineCaps.Butt;
+         def.strokeLineJoin = LineJoin.Miter;
          def.opacity = 1f;
          def.fontFamily = null;
          def.fontSize = new Length(12, Unit.pt);

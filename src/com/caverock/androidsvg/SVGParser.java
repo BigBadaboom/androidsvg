@@ -85,6 +85,7 @@ public class SVGParser extends DefaultHandler
       stroke,
       //stroke_fill,
       stroke_linecap,
+      stroke_linejoin,
       stroke_opacity,
       stroke_width,
       //style,
@@ -1018,6 +1019,11 @@ dumpNode(svgDocument.getRootElement(), "");
                obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE_LINECAP;
                break;
 
+            case stroke_linejoin:
+               obj.style.strokeLineJoin = parseStrokeLineJoin(val);
+               obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE_LINEJOIN;
+               break;
+
             case opacity:
                obj.style.opacity = parseFloat(val);
                obj.style.specifiedFlags |= SVG.SPECIFIED_OPACITY;
@@ -1482,6 +1488,22 @@ dumpNode(svgDocument.getRootElement(), "");
       if ("square".equals(val))
          return Style.LineCaps.Square;
       throw new SAXException("Invalid stroke-linecap property: "+val);
+   }
+
+
+   // Parse stroke-linejoin
+   private Style.LineJoin  parseStrokeLineJoin(String val) throws SAXException
+   {
+/**/Log.d(TAG, "parseStrokeLineJoin: "+val);
+
+      val = val.toLowerCase();
+      if ("miter".equals(val))
+         return Style.LineJoin.Miter;
+      if ("round".equals(val))
+         return Style.LineJoin.Round;
+      if ("bevel".equals(val))
+         return Style.LineJoin.Bevel;
+      throw new SAXException("Invalid stroke-linejoin property: "+val);
    }
 
 

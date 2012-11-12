@@ -717,6 +717,25 @@ public class SVGAndroidRenderer
          }
       }
 
+      if ((style.specifiedFlags & SVG.SPECIFIED_STROKE_LINEJOIN) != 0)
+      {
+         state.style.strokeLineJoin = style.strokeLineJoin;
+         switch (style.strokeLineJoin)
+         {
+            case Miter:
+               state.strokePaint.setStrokeJoin(Paint.Join.MITER);
+               break;
+            case Round:
+               state.strokePaint.setStrokeJoin(Paint.Join.ROUND);
+               break;
+            case Bevel:
+               state.strokePaint.setStrokeJoin(Paint.Join.BEVEL);
+               break;
+            default:
+               break;
+         }
+      }
+
       if ((style.specifiedFlags & SVG.SPECIFIED_OPACITY) != 0)
       {
          state.style.opacity = style.opacity;

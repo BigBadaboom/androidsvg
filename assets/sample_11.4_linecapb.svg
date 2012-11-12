@@ -34,6 +34,6 @@
     <use stroke="black" stroke-width="70" class="thick" xlink:href="#line1" stroke-linecap="square"/>
     <use stroke="#ffcccc" stroke-width="5" class="thin" xlink:href="#line1"/>
     <use xlink:href="#circles"/>
-    <text font-size="50" y="90">'square' cap</text>
+    <text text-anchor="middle" font-size="50" y="90">'square' cap</text>
   </g>
 </svg>
