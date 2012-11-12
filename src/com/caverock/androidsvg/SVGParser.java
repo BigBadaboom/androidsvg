@@ -1711,7 +1711,9 @@ dumpNode(svgDocument.getRootElement(), "");
       }
       catch (NoSuchElementException e)
       {
-         throw new SAXException("Invalid <path> data");
+         // Path tokens ran out before we were finished.
+         // Spec says to return what we can
+         return path;
       }
    }
 
