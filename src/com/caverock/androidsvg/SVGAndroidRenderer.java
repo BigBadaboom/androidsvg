@@ -448,8 +448,8 @@ public class SVGAndroidRenderer
       updatePaintsFromStyle(obj.style);
 
       // Get the first coordinate pair from the lists in the x and y properties.
-      float  x = (obj.x == null || obj.x.size() == 0) ? 0f : obj.x.remove(0).floatValueX(this);
-      float  y = (obj.y == null || obj.y.size() == 0) ? 0f : obj.y.remove(0).floatValueY(this);
+      float  x = (obj.x == null || obj.x.size() == 0) ? 0f : obj.x.get(0).floatValueX(this);
+      float  y = (obj.y == null || obj.y.size() == 0) ? 0f : obj.y.get(0).floatValueY(this);
       TextRenderContext currentTextPosition = new TextRenderContext(x, y);
 
       boolean isFirstNode = true;
