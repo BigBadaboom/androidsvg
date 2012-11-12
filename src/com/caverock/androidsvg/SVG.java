@@ -21,7 +21,10 @@ public class SVG
    private static final float   DEFAULT_DPI = 90;
    private static final int     DEFAULT_PICTURE_WIDTH = 512;
    private static final int     DEFAULT_PICTURE_HEIGHT = 512;
-   
+
+   private static final double  SQRT2 = 1.414213562373095;
+
+
    private Svg  rootElement = null;
 
    public enum Unit
@@ -253,6 +256,7 @@ public class SVG
          return value;
       }
 
+      // Convert length to user units for a horizontally-related context.
       public float floatValueX(SVGAndroidRenderer renderer)
       {
          switch (unit)
@@ -280,10 +284,27 @@ public class SVG
          }
       }
 
+      // Convert length to user units for a vertically-related context.
       public float floatValueY(SVGAndroidRenderer renderer)
       {
          if (unit == Unit.percent)
             return value * renderer.getCurrentViewBox().height / 100f;
+         return floatValueX(renderer);
+      }
+
+      // Convert length to user units for a context that is not orientation specific.
+      // For example, stroke width.
+      public float floatValue(SVGAndroidRenderer renderer)
+      {
+         if (unit == Unit.percent)
+         {
+            float w = renderer.getCurrentViewBox().width;
+            float h = renderer.getCurrentViewBox().height;
+            if (w == h)
+               return value * w / 100f;
+            float n = (float) (Math.sqrt(w*w+h*h) / SQRT2);  // see spec section 7.10
+            return value * n / 100f;
+         }
          return floatValueX(renderer);
       }
 

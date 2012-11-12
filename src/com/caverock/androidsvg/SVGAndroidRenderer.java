@@ -178,6 +178,7 @@ public class SVGAndroidRenderer
       m.preTranslate(_x, _y);
       canvas.concat(m);
 
+/**/Log.d(TAG, "Use: strokewidth = "+obj.style.strokeWidth);
       updatePaintsFromStyle(obj.style);
 
       render(ref);
@@ -263,7 +264,7 @@ public class SVGAndroidRenderer
       float _cx, _cy, _r;
       _cx = (obj.cx != null) ? obj.cx.floatValueX(this) : 0f;
       _cy = (obj.cy != null) ? obj.cy.floatValueY(this) : 0f;
-      _r = obj.r.floatValueX(this);
+      _r = obj.r.floatValue(this);
 
       updatePaintsFromStyle(obj.style);
 
@@ -631,7 +632,7 @@ public class SVGAndroidRenderer
 
       if ((style.specifiedFlags & SVG.SPECIFIED_STROKE_WIDTH) != 0)
       {
-         strokePaint.setStrokeWidth(style.strokeWidth.floatValueX(this));
+         strokePaint.setStrokeWidth(style.strokeWidth.floatValue(this));
       }
 
       if ((style.specifiedFlags & SVG.SPECIFIED_STROKE_LINECAP) != 0)
@@ -664,8 +665,8 @@ public class SVGAndroidRenderer
 
       if ((style.specifiedFlags & SVG.SPECIFIED_FONT_SIZE) != 0)
       {
-         fillPaint.setTextSize(style.fontSize.floatValueY(this));
-         strokePaint.setTextSize(style.fontSize.floatValueY(this));
+         fillPaint.setTextSize(style.fontSize.floatValue(this));
+         strokePaint.setTextSize(style.fontSize.floatValue(this));
       }
 
       if ((style.specifiedFlags & SVG.SPECIFIED_FONT_WEIGHT) != 0 ||
