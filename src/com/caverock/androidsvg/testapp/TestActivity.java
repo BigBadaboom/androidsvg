@@ -22,7 +22,8 @@ public class TestActivity extends Activity
    GestureDetector  gesture;
    Toast            currentToast;
 
-   String[] fileList = {"sample_8.3_arcs02.svg",
+   String[] fileList = {//"sample_5.6_Use01b.svg",
+                        "sample_5.6_Use01.svg",
                         "sample_6.4.svg",
                         "sample_7.3_InitialCoords.svg",
                         "sample_7.4_NewCoordSys.svg",

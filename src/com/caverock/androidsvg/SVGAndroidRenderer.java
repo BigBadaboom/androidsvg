@@ -5,12 +5,15 @@ import java.util.Iterator;
 import java.util.Stack;
 
 import android.graphics.Canvas;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.util.Log;
 
+import com.caverock.androidsvg.SVG.AspectRatioRule;
+import com.caverock.androidsvg.SVG.Box;
 import com.caverock.androidsvg.SVG.Style;
 
 
@@ -18,19 +21,24 @@ public class SVGAndroidRenderer
 {
    private static final String  TAG = "SVGAndroidRenderer";
 
-   private int     dpi = 90;    // dots per inch. Needed for accurate conversion of length values that have real world units, such as "cm".
+   private Canvas  canvas;
+   private float   dpi = 90;    // dots per inch. Needed for accurate conversion of length values that have real world units, such as "cm".
 
    // Renderer state
-   private Canvas  canvas;
-   private Paint   fillPaint;
-   private Paint   strokePaint;
+   private Paint    fillPaint;
+   private Paint    strokePaint;
+   private SVG.Box  viewPort;
+   private SVG.Box  viewBox;
 
-   private Stack<Paint> paintStack = new Stack<Paint>();   // So we can save/restore style when dealing with nested objects
+   private Stack<Paint>   paintStack = new Stack<Paint>();       // So we can save/restore style when dealing with nested objects
+   private Stack<SVG.Box> viewBoxStack = new Stack<SVG.Box>();   // So we can know what a value of "N%" represents.
 
 
-   public SVGAndroidRenderer(Canvas canvas)
+   public SVGAndroidRenderer(Canvas canvas, SVG.Box viewPort, float dpi)
    {
       this.canvas = canvas;
+      this.viewPort = viewPort;
+      this.dpi = dpi;
 
       fillPaint = new Paint();
       fillPaint.setStyle(Paint.Style.FILL);
@@ -39,6 +47,31 @@ public class SVGAndroidRenderer
       strokePaint = new Paint();
       strokePaint.setStyle(Paint.Style.STROKE);
       strokePaint.setTypeface(Typeface.DEFAULT);
+   }
+
+
+   public float  getDPI()
+   {
+      return dpi;
+   }
+
+
+   public float  getCurrentFontSize()
+   {
+      return fillPaint.getTextSize();
+   }
+
+
+   public float  getCurrentFontXHeight()
+   {
+      // The CSS3 spec says to use 0.5em if there is no way to determine true x-height;
+      return fillPaint.getTextSize() / 2f;
+   }
+
+
+   public SVG.Box getCurrentViewBox()
+   {
+      return viewBox;
    }
 
 
@@ -99,6 +132,11 @@ public class SVGAndroidRenderer
    public void render(SVG.Svg obj)
    {
 /**/Log.d(TAG, "Svg render");
+
+      if (obj.viewBox != null) {
+         canvas.concat(calculateViewBoxTransform(obj.viewBox));
+      }
+      
       for (SVG.SvgObject child: obj.children) {
          render(child);
       }
@@ -124,20 +162,25 @@ public class SVGAndroidRenderer
    {
 /**/Log.d(TAG, "Use render");
 
+      // Locate the referenced object
+      SVG.SvgObject  ref = obj.document.resolveIRI(obj.href);
+      if (ref == null)
+         return;
+
       if (obj.transform != null) {
          canvas.concat(obj.transform);
       }
 
-      // TODO handle x,y attr - concat to transform
+      // We handle the x,y,width,height attributes by adjusting the transform
+      Matrix m = new Matrix();
+      float _x = (obj.x != null) ? obj.x.floatValueX(this) : 0f;
+      float _y = (obj.y != null) ? obj.y.floatValueY(this) : 0f;
+      m.preTranslate(_x, _y);
+      canvas.concat(m);
 
       updatePaintsFromStyle(obj.style);
 
-      // Locate the referenced object
-      SVG.SvgObject  ref = obj.document.resolveIRI(obj.href);
-/**/Log.d(TAG, "Use: ref="+ref);
-      if (ref != null) {
-         render(ref);
-      }
+      render(ref);
    }
 
 
@@ -174,34 +217,34 @@ public class SVGAndroidRenderer
          _rx = 0;
          _ry = 0;
       } else if (obj.rx == null) {
-         _rx = _ry = obj.ry.floatValue(dpi);
+         _rx = _ry = obj.ry.floatValueY(this);
       } else if (obj.ry == null) {
-         _rx = _ry = obj.rx.floatValue(dpi);
+         _rx = _ry = obj.rx.floatValueX(this);
       } else {
-         _rx = obj.rx.floatValue(dpi);
-         _ry = obj.ry.floatValue(dpi);
+         _rx = obj.rx.floatValueX(this);
+         _ry = obj.ry.floatValueY(this);
       }
-      _rx = Math.min(_rx, obj.width.floatValue(dpi) / 2f);
-      _ry = Math.min(_ry, obj.height.floatValue(dpi) / 2f);
-      _x = (obj.x != null) ? obj.x.floatValue(dpi) : 0f;
-      _y = (obj.y != null) ? obj.y.floatValue(dpi) : 0f;
+      _rx = Math.min(_rx, obj.width.floatValueX(this) / 2f);
+      _ry = Math.min(_ry, obj.height.floatValueY(this) / 2f);
+      _x = (obj.x != null) ? obj.x.floatValueX(this) : 0f;
+      _y = (obj.y != null) ? obj.y.floatValueY(this) : 0f;
 
       updatePaintsFromStyle(obj.style);
 
       if (obj.style.hasFill)
       {
          if (_rx == 0f || _ry == 0f) {
-            canvas.drawRect(_x, _y, _x + obj.width.floatValue(dpi), _y + obj.height.floatValue(dpi), fillPaint);
+            canvas.drawRect(_x, _y, _x + obj.width.floatValueX(this), _y + obj.height.floatValueY(this), fillPaint);
          } else {
-            canvas.drawRoundRect(new RectF(_x, _y, _x + obj.width.floatValue(dpi), _y + obj.height.floatValue(dpi)), _rx, _ry, fillPaint);
+            canvas.drawRoundRect(new RectF(_x, _y, _x + obj.width.floatValueX(this), _y + obj.height.floatValueY(this)), _rx, _ry, fillPaint);
          }
       }
       if (obj.style.hasStroke)
       {
          if (_rx == 0f || _ry == 0f) {
-            canvas.drawRect(_x, _y, _x + obj.width.floatValue(dpi), _y + obj.height.floatValue(dpi), strokePaint);
+            canvas.drawRect(_x, _y, _x + obj.width.floatValueX(this), _y + obj.height.floatValueY(this), strokePaint);
          } else {
-            canvas.drawRoundRect(new RectF(_x, _y, _x + obj.width.floatValue(dpi), _y + obj.height.floatValue(dpi)), _rx, _ry, strokePaint);
+            canvas.drawRoundRect(new RectF(_x, _y, _x + obj.width.floatValueX(this), _y + obj.height.floatValueY(this)), _rx, _ry, strokePaint);
          }
       }
 
@@ -218,9 +261,9 @@ public class SVGAndroidRenderer
          canvas.concat(obj.transform);
 
       float _cx, _cy, _r;
-      _cx = (obj.cx != null) ? obj.cx.floatValue(dpi) : 0f;
-      _cy = (obj.cy != null) ? obj.cy.floatValue(dpi) : 0f;
-      _r = obj.r.floatValue(dpi);
+      _cx = (obj.cx != null) ? obj.cx.floatValueX(this) : 0f;
+      _cy = (obj.cy != null) ? obj.cy.floatValueY(this) : 0f;
+      _r = obj.r.floatValueX(this);
 
       updatePaintsFromStyle(obj.style);
 
@@ -244,10 +287,10 @@ public class SVGAndroidRenderer
          canvas.concat(obj.transform);
 
       float _cx, _cy, _rx, _ry;
-      _cx = (obj.cx != null) ? obj.cx.floatValue(dpi) : 0f;
-      _cy = (obj.cy != null) ? obj.cy.floatValue(dpi) : 0f;
-      _rx = obj.rx.floatValue(dpi);
-      _ry = obj.ry.floatValue(dpi);
+      _cx = (obj.cx != null) ? obj.cx.floatValueX(this) : 0f;
+      _cy = (obj.cy != null) ? obj.cy.floatValueY(this) : 0f;
+      _rx = obj.rx.floatValueX(this);
+      _ry = obj.ry.floatValueY(this);
       RectF oval = new RectF(_cx-_rx, _cy-_ry, _cx+_rx, _cy+_ry);
 
       updatePaintsFromStyle(obj.style);
@@ -273,10 +316,10 @@ public class SVGAndroidRenderer
          canvas.concat(obj.transform);
 
       float _x1, _y1, _x2, _y2;
-      _x1 = (obj.x1 != null) ? obj.x1.floatValue(dpi) : 0f;
-      _y1 = (obj.y1 != null) ? obj.y1.floatValue(dpi) : 0f;
-      _x2 = (obj.x2 != null) ? obj.x2.floatValue(dpi) : 0f;
-      _y2 = (obj.y2 != null) ? obj.y2.floatValue(dpi) : 0f;
+      _x1 = (obj.x1 != null) ? obj.x1.floatValueX(this) : 0f;
+      _y1 = (obj.y1 != null) ? obj.y1.floatValueY(this) : 0f;
+      _x2 = (obj.x2 != null) ? obj.x2.floatValueX(this) : 0f;
+      _y2 = (obj.y2 != null) ? obj.y2.floatValueY(this) : 0f;
 
       updatePaintsFromStyle(obj.style);
 
@@ -362,8 +405,8 @@ public class SVGAndroidRenderer
       updatePaintsFromStyle(obj.style);
 
       // Get the first coordinate pair from the lists in the x and y properties.
-      float  x = (obj.x == null || obj.x.size() == 0) ? 0f : obj.x.remove(0).floatValue(dpi);
-      float  y = (obj.y == null || obj.y.size() == 0) ? 0f : obj.y.remove(0).floatValue(dpi);
+      float  x = (obj.x == null || obj.x.size() == 0) ? 0f : obj.x.remove(0).floatValueX(this);
+      float  y = (obj.y == null || obj.y.size() == 0) ? 0f : obj.y.remove(0).floatValueY(this);
       TextRenderContext currentTextPosition = new TextRenderContext(x, y);
 
       boolean isFirstNode = true;
@@ -479,6 +522,84 @@ public class SVGAndroidRenderer
    // ==============================================================================
 
 
+   /*
+    * Calculate the transform required to fit the supplied viewBox into the current viewPort.
+    * See spec section 7.8 for an explanation of how this works.
+    * 
+    * aspectRatioRule determines where the graphic is placed in the viewPort when aspect ration
+    *    is kept.  xMin means left justified, xMid is centred, xMax is right justified etc.
+    * slice determines whether we see the whole image or not. True fill the whole viewport.
+    *    If slice is false, the image will be "letter-boxed". 
+    */
+   private Matrix calculateViewBoxTransform(Box viewBox, AspectRatioRule aspectRule, boolean slice)
+   {
+      Matrix m = new Matrix();
+
+      float  xScale = viewPort.width / viewBox.width;
+      float  yScale = viewPort.height / viewBox.height;
+      float  xOffset = -viewBox.minX;
+      float  yOffset = -viewBox.minY;
+
+      // 'none' means scale both dimensions to fit the viewport
+      if (aspectRule == AspectRatioRule.none)
+      {
+         m.preScale(xScale, yScale);
+         m.preTranslate(xOffset, yOffset);
+         return m;
+      }
+
+      // Otherwise, the aspect ratio of the image is kept.
+      // What scale are we going to use?
+      float  aspectScale = (slice) ? Math.max(xScale,  yScale) : Math.min(xScale,  yScale);
+      // What size will the image end up being? 
+      float  imageW = viewPort.width / aspectScale;
+      float  imageH = viewPort.height / aspectScale;
+      // Determine final X position
+      switch (aspectRule)
+      {
+         case xMidYMin:
+         case xMidYMid:
+         case xMidYMax:
+            xOffset -= (viewBox.width - imageW) / 2;
+            break;
+         case xMaxYMin:
+         case xMaxYMid:
+         case xMaxYMax:
+            xOffset -= (viewBox.width - imageW);
+            break;
+         default:
+            // nothing to do 
+            break;
+      }
+      // Determine final Y position
+      switch (aspectRule)
+      {
+         case xMinYMid:
+         case xMidYMid:
+         case xMaxYMid:
+            yOffset -= (viewBox.height - imageH) / 2;
+            break;
+         case xMinYMax:
+         case xMidYMax:
+         case xMaxYMax:
+            yOffset -= (viewBox.height - imageH);
+            break;
+         default:
+            // nothing to do 
+            break;
+      }
+/**/Log.d(TAG, "calculateViewBoxTransform "+aspectScale+" "+xOffset+" "+yOffset);
+      m.preScale(aspectScale, aspectScale);
+      m.preTranslate(xOffset, yOffset);
+      return m;
+   }
+
+   private Matrix calculateViewBoxTransform(Box viewBox)
+   {
+      return calculateViewBoxTransform(viewBox, AspectRatioRule.xMidYMid, false);
+   }
+
+
    private void updatePaintsFromStyle(Style style)
    {
       if ((style.specifiedFlags & SVG.SPECIFIED_FILL) != 0 ||
@@ -510,7 +631,7 @@ public class SVGAndroidRenderer
 
       if ((style.specifiedFlags & SVG.SPECIFIED_STROKE_WIDTH) != 0)
       {
-         strokePaint.setStrokeWidth(style.strokeWidth.floatValue(dpi));
+         strokePaint.setStrokeWidth(style.strokeWidth.floatValueX(this));
       }
 
       if ((style.specifiedFlags & SVG.SPECIFIED_STROKE_LINECAP) != 0)
@@ -543,8 +664,8 @@ public class SVGAndroidRenderer
 
       if ((style.specifiedFlags & SVG.SPECIFIED_FONT_SIZE) != 0)
       {
-         fillPaint.setTextSize(style.fontSize.floatValue(dpi));
-         strokePaint.setTextSize(style.fontSize.floatValue(dpi));
+         fillPaint.setTextSize(style.fontSize.floatValueY(this));
+         strokePaint.setTextSize(style.fontSize.floatValueY(this));
       }
 
       if ((style.specifiedFlags & SVG.SPECIFIED_FONT_WEIGHT) != 0 ||

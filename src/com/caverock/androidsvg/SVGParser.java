@@ -1073,7 +1073,7 @@ dumpNode(svgDocument.getRootElement(), "");
    }
 
 
-   private void  parseAttributesTransform(SVG.Transformable obj, Attributes attributes) throws SAXException
+   private void  parseAttributesTransform(SVG.HasTransform obj, Attributes attributes) throws SAXException
    {
 //Log.d(TAG, "parseAttributesTransform");
       for (int i=0; i<attributes.getLength(); i++)
@@ -1174,7 +1174,7 @@ dumpNode(svgDocument.getRootElement(), "");
       if (val.length() == 0)
          throw new SAXException("Invalid length value (empty string)");
       int   end = val.length();
-      Unit  unit = null;
+      Unit  unit = Unit.px;
       char  lastChar = val.charAt(end-1);
 
       if (lastChar == '%') {
@@ -1184,7 +1184,7 @@ dumpNode(svgDocument.getRootElement(), "");
          String unitStr = val.substring(end-2);
          if ("px|em|ex|in|cm|mm|pt|pc".indexOf(unitStr) >= 0) {
            end -= 2;
-           unit = Unit.fromString(unitStr);
+           unit = Unit.valueOf(unitStr);
          } else {
             throw new SAXException("Invalid length unit specifier: "+val);
          }
@@ -1192,8 +1192,6 @@ dumpNode(svgDocument.getRootElement(), "");
       try
       {
          float scalar = Float.parseFloat(val.substring(0, end));
-         if (unit == null)
-            unit = Unit.none;
          return new Length(scalar, unit);
       }
       catch (NumberFormatException e)
@@ -1318,12 +1316,15 @@ dumpNode(svgDocument.getRootElement(), "");
       ListTokeniser tok = new ListTokeniser(val);
       try
       {
-         SVG.Box b = new SVG.Box();
-         b.minX = Float.parseFloat(tok.nextToken());
-         b.minY = Float.parseFloat(tok.nextToken());
-         b.width = Float.parseFloat(tok.nextToken());
-         b.height = Float.parseFloat(tok.nextToken());
-         return b;
+         float minX = Float.parseFloat(tok.nextToken());
+         float minY = Float.parseFloat(tok.nextToken());
+         float width = Float.parseFloat(tok.nextToken());
+         float height = Float.parseFloat(tok.nextToken());
+         if (width < 0)
+            throw new SAXException("Invalid viewBox. width cannot be negative");
+         if (height < 0)
+            throw new SAXException("Invalid viewBox. height cannot be negative");
+         return new SVG.Box(minX, minY, width, height);
       }
       catch (Exception e)
       {

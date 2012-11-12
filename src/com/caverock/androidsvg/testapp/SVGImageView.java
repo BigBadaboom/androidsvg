@@ -16,14 +16,11 @@ import com.caverock.androidsvg.SVGParser;
 
 public class SVGImageView extends View
 {
-   private int      width = 0;
-   private int      height = 0;
+   private int      width;
+   private int      height;
+   private SVG      svg = null;
    private Bitmap   bm = null;
    private Paint    paint = new Paint();
-
-   private SVG      svg = null;
-   private Picture  picture = null;
-
 
 
    public SVGImageView(Context context, AttributeSet attrs)
@@ -42,41 +39,6 @@ public class SVGImageView extends View
    @Override
    protected void onDraw(Canvas canvas)
    {
-/*
-      RectF bounds = svg.getElementById("bounds").getBoundingBox();
-      if (bounds == null) {
-         bounds = svg.getLimits();
-         if (bounds == null)
-            throw new RuntimeException("SVG resource is missing a bounds or limits record");
-      }
-      // Scale SVG to fit bitmap
-      float xscale = (float)width / (bounds.right - bounds.left);
-      float yscale = (float)height / (bounds.bottom - bounds.top);
-      // Shift to display in the right place. Bounds minx and miny may not be 0.
-      float xbase = xscale * bounds.left;
-      float ybase = yscale * bounds.top;
-      // We render SVG into a bitmap, not directly to the View canvas
-      if (this.bm == null) {
-          this.bm = Bitmap.createBitmap(this.width, this.height, Bitmap.Config.ARGB_8888);
-      }
-      Canvas bmcanvas = new Canvas(this.bm);
-//Log.d("foo", "xscale="+xscale+" yscale="+yscale);
-      bmcanvas.scale(xscale, yscale);
-//Log.d("foo", "xbase="+xbase+" ybase="+ybase);
-//Log.d("onDraw", "limits = "+limits.left+","+limits.top+" "+limits.right+","+limits.bottom);
-      // Render SVG
-//Log.d("foo", "reject="+canvas.quickReject(bounds, EdgeType.AA));
-      bmcanvas.drawPicture(picture);
-      canvas.drawBitmap(bm, 0, 0, paint);
-*/
-      if (this.bm == null) {
-          this.bm = Bitmap.createBitmap(this.width, this.height, Bitmap.Config.ARGB_8888);
-      }
-      Canvas bmcanvas = new Canvas(this.bm);
-      bmcanvas.drawRGB(255, 255, 255);  // Clear bg to white
-      if (this.picture != null) {
-         bmcanvas.drawPicture(picture);
-      }
       canvas.drawBitmap(bm, 0, 0, paint);
    }
 
@@ -86,9 +48,26 @@ public class SVGImageView extends View
    {
       super.onLayout(changed, left, top, right, bottom);
       
+      if (this.svg == null)
+         return;
+
       this.width = right - left;
       this.height = bottom - top;
 /**/Log.d("onLayout", "width = "+width+" height="+height);
+      rebuildBitmap();
+   }
+
+
+   private void rebuildBitmap()
+   {
+      if (this.width == 0)
+         return;
+      Bitmap  newBM = Bitmap.createBitmap(this.width, this.height, Bitmap.Config.ARGB_8888);
+      Canvas  bmcanvas = new Canvas(newBM);
+      bmcanvas.drawRGB(255, 255, 255);  // Clear bg to white
+      if (this.svg != null)
+         bmcanvas.drawPicture(this.svg.getPicture(width, height, getResources().getDisplayMetrics().xdpi));
+      this.bm = newBM;
    }
 
 
@@ -98,7 +77,7 @@ public class SVGImageView extends View
       try
       {
          this.svg = SVG.getFromAsset(getContext().getAssets(), svgPath);
-         this.picture = this.svg.getPicture();
+         rebuildBitmap();
          invalidate();
       }
       catch (Exception e)
@@ -107,7 +86,8 @@ public class SVGImageView extends View
          Log.e("SVGImageView", e.toString());
          e.printStackTrace();
 
-         this.picture = null;
+         this.svg = null;
+         rebuildBitmap();
          invalidate();
       }
    }
@@ -117,7 +97,6 @@ public class SVGImageView extends View
       try
       {
          this.svg = SVG.getFromResource(this.getContext(), resId);
-         this.picture = this.svg.getPicture();
          invalidate();
       }
       catch (Exception e)
@@ -125,7 +104,7 @@ public class SVGImageView extends View
          Log.e("SVGImageView", e.getMessage());
          e.printStackTrace();
 
-         this.picture = null;
+         this.svg = null;
          invalidate();
       }
    }

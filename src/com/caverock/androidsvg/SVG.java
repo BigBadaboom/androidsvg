@@ -6,6 +6,8 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.xml.sax.SAXParseException;
+
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.graphics.Canvas;
@@ -15,6 +17,10 @@ import android.graphics.Picture;
 public class SVG
 {
    private static final String  TAG = "AndroidSVG";
+
+   private static final float   DEFAULT_DPI = 90;
+   private static final int     DEFAULT_PICTURE_WIDTH = 512;
+   private static final int     DEFAULT_PICTURE_HEIGHT = 512;
    
    private Svg  rootElement = null;
 
@@ -28,24 +34,23 @@ public class SVG
       mm,
       pt,
       pc,
-      percent,
-      none,
-      error;
+      percent
+   }
 
-      public static Unit  fromString(String str)
-      {
-         if (str.equals("%"))
-            return percent;
-         try
-         {
-            return valueOf(str);
-         } 
-         catch (Exception e)
-         {
-            return error;
-         }
-      }
-}
+   public enum AspectRatioRule
+   {
+      none,
+      xMinYMin,
+      xMidYMin,
+      xMaxYMin,
+      xMinYMid,
+      xMidYMid,
+      xMaxYMid,
+      xMinYMax,
+      xMidYMax,
+      xMaxYMax
+   }
+
 
    protected SVG()
    {
@@ -101,6 +106,14 @@ public class SVG
    public static class  Box
    {
       public float  minX, minY, width, height;
+
+      public Box(float minX, float minY, float width, float height)
+      {
+         this.minX = minX;
+         this.minY = minY;
+         this.width = width;
+         this.height = height;
+      }
    }
 
 
@@ -221,7 +234,7 @@ public class SVG
    protected static class Length
    {
       float  value = 0;;
-      Unit   unit = Unit.none;
+      Unit   unit = Unit.px;
 
       public Length(float value, Unit unit)
       {
@@ -232,7 +245,7 @@ public class SVG
       public Length(float value)
       {
          this.value = value;
-         this.unit = Unit.none;
+         this.unit = Unit.px;
       }
 
       public float floatValue()
@@ -240,9 +253,64 @@ public class SVG
          return value;
       }
 
-      public float floatValue(int dpi)
+      public float floatValueX(SVGAndroidRenderer renderer)
       {
-         return value;   // FIXME
+         switch (unit)
+         {
+            case px:
+               return value;
+            case em:
+               return value * renderer.getCurrentFontSize();
+            case ex:
+               return value * renderer.getCurrentFontXHeight();
+            case in:
+               return value * renderer.getDPI();
+            case cm:
+               return value * renderer.getDPI() / 2.54f;
+            case mm:
+               return value * renderer.getDPI() / 25.4f;
+            case pt: // 1 point = 1/72 in
+               return value * renderer.getDPI() / 72f;
+            case pc: // 1 pica = 1/6 in
+               return value * renderer.getDPI() / 6f;
+            case percent:
+               return value * renderer.getCurrentViewBox().width / 100f;
+            default:
+               return value;
+         }
+      }
+
+      public float floatValueY(SVGAndroidRenderer renderer)
+      {
+         if (unit == Unit.percent)
+            return value * renderer.getCurrentViewBox().height / 100f;
+         return floatValueX(renderer);
+      }
+
+      // For situations (like calculating the initial viewport) when we can only rely on
+      // physical real world units.
+      public float floatValue(float dpi)
+      {
+         switch (unit)
+         {
+            case px:
+               return value;
+            case in:
+               return value * dpi;
+            case cm:
+               return value * dpi / 2.54f;
+            case mm:
+               return value * dpi / 25.4f;
+            case pt: // 1 point = 1/72 in
+               return value * dpi / 72f;
+            case pc: // 1 pica = 1/6 in
+               return value * dpi / 6f;
+            case em:
+            case ex:
+            case percent:
+            default:
+               return value;
+         }
       }
 
       public boolean isZero()
@@ -290,21 +358,35 @@ public class SVG
       }
    }
 
-   protected static class Svg extends SvgContainer
+
+   protected interface HasViewBox
+   {
+      public Box  getViewBox();
+      public void setViewBox(Box viewBox);
+   }
+
+
+   protected static class Svg extends SvgContainer implements HasViewBox
    {
       public Length  width;
       public Length  height;
       public Box     viewBox;
+
+      @Override
+      public Box  getViewBox()            { return this.viewBox; }
+      @Override
+      public void setViewBox(Box viewBox) { this.viewBox = viewBox; }
    }
 
-   protected interface Transformable
+
+   protected interface HasTransform
    {
       public void setTransform(Matrix matrix);
    }
 
 
    // An SVG element that can contain other elements.
-   protected static class Group extends SvgContainer implements Transformable
+   protected static class Group extends SvgContainer implements HasTransform
    {
       public Matrix transform;
 
@@ -322,7 +404,7 @@ public class SVG
 
    // One of the element types that can cause graphics to be drawn onto the target canvas.
    // Specifically: ‘circle’, ‘ellipse’, ‘image’, ‘line’, ‘path’, ‘polygon’, ‘polyline’, ‘rect’, ‘text’ and ‘use’.
-   protected static abstract class GraphicsElement extends SvgElement implements Transformable
+   protected static abstract class GraphicsElement extends SvgElement implements HasTransform
    {
       public Matrix transform;
 
@@ -403,7 +485,7 @@ public class SVG
    }
 
 
-   protected static class Text extends TextContainer implements Transformable
+   protected static class Text extends TextContainer implements HasTransform
    {
       public Matrix transform;
 
@@ -442,17 +524,59 @@ public class SVG
    //===============================================================================
    // SVG document rendering
 
+
    public Picture  getPicture()
    {
+      // Determine the initial viewport. See SVG spec section 7.2.
+      Length  width = rootElement.width;
+      if (width != null)
+      {
+         float w = width.floatValue(DEFAULT_DPI);
+         float h;
+         Box  rootViewBox = rootElement.viewBox;
+         
+         if (rootViewBox != null) {
+            h = w * rootViewBox.height / rootViewBox.width;
+         } else {
+            Length  height = rootElement.height;
+            if (height != null) {
+               h = height.floatValue(DEFAULT_DPI);
+            } else {
+               h = w;
+            }
+         }
+         return getPicture( (int) Math.ceil(w), (int) Math.ceil(h) );
+      }
+      else
+      {
+         return getPicture(DEFAULT_PICTURE_WIDTH, DEFAULT_PICTURE_HEIGHT, DEFAULT_DPI);
+      }
+   }
+
+
+   public Picture  getPicture(int widthInPixels, int heightInPixels)
+   {
+      return getPicture(widthInPixels, heightInPixels, DEFAULT_DPI);
+   }
+
+
+   public Picture  getPicture(int widthInPixels, int heightInPixels, float dpi)
+   {
       Picture             picture = new Picture();
-      Canvas              canvas = picture.beginRecording(1000, 1000);  // FIXME
-      SVGAndroidRenderer  renderer= new SVGAndroidRenderer(canvas);
+      Canvas              canvas = picture.beginRecording(widthInPixels, heightInPixels);
+
+      Box                 viewPort = new Box(0f, 0f, (float) widthInPixels, (float) heightInPixels);
+      SVGAndroidRenderer  renderer= new SVGAndroidRenderer(canvas, viewPort, dpi);
 
       renderer.render(rootElement);
 
       picture.endRecording();
       return picture;
    }
+
+
+   //===============================================================================
+   // Other document utility functions
 
 
    public SvgObject  resolveIRI(String iri)
