@@ -65,8 +65,10 @@ public class SVGImageView extends View
       Bitmap  newBM = Bitmap.createBitmap(this.width, this.height, Bitmap.Config.ARGB_8888);
       Canvas  bmcanvas = new Canvas(newBM);
       bmcanvas.drawRGB(255, 255, 255);  // Clear bg to white
-      if (this.svg != null)
+      if (this.svg != null) {
+         svg.ensureRootViewBox();
          bmcanvas.drawPicture(this.svg.getPicture(width, height, getResources().getDisplayMetrics().xdpi));
+      }
       this.bm = newBM;
    }
 

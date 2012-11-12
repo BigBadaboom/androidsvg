@@ -620,4 +620,34 @@ public class SVG
       return null;
    }
 
+
+   /**
+    * Ensure that the root <svg> element has a viewBox.
+    * If you want your SVG image to scale properly to your canvas, the renderer
+    * needs to know how much to scale it.  It works this out from the viewPort
+    * you pass to the renderer combined with the viewBox attribute of the root
+    * element.  Some files are missing this viewBox.  When that is the case, the
+    * renderer will just draw the image at 1:1 scale.
+    * 
+    * When called, this method will attempt to generate a suitable viewBox if one
+    * is missing.  It does this by using the width and height attributes in the
+    * root <svg> element.
+    * 
+    * If those are also missing, then nothing is done and the image will not be
+    * scaled when rendered.  In the future, we may add code to go through the
+    * image and attempt to work out the bounds. But thats a job for another day.
+    */
+   public void  ensureRootViewBox()
+   {
+      if (rootElement.viewBox != null)
+         return;
+      if (rootElement.width != null && rootElement.height != null)
+      {
+         float  w = rootElement.width.floatValue(DEFAULT_DPI);
+         float  h = rootElement.height.floatValue(DEFAULT_DPI);
+         rootElement.setViewBox(new SVG.Box(0,0, w,h));
+      }
+   }
+
+
 }
