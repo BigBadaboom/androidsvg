@@ -1,0 +1,15 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="12cm" height="3cm" viewBox="0 0 1200 300" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <desc>DashOffset test</desc>
+
+  <rect x="0" y="0" width="1200" height="300"
+         fill="none" stroke="blue" stroke-width="3"/>
+  <g stroke="red" stroke-width="40" stroke-dasharray="100,20">
+    <path d="M300 50 L900 50" stroke-dashoffset="-50" />
+    <path d="M300 100 L900 100" stroke-dashoffset="0" />
+    <path d="M300 150 L900 150" stroke-dashoffset="50" />
+    <path d="M300 200 L900 200" stroke-dashoffset="100" />
+    <path d="M300 250 L900 250" stroke-dashoffset="150" />
+  </g>
+</svg>
