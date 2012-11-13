@@ -1,10 +1,10 @@
 package com.caverock.androidsvg;
 
 
-import java.util.Iterator;
 import java.util.Stack;
 
 import android.graphics.Canvas;
+import android.graphics.DashPathEffect;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
@@ -714,6 +714,50 @@ public class SVGAndroidRenderer
                break;
             default:
                break;
+         }
+      }
+
+      if ((style.specifiedFlags & SVG.SPECIFIED_STROKE_DASHARRAY) != 0)
+      {
+         state.style.strokeDashArray = style.strokeDashArray;
+      }
+
+      if ((style.specifiedFlags & SVG.SPECIFIED_STROKE_DASHOFFSET) != 0)
+      {
+         state.style.strokeDashOffset = style.strokeDashOffset;
+      }
+
+      if ((style.specifiedFlags & SVG.SPECIFIED_STROKE_DASHARRAY) != 0 ||
+          (style.specifiedFlags & SVG.SPECIFIED_STROKE_DASHOFFSET) != 0)
+      {
+         // Either the dash array or dash offset has changed.
+         if (state.style.strokeDashArray == null)
+         {
+            state.strokePaint.setPathEffect(null);
+         }
+         else
+         {
+            float  intervalSum = 0f;
+            int    n = state.style.strokeDashArray.length;
+            // SVG dash arrays can be odd length, whereas Android dash arrays must have an even length.
+            // So we solve the problem by doubling the array length.
+            int    arrayLen = (n % 2==0) ? n : n*2;
+            float[] intervals = new float[arrayLen];
+            for (int i=0; i<arrayLen; i++) {
+               intervals[i] = state.style.strokeDashArray[i % n].floatValue(this);
+               intervalSum += intervals[i];
+            }
+            if (intervalSum == 0f) {
+               state.strokePaint.setPathEffect(null);
+            } else {
+               float offset = state.style.strokeDashOffset.floatValue(this);
+               if (offset < 0) {
+                  // SVG offsets can be negative. Not sure if Android ones can be.
+                  // Just in case we will convert it.
+                  offset = intervalSum + (offset % intervalSum);
+               }
+               state.strokePaint.setPathEffect( new DashPathEffect(intervals, offset) );
+            }
          }
       }
 

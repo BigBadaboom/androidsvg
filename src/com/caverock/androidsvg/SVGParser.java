@@ -15,6 +15,7 @@ import javax.xml.parsers.SAXParserFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
 
@@ -85,6 +86,8 @@ public class SVGParser extends DefaultHandler
       r,
       rx, ry,
       stroke,
+      stroke_dasharray,
+      stroke_dashoffset,
       //stroke_fill,
       stroke_linecap,
       stroke_linejoin,
@@ -1111,6 +1114,19 @@ dumpNode(svgDocument.getRootElement(), "");
                obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE_LINEJOIN;
                break;
 
+            case stroke_dasharray:
+               if ("none".equals(val))
+                  obj.style.strokeDashArray = null;
+               else
+                  obj.style.strokeDashArray = parseStrokeDashArray(val);
+               obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE_DASHARRAY;
+               break;
+
+            case stroke_dashoffset:
+               obj.style.strokeDashOffset = parseLength(val);
+               obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE_DASHOFFSET;
+               break;
+
             case opacity:
                obj.style.opacity = parseFloat(val);
                obj.style.specifiedFlags |= SVG.SPECIFIED_OPACITY;
@@ -1598,6 +1614,31 @@ dumpNode(svgDocument.getRootElement(), "");
       if ("bevel".equals(val))
          return Style.LineJoin.Bevel;
       throw new SAXException("Invalid stroke-linejoin property: "+val);
+   }
+
+
+   // Parse stroke-dasharray
+   private Length[]  parseStrokeDashArray(String val) throws SAXException
+   {
+/**/Log.d(TAG, "parseStrokeDashArray: "+val);
+
+      ListTokeniser tok = new ListTokeniser(val);
+      int n = tok.countTokens();
+      Length[] dashes = new Length[n]; 
+      for (int i=0; i<n; i++) {
+         try
+         {
+            dashes[i] = parseLength(tok.nextToken());
+         }
+         catch (SAXParseException e)
+         {
+            throw new SAXException("Invalid stroke-dasharray property: "+val);
+         }
+         if (dashes[i].isNegative()) {
+            throw new SAXException("Invalid stroke-dasharray: dash segemnts cannot be negative");
+         }
+      }
+      return dashes;
    }
 
 

@@ -6,8 +6,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.xml.sax.SAXParseException;
-
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.graphics.Canvas;
@@ -120,21 +118,23 @@ public class SVG
    }
 
 
-   public static final long SPECIFIED_FILL            = (1<<0);
-   public static final long SPECIFIED_FILL_RULE       = (1<<1);
-   public static final long SPECIFIED_FILL_OPACITY    = (1<<2);
-   public static final long SPECIFIED_STROKE          = (1<<3);
-   public static final long SPECIFIED_STROKE_OPACITY  = (1<<4);
-   public static final long SPECIFIED_STROKE_WIDTH    = (1<<5);
-   public static final long SPECIFIED_STROKE_LINECAP  = (1<<6);
-   public static final long SPECIFIED_STROKE_LINEJOIN = (1<<7);
-   public static final long SPECIFIED_OPACITY         = (1<<8);
-   public static final long SPECIFIED_FONT_FAMILY     = (1<<9);
-   public static final long SPECIFIED_FONT_SIZE       = (1<<10);
-   public static final long SPECIFIED_FONT_WEIGHT     = (1<<11);
-   public static final long SPECIFIED_FONT_STYLE      = (1<<12);
-   public static final long SPECIFIED_TEXT_DECORATION = (1<<13);
-   public static final long SPECIFIED_TEXT_ANCHOR     = (1<<14);
+   public static final long SPECIFIED_FILL              = (1<<0);
+   public static final long SPECIFIED_FILL_RULE         = (1<<1);
+   public static final long SPECIFIED_FILL_OPACITY      = (1<<2);
+   public static final long SPECIFIED_STROKE            = (1<<3);
+   public static final long SPECIFIED_STROKE_OPACITY    = (1<<4);
+   public static final long SPECIFIED_STROKE_WIDTH      = (1<<5);
+   public static final long SPECIFIED_STROKE_LINECAP    = (1<<6);
+   public static final long SPECIFIED_STROKE_LINEJOIN   = (1<<7);
+   public static final long SPECIFIED_STROKE_DASHARRAY  = (1<<8);
+   public static final long SPECIFIED_STROKE_DASHOFFSET = (1<<9);
+   public static final long SPECIFIED_OPACITY           = (1<<10);
+   public static final long SPECIFIED_FONT_FAMILY       = (1<<11);
+   public static final long SPECIFIED_FONT_SIZE         = (1<<12);
+   public static final long SPECIFIED_FONT_WEIGHT       = (1<<13);
+   public static final long SPECIFIED_FONT_STYLE        = (1<<14);
+   public static final long SPECIFIED_TEXT_DECORATION   = (1<<15);
+   public static final long SPECIFIED_TEXT_ANCHOR       = (1<<16);
 
    public static final long SPECIFIED_ALL = 0xffffffff;
 
@@ -142,19 +142,21 @@ public class SVG
    public static class  Style implements Cloneable
    {
       // Which properties have been explicity specified by this element
-      public long      specifiedFlags = 0;
+      public long       specifiedFlags = 0;
 
-      public SvgPaint  fill;
-      public FillRule  fillRule;
-      public Float     fillOpacity;
+      public SvgPaint   fill;
+      public FillRule   fillRule;
+      public Float      fillOpacity;
 
-      public SvgPaint  stroke;
-      public Float     strokeOpacity;
-      public Length    strokeWidth;
-      public LineCaps  strokeLineCap;
-      public LineJoin  strokeLineJoin;
+      public SvgPaint   stroke;
+      public Float      strokeOpacity;
+      public Length     strokeWidth;
+      public LineCaps   strokeLineCap;
+      public LineJoin   strokeLineJoin;
+      public Length[]   strokeDashArray;
+      public Length     strokeDashOffset;
 
-      public Float     opacity; // master opacity of both stroke and fill
+      public Float      opacity; // master opacity of both stroke and fill
 
       public String     fontFamily;
       public Length     fontSize;
@@ -211,6 +213,8 @@ public class SVG
          def.strokeWidth = new Length(1f);
          def.strokeLineCap = LineCaps.Butt;
          def.strokeLineJoin = LineJoin.Miter;
+         def.strokeDashArray = null;
+         def.strokeDashOffset = new Length(0f);
          def.opacity = 1f;
          def.fontFamily = null;
          def.fontSize = new Length(12, Unit.pt);
@@ -221,6 +225,21 @@ public class SVG
          return def;
       }
 
+      @Override
+      protected Object  clone()
+      {
+         Style obj;
+         try
+         {
+            obj = (Style) super.clone();
+            obj.strokeDashArray = (Length[]) strokeDashArray.clone();
+            return obj;
+         }
+         catch (CloneNotSupportedException e)
+         {
+            throw new InternalError(e.toString());
+         }
+      }
    }
 
 
