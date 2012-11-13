@@ -22,7 +22,7 @@ public class TestActivity extends Activity
    GestureDetector  gesture;
    Toast            currentToast;
 
-   String[] fileList = {"sample_11.4_linejoinb.svg",
+   String[] fileList = {"test_textanchor.svg",
                         "sample_5.6_Use01.svg",
                         "sample_6.4.svg",
                         "sample_7.3_InitialCoords.svg",
@@ -50,6 +50,7 @@ public class TestActivity extends Activity
                         "sample_11.3_fillrule-evenodd.svg",
                         "sample_11.4_linecapb.svg",
                         "sample_11.4_linejoinb.svg",
+                        "test_textanchor.svg",
                         "Android_robot.svg"};
    int  whichFile = 0;
 

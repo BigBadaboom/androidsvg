@@ -134,6 +134,7 @@ public class SVG
    public static final long SPECIFIED_FONT_WEIGHT     = (1<<11);
    public static final long SPECIFIED_FONT_STYLE      = (1<<12);
    public static final long SPECIFIED_TEXT_DECORATION = (1<<13);
+   public static final long SPECIFIED_TEXT_ANCHOR     = (1<<14);
 
    public static final long SPECIFIED_ALL = 0xffffffff;
 
@@ -155,11 +156,14 @@ public class SVG
 
       public Float     opacity; // master opacity of both stroke and fill
 
-      public String    fontFamily;
-      public Length    fontSize;
-      public String    fontWeight;
-      public String    fontStyle;
-      public String    textDecoration;
+      public String     fontFamily;
+      public Length     fontSize;
+      public String     fontWeight;
+      public FontStyle  fontStyle;
+      public String     textDecoration;
+
+      public TextAnchor  textAnchor;
+
 
       public enum FillRule
       {
@@ -180,6 +184,20 @@ public class SVG
          Round,
          Bevel
       }
+
+      public enum FontStyle
+      {
+         Normal,
+         Italic,
+         Oblique
+      }
+
+      public enum TextAnchor
+      {
+         Start,
+         Middle,
+         End
+      }
       
       public static Style  getDefaultStyle()
       {
@@ -197,8 +215,9 @@ public class SVG
          def.fontFamily = null;
          def.fontSize = new Length(12, Unit.pt);
          def.fontWeight = "normal";
-         def.fontStyle = "normal";
+         def.fontStyle = FontStyle.Normal;
          def.textDecoration = "none";
+         def.textAnchor = TextAnchor.Start;
          return def;
       }
 
@@ -522,7 +541,7 @@ public class SVG
       
       public String  toString()
       {
-         return this.getClass().getSimpleName() + " '"+text.trim()+"'";
+         return this.getClass().getSimpleName() + " '"+text+"'";
       }
    }
 

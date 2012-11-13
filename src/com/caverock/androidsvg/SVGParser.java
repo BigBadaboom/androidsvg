@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -59,6 +60,7 @@ public class SVGParser extends DefaultHandler
    private static final String  TAG_STOP           = "stop";
    private static final String  TAG_TEXT           = "text";
    private static final String  TAG_TEXTPATH       = "textPath";
+   private static final String  TAG_TREF           = "tref";
    private static final String  TAG_TSPAN          = "tspan";
    private static final String  TAG_USE            = "use";
 
@@ -89,6 +91,7 @@ public class SVGParser extends DefaultHandler
       stroke_opacity,
       stroke_width,
       //style,
+      text_anchor,
       text_decoration,
       transform,
       viewBox,
@@ -401,6 +404,10 @@ public class SVGParser extends DefaultHandler
    public void endElement(String uri, String localName, String qName) throws SAXException
    {
       super.endElement(uri, localName, qName);
+
+      if (localName.equalsIgnoreCase(TAG_TEXT)) {
+         collapseSpaces((SVG.Text) currentElement);
+      }
 
       if (localName.equalsIgnoreCase(TAG_SVG) ||
           localName.equalsIgnoreCase(TAG_DEFS) ||
@@ -923,6 +930,86 @@ dumpNode(svgDocument.getRootElement(), "");
    }
 
 
+   /*
+    * Collapse the spaces in a Text subtree using the normal HTML/XML rules.
+    */
+   private void collapseSpaces(SVG.Text textObj)
+   {
+      collapseSpaces(textObj, false,false);
+   }
+
+   private void  collapseSpaces(SVG.SvgObject obj, boolean isFirstNode, boolean isLastNode)
+   {
+      if (obj instanceof SVG.TextContainer)
+      {
+         SVG.TextContainer tspan = (SVG.TextContainer) obj; 
+
+         isFirstNode = true;
+         for (Iterator<SVG.SvgObject> iterator = tspan.children.iterator(); iterator.hasNext(); isFirstNode=false) {
+            SVG.SvgObject child = iterator.next();
+            collapseSpaces(child, isFirstNode, !iterator.hasNext());
+         }
+      }
+      else if  (obj instanceof SVG.TextSequence)
+      {
+         SVG.TextSequence tseq = (SVG.TextSequence) obj; 
+         tseq.text = trimmer(tseq.text, isFirstNode, isLastNode);
+      }
+      else if  (obj instanceof SVG.TRef)
+      {
+         // TODO
+      }
+   }
+
+   // Trim whitespace chars appropriately depending on where the node is
+   // relative to other text nodes.
+   private String trimmer(String str, boolean isFirstNode, boolean isLastNode)
+   {
+      int len = str.length();
+      int offset = 0;
+
+      if (len == 0)
+         return str;
+
+      char[] chars = str.toCharArray();
+
+      while (offset < len && chars[offset] <= ' ') {
+         offset++;
+      }
+      len -= offset;
+      while (len > 0 && chars[offset + len - 1] <= ' ') {
+         len--;
+      }
+
+      // Allow one space at the start if this wasn't the first node
+      if (len == 0)
+      {
+         if (!isFirstNode && !isLastNode)
+         {
+            chars[0] = ' ';
+            offset = 0;
+            len = 1;
+         }
+      }
+      else
+      {
+         if (offset > 0 && !isFirstNode)
+         {
+            chars[--offset] = ' ';
+            len++;
+         }
+         // Allow one space at the end if this wasn't the last node
+         if ((offset + len) < str.length() && !isLastNode)
+         {
+            chars[offset + len] = ' ';
+            len++;
+         }
+      }
+
+      return new String(chars, offset, len);
+   }
+
+
    //=========================================================================
    // <tspan> element
 
@@ -933,7 +1020,7 @@ dumpNode(svgDocument.getRootElement(), "");
       if (currentElement == null)
          throw new SAXException("Invalid document. Root element must be <svg>");
       if (!(currentElement instanceof SVG.TextContainer))
-         throw new SAXException("Invalid document. <tspan> elements are only valid inside <text> or <other <tspan>s.");
+         throw new SAXException("Invalid document. <tspan> elements are only valid inside <text> or other <tspan> elements.");
       SVG.TSpan  obj = new SVG.TSpan();
       obj.document = svgDocument;
       obj.parent = currentElement;
@@ -1052,6 +1139,11 @@ dumpNode(svgDocument.getRootElement(), "");
             case text_decoration:
                obj.style.textDecoration = parseTextDecoration(val);
                obj.style.specifiedFlags |= SVG.SPECIFIED_TEXT_DECORATION;
+               break;
+
+            case text_anchor:
+               obj.style.textAnchor = parseTextAnchor(val);
+               obj.style.specifiedFlags |= SVG.SPECIFIED_TEXT_ANCHOR;
                break;
 
             default:
@@ -1434,15 +1526,17 @@ dumpNode(svgDocument.getRootElement(), "");
 
 
    // Parse a font style keyword
-   private String  parseFontStyle(String val) throws SAXException
+   private Style.FontStyle  parseFontStyle(String val) throws SAXException
    {
 /**/Log.d(TAG, "parseFontStyle: "+val);
 
       val = val.toLowerCase();
       if ("normal".equals(val))
-         return val;
-      if ("italic".equals(val) || "oblique".equals(val))
-         return "italic";
+         return Style.FontStyle.Normal;
+      if ("italic".equals(val))
+         return Style.FontStyle.Italic;
+      if ("oblique".equals(val))
+         return Style.FontStyle.Oblique;
       throw new SAXException("Invalid font-style property: "+val);
    }
 
@@ -1504,6 +1598,22 @@ dumpNode(svgDocument.getRootElement(), "");
       if ("bevel".equals(val))
          return Style.LineJoin.Bevel;
       throw new SAXException("Invalid stroke-linejoin property: "+val);
+   }
+
+
+   // Parse a text anchor keyword
+   private Style.TextAnchor  parseTextAnchor(String val) throws SAXException
+   {
+/**/Log.d(TAG, "parseTextAnchor: "+val);
+
+      val = val.toLowerCase();
+      if ("start".equals(val))
+         return Style.TextAnchor.Start;
+      if ("middle".equals(val))
+         return Style.TextAnchor.Middle;
+      if ("end".equals(val))
+         return Style.TextAnchor.End;
+      throw new SAXException("Invalid text-anchor property: "+val);
    }
 
 

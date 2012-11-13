@@ -22,13 +22,13 @@
     <use stroke="black" stroke-width="70" class="thick" xlink:href="#line1" stroke-linecap="butt"/>
     <use stroke="#ffcccc" stroke-width="5" class="thin" xlink:href="#line1"/>
     <use xlink:href="#circles"/>
-    <text font-size="50" y="90">'butt' cap</text>
+    <text text-anchor="middle" font-size="50" y="90">'butt' cap</text>
   </g>
   <g transform="translate(600,75)">
     <use stroke="black" stroke-width="70" class="thick" xlink:href="#line1" stroke-linecap="round"/>
     <use stroke="#ffcccc" stroke-width="5" class="thin" xlink:href="#line1"/>
     <use xlink:href="#circles"/>
-    <text font-size="50" y="90">'round' cap</text>
+    <text text-anchor="middle" font-size="50" y="90">'round' cap</text>
   </g>
   <g transform="translate(1000,75)">
     <use stroke="black" stroke-width="70" class="thick" xlink:href="#line1" stroke-linecap="square"/>

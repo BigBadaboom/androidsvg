@@ -27,7 +27,7 @@
   <circle fill="none" stroke="#888888" stroke-width="2" class="EndPoint" cx="400" cy="200" r="10" />
   <circle fill="#888888" stroke="none" class="CtlPoint" cx="100" cy="100" r="10" />
   <circle fill="#888888" stroke="none" class="CtlPoint" cx="400" cy="100" r="10" />
-  <text font-size="22" font-family="Verdana" class="Label" x="250" y="275">M100,200 C100,100 400,100 400,200</text>
+  <text text-anchor="middle" font-size="22" font-family="Verdana" class="Label" x="250" y="275">M100,200 C100,100 400,100 400,200</text>
 
   <!-- Path 2 -->
   <polyline fill="none" stroke="#888888" stroke-width="2" class="Connect" points="100,500 25,400" />
@@ -37,7 +37,7 @@
   <circle fill="none" stroke="#888888" stroke-width="2" class="EndPoint" cx="400" cy="500" r="10" />
   <circle class="CtlPoint" cx="25" cy="400" r="10" />
   <circle class="CtlPoint" cx="475" cy="400" r="10" />
-  <text font-size="22" font-family="Verdana" class="Label" x="250" y="575">M100,500 C25,400 475,400 400,500</text>
+  <text text-anchor="middle" font-size="22" font-family="Verdana" class="Label" x="250" y="575">M100,500 C25,400 475,400 400,500</text>
 
   <!-- Path 3 -->
   <polyline fill="none" stroke="#888888" stroke-width="2" class="Connect" points="100,800 175,700" />
@@ -47,7 +47,7 @@
   <circle fill="none" stroke="#888888" stroke-width="2" class="EndPoint" cx="400" cy="800" r="10" />
   <circle fill="#888888" stroke="none" class="CtlPoint" cx="175" cy="700" r="10" />
   <circle fill="#888888" stroke="none" class="CtlPoint" cx="325" cy="700" r="10" />
-  <text font-size="22" font-family="Verdana" class="Label" x="250" y="875">M100,800 C175,700 325,700 400,800</text>
+  <text text-anchor="middle" font-size="22" font-family="Verdana" class="Label" x="250" y="875">M100,800 C175,700 325,700 400,800</text>
 
   <!-- Path 4 -->
   <polyline fill="none" stroke="#888888" stroke-width="2" class="Connect" points="600,200 675,100" />
@@ -57,7 +57,7 @@
   <circle fill="none" stroke="#888888" stroke-width="2" class="EndPoint" cx="900" cy="200" r="10" />
   <circle fill="#888888" stroke="none" class="CtlPoint" cx="675" cy="100" r="10" />
   <circle fill="#888888" stroke="none" class="CtlPoint" cx="975" cy="100" r="10" />
-  <text font-size="22" font-family="Verdana" class="Label" x="750" y="275">M600,200 C675,100 975,100 900,200</text>
+  <text text-anchor="middle" font-size="22" font-family="Verdana" class="Label" x="750" y="275">M600,200 C675,100 975,100 900,200</text>
 
   <!-- Path 5 -->
   <polyline fill="none" stroke="#888888" stroke-width="2" class="Connect" points="600,500 600,350" />
@@ -67,7 +67,7 @@
   <circle fill="none" stroke="#888888" stroke-width="2" class="EndPoint" cx="900" cy="500" r="10" />
   <circle fill="#888888" stroke="none" class="CtlPoint" cx="600" cy="350" r="10" />
   <circle fill="#888888" stroke="none" class="CtlPoint" cx="900" cy="650" r="10" />
-  <text font-size="22" font-family="Verdana" class="Label" x="750" y="575">M600,500 C600,350 900,650 900,500</text>
+  <text text-anchor="middle" font-size="22" font-family="Verdana" class="Label" x="750" y="575">M600,500 C600,350 900,650 900,500</text>
 
   <!-- Path 6 (C and S command) -->
   <polyline fill="none" stroke="#888888" stroke-width="2" class="Connect" points="600,800 625,700" />
@@ -83,6 +83,6 @@
   <circle fill="#888888" stroke="none" class="CtlPoint" cx="725" cy="700" r="10" />
   <circle fill="#888888" stroke="none" class="CtlPoint" cx="875" cy="900" r="10" />
   <circle fill="none" stroke="blue" stroke-width="4" class="AutoCtlPoint" cx="775" cy="900" r="9" />
-  <text font-size="22" font-family="Verdana" class="Label" x="750" y="945">M600,800 C625,700 725,700 750,800</text>
-  <text font-size="22" font-family="Verdana" class="Label" x="750" y="975">S875,900 900,800</text>
+  <text text-anchor="middle" font-size="22" font-family="Verdana" class="Label" x="750" y="945">M600,800 C625,700 725,700 750,800</text>
+  <text text-anchor="middle" font-size="22" font-family="Verdana" class="Label" x="750" y="975">S875,900 900,800</text>
 </svg>

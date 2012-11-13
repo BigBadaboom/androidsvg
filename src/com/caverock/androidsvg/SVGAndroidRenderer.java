@@ -15,6 +15,9 @@ import android.util.Log;
 import com.caverock.androidsvg.SVG.AspectRatioRule;
 import com.caverock.androidsvg.SVG.Box;
 import com.caverock.androidsvg.SVG.Style;
+import com.caverock.androidsvg.SVG.Text;
+import com.caverock.androidsvg.SVG.TextContainer;
+import com.caverock.androidsvg.SVG.TextSequence;
 
 
 public class SVGAndroidRenderer
@@ -452,17 +455,24 @@ public class SVGAndroidRenderer
       float  y = (obj.y == null || obj.y.size() == 0) ? 0f : obj.y.get(0).floatValueY(this);
       TextRenderContext currentTextPosition = new TextRenderContext(x, y);
 
-      boolean isFirstNode = true;
-      for (Iterator<SVG.SvgObject> iterator = obj.children.iterator(); iterator.hasNext(); isFirstNode = false)
-      {
-         SVG.SvgObject child = iterator.next();
-         renderText(child, obj, currentTextPosition, isFirstNode, !iterator.hasNext());
+      // Handle text alignment
+      if (state.style.textAnchor != Style.TextAnchor.Start) {
+         float  textWidth = calculateTextWidth(obj);
+         if (state.style.textAnchor == Style.TextAnchor.Middle) {
+            currentTextPosition.x -= (textWidth / 2);
+         } else {
+            currentTextPosition.x -= textWidth;  // 'End' (right justify)
+         }
+      }
+
+      for (SVG.SvgObject child: obj.children) {
+         renderText(child, currentTextPosition);
       }
 
    }
 
 
-   public void  renderText(SVG.SvgObject obj, SVG.SvgElement parent, TextRenderContext currentTextPosition, boolean isFirstNode, boolean isLastNode)
+   public void  renderText(SVG.SvgObject obj, TextRenderContext currentTextPosition)
    {
       if (obj instanceof SVG.TSpan)
       {
@@ -474,10 +484,8 @@ public class SVGAndroidRenderer
 
          updatePaintsFromStyle(tspan.style);
 
-         isFirstNode = true;
-         for (Iterator<SVG.SvgObject> iterator = tspan.children.iterator(); iterator.hasNext(); isFirstNode=false) {
-            SVG.SvgObject child = iterator.next();
-            renderText(child, tspan, currentTextPosition, isFirstNode, !iterator.hasNext());
+         for (SVG.SvgObject child: tspan.children) {
+            renderText(child, currentTextPosition);
          }
 
          // Restore state
@@ -486,9 +494,7 @@ public class SVGAndroidRenderer
       else if  (obj instanceof SVG.TextSequence)
       {
 /**/Log.d(TAG, "TextSequence render");
-         String ts = ((SVG.TextSequence) obj).text;
-         ts = trimmer(ts, isFirstNode, isLastNode);
-         drawText(ts, currentTextPosition);
+         drawText(((SVG.TextSequence) obj).text, currentTextPosition);
       }
       else if  (obj instanceof SVG.TRef)
       {
@@ -509,54 +515,29 @@ public class SVGAndroidRenderer
    }
 
 
-   // Trim whitespace chars appropriately depending on where the node is
-   // relative to other text nodes.
-   private String trimmer(String str, boolean isFirstNode, boolean isLastNode)
+   /*
+    * Calculate the approximate width of this line of text.
+    * To simplify, we will ignore font changes and just assume that all the text
+    * uses the current font.
+    */
+   private float calculateTextWidth(Text parentTextObj)
    {
-      int len = str.length();
-      int offset = 0;
-
-      if (len == 0)
-         return str;
-
-      char[] chars = str.toCharArray();
-
-      while (offset < len && chars[offset] <= ' ') {
-         offset++;
-      }
-      len -= offset;
-      while (len > 0 && chars[offset + len - 1] <= ' ') {
-         len--;
-      }
-
-      // Allow one space at the start if this wasn't the first node
-      if (len == 0)
-      {
-         if (!isFirstNode && !isLastNode)
-         {
-            chars[0] = ' ';
-            offset = 0;
-            len = 1;
-         }
-      }
-      else
-      {
-         if (offset > 0 && !isFirstNode)
-         {
-            chars[--offset] = ' ';
-            len++;
-         }
-         // Allow one space at the end if this wasn't the last node
-         if ((offset + len) < str.length() && !isLastNode)
-         {
-            chars[offset + len] = ' ';
-            len++;
-         }
-      }
-
-      return new String(chars, offset, len);
+      return sumChildWidths(parentTextObj, 0f);
    }
 
+   private float  sumChildWidths(TextContainer parent, float runningTotal)
+   {
+      for (SVG.SvgObject child: parent.children)
+      {
+         if (child instanceof TextContainer) {
+            runningTotal = sumChildWidths((TextContainer) child, runningTotal);
+         } else if (child instanceof TextSequence) {
+            runningTotal += state.fillPaint.measureText(((TextSequence) child).text);
+         }
+      }
+      return runningTotal;
+   }
+ 
 
    // ==============================================================================
 
@@ -783,12 +764,17 @@ public class SVGAndroidRenderer
          //state.strokePaint.setUnderlineText(style.textDecoration.equals("underline"));
       }
 
+      if ((style.specifiedFlags & SVG.SPECIFIED_TEXT_ANCHOR) != 0)
+      {
+         state.style.textAnchor = style.textAnchor;
+      }
+
    }
 
 
    private int  getTypefaceStyle(Style style)
    {
-      boolean  italic = "italic".equals(style.fontStyle);
+      boolean  italic = (style.fontStyle == Style.FontStyle.Italic);
       if ("bold".equals(style.fontWeight)) {
          return italic ? Typeface.BOLD_ITALIC : Typeface.BOLD;
       }
