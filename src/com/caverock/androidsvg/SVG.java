@@ -38,7 +38,7 @@ public class SVG
       percent
    }
 
-   public enum AspectRatioRule
+   public enum AspectRatioAlignment
    {
       none,
       xMinYMin,
@@ -416,16 +416,32 @@ public class SVG
    }
 
 
-   protected static class Svg extends SvgContainer implements HasViewBox
+   protected interface HasPreserveAspectRatio
    {
-      public Length  width;
-      public Length  height;
-      public Box     viewBox;
+      public void setPreserveAspectRatio(AspectRatioAlignment alignment, boolean slice);
+   }
+
+
+   protected static class Svg extends SvgContainer implements HasViewBox, HasPreserveAspectRatio
+   {
+      public Length               x;
+      public Length               y;
+      public Length               width;
+      public Length               height;
+      public Box                  viewBox;
+      public AspectRatioAlignment preserveAspectRatioAlignment = null;
+      public boolean              preserveAspectRatioSlice;
 
       @Override
       public Box  getViewBox()            { return this.viewBox; }
       @Override
       public void setViewBox(Box viewBox) { this.viewBox = viewBox; }
+      @Override
+      public void setPreserveAspectRatio(AspectRatioAlignment alignment, boolean slice)
+      {
+         this.preserveAspectRatioAlignment = alignment;
+         this.preserveAspectRatioSlice = slice;
+      }
    }
 
 

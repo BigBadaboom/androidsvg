@@ -15,7 +15,6 @@ import javax.xml.parsers.SAXParserFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
 
@@ -83,6 +82,7 @@ public class SVGParser extends DefaultHandler
       opacity,
       pathLength,
       points,
+      preserveAspectRatio,
       r,
       rx, ry,
       stroke,
@@ -122,6 +122,7 @@ public class SVGParser extends DefaultHandler
    private static HashMap<String, Integer> colourKeywords = new HashMap<String, Integer>();
    private static HashMap<String, Length> fontSizeKeywords = new HashMap<String, Length>();
    private static HashMap<String, String> fontWeightKeywords = new HashMap<String, String>();
+   private static HashMap<String, SVG.AspectRatioAlignment> aspectRatioKeywords = new HashMap<String, SVG.AspectRatioAlignment>();
 
    static {
       colourKeywords.put("aliceblue", 0xf0f8ff);
@@ -295,6 +296,18 @@ public class SVGParser extends DefaultHandler
       fontWeightKeywords.put("700", "bold");
       fontWeightKeywords.put("800", "bold");
       fontWeightKeywords.put("900", "bold");
+
+      aspectRatioKeywords.put("none", SVG.AspectRatioAlignment.none);
+      aspectRatioKeywords.put("xMinYMin", SVG.AspectRatioAlignment.xMinYMin);
+      aspectRatioKeywords.put("xMidYMin", SVG.AspectRatioAlignment.xMidYMin);
+      aspectRatioKeywords.put("xMaxYMin", SVG.AspectRatioAlignment.xMaxYMin);
+      aspectRatioKeywords.put("xMinYMid", SVG.AspectRatioAlignment.xMinYMid);
+      aspectRatioKeywords.put("xMidYMid", SVG.AspectRatioAlignment.xMidYMid);
+      aspectRatioKeywords.put("xMaxYMid", SVG.AspectRatioAlignment.xMaxYMid);
+      aspectRatioKeywords.put("xMinYMax", SVG.AspectRatioAlignment.xMinYMax);
+      aspectRatioKeywords.put("xMidYMax", SVG.AspectRatioAlignment.xMidYMax);
+      aspectRatioKeywords.put("xMaxYMax", SVG.AspectRatioAlignment.xMaxYMax);
+
    }
 
 
@@ -473,14 +486,27 @@ dumpNode(svgDocument.getRootElement(), "");
          String val = attributes.getValue(i).trim();
          switch (SVGAttr.fromString(attributes.getLocalName(i)))
          {
+            case x:
+               obj.x = parseLength(val);
+               break;
+            case y:
+               obj.y = parseLength(val);
+               break;
             case width:
                obj.width = parseLength(val);
+               if (obj.width.isNegative())
+                  throw new SAXException("Invalid <svg> element. width cannot be negative");
                break;
             case height:
                obj.height = parseLength(val);
+               if (obj.height.isNegative())
+                  throw new SAXException("Invalid <svg> element. height cannot be negative");
                break;
             case viewBox:
                obj.viewBox = parseViewBox(val);
+               break;
+            case preserveAspectRatio:
+               parsePreserveAspectRatio(obj, val);
                break;
             default:
                break;
@@ -1430,6 +1456,41 @@ dumpNode(svgDocument.getRootElement(), "");
 
 
    /*
+    * 
+    */
+   private void  parsePreserveAspectRatio(SVG.HasPreserveAspectRatio obj, String val) throws SAXException
+   {
+      ListTokeniser tok = new ListTokeniser(val);
+      try
+      {
+         SVG.AspectRatioAlignment  align;
+         boolean                   slice = false;
+
+         String  word = tok.nextToken();
+         if ("defer".equals(word)) {    // Ignore defer keyword
+            word = tok.nextToken();
+         }
+         align = aspectRatioKeywords.get(word);
+         if (tok.hasMoreTokens()) {
+            String meetOrSlice = tok.nextToken();
+            if (meetOrSlice.equals("meet")) {
+               slice = false;
+            } else if (meetOrSlice.equals("slice")) {
+               slice = true;
+            } else {
+               throw new SAXException("Invalid preserveAspectRatio definition");
+            }
+         }
+         obj.setPreserveAspectRatio(align, slice);
+      }
+      catch (Exception e)
+      {
+         throw new SAXException("Invalid preserveAspectRatio definition");
+      }
+   }
+
+
+   /*
     * Parse a colour specifier.
     */
    private Colour  parseColour(String val) throws SAXException
@@ -1630,7 +1691,7 @@ dumpNode(svgDocument.getRootElement(), "");
          {
             dashes[i] = parseLength(tok.nextToken());
          }
-         catch (SAXParseException e)
+         catch (SAXException e)
          {
             throw new SAXException("Invalid stroke-dasharray property: "+val);
          }

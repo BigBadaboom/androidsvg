@@ -12,7 +12,7 @@ import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.util.Log;
 
-import com.caverock.androidsvg.SVG.AspectRatioRule;
+import com.caverock.androidsvg.SVG.AspectRatioAlignment;
 import com.caverock.androidsvg.SVG.Box;
 import com.caverock.androidsvg.SVG.Style;
 import com.caverock.androidsvg.SVG.Text;
@@ -178,8 +178,28 @@ public class SVGAndroidRenderer
    {
 /**/Log.d(TAG, "Svg render");
 
+      if ((obj.width != null && obj.width.isZero()) ||
+          (obj.height != null && obj.height.isZero()))
+         return;
+
+      // <svg> elements establish a new viewport.
+      // But in the case of the root element, it has already been done for us.
+      if (obj.parent != null)
+      {
+         float  _x = (obj.x != null) ? obj.x.floatValueX(this) : 0f;
+         float  _y = (obj.y != null) ? obj.y.floatValueY(this) : 0f;
+         float  _w = (obj.width != null) ? obj.width.floatValueX(this) : state.viewPort.width;
+         float  _h = (obj.height != null) ? obj.height.floatValueX(this) : state.viewPort.height;
+         state.viewPort = new SVG.Box(_x, _y, _w, _h);
+      }
+      canvas.clipRect(state.viewPort.minX, state.viewPort.minY, state.viewPort.width, state.viewPort.height);
+
       if (obj.viewBox != null) {
-         canvas.concat(calculateViewBoxTransform(obj.viewBox));
+         if (obj.preserveAspectRatioAlignment != null) {
+            canvas.concat(calculateViewBoxTransform(obj.viewBox, obj.preserveAspectRatioAlignment, obj.preserveAspectRatioSlice));
+         } else {
+            canvas.concat(calculateViewBoxTransform(obj.viewBox));
+         }
       }
       
       for (SVG.SvgObject child: obj.children) {
@@ -551,7 +571,7 @@ public class SVGAndroidRenderer
     * slice determines whether we see the whole image or not. True fill the whole viewport.
     *    If slice is false, the image will be "letter-boxed". 
     */
-   private Matrix calculateViewBoxTransform(Box viewBox, AspectRatioRule aspectRule, boolean slice)
+   private Matrix calculateViewBoxTransform(Box viewBox, AspectRatioAlignment aspectRule, boolean slice)
    {
       Matrix m = new Matrix();
 
@@ -561,7 +581,7 @@ public class SVGAndroidRenderer
       float  yOffset = -viewBox.minY;
 
       // 'none' means scale both dimensions to fit the viewport
-      if (aspectRule == AspectRatioRule.none)
+      if (aspectRule == AspectRatioAlignment.none)
       {
          m.preScale(xScale, yScale);
          m.preTranslate(xOffset, yOffset);
@@ -616,7 +636,7 @@ public class SVGAndroidRenderer
 
    private Matrix calculateViewBoxTransform(Box viewBox)
    {
-      return calculateViewBoxTransform(viewBox, AspectRatioRule.xMidYMid, false);
+      return calculateViewBoxTransform(viewBox, AspectRatioAlignment.xMidYMid, false);
    }
 
 
