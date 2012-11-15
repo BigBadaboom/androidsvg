@@ -135,6 +135,8 @@ public class SVG
    public static final long SPECIFIED_FONT_STYLE        = (1<<14);
    public static final long SPECIFIED_TEXT_DECORATION   = (1<<15);
    public static final long SPECIFIED_TEXT_ANCHOR       = (1<<16);
+   public static final long SPECIFIED_OVERFLOW          = (1<<17);
+   public static final long SPECIFIED_CLIP              = (1<<18);
 
    public static final long SPECIFIED_ALL = 0xffffffff;
 
@@ -164,9 +166,12 @@ public class SVG
       public FontStyle  fontStyle;
       public String     textDecoration;
 
-      public TextAnchor  textAnchor;
+      public TextAnchor textAnchor;
 
+      public Boolean    overflow;  // true if overflow visible
+      public Box        clip;
 
+      
       public enum FillRule
       {
          NonZero,
@@ -222,7 +227,17 @@ public class SVG
          def.fontStyle = FontStyle.Normal;
          def.textDecoration = "none";
          def.textAnchor = TextAnchor.Start;
+         def.overflow = true;  // Overflow shown/visible for root, but not for other elements (see section 14.3.3).
+         def.clip = null;
          return def;
+      }
+
+      // CAlled just before we update the current style state with the current objects style.
+      // These are the properties that don't inherit.
+      public void  resetNonInheritingProperties()
+      {
+         this.overflow = false;
+         this.clip = null;
       }
 
       @Override

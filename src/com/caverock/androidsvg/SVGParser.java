@@ -80,6 +80,7 @@ public class SVGParser extends DefaultHandler
       href,
       id,
       opacity,
+      overflow,
       pathLength,
       points,
       preserveAspectRatio,
@@ -1188,6 +1189,11 @@ dumpNode(svgDocument.getRootElement(), "");
                obj.style.specifiedFlags |= SVG.SPECIFIED_TEXT_ANCHOR;
                break;
 
+            case overflow:
+               obj.style.overflow = parseOverflow(val);
+               obj.style.specifiedFlags |= SVG.SPECIFIED_OVERFLOW;
+               break;
+
             default:
                break;
          }
@@ -1716,6 +1722,20 @@ dumpNode(svgDocument.getRootElement(), "");
       if ("end".equals(val))
          return Style.TextAnchor.End;
       throw new SAXException("Invalid text-anchor property: "+val);
+   }
+
+
+   // Parse a text anchor keyword
+   private Boolean  parseOverflow(String val) throws SAXException
+   {
+/**/Log.d(TAG, "parseOverflow: "+val);
+
+      val = val.toLowerCase();
+      if ("visible".equals(val) || "auto".equals(val))
+         return Boolean.TRUE;
+      if ("hidden".equals(val) || "scroll".equals(val))
+         return Boolean.FALSE;
+      throw new SAXException("Invalid toverflow property: "+val);
    }
 
 

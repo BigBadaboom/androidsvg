@@ -84,7 +84,8 @@ public class SVGAndroidRenderer
       state.strokePaint.setTypeface(Typeface.DEFAULT);
 
       state.style = new Style();
-      updatePaintsFromStyle(Style.getDefaultStyle());
+      // Initialise the style state
+      updateStyle(Style.getDefaultStyle());
    }
 
 
@@ -182,6 +183,8 @@ public class SVGAndroidRenderer
           (obj.height != null && obj.height.isZero()))
          return;
 
+      updateStyle(obj.style);
+
       // <svg> elements establish a new viewport.
       // But in the case of the root element, it has already been done for us.
       if (obj.parent != null)
@@ -192,7 +195,9 @@ public class SVGAndroidRenderer
          float  _h = (obj.height != null) ? obj.height.floatValueX(this) : state.viewPort.height;
          state.viewPort = new SVG.Box(_x, _y, _w, _h);
       }
-      canvas.clipRect(state.viewPort.minX, state.viewPort.minY, state.viewPort.width, state.viewPort.height);
+      if (!state.style.overflow) {
+         canvas.clipRect(state.viewPort.minX, state.viewPort.minY, state.viewPort.width, state.viewPort.height);  //TODO only do clipRect if overflow property says so
+      }
 
       if (obj.viewBox != null) {
          if (obj.preserveAspectRatioAlignment != null) {
@@ -211,11 +216,13 @@ public class SVGAndroidRenderer
    public void render(SVG.Group obj)
    {
 /**/Log.d(TAG, "Group render");
+      updateStyle(obj.style);
+
       if (obj.transform != null) {
          canvas.concat(obj.transform);
       }
 
-      updatePaintsFromStyle(obj.style);
+      updateStyle(obj.style);
 
       for (SVG.SvgObject child: obj.children) {
          render(child);
@@ -226,6 +233,8 @@ public class SVGAndroidRenderer
    public void render(SVG.Use obj)
    {
 /**/Log.d(TAG, "Use render");
+
+      updateStyle(obj.style);
 
       // Locate the referenced object
       SVG.SvgObject  ref = obj.document.resolveIRI(obj.href);
@@ -243,8 +252,6 @@ public class SVGAndroidRenderer
       m.preTranslate(_x, _y);
       canvas.concat(m);
 
-      updatePaintsFromStyle(obj.style);
-
       render(ref);
    }
 
@@ -253,7 +260,7 @@ public class SVGAndroidRenderer
    {
 /**/Log.d(TAG, "Path render");
 
-      updatePaintsFromStyle(obj.style);
+      updateStyle(obj.style);
 
       if (!state.hasStroke && !state.hasFill)
          return;
@@ -274,6 +281,8 @@ public class SVGAndroidRenderer
       if (obj.width == null || obj.height == null || obj.width.isZero() || obj.height.isZero())
          return;
 
+      updateStyle(obj.style);
+
       if (obj.transform != null)
          canvas.concat(obj.transform);
 
@@ -293,8 +302,6 @@ public class SVGAndroidRenderer
       _ry = Math.min(_ry, obj.height.floatValueY(this) / 2f);
       _x = (obj.x != null) ? obj.x.floatValueX(this) : 0f;
       _y = (obj.y != null) ? obj.y.floatValueY(this) : 0f;
-
-      updatePaintsFromStyle(obj.style);
 
       if (state.hasFill)
       {
@@ -322,6 +329,8 @@ public class SVGAndroidRenderer
       if (obj.r == null || obj.r.isZero())
          return;
 
+      updateStyle(obj.style);
+
       if (obj.transform != null)
          canvas.concat(obj.transform);
 
@@ -329,8 +338,6 @@ public class SVGAndroidRenderer
       _cx = (obj.cx != null) ? obj.cx.floatValueX(this) : 0f;
       _cy = (obj.cy != null) ? obj.cy.floatValueY(this) : 0f;
       _r = obj.r.floatValue(this);
-
-      updatePaintsFromStyle(obj.style);
 
       if (state.hasFill) {
          canvas.drawCircle(_cx, _cy, _r, state.fillPaint);
@@ -348,6 +355,8 @@ public class SVGAndroidRenderer
       if (obj.rx == null || obj.ry == null || obj.rx.isZero() || obj.ry.isZero())
          return;
 
+      updateStyle(obj.style);
+
       if (obj.transform != null)
          canvas.concat(obj.transform);
 
@@ -357,8 +366,6 @@ public class SVGAndroidRenderer
       _rx = obj.rx.floatValueX(this);
       _ry = obj.ry.floatValueY(this);
       RectF oval = new RectF(_cx-_rx, _cy-_ry, _cx+_rx, _cy+_ry);
-
-      updatePaintsFromStyle(obj.style);
 
       if (state.hasFill) {
          canvas.drawOval(oval, state.fillPaint);
@@ -374,7 +381,7 @@ public class SVGAndroidRenderer
    {
 /**/Log.d(TAG, "Line render");
 
-      updatePaintsFromStyle(obj.style);
+      updateStyle(obj.style);
 
 /**/Log.d(TAG, "LR hasStroke "+state.hasStroke+" "+obj.style.specifiedFlags);
       if (!state.hasStroke)
@@ -397,7 +404,7 @@ public class SVGAndroidRenderer
    {
 /**/Log.d(TAG, "PolyLine render");
 
-      updatePaintsFromStyle(obj.style);
+      updateStyle(obj.style);
 
       if (!state.hasStroke)
          return;
@@ -422,7 +429,7 @@ public class SVGAndroidRenderer
    {
 /**/Log.d(TAG, "Polygon render");
 
-      updatePaintsFromStyle(obj.style);
+      updateStyle(obj.style);
 
       if (!state.hasStroke && !state.hasFill)
          return;
@@ -465,10 +472,10 @@ public class SVGAndroidRenderer
    {
 /**/Log.d(TAG, "Text render");
 
+      updateStyle(obj.style);
+
       if (obj.transform != null)
          canvas.concat(obj.transform);
-
-      updatePaintsFromStyle(obj.style);
 
       // Get the first coordinate pair from the lists in the x and y properties.
       float  x = (obj.x == null || obj.x.size() == 0) ? 0f : obj.x.get(0).floatValueX(this);
@@ -502,7 +509,7 @@ public class SVGAndroidRenderer
 
          SVG.TSpan tspan = (SVG.TSpan) obj; 
 
-         updatePaintsFromStyle(tspan.style);
+         updateStyle(tspan.style);
 
          for (SVG.SvgObject child: tspan.children) {
             renderText(child, currentTextPosition);
@@ -628,7 +635,6 @@ public class SVGAndroidRenderer
             // nothing to do 
             break;
       }
-/**/Log.d(TAG, "calculateViewBoxTransform "+aspectScale+" "+xOffset+" "+yOffset);
       m.preScale(aspectScale, aspectScale);
       m.preTranslate(xOffset, yOffset);
       return m;
@@ -640,8 +646,16 @@ public class SVGAndroidRenderer
    }
 
 
-   private void updatePaintsFromStyle(Style style)
+   /*
+    * Updates the global style state with the style defined by the current object.
+    * Will also update the current paints etc where appropriate.
+    */
+   private void updateStyle(Style style)
    {
+      // Some style attributes don't inherit, so first, lets reset those
+      state.style.resetNonInheritingProperties();
+
+      // Now update each style property we know about
       if ((style.specifiedFlags & SVG.SPECIFIED_FILL) != 0)
       {
          state.style.fill = style.fill;
@@ -831,6 +845,11 @@ public class SVGAndroidRenderer
       if ((style.specifiedFlags & SVG.SPECIFIED_TEXT_ANCHOR) != 0)
       {
          state.style.textAnchor = style.textAnchor;
+      }
+
+      if ((style.specifiedFlags & SVG.SPECIFIED_OVERFLOW) != 0)
+      {
+         state.style.overflow = style.overflow;
       }
 
    }
