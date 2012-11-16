@@ -1085,10 +1085,16 @@ dumpNode(svgDocument.getRootElement(), "");
 //Log.d(TAG, "parseAttributesStyle");
       for (int i=0; i<attributes.getLength(); i++)
       {
-         String val = attributes.getValue(i).trim();
+         String  val = attributes.getValue(i).trim();
+         boolean  inherit = val.equals("inherit");
+
          switch (SVGAttr.fromString(attributes.getLocalName(i)))
          {
             case fill:
+               if (inherit) {
+                  //obj.style.inheritFlags |= SVG.SPECIFIED_FILL;
+                  break;
+               }
                obj.style.specifiedFlags |= SVG.SPECIFIED_FILL;
                if (val.equals("none")) {
                   obj.style.fill = null;
@@ -1101,16 +1107,28 @@ dumpNode(svgDocument.getRootElement(), "");
                break;
 
             case fill_rule:
+               if (inherit) {
+                  //obj.style.inheritFlags |= SVG.SPECIFIED_FILL_RULE;
+                  break;
+               }
                obj.style.fillRule = parseFillRule(val);
                obj.style.specifiedFlags |= SVG.SPECIFIED_FILL_RULE;
                break;
 
             case fill_opacity:
+               if (inherit) {
+                  //obj.style.inheritFlags |= SVG.SPECIFIED_FILL_OPACITY;
+                  break;
+               }
                obj.style.fillOpacity = parseFloat(val);
                obj.style.specifiedFlags |= SVG.SPECIFIED_FILL_OPACITY;
                break;
 
             case stroke:
+               if (inherit) {
+                  //obj.style.inheritFlags |= SVG.SPECIFIED_STROKE;
+                  break;
+               }
                obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE;
                if (val.equals("none")) {
                } else  if (val.startsWith("url")) {
@@ -1122,26 +1140,46 @@ dumpNode(svgDocument.getRootElement(), "");
                break;
 
             case stroke_opacity:
+               if (inherit) {
+                  //obj.style.inheritFlags |= SVG.SPECIFIED_STROKE_OPACITY;
+                  break;
+               }
                obj.style.strokeOpacity = parseFloat(val);
                obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE_OPACITY;
                break;
 
             case stroke_width:
+               if (inherit) {
+                  //obj.style.inheritFlags |= SVG.SPECIFIED_STROKE_WIDTH;
+                  break;
+               }
                obj.style.strokeWidth = parseLength(val);
                obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE_WIDTH;
                break;
 
             case stroke_linecap:
+               if (inherit) {
+                  //obj.style.inheritFlags |= SVG.SPECIFIED_STROKE_LINECAP;
+                  break;
+               }
                obj.style.strokeLineCap = parseStrokeLineCap(val);
                obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE_LINECAP;
                break;
 
             case stroke_linejoin:
+               if (inherit) {
+                  //obj.style.inheritFlags |= SVG.SPECIFIED_STROKE_LINEJOIN;
+                  break;
+               }
                obj.style.strokeLineJoin = parseStrokeLineJoin(val);
                obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE_LINEJOIN;
                break;
 
             case stroke_dasharray:
+               if (inherit) {
+                  //obj.style.inheritFlags |= SVG.SPECIFIED_STROKE_DASHARRAY;
+                  break;
+               }
                if ("none".equals(val))
                   obj.style.strokeDashArray = null;
                else
@@ -1150,46 +1188,82 @@ dumpNode(svgDocument.getRootElement(), "");
                break;
 
             case stroke_dashoffset:
+               if (inherit) {
+                  //obj.style.inheritFlags |= SVG.SPECIFIED_STROKE_DASHOFFSET;
+                  break;
+               }
                obj.style.strokeDashOffset = parseLength(val);
                obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE_DASHOFFSET;
                break;
 
             case opacity:
+               if (inherit) {
+                  //obj.style.inheritFlags |= SVG.SPECIFIED_OPACITY;
+                  break;
+               }
                obj.style.opacity = parseFloat(val);
                obj.style.specifiedFlags |= SVG.SPECIFIED_OPACITY;
                break;
 
             case font_family:
+               if (inherit) {
+                  //obj.style.inheritFlags |= SVG.SPECIFIED_FONT_FAMILY;
+                  break;
+               }
                obj.style.fontFamily = val;
                obj.style.specifiedFlags |= SVG.SPECIFIED_FONT_FAMILY;
                break;
 
             case font_size:
+               if (inherit) {
+                  //obj.style.inheritFlags |= SVG.SPECIFIED_FONT_SIZE;
+                  break;
+               }
                obj.style.fontSize = parseFontSize(val);
                obj.style.specifiedFlags |= SVG.SPECIFIED_FONT_SIZE;
                break;
 
             case font_weight:
+               if (inherit) {
+                  //obj.style.inheritFlags |= SVG.SPECIFIED_FONT_WEIGHT;
+                  break;
+               }
                obj.style.fontWeight = val.toLowerCase();
                obj.style.specifiedFlags |= SVG.SPECIFIED_FONT_WEIGHT;
                break;
 
             case font_style:
+               if (inherit) {
+                  //obj.style.inheritFlags |= SVG.SPECIFIED_FONT_STYLE;
+                  break;
+               }
                obj.style.fontStyle = parseFontStyle(val);
                obj.style.specifiedFlags |= SVG.SPECIFIED_FONT_STYLE;
                break;
 
             case text_decoration:
+               if (inherit) {
+                  //obj.style.inheritFlags |= SVG.SPECIFIED_TEXT_DECORATION;
+                  break;
+               }
                obj.style.textDecoration = parseTextDecoration(val);
                obj.style.specifiedFlags |= SVG.SPECIFIED_TEXT_DECORATION;
                break;
 
             case text_anchor:
+               if (inherit) {
+                  //obj.style.inheritFlags |= SVG.SPECIFIED_TEXT_ANCHOR;
+                  break;
+               }
                obj.style.textAnchor = parseTextAnchor(val);
                obj.style.specifiedFlags |= SVG.SPECIFIED_TEXT_ANCHOR;
                break;
 
             case overflow:
+               if (inherit) {
+                  //obj.style.inheritFlags |= SVG.SPECIFIED_OVERFLOW;
+                  break;
+               }
                obj.style.overflow = parseOverflow(val);
                obj.style.specifiedFlags |= SVG.SPECIFIED_OVERFLOW;
                break;

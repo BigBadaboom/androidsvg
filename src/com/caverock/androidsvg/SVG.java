@@ -146,6 +146,7 @@ public class SVG
    {
       // Which properties have been explicity specified by this element
       public long       specifiedFlags = 0;
+      //public long       inheritFlags = 0;
 
       public SvgPaint   fill;
       public FillRule   fillRule;

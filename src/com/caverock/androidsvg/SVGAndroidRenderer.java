@@ -652,6 +652,12 @@ public class SVGAndroidRenderer
    }
 
 
+   private boolean  isSpecified(Style style, long flag)
+   {
+      return (style.specifiedFlags & flag) != 0;
+   }
+
+
    /*
     * Updates the global style state with the style defined by the current object.
     * Will also update the current paints etc where appropriate.
@@ -662,20 +668,19 @@ public class SVGAndroidRenderer
       state.style.resetNonInheritingProperties();
 
       // Now update each style property we know about
-      if ((style.specifiedFlags & SVG.SPECIFIED_FILL) != 0)
+      if (isSpecified(style, SVG.SPECIFIED_FILL))
       {
          state.style.fill = style.fill;
          state.hasFill = (style.fill != null);
       }
 
-      if ((style.specifiedFlags & SVG.SPECIFIED_FILL_OPACITY) != 0)
+      if (isSpecified(style, SVG.SPECIFIED_FILL_OPACITY))
       {
          state.style.fillOpacity = style.fillOpacity;
       }
 
       // If either fill or its opacity has changed, update the fillPaint
-      if ((style.specifiedFlags & SVG.SPECIFIED_FILL) != 0 ||
-          (style.specifiedFlags & SVG.SPECIFIED_FILL_OPACITY) != 0)
+      if (isSpecified(style, SVG.SPECIFIED_FILL | SVG.SPECIFIED_FILL_OPACITY))
       {
          if (style.fill instanceof SVG.Colour)
          {
@@ -685,25 +690,24 @@ public class SVGAndroidRenderer
          }
       }
 
-      if ((style.specifiedFlags & SVG.SPECIFIED_FILL_RULE) != 0)
+      if (isSpecified(style, SVG.SPECIFIED_FILL_RULE))
       {
          // Not supported by Android? It always uses a non-zero winding rule.
       }
 
 
-      if ((style.specifiedFlags & SVG.SPECIFIED_STROKE) != 0)
+      if (isSpecified(style, SVG.SPECIFIED_STROKE))
       {
          state.style.stroke = style.stroke;
          state.hasStroke = (style.stroke != null);
       }
 
-      if ((style.specifiedFlags & SVG.SPECIFIED_STROKE_OPACITY) != 0)
+      if (isSpecified(style, SVG.SPECIFIED_STROKE_OPACITY))
       {
          state.style.strokeOpacity = style.strokeOpacity;
       }
 
-      if ((style.specifiedFlags & SVG.SPECIFIED_STROKE) != 0 ||
-          (style.specifiedFlags & SVG.SPECIFIED_STROKE_OPACITY) != 0)
+      if (isSpecified(style, SVG.SPECIFIED_STROKE | SVG.SPECIFIED_STROKE_OPACITY))
       {
          if (style.stroke instanceof SVG.Colour)
          {
@@ -713,13 +717,13 @@ public class SVGAndroidRenderer
          }
       }
 
-      if ((style.specifiedFlags & SVG.SPECIFIED_STROKE_WIDTH) != 0)
+      if (isSpecified(style, SVG.SPECIFIED_STROKE_WIDTH))
       {
          state.style.strokeWidth = style.strokeWidth;
          state.strokePaint.setStrokeWidth(style.strokeWidth.floatValue(this));
       }
 
-      if ((style.specifiedFlags & SVG.SPECIFIED_STROKE_LINECAP) != 0)
+      if (isSpecified(style, SVG.SPECIFIED_STROKE_LINECAP))
       {
          state.style.strokeLineCap = style.strokeLineCap;
          switch (style.strokeLineCap)
@@ -738,7 +742,7 @@ public class SVGAndroidRenderer
          }
       }
 
-      if ((style.specifiedFlags & SVG.SPECIFIED_STROKE_LINEJOIN) != 0)
+      if (isSpecified(style, SVG.SPECIFIED_STROKE_LINEJOIN))
       {
          state.style.strokeLineJoin = style.strokeLineJoin;
          switch (style.strokeLineJoin)
@@ -757,18 +761,17 @@ public class SVGAndroidRenderer
          }
       }
 
-      if ((style.specifiedFlags & SVG.SPECIFIED_STROKE_DASHARRAY) != 0)
+      if (isSpecified(style, SVG.SPECIFIED_STROKE_DASHARRAY))
       {
          state.style.strokeDashArray = style.strokeDashArray;
       }
 
-      if ((style.specifiedFlags & SVG.SPECIFIED_STROKE_DASHOFFSET) != 0)
+      if (isSpecified(style, SVG.SPECIFIED_STROKE_DASHOFFSET))
       {
          state.style.strokeDashOffset = style.strokeDashOffset;
       }
 
-      if ((style.specifiedFlags & SVG.SPECIFIED_STROKE_DASHARRAY) != 0 ||
-          (style.specifiedFlags & SVG.SPECIFIED_STROKE_DASHOFFSET) != 0)
+      if (isSpecified(style, SVG.SPECIFIED_STROKE_DASHARRAY | SVG.SPECIFIED_STROKE_DASHOFFSET))
       {
          // Either the dash array or dash offset has changed.
          if (state.style.strokeDashArray == null)
@@ -801,45 +804,44 @@ public class SVGAndroidRenderer
          }
       }
 
-      if ((style.specifiedFlags & SVG.SPECIFIED_OPACITY) != 0)
+      if (isSpecified(style, SVG.SPECIFIED_OPACITY))
       {
          state.style.opacity = style.opacity;
          // NYI
       }
 
-      if ((style.specifiedFlags & SVG.SPECIFIED_FONT_FAMILY) != 0)
+      if (isSpecified(style, SVG.SPECIFIED_FONT_FAMILY))
       {
          state.style.fontFamily = style.fontFamily;
          // NYI
       }
 
-      if ((style.specifiedFlags & SVG.SPECIFIED_FONT_SIZE) != 0)
+      if (isSpecified(style, SVG.SPECIFIED_FONT_SIZE))
       {
          state.style.fontSize = style.fontSize;
          state.fillPaint.setTextSize(style.fontSize.floatValue(this));
          state.strokePaint.setTextSize(style.fontSize.floatValue(this));
       }
 
-      if ((style.specifiedFlags & SVG.SPECIFIED_FONT_WEIGHT) != 0)
+      if (isSpecified(style, SVG.SPECIFIED_FONT_WEIGHT))
       {
          state.style.fontWeight = style.fontWeight;
       }
 
-      if ((style.specifiedFlags & SVG.SPECIFIED_FONT_STYLE) != 0)
+      if (isSpecified(style, SVG.SPECIFIED_FONT_STYLE))
       {
          state.style.fontStyle = style.fontStyle;
       }
 
       // If weight or style has changed, update the typeface
-      if ((style.specifiedFlags & SVG.SPECIFIED_FONT_WEIGHT) != 0 ||
-          (style.specifiedFlags & SVG.SPECIFIED_FONT_STYLE) != 0)
+      if (isSpecified(style, SVG.SPECIFIED_FONT_WEIGHT | SVG.SPECIFIED_FONT_STYLE))
       {
          Typeface  font = Typeface.create(Typeface.DEFAULT,  getTypefaceStyle(style));
          state.fillPaint.setTypeface(font);
          state.strokePaint.setTypeface(font);
       }
 
-      if ((style.specifiedFlags & SVG.SPECIFIED_TEXT_DECORATION) != 0)
+      if (isSpecified(style, SVG.SPECIFIED_TEXT_DECORATION))
       {
          state.style.textDecoration = style.textDecoration;
          state.fillPaint.setStrikeThruText(style.textDecoration.equals("line-through"));
@@ -848,12 +850,12 @@ public class SVGAndroidRenderer
          //state.strokePaint.setUnderlineText(style.textDecoration.equals("underline"));
       }
 
-      if ((style.specifiedFlags & SVG.SPECIFIED_TEXT_ANCHOR) != 0)
+      if (isSpecified(style, SVG.SPECIFIED_TEXT_ANCHOR))
       {
          state.style.textAnchor = style.textAnchor;
       }
 
-      if ((style.specifiedFlags & SVG.SPECIFIED_OVERFLOW) != 0)
+      if (isSpecified(style, SVG.SPECIFIED_OVERFLOW))
       {
          state.style.overflow = style.overflow;
       }
