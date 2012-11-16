@@ -39,6 +39,8 @@ public class SVGImageView extends View
    @Override
    protected void onDraw(Canvas canvas)
    {
+      if (this.bm == null)
+         return;
       canvas.drawBitmap(bm, 0, 0, paint);
    }
 
@@ -79,6 +81,7 @@ public class SVGImageView extends View
 /**/Log.d("setSVGAsset", svgPath);
       try
       {
+         this.svg = null;
          this.svg = SVG.getFromAsset(getContext().getAssets(), svgPath);
          rebuildBitmap();
          invalidate();
@@ -89,7 +92,7 @@ public class SVGImageView extends View
          Log.e("SVGImageView", e.toString());
          e.printStackTrace();
 
-         this.svg = null;
+         // Some of the document (up till th error) may have been created.
          rebuildBitmap();
          invalidate();
       }

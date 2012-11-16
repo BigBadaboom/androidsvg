@@ -14,6 +14,7 @@ import javax.xml.parsers.SAXParserFactory;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
+import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
@@ -39,7 +40,7 @@ public class SVGParser extends DefaultHandler
 
    private static final String  NAMESPACE = "http://www.w3.org/2000/svg";
 
-   // Parser settings
+   // SVG parser
    private float    dpi = 96f;   // inches to pixels conversion
    SVG              svgDocument = null;
    SVG.SvgContainer currentElement = null;
@@ -331,13 +332,13 @@ public class SVGParser extends DefaultHandler
       {
          throw new SVGParseException("File error", e);
       }
-      catch (SAXException e)
-      {
-         throw new SVGParseException("Invalid SVG file: "+e.getMessage(), e);
-      }
       catch (ParserConfigurationException e)
       {
-         throw new SVGParseException("SVG Parser problem", e);
+         throw new SVGParseException("XML Parser problem", e);
+      }
+      catch (SAXException e)
+      {
+         throw new SVGParseException("SVG parse error: "+e.getMessage(), e);
       }
       return svgDocument;
    }
@@ -1067,7 +1068,7 @@ dumpNode(svgDocument.getRootElement(), "");
    //=========================================================================
 
 
-   private void  parseAttributesCore(SVG.SvgElement obj, Attributes attributes) throws SAXException
+   private void  parseAttributesCore(SVG.SvgElement obj, Attributes attributes)
    {
       for (int i=0; i<attributes.getLength(); i++)
       {
@@ -1080,12 +1081,18 @@ dumpNode(svgDocument.getRootElement(), "");
    }
 
 
+   /*
+    * Parse the style attributes for an element.
+    */
    private void  parseAttributesStyle(SVG.SvgElement obj, Attributes attributes) throws SAXException
    {
 //Log.d(TAG, "parseAttributesStyle");
       for (int i=0; i<attributes.getLength(); i++)
       {
          String  val = attributes.getValue(i).trim();
+         if (val.length() == 0) { // The spec doesn't say how to handle empty style attributes.
+            continue;             // Our strategy is just to ignore them.
+         }
          boolean  inherit = val.equals("inherit");
 
          switch (SVGAttr.fromString(attributes.getLocalName(i)))
@@ -1228,7 +1235,7 @@ dumpNode(svgDocument.getRootElement(), "");
                   //obj.style.inheritFlags |= SVG.SPECIFIED_FONT_WEIGHT;
                   break;
                }
-               obj.style.fontWeight = val.toLowerCase();
+               obj.style.fontWeight = val;
                obj.style.specifiedFlags |= SVG.SPECIFIED_FONT_WEIGHT;
                break;
 
@@ -1575,8 +1582,6 @@ dumpNode(svgDocument.getRootElement(), "");
     */
    private Colour  parseColour(String val) throws SAXException
    {
-      if (val.length() == 0)
-         throw new SAXException("Bad colour value \""+val+"\"");
       if (val.charAt(0) == '#')
       {
          try
@@ -1598,22 +1603,13 @@ dumpNode(svgDocument.getRootElement(), "");
             throw new SAXException("Bad colour value: "+val);
          }
       }
-      val = val.toLowerCase();
       if (val.startsWith("rgb("))
       {
          ListTokeniser tok = new ListTokeniser(val.substring(4, val.indexOf(')')));
-         try
-         {
-            int red = parseColourComponent(tok.nextToken());
-            int green = parseColourComponent(tok.nextToken());
-            int blue = parseColourComponent(tok.nextToken());
-            return new Colour(red<<16 | green<<8 | blue);
-         }
-         catch (Exception e)
-         {
-            throw new SAXException("Bad rgb() colour definition - should have three numbers");
-         }
-         
+         int red = parseColourComponent(tok.nextToken());
+         int green = parseColourComponent(tok.nextToken());
+         int blue = parseColourComponent(tok.nextToken());
+         return new Colour(red<<16 | green<<8 | blue);
       }
       // Must be a colour keyword
       else
@@ -1640,7 +1636,7 @@ dumpNode(svgDocument.getRootElement(), "");
       }
       catch (NumberFormatException e)
       {
-         throw new SAXException("Invalid rgb() colour component: "+val);
+         throw new SAXException("Invalid colour component: "+val);
       }
    }
 
@@ -1649,9 +1645,10 @@ dumpNode(svgDocument.getRootElement(), "");
    private Colour  parseColourKeyword(String name) throws SAXException
    {
 //Log.d(TAG, "parseColourKeyword: "+name);
-      Integer  col = colourKeywords.get(name.toLowerCase());
-      if (col == null)
+      Integer  col = colourKeywords.get(name);
+      if (col == null) {
          throw new SAXException("Invalid colour keyword: "+name);
+      }
       return new Colour(col.intValue());
    }
 
@@ -1661,7 +1658,7 @@ dumpNode(svgDocument.getRootElement(), "");
    {
 /**/Log.d(TAG, "parseFontSize: "+val);
 
-      Length  size = fontSizeKeywords.get(val.toLowerCase());
+      Length  size = fontSizeKeywords.get(val);
       if (size == null) {
          size = parseLength(val);
       }
@@ -1674,7 +1671,7 @@ dumpNode(svgDocument.getRootElement(), "");
    {
 /**/Log.d(TAG, "parseFontWeight: "+val);
 
-      String  wt = fontWeightKeywords.get(val.toLowerCase());
+      String  wt = fontWeightKeywords.get(val);
       if (wt == null) {
          throw new SAXException("Invalid font-weight property: "+val);
       }
@@ -1687,7 +1684,6 @@ dumpNode(svgDocument.getRootElement(), "");
    {
 /**/Log.d(TAG, "parseFontStyle: "+val);
 
-      val = val.toLowerCase();
       if ("normal".equals(val))
          return Style.FontStyle.Normal;
       if ("italic".equals(val))
@@ -1703,7 +1699,6 @@ dumpNode(svgDocument.getRootElement(), "");
    {
 /**/Log.d(TAG, "parseTextDecoration: "+val);
 
-      val = val.toLowerCase();
       if ("none".equals(val) || "overline".equals(val) || "blink".equals(val))
          return "none";
       if ("underline".equals(val) || "line-through".equals(val))
@@ -1717,7 +1712,6 @@ dumpNode(svgDocument.getRootElement(), "");
    {
 /**/Log.d(TAG, "parseFillRule: "+val);
 
-      val = val.toLowerCase();
       if ("nonzero".equals(val))
          return Style.FillRule.NonZero;
       if ("evenodd".equals(val))
@@ -1731,7 +1725,6 @@ dumpNode(svgDocument.getRootElement(), "");
    {
 /**/Log.d(TAG, "parseStrokeLineCap: "+val);
 
-      val = val.toLowerCase();
       if ("butt".equals(val))
          return Style.LineCaps.Butt;
       if ("round".equals(val))
@@ -1747,7 +1740,6 @@ dumpNode(svgDocument.getRootElement(), "");
    {
 /**/Log.d(TAG, "parseStrokeLineJoin: "+val);
 
-      val = val.toLowerCase();
       if ("miter".equals(val))
          return Style.LineJoin.Miter;
       if ("round".equals(val))
@@ -1788,7 +1780,6 @@ dumpNode(svgDocument.getRootElement(), "");
    {
 /**/Log.d(TAG, "parseTextAnchor: "+val);
 
-      val = val.toLowerCase();
       if ("start".equals(val))
          return Style.TextAnchor.Start;
       if ("middle".equals(val))
@@ -1804,7 +1795,6 @@ dumpNode(svgDocument.getRootElement(), "");
    {
 /**/Log.d(TAG, "parseOverflow: "+val);
 
-      val = val.toLowerCase();
       if ("visible".equals(val) || "auto".equals(val))
          return Boolean.TRUE;
       if ("hidden".equals(val) || "scroll".equals(val))
