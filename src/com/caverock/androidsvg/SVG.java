@@ -11,6 +11,7 @@ import android.content.res.AssetManager;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Picture;
+import android.util.Log;
 
 public class SVG
 {
@@ -280,7 +281,7 @@ public class SVG
 
    protected static class Length implements Cloneable
    {
-      float  value = 0;;
+      float  value = 0;
       Unit   unit = Unit.px;
 
       public Length(float value, Unit unit)
@@ -322,7 +323,10 @@ public class SVG
             case pc: // 1 pica = 1/6 in
                return value * renderer.getDPI() / 6f;
             case percent:
-               return value * renderer.getCurrentViewBox().width / 100f;
+               Box  viewPortUser = renderer.getCurrentViewPortinUserUnits();
+               if (viewPortUser == null)
+                  return value;  // Undefined in this situation - so just return value to avoid an NPE
+               return value * viewPortUser.width / 100f;
             default:
                return value;
          }
@@ -331,8 +335,12 @@ public class SVG
       // Convert length to user units for a vertically-related context.
       public float floatValueY(SVGAndroidRenderer renderer)
       {
-         if (unit == Unit.percent)
-            return value * renderer.getCurrentViewBox().height / 100f;
+         if (unit == Unit.percent) {
+            Box  viewPortUser = renderer.getCurrentViewPortinUserUnits();
+            if (viewPortUser == null)
+               return value;  // Undefined in this situation - so just return value to avoid an NPE
+            return value * viewPortUser.height / 100f;
+         }
          return floatValueX(renderer);
       }
 
@@ -342,8 +350,11 @@ public class SVG
       {
          if (unit == Unit.percent)
          {
-            float w = renderer.getCurrentViewBox().width;
-            float h = renderer.getCurrentViewBox().height;
+            Box  viewPortUser = renderer.getCurrentViewPortinUserUnits();
+            if (viewPortUser == null)
+               return value;  // Undefined in this situation - so just return value to avoid an NPE
+            float w = viewPortUser.width;
+            float h = viewPortUser.height;
             if (w == h)
                return value * w / 100f;
             float n = (float) (Math.sqrt(w*w+h*h) / SQRT2);  // see spec section 7.10

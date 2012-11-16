@@ -25,7 +25,7 @@ public class SVGAndroidRenderer
    private static final String  TAG = "SVGAndroidRenderer";
 
    private Canvas  canvas;
-   private float   dpi = 90;    // dots per inch. Needed for accurate conversion of length values that have real world units, such as "cm".
+   private float   dpi = 160;    // dots per inch. Needed for accurate conversion of length values that have real world units, such as "cm".
 
    // Renderer state
    private RendererState  state = new RendererState();
@@ -108,7 +108,11 @@ public class SVGAndroidRenderer
    }
 
 
-   public SVG.Box getCurrentViewBox()
+   /**
+    * Get the current view port in user units.
+    * @return
+    */
+   public SVG.Box getCurrentViewPortinUserUnits()
    {
       return state.viewBox;
    }
@@ -184,6 +188,8 @@ public class SVGAndroidRenderer
          return;
 
       updateStyle(obj.style);
+
+      state.viewBox = obj.viewBox;
 
       // <svg> elements establish a new viewport.
       // But in the case of the root element, it has already been done for us.

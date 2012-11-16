@@ -68,6 +68,7 @@ public class SVGImageView extends View
       if (this.svg != null) {
          svg.ensureRootViewBox();
          bmcanvas.drawPicture(this.svg.getPicture(width, height, getResources().getDisplayMetrics().xdpi));
+         //bmcanvas.drawPicture(this.svg.getPicture(width, height, 96f));
       }
       this.bm = newBM;
    }
