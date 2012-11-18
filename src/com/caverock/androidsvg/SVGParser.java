@@ -6,7 +6,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.NoSuchElementException;
+import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -14,7 +18,6 @@ import javax.xml.parsers.SAXParserFactory;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
-import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
@@ -38,7 +41,8 @@ public class SVGParser extends DefaultHandler
 {
    private static final String  TAG = "SVGParser";
 
-   private static final String  NAMESPACE = "http://www.w3.org/2000/svg";
+   private static final String  SVG_NAMESPACE = "http://www.w3.org/2000/svg";
+   private static final String  XLINK_NAMESPACE = "http://www.w3.org/1999/xlink";
 
    // SVG parser
    private float    dpi = 96f;   // inches to pixels conversion
@@ -125,6 +129,8 @@ public class SVGParser extends DefaultHandler
    private static HashMap<String, Length> fontSizeKeywords = new HashMap<String, Length>();
    private static HashMap<String, String> fontWeightKeywords = new HashMap<String, String>();
    private static HashMap<String, SVG.AspectRatioAlignment> aspectRatioKeywords = new HashMap<String, SVG.AspectRatioAlignment>();
+
+   private static Pattern  FLOAT_PATTERN = null;
 
    static {
       colourKeywords.put("aliceblue", 0xf0f8ff);
@@ -310,6 +316,14 @@ public class SVGParser extends DefaultHandler
       aspectRatioKeywords.put("xMidYMax", SVG.AspectRatioAlignment.xMidYMax);
       aspectRatioKeywords.put("xMaxYMax", SVG.AspectRatioAlignment.xMaxYMax);
 
+      // Regex pattern for matching floats
+      String  digitSequence = "([0-9]++)";
+      String  fractionalConstant = "(" + digitSequence + "?\\." + digitSequence + "|" + digitSequence + "\\.)";
+      String  exponent = "([eE][+-]?" + digitSequence + ")";
+      String  floatingPointConstant = "(" + fractionalConstant + exponent + "?|" + digitSequence + exponent + ")";
+      String  integerConstant = digitSequence;
+      String  number = "([+-]?" + integerConstant +"|[+-]?" + floatingPointConstant +")";
+      FLOAT_PATTERN = Pattern.compile("^" + number);
    }
 
 
@@ -362,7 +376,9 @@ public class SVGParser extends DefaultHandler
    public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException
    {
       super.startElement(uri, localName, qName, attributes);
-/**/Log.d(TAG, "startElement: "+localName);
+/**/Log.d(TAG, "startElement: "+localName+" "+uri);
+      if (!SVG_NAMESPACE.equals(uri))
+         return;
       
       if (localName.equalsIgnoreCase(TAG_SVG)) {
          svg(attributes);
@@ -460,6 +476,8 @@ dumpNode(svgDocument.getRootElement(), "");
    }
 
 
+   //=========================================================================
+   // Handlers for each SVG element
    //=========================================================================
    // <svg> element
 
@@ -887,13 +905,26 @@ dumpNode(svgDocument.getRootElement(), "");
       {
          if (SVGAttr.fromString(attributes.getLocalName(i)) == SVGAttr.points)
          {
-            ListTokeniser tok = new ListTokeniser(attributes.getValue(i).trim());
-            int n = tok.countTokens();
-            if (n % 2 == 1)
-               throw new SAXException("Invalid <polyline> points attribute. There should be an even number of coordinates.");
-            obj.points = new float[n]; 
-            for (int j=0; j<n; j++) {
-               obj.points[j] = parseFloat(tok.nextToken());
+            TextScanner scan = new TextScanner(attributes.getValue(i));
+            List<Float> points = new ArrayList<Float>();
+            scan.skipWhitespace();
+
+            while (!scan.empty()) {
+               Float x = scan.nextFloat();
+               if (x == null)
+                  throw new SAXException("Invalid <polyline> points attribute. Non-coordinate content found in list.");
+               scan.skipCommaWhitespace();
+               Float y = scan.nextFloat();
+               if (y == null)
+                  throw new SAXException("Invalid <polyline> points attribute. There should be an even number of coordinates.");
+               scan.skipWhitespace();
+               points.add(x);
+               points.add(y);
+            }
+            obj.points = new float[points.size()];
+            int j = 0;
+            for (Float f: points) {
+               obj.points[j++] = f;
             }
          }
       }
@@ -1064,6 +1095,386 @@ dumpNode(svgDocument.getRootElement(), "");
 
 
    //=========================================================================
+   // String tokeniser
+   //=========================================================================
+
+
+   private class TextScanner
+   {
+      private String   input;
+      private int      position = 0;
+
+
+      public TextScanner(String input)
+      {
+         this.input = input.trim();
+      }
+
+      /**
+       * Returns true if we have reached the end of the input.
+       */
+      public boolean  empty()
+      {
+         return (position == input.length());
+      }
+
+      private boolean  isWhitespace(int c)
+      {
+         return (c==' ' || c=='\n' || c=='\r' || c =='\t');
+      }
+
+      public void  skipWhitespace()
+      {
+         while (position < input.length()) {
+            if (!isWhitespace(input.charAt(position)))
+               break;
+            position++;
+         }
+      }
+
+      public void  skipCommaWhitespace()
+      {
+         while (position < input.length()) {
+            if (!isWhitespace(input.charAt(position)))
+               break;
+            position++;
+         }
+         if (position == input.length())
+            return;
+/**/Log.d(TAG, "skipCommaWhitespace: pos="+position);
+         if (!(input.charAt(position) == ','))
+            return;
+         position++;
+         while (position < input.length()) {
+            if (!isWhitespace(input.charAt(position)))
+               break;
+            position++;
+         }
+      }
+
+      public boolean  hasFloat()
+      {
+         int  floatEnd = scanForFloat();
+         return (floatEnd > position);
+      }
+
+      public Float  nextFloat()
+      {
+         int  floatEnd = scanForFloat();
+         if (floatEnd == position)
+            return null;
+         Float  result = Float.parseFloat(input.substring(position, floatEnd));
+         position = floatEnd;
+         return result;
+      }
+
+      /*
+       * Scans for a comma-whitespace sequence with a float following it.
+       * If found, the float is returned. Otherwise null is returned and
+       * the scan position left as it was.
+       */
+      public Float  possibleNextFloat()
+      {
+         int  start = position;
+         skipCommaWhitespace();
+/**/Log.d(TAG, "possibleNextFloat: pos="+start+" skip="+position);
+         Float  result = nextFloat();
+/**/Log.d(TAG, "possibleNextFloat: pos="+start+" res="+result);
+         if (result != null)
+            return result;
+         position = start;
+         return null;
+      }
+
+      public Integer  nextInteger()
+      {
+         int  intEnd = scanForInteger();
+         //System.out.println("nextFloat: "+position+" "+floatEnd);
+         if (intEnd == position)
+            return null;
+         Integer  result = Integer.parseInt(input.substring(position, intEnd));
+         position = intEnd;
+         return result;
+      }
+
+      public Length  nextLength()
+      {
+         Float  scalar = nextFloat();
+         if (scalar == null)
+            return null;
+         Unit  unit = nextUnit();
+         if (unit == null)
+            return new Length(scalar, Unit.px);
+         else
+            return new Length(scalar, unit);
+      }
+
+      public boolean  hasNext(char ch)
+      {
+         return (position < input.length() && input.charAt(position) == ch);
+      }
+
+      public boolean  consume(char ch)
+      {
+/**/Log.d(TAG, "consume: pos="+position);
+         boolean  found = (position < input.length() && input.charAt(position) == ch);
+         if (found)
+            position++;
+         return found;
+      }
+
+      private int  nextChar()
+      {
+         if (position == input.length())
+            return -1;
+         position++;
+         if (position < input.length())
+            return input.charAt(position);
+         else
+            return -1;
+      }
+
+      private boolean  isTokenChar(int c)
+      {
+         return (c != -1 && !isWhitespace(c));
+      }
+
+      /*
+       * Scans the input starting immediately at 'position' for the next token.
+       * A token is a sequence of character terminating at a whitespace character.
+       * Note that this routine only checks for whitespace characters.  Do not
+       * use this if you want to scan for a value that might terminate with
+       * comma-whitespace.
+       */
+      private String  nextToken()
+      {
+         if (empty())
+            return null;
+
+         int  ch = input.charAt(position);
+         if (isWhitespace(ch))
+            return null;
+         
+         int  start = position;
+         ch = nextChar();
+         while (isTokenChar(ch)) {
+            ch = nextChar();
+         }
+         return input.substring(start, position);
+      }
+
+      /*
+       * Scans the input starting immediately at 'position' for the a sequence
+       * of letter characters terminated by an open bracket.  Both the function
+       * name and the bracket are returned.
+       */
+      private String  nextFunction()
+      {
+         if (empty())
+            return null;
+         int  start = position;
+
+         int  ch = input.charAt(position);
+         while ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z'))
+            ch = nextChar();
+         if (ch == '(') {
+            position ++;
+            return input.substring(start, position);
+         }
+         position = start;
+         return null;
+      }
+
+      /*
+       * Scans the input starting immediately at 'position' for a floating point number.
+       * If one is found, the end position of the float will be returned.
+       * If the returned value is the same as 'position' then no float was found.
+       */
+      private int  scanForFloat()
+      {
+         if (empty())
+            return position;
+         int  lastValidPos = position;
+         int  start = position;
+
+         int  ch = input.charAt(position);
+         // Check whole part of mantissa
+         if (ch == '-' || ch == '+')
+            ch = nextChar();
+         if (Character.isDigit(ch)) {
+            lastValidPos = position + 1;
+            ch = nextChar();
+            while (Character.isDigit(ch)) {
+               lastValidPos = position + 1;
+               ch = nextChar();
+            }
+         }
+         // Fraction or exponent starts here
+         if (ch == '.') {
+            lastValidPos = position + 1;
+            ch = nextChar();
+            while (Character.isDigit(ch)) {
+               lastValidPos = position + 1;
+               ch = nextChar();
+            }
+         }
+         // Exponent
+         if (ch == 'e' || ch == 'E') {
+            ch = nextChar();
+            if (ch == '-' || ch == '+')
+               ch = nextChar();
+            if (Character.isDigit(ch)) {
+               lastValidPos = position + 1;
+               ch = nextChar();
+               while (Character.isDigit(ch)) {
+                  lastValidPos = position + 1;
+                  ch = nextChar();
+               }
+            }
+         }
+
+         position = start;
+         return lastValidPos;
+      }
+
+      /*
+       * Scans the input starting immediately at 'position' for an integer number.
+       * If one is found, the end position of the float will be returned.
+       * If the returned value is the same as 'position' then no number was found.
+       */
+      private int  scanForInteger()
+      {
+         if (empty())
+            return position;
+         int  lastValidPos = position;
+         int  start = position;
+
+         int  ch = input.charAt(position);
+         // Check whole part of mantissa
+         if (ch == '-' || ch == '+')
+            ch = nextChar();
+         if (Character.isDigit(ch)) {
+            lastValidPos = position + 1;
+            ch = nextChar();
+            while (Character.isDigit(ch)) {
+               lastValidPos = position + 1;
+               ch = nextChar();
+            }
+         }
+
+         position = start;
+         return lastValidPos;
+      }
+
+      /*
+       * Get the next few chars. Mainly used for error messages.
+       */
+      public String  ahead()
+      {
+         int start = position;
+         while (!empty() && !isWhitespace(input.charAt(position)))
+            position++;
+         String  str = input.substring(start, position);
+         position = start;
+         return str;
+      }
+
+      public Unit  nextUnit()
+      {
+         if (empty())
+            return null;
+         int  ch = input.charAt(position);
+         if (ch == '%') {
+            position++;
+            return Unit.percent;
+         }
+         if (position > (input.length() - 2))
+            return null;
+         try {
+            return Unit.valueOf(input.substring(position, position + 2));
+         } catch (IllegalArgumentException e) {
+            return null;
+         }
+      }
+   }
+
+
+   /*
+    * Tokenises SVG path data.
+    */
+   private class PathTokeniser
+   {
+      private int nextToken = 0;
+      private ArrayList<String>  list = new ArrayList<String>();
+
+      public PathTokeniser(String src)
+      {
+         int start = 0;
+         int pos = 0;
+         boolean skipWs = false;
+         while (pos < src.length())
+         {
+            char c = src.charAt(pos);
+            if (Character.isLetter(c)) {
+               if (!skipWs && pos>start) {
+//Log.d(TAG, "pt0: "+src.substring(start, pos));
+                  list.add(src.substring(start, pos));
+               }
+//Log.d(TAG, "pt1: "+c);
+               list.add(String.valueOf(c));
+               skipWs = true;
+            } else if (c == ',' || Character.isWhitespace(c)) {
+               if (!skipWs) {
+//Log.d(TAG, "pt2: "+src.substring(start, pos));
+                  list.add(src.substring(start, pos));
+                  skipWs = true;
+               }
+               skipWs = true;
+            } else if (skipWs) {
+               skipWs = false;
+               start = pos;
+            }
+            pos++;
+         }
+         if (!skipWs) {
+//Log.d(TAG, "pt3: "+src.substring(start, pos));
+            list.add(src.substring(start, pos));
+         }
+      }
+      
+      public boolean hasMoreTokens()
+      {
+         return nextToken < list.size();
+      }
+      
+      public String nextToken()
+      {
+         if (nextToken == list.size())
+            throw new NoSuchElementException();
+         return list.get(nextToken++);
+      }
+
+      public String peekToken()
+      {
+         if (nextToken == list.size())
+            throw new NoSuchElementException();
+         return list.get(nextToken);
+      }
+
+      public int countTokens()
+      {
+         return list.size() - nextToken;
+      }
+   }
+
+
+   private boolean  isPathCommandLetter(String s)
+   {
+      return (s.length() == 1 && Character.isLetter(s.charAt(0)));
+   }
+
+
+   //=========================================================================
    // Attribute parsing
    //=========================================================================
 
@@ -1099,7 +1510,7 @@ dumpNode(svgDocument.getRootElement(), "");
          {
             case fill:
                if (inherit) {
-                  //obj.style.inheritFlags |= SVG.SPECIFIED_FILL;
+                  //setInherit(obj, SVG.SPECIFIED_FILL);
                   break;
                }
                obj.style.specifiedFlags |= SVG.SPECIFIED_FILL;
@@ -1115,7 +1526,7 @@ dumpNode(svgDocument.getRootElement(), "");
 
             case fill_rule:
                if (inherit) {
-                  //obj.style.inheritFlags |= SVG.SPECIFIED_FILL_RULE;
+                  //setInherit(obj, SVG.SPECIFIED_FILL_RULE);
                   break;
                }
                obj.style.fillRule = parseFillRule(val);
@@ -1124,7 +1535,7 @@ dumpNode(svgDocument.getRootElement(), "");
 
             case fill_opacity:
                if (inherit) {
-                  //obj.style.inheritFlags |= SVG.SPECIFIED_FILL_OPACITY;
+                  //setInherit(obj, SVG.SPECIFIED_FILL_OPACITY);
                   break;
                }
                obj.style.fillOpacity = parseFloat(val);
@@ -1133,7 +1544,7 @@ dumpNode(svgDocument.getRootElement(), "");
 
             case stroke:
                if (inherit) {
-                  //obj.style.inheritFlags |= SVG.SPECIFIED_STROKE;
+                  //setInherit(obj, SVG.SPECIFIED_STROKE);
                   break;
                }
                obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE;
@@ -1148,7 +1559,7 @@ dumpNode(svgDocument.getRootElement(), "");
 
             case stroke_opacity:
                if (inherit) {
-                  //obj.style.inheritFlags |= SVG.SPECIFIED_STROKE_OPACITY;
+                  //setInherit(obj, SVG.SPECIFIED_STROKE_OPACITY);
                   break;
                }
                obj.style.strokeOpacity = parseFloat(val);
@@ -1157,7 +1568,7 @@ dumpNode(svgDocument.getRootElement(), "");
 
             case stroke_width:
                if (inherit) {
-                  //obj.style.inheritFlags |= SVG.SPECIFIED_STROKE_WIDTH;
+                  //setInherit(obj, SVG.SPECIFIED_STROKE_WIDTH);
                   break;
                }
                obj.style.strokeWidth = parseLength(val);
@@ -1166,7 +1577,7 @@ dumpNode(svgDocument.getRootElement(), "");
 
             case stroke_linecap:
                if (inherit) {
-                  //obj.style.inheritFlags |= SVG.SPECIFIED_STROKE_LINECAP;
+                  //setInherit(obj, SVG.SPECIFIED_STROKE_LINECAP);
                   break;
                }
                obj.style.strokeLineCap = parseStrokeLineCap(val);
@@ -1175,7 +1586,7 @@ dumpNode(svgDocument.getRootElement(), "");
 
             case stroke_linejoin:
                if (inherit) {
-                  //obj.style.inheritFlags |= SVG.SPECIFIED_STROKE_LINEJOIN;
+                  //setInherit(obj, SVG.SPECIFIED_STROKE_LINEJOIN);
                   break;
                }
                obj.style.strokeLineJoin = parseStrokeLineJoin(val);
@@ -1184,7 +1595,7 @@ dumpNode(svgDocument.getRootElement(), "");
 
             case stroke_dasharray:
                if (inherit) {
-                  //obj.style.inheritFlags |= SVG.SPECIFIED_STROKE_DASHARRAY;
+                  //setInherit(obj, SVG.SPECIFIED_STROKE_DASHARRAY);
                   break;
                }
                if ("none".equals(val))
@@ -1196,7 +1607,7 @@ dumpNode(svgDocument.getRootElement(), "");
 
             case stroke_dashoffset:
                if (inherit) {
-                  //obj.style.inheritFlags |= SVG.SPECIFIED_STROKE_DASHOFFSET;
+                  //setInherit(obj, SVG.SPECIFIED_STROKE_DASHOFFSET);
                   break;
                }
                obj.style.strokeDashOffset = parseLength(val);
@@ -1205,7 +1616,7 @@ dumpNode(svgDocument.getRootElement(), "");
 
             case opacity:
                if (inherit) {
-                  //obj.style.inheritFlags |= SVG.SPECIFIED_OPACITY;
+                  //setInherit(obj, SVG.SPECIFIED_OPACITY);
                   break;
                }
                obj.style.opacity = parseFloat(val);
@@ -1214,7 +1625,7 @@ dumpNode(svgDocument.getRootElement(), "");
 
             case font_family:
                if (inherit) {
-                  //obj.style.inheritFlags |= SVG.SPECIFIED_FONT_FAMILY;
+                  //setInherit(obj, SVG.SPECIFIED_FONT_FAMILY);
                   break;
                }
                obj.style.fontFamily = val;
@@ -1223,7 +1634,7 @@ dumpNode(svgDocument.getRootElement(), "");
 
             case font_size:
                if (inherit) {
-                  //obj.style.inheritFlags |= SVG.SPECIFIED_FONT_SIZE;
+                  //setInherit(obj, SVG.SPECIFIED_FONT_SIZE);
                   break;
                }
                obj.style.fontSize = parseFontSize(val);
@@ -1232,7 +1643,7 @@ dumpNode(svgDocument.getRootElement(), "");
 
             case font_weight:
                if (inherit) {
-                  //obj.style.inheritFlags |= SVG.SPECIFIED_FONT_WEIGHT;
+                  //setInherit(obj, SVG.SPECIFIED_FONT_WEIGHT);
                   break;
                }
                obj.style.fontWeight = val;
@@ -1241,7 +1652,7 @@ dumpNode(svgDocument.getRootElement(), "");
 
             case font_style:
                if (inherit) {
-                  //obj.style.inheritFlags |= SVG.SPECIFIED_FONT_STYLE;
+                  //setInherit(obj, SVG.SPECIFIED_FONT_STYLE);
                   break;
                }
                obj.style.fontStyle = parseFontStyle(val);
@@ -1250,7 +1661,7 @@ dumpNode(svgDocument.getRootElement(), "");
 
             case text_decoration:
                if (inherit) {
-                  //obj.style.inheritFlags |= SVG.SPECIFIED_TEXT_DECORATION;
+                  //setInherit(obj, SVG.SPECIFIED_TEXT_DECORATION);
                   break;
                }
                obj.style.textDecoration = parseTextDecoration(val);
@@ -1259,7 +1670,7 @@ dumpNode(svgDocument.getRootElement(), "");
 
             case text_anchor:
                if (inherit) {
-                  //obj.style.inheritFlags |= SVG.SPECIFIED_TEXT_ANCHOR;
+                  //setInherit(obj, SVG.SPECIFIED_TEXT_ANCHOR);
                   break;
                }
                obj.style.textAnchor = parseTextAnchor(val);
@@ -1268,7 +1679,7 @@ dumpNode(svgDocument.getRootElement(), "");
 
             case overflow:
                if (inherit) {
-                  //obj.style.inheritFlags |= SVG.SPECIFIED_OVERFLOW;
+                  //setInherit(obj, SVG.SPECIFIED_OVERFLOW);
                   break;
                }
                obj.style.overflow = parseOverflow(val);
@@ -1282,91 +1693,148 @@ dumpNode(svgDocument.getRootElement(), "");
    }
 
 
+   /*
+   private void  setInherit(SVG.SvgElement obj, long flag)
+   {
+      obj.style.inheritFlags |= flag;
+      obj.style.specifiedFlags |= flag;
+   }
+   */
+
+
    private void  parseAttributesTransform(SVG.HasTransform obj, Attributes attributes) throws SAXException
    {
 //Log.d(TAG, "parseAttributesTransform");
       for (int i=0; i<attributes.getLength(); i++)
       {
-         if (SVGAttr.fromString(attributes.getLocalName(i)) == SVGAttr.transform) {
-            ListTokeniser tok = new ListTokeniser(attributes.getValue(i).trim());
+         if (SVGAttr.fromString(attributes.getLocalName(i)) == SVGAttr.transform)
+         {
             Matrix  matrix = new Matrix();
 
-            while (tok.hasMoreTokens())
-            {
-               String  val = tok.nextToken();
-               int bracket1 = val.indexOf('(');
-               int bracket2 = val.indexOf(')');
-               if (bracket1 > bracket2) {
-                  throw new SAXException("Invalid transform attribute: "+val);
-               }
-               String fn = val.substring(0, bracket1).trim();
-               String pars = val.substring(bracket1+1, bracket2).trim();
-//Log.d(TAG, ">>>"+fn+"("+pars+")");
-               ListTokeniser parstok = new ListTokeniser(pars);
+            String  val = attributes.getValue(i);
+/**/Log.d(TAG, "parseAttributesTransform: "+val);
+            TextScanner  scan = new TextScanner(val);
+            scan.skipWhitespace();
 
-               if (fn.equals("matrix")) {
-                  if (parstok.countTokens() == 6) {
-                     float[] vals = new float[9];
-                     vals[0] = Float.parseFloat(parstok.nextToken());
-                     vals[3] = Float.parseFloat(parstok.nextToken());
-                     vals[1] = Float.parseFloat(parstok.nextToken());
-                     vals[4] = Float.parseFloat(parstok.nextToken());
-                     vals[2] = Float.parseFloat(parstok.nextToken());
-                     vals[5] = Float.parseFloat(parstok.nextToken());
-                     vals[6] = 0f;
-                     vals[7] = 0f;
-                     vals[8] = 1f;
-                     Matrix m = new Matrix();
-                     m.getValues(vals);
-                     matrix.preConcat(m);
-                     continue;
-                  }
-               } else if (fn.equals("translate")) {
-                  if (parstok.countTokens() == 1) {
-                     matrix.preTranslate(Float.parseFloat(parstok.nextToken()), 0f);
-                     continue;
-                  } else if (parstok.countTokens() == 2) {
-                     float tx = Float.parseFloat(parstok.nextToken());
-                     matrix.preTranslate(tx, Float.parseFloat(parstok.nextToken()));
-                     continue;
-                  }
-               } else if (fn.equals("scale")) {
-                  if (parstok.countTokens() == 1) {
-                     float sx = Float.parseFloat(parstok.nextToken());
+            while (!scan.empty())
+            {
+               String  cmd = scan.nextFunction();
+/**/Log.d(TAG, ">>>"+cmd+")");
+
+               if (cmd.equals("matrix("))
+               {
+                  scan.skipWhitespace();
+                  Float a = scan.nextFloat();
+                  scan.skipCommaWhitespace();
+                  Float b = scan.nextFloat();
+                  scan.skipCommaWhitespace();
+                  Float c = scan.nextFloat();
+                  scan.skipCommaWhitespace();
+                  Float d = scan.nextFloat();
+                  scan.skipCommaWhitespace();
+                  Float e = scan.nextFloat();
+                  scan.skipCommaWhitespace();
+                  Float f = scan.nextFloat();
+                  scan.skipWhitespace();
+
+                  if (f == null || !scan.consume(')'))
+                     throw new SAXException("Invalid transform list: "+val);
+
+                  float[] vals = new float[9];
+                  vals[0] = a;
+                  vals[3] = b;
+                  vals[1] = c;
+                  vals[4] = d;
+                  vals[2] = e;
+                  vals[5] = f;
+                  vals[6] = 0f;
+                  vals[7] = 0f;
+                  vals[8] = 1f;
+                  Matrix m = new Matrix();
+                  m.getValues(vals);
+                  matrix.preConcat(m);
+               }
+               else if (cmd.equals("translate("))
+               {
+                  scan.skipWhitespace();
+                  Float  tx = scan.nextFloat();
+                  Float  ty = scan.possibleNextFloat();
+                  scan.skipWhitespace();
+/**/Log.d(TAG, "tx = "+tx+" ty="+ty);
+
+                  if (tx == null || !scan.consume(')'))
+                     throw new SAXException("Invalid transform list: "+val);
+
+                  if (ty == null)
+                     matrix.preTranslate(tx, 0f);
+                  else
+                     matrix.preTranslate(tx, ty);
+               }
+               else if (cmd.equals("scale("))
+               {
+                  scan.skipWhitespace();
+                  Float  sx = scan.nextFloat();
+                  Float  sy = scan.possibleNextFloat();
+                  scan.skipWhitespace();
+
+                  if (sx == null || !scan.consume(')'))
+                     throw new SAXException("Invalid transform list: "+val);
+
+                  if (sy == null)
                      matrix.preScale(sx, sx);
-                     continue;
-                  } else if (parstok.countTokens() == 2) {
-                     float sx = Float.parseFloat(parstok.nextToken());
-                     matrix.preScale(sx, Float.parseFloat(parstok.nextToken()));
-                     continue;
-                  }
-               } else if (fn.equals("rotate")) {
-                  if (parstok.countTokens() == 1) {
-                     matrix.preRotate(Float.parseFloat(parstok.nextToken()));
-                     continue;
-                  } else if (parstok.countTokens() == 3) {
-                     float ang = Float.parseFloat(parstok.nextToken());
-                     float cx = Float.parseFloat(parstok.nextToken());
-                     float cy = Float.parseFloat(parstok.nextToken());
+                  else
+                     matrix.preScale(sx, sy);
+               }
+               else if (cmd.equals("rotate("))
+               {
+                  scan.skipWhitespace();
+                  Float  ang = scan.nextFloat();
+                  Float  cx = scan.possibleNextFloat();
+                  Float  cy = scan.possibleNextFloat();
+                  scan.skipWhitespace();
+
+                  if (ang == null || !scan.consume(')'))
+                     throw new SAXException("Invalid transform list: "+val);
+
+                  if (cx == null) {
+                     matrix.preRotate(ang);
+                  } else if (cy != null) {
                      matrix.preRotate(ang, cx, cy);
-                     continue;
-                  }
-               } else if (fn.equals("skewX")) {
-                  if (parstok.countTokens() == 1) {
-                     float ang = Float.parseFloat(parstok.nextToken());
-                     matrix.preSkew((float) Math.tan(Math.toRadians(ang)), 0f);
-//Log.d(TAG, "skewX "+matrix);
-                     continue;
-                  }
-               } else if (fn.equals("skewY")) {
-                  if (parstok.countTokens() == 1) {
-                     float ang = Float.parseFloat(parstok.nextToken());
-                     matrix.preSkew(0f, (float) Math.tan(Math.toRadians(ang)));
-//Log.d(TAG, "skewY "+matrix);
+                  } else {
+                     throw new SAXException("Invalid transform list: "+val);
                   }
                }
-               else
-                  throw new SAXException("Invalid transform attribute: "+val);
+               else if (cmd.equals("skewX("))
+               {
+                  scan.skipWhitespace();
+                  Float  ang = scan.nextFloat();
+                  scan.skipWhitespace();
+
+                  if (ang == null || !scan.consume(')'))
+                     throw new SAXException("Invalid transform list: "+val);
+
+                  matrix.preSkew((float) Math.tan(Math.toRadians(ang)), 0f);
+               }
+               else if (cmd.equals("skewY("))
+               {
+                  scan.skipWhitespace();
+                  Float  ang = scan.nextFloat();
+                  scan.skipWhitespace();
+
+                  if (ang == null || !scan.consume(')'))
+                     throw new SAXException("Invalid transform list: "+val);
+
+                  matrix.preSkew(0f, (float) Math.tan(Math.toRadians(ang)));
+               }
+               else if (cmd != null) {
+                  throw new SAXException("Invalid transform list fn: "+cmd+")");
+               } else {
+                  throw new SAXException("Invalid transform list: "+val);
+               }
+
+               if (scan.empty())
+                  break;
+               scan.skipCommaWhitespace();
             }
             obj.setTransform(matrix);
          }
@@ -1390,16 +1858,17 @@ dumpNode(svgDocument.getRootElement(), "");
          end -= 1;
          unit = Unit.percent;
       } else if (end > 2 && Character.isLetter(lastChar) && Character.isLetter(val.charAt(end-2))) {
-         String unitStr = val.substring(end-2);
-         if ("px|em|ex|in|cm|mm|pt|pc".indexOf(unitStr) >= 0) {
-           end -= 2;
-           unit = Unit.valueOf(unitStr);
-         } else {
+         end -= 2;
+         String unitStr = val.substring(end);
+         try {
+            unit = Unit.valueOf(unitStr);
+         } catch (IllegalArgumentException e) {
             throw new SAXException("Invalid length unit specifier: "+val);
          }
       }
       try
       {
+/**/Log.d(TAG, "@@@ parseLength: "+val.substring(0, end));
          float scalar = Float.parseFloat(val.substring(0, end));
          return new Length(scalar, unit);
       }
@@ -1419,11 +1888,20 @@ dumpNode(svgDocument.getRootElement(), "");
          throw new SAXException("Invalid length list (empty string)");
 
       List<Length>  coords = new ArrayList<Length>(1);
-      ListTokeniser tok = new ListTokeniser(val);
 
-      while (tok.hasMoreTokens())
+      TextScanner scan = new TextScanner(val);
+      scan.skipWhitespace();
+
+      while (!scan.empty())
       {
-         coords.add(parseLength(tok.nextToken()));
+         Float scalar = scan.nextFloat();
+         if (scalar == null)
+            throw new SAXException("Invalid length list value: "+scan.ahead());
+         Unit  unit = scan.nextUnit();
+         if (unit == null)
+            unit = Unit.px;
+         coords.add(new Length(scalar, unit));
+         scan.skipWhitespace();
       }
       return coords;
    }
@@ -1448,97 +1926,29 @@ dumpNode(svgDocument.getRootElement(), "");
 
 
    /*
-    * Tokenises an SVG list. Lists are a set of values seperated by whitespace and/or a comma.
-    * Unlike StringTokenizer, this tokeniser only returns the values. No delimiters are returned.
-    * Note: trim() the string before you pass it in.
-    */
-   private class ListTokeniser
-   {
-      private int nextToken = 0;
-      private ArrayList<String>  list = new ArrayList<String>();
-      
-      public ListTokeniser(String src)
-      {
-         int start = 0;
-         int pos = 0;
-         boolean skipWs = false;
-         boolean inBrackets = false;
-         while (pos < src.length())
-         {
-            char c = src.charAt(pos);
-            if (inBrackets) {
-               if (c == ')') {
-                  inBrackets = false;
-               }
-               pos++;
-               continue;
-            }
-            if (c == '(') {
-               inBrackets = true;
-               pos++;
-               continue;
-            }
-            if (c == ',') {
-               list.add(src.substring(start, pos));
-               skipWs = true;
-            } else if (Character.isWhitespace(c)) {
-               if (!skipWs) {
-                  list.add(src.substring(start, pos));
-                  skipWs = true;
-               }
-            } else if (skipWs) {
-               skipWs = false;
-               start = pos;
-            }
-            pos++;
-         }
-         if (!skipWs) {
-            list.add(src.substring(start, pos));
-         }
-      }
-      
-      public boolean hasMoreTokens()
-      {
-         return nextToken < list.size();
-      }
-      
-      public String nextToken()
-      {
-         if (nextToken == list.size())
-            throw new NoSuchElementException();
-//Log.d(TAG, "ListTokenizer.nextToken = "+list.get(nextToken));
-         return list.get(nextToken++);
-      }
-
-      public int countTokens()
-      {
-         return list.size() - nextToken;
-      }
-   }
-
-
-   /*
     * Parse a viewBox attribute.
     */
    private Box  parseViewBox(String val) throws SAXException
    {
-      ListTokeniser tok = new ListTokeniser(val);
-      try
-      {
-         float minX = Float.parseFloat(tok.nextToken());
-         float minY = Float.parseFloat(tok.nextToken());
-         float width = Float.parseFloat(tok.nextToken());
-         float height = Float.parseFloat(tok.nextToken());
-         if (width < 0)
-            throw new SAXException("Invalid viewBox. width cannot be negative");
-         if (height < 0)
-            throw new SAXException("Invalid viewBox. height cannot be negative");
-         return new SVG.Box(minX, minY, width, height);
-      }
-      catch (Exception e)
-      {
+      TextScanner scan = new TextScanner(val);
+      scan.skipWhitespace();
+
+      Float minX = scan.nextFloat();
+      scan.skipCommaWhitespace();
+      Float minY = scan.nextFloat();
+      scan.skipCommaWhitespace();
+      Float width = scan.nextFloat();
+      scan.skipCommaWhitespace();
+      Float height = scan.nextFloat();
+
+      if (minX==null || minY==null || width == null || height == null)
          throw new SAXException("Invalid viewBox definition - should have four numbers");
-      }
+      if (width < 0)
+         throw new SAXException("Invalid viewBox. width cannot be negative");
+      if (height < 0)
+         throw new SAXException("Invalid viewBox. height cannot be negative");
+
+      return new SVG.Box(minX, minY, width, height);
    }
 
 
@@ -1547,33 +1957,33 @@ dumpNode(svgDocument.getRootElement(), "");
     */
    private void  parsePreserveAspectRatio(SVG.HasPreserveAspectRatio obj, String val) throws SAXException
    {
-      ListTokeniser tok = new ListTokeniser(val);
-      try
-      {
-         SVG.AspectRatioAlignment  align;
-         boolean                   slice = false;
+      TextScanner scan = new TextScanner(val);
+      scan.skipWhitespace();
 
-         String  word = tok.nextToken();
-         if ("defer".equals(word)) {    // Ignore defer keyword
-            word = tok.nextToken();
-         }
-         align = aspectRatioKeywords.get(word);
-         if (tok.hasMoreTokens()) {
-            String meetOrSlice = tok.nextToken();
-            if (meetOrSlice.equals("meet")) {
-               slice = false;
-            } else if (meetOrSlice.equals("slice")) {
-               slice = true;
-            } else {
-               throw new SAXException("Invalid preserveAspectRatio definition");
-            }
-         }
-         obj.setPreserveAspectRatio(align, slice);
+      SVG.AspectRatioAlignment  align;
+      boolean                   slice = false;
+
+      String  word = scan.nextToken();
+      if ("defer".equals(word)) {    // Ignore defer keyword
+         scan.skipWhitespace();
+         word = scan.nextToken();
       }
-      catch (Exception e)
-      {
-         throw new SAXException("Invalid preserveAspectRatio definition");
+/**/Log.d(TAG, "parsePreserveAspectRatio: word="+word);
+      align = aspectRatioKeywords.get(word);
+      scan.skipWhitespace();
+
+      if (!scan.empty()) {
+         String meetOrSlice = scan.nextToken();
+/**/Log.d(TAG, "parsePreserveAspectRatio: meetOrSlice="+meetOrSlice);
+         if (meetOrSlice.equals("meet")) {
+            slice = false;
+         } else if (meetOrSlice.equals("slice")) {
+            slice = true;
+         } else {
+            throw new SAXException("Invalid preserveAspectRatio definition: "+val);
+         }
       }
+      obj.setPreserveAspectRatio(align, slice);
    }
 
 
@@ -1605,10 +2015,18 @@ dumpNode(svgDocument.getRootElement(), "");
       }
       if (val.startsWith("rgb("))
       {
-         ListTokeniser tok = new ListTokeniser(val.substring(4, val.indexOf(')')));
-         int red = parseColourComponent(tok.nextToken());
-         int green = parseColourComponent(tok.nextToken());
-         int blue = parseColourComponent(tok.nextToken());
+         TextScanner scan = new TextScanner(val.substring(4));
+         scan.skipWhitespace();
+
+         int red = parseColourComponent(scan);
+         scan.skipCommaWhitespace();
+         int green = parseColourComponent(scan);
+         scan.skipCommaWhitespace();
+         int blue = parseColourComponent(scan);
+
+         scan.skipWhitespace();
+         if (!scan.consume(')'))
+            throw new SAXException("Bad rgb() colour value: "+val);
          return new Colour(red<<16 | green<<8 | blue);
       }
       // Must be a colour keyword
@@ -1618,25 +2036,17 @@ dumpNode(svgDocument.getRootElement(), "");
 
 
    // Parse a colour component value (0..255 or 0%-100%)
-   private int  parseColourComponent(String val) throws SAXException
+   private int  parseColourComponent(TextScanner scan) throws SAXException
    {
-      try
-      {
-         if (val.endsWith("%")) {
-            int pct = Integer.parseInt(val.substring(0, val.length()-1));
-            if (pct < 0 || pct > 100)
-               throw new NumberFormatException();
-            return (pct * 255 / 100);
-         } else {
-            int comp = Integer.parseInt(val);
-            if (comp < 0 || comp > 255)
-               throw new NumberFormatException();
-            return comp;
-         }
-      }
-      catch (NumberFormatException e)
-      {
-         throw new SAXException("Invalid colour component: "+val);
+      int  comp = scan.nextInteger();
+      if (scan.consume('%')) {
+         if (comp < 0 || comp > 100)
+            throw new SAXException("Invalid colour component: "+comp+"%");
+         return (comp * 255 / 100);
+      } else {
+         if (comp < 0 || comp > 255)
+            throw new SAXException("Invalid colour component: "+comp);
+         return comp;
       }
    }
 
@@ -1645,7 +2055,13 @@ dumpNode(svgDocument.getRootElement(), "");
    private Colour  parseColourKeyword(String name) throws SAXException
    {
 //Log.d(TAG, "parseColourKeyword: "+name);
-      Integer  col = colourKeywords.get(name);
+      if (name.equals("currentColor")) {
+         // Intended for when SVG is embedded in othe documents. Allows the
+         // SVG to inherit the current colour from the parent document.
+         // We are just going to treat it as black.
+         return new Colour(0);
+      }
+      Integer  col = colourKeywords.get(name.toLowerCase());
       if (col == null) {
          throw new SAXException("Invalid colour keyword: "+name);
       }
@@ -1755,23 +2171,42 @@ dumpNode(svgDocument.getRootElement(), "");
    {
 /**/Log.d(TAG, "parseStrokeDashArray: "+val);
 
-      ListTokeniser tok = new ListTokeniser(val);
-      int n = tok.countTokens();
-      Length[] dashes = new Length[n]; 
-      for (int i=0; i<n; i++) {
-         try
-         {
-            dashes[i] = parseLength(tok.nextToken());
-         }
-         catch (SAXException e)
-         {
-            throw new SAXException("Invalid stroke-dasharray property: "+val);
-         }
-         if (dashes[i].isNegative()) {
-            throw new SAXException("Invalid stroke-dasharray: dash segemnts cannot be negative");
-         }
+      TextScanner scan = new TextScanner(val);
+      scan.skipWhitespace();
+
+      if (scan.empty())
+         return null;
+      
+      Length dash = scan.nextLength();
+/**/Log.d(TAG, "@@@ parseStrokeDashArray: dash="+dash);
+      if (dash == null)
+         return null;
+      if (dash.isNegative())
+         throw new SAXException("Invalid stroke-dasharray. Dash segemnts cannot be negative: "+val);
+
+      float sum = dash.floatValue();
+
+      List<Length> dashes = new ArrayList<Length>();
+      dashes.add(dash);
+      while (!scan.empty())
+      {
+         scan.skipCommaWhitespace();
+         dash = scan.nextLength();
+/**/Log.d(TAG, "@@@ parseStrokeDashArray: dash="+dash);
+         if (dash == null)  // must have hit something unexpected
+            throw new SAXException("Invalid stroke-dasharray. Non-Length content found: "+val);
+         if (dash.isNegative())
+            throw new SAXException("Invalid stroke-dasharray. Dash segemnts cannot be negative: "+val);
+         dashes.add(dash);
+         sum += dash.floatValue();
       }
-      return dashes;
+
+      // Spec (section 11.4) says if the sum of dash lengths is zero, it should
+      // be treated as "none" ie a solid stroke.
+      if (sum == 0f)
+         return null;
+      
+      return dashes.toArray(new Length[dashes.size()]);
    }
 
 
@@ -1811,6 +2246,7 @@ dumpNode(svgDocument.getRootElement(), "");
    {
 /**/Log.d(TAG, "parsePath: "+val);
       PathTokeniser tok = new PathTokeniser(val);
+/**/Log.d(TAG, "parsePath: num tokens = "+tok.countTokens());
 
       char    pathCommand = '?';
       float   currentX = 0f, currentY = 0f;    // The last point visited in the subpath
@@ -1826,7 +2262,7 @@ dumpNode(svgDocument.getRootElement(), "");
       {
          while (tok.hasMoreTokens())
          {
-            if (isCommandLetter(tok.peekToken()))
+            if (isPathCommandLetter(tok.peekToken()))
                pathCommand = tok.nextToken().charAt(0);
 
             if (startOfPath && pathCommand != 'M' && pathCommand != 'm')
@@ -2011,81 +2447,6 @@ dumpNode(svgDocument.getRootElement(), "");
          // Spec says to return what we can
          return path;
       }
-   }
-
-
-   private boolean  isCommandLetter(String s)
-   {
-      return (s.length() == 1 && Character.isLetter(s.charAt(0)));
-   }
-
-
-   /*
-    * Tokenises SVG path data.
-    */
-   private class PathTokeniser
-   {
-      private int nextToken = 0;
-      private ArrayList<String>  list = new ArrayList<String>();
-      
-      public PathTokeniser(String src)
-      {
-         int start = 0;
-         int pos = 0;
-         boolean skipWs = false;
-         while (pos < src.length())
-         {
-            char c = src.charAt(pos);
-            if (Character.isLetter(c)) {
-               if (!skipWs && pos>start) {
-//Log.d(TAG, "pt0: "+src.substring(start, pos));
-                  list.add(src.substring(start, pos));
-               }
-//Log.d(TAG, "pt1: "+c);
-               list.add(String.valueOf(c));
-               skipWs = true;
-            } else if (c == ',' || Character.isWhitespace(c)) {
-               if (!skipWs) {
-//Log.d(TAG, "pt2: "+src.substring(start, pos));
-                  list.add(src.substring(start, pos));
-                  skipWs = true;
-               }
-               skipWs = true;
-            } else if (skipWs) {
-               skipWs = false;
-               start = pos;
-            }
-            pos++;
-         }
-         if (!skipWs) {
-//Log.d(TAG, "pt3: "+src.substring(start, pos));
-            list.add(src.substring(start, pos));
-         }
-      }
-      
-      public boolean hasMoreTokens()
-      {
-         return nextToken < list.size();
-      }
-      
-      public String nextToken()
-      {
-         if (nextToken == list.size())
-            throw new NoSuchElementException();
-         return list.get(nextToken++);
-      }
-
-      public String peekToken()
-      {
-         if (nextToken == list.size())
-            throw new NoSuchElementException();
-         return list.get(nextToken);
-      }
-
-      //public int countTokens()
-      //{
-      //   return list.size() - nextToken;
-      //}
    }
 
 

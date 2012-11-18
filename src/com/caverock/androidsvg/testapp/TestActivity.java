@@ -22,7 +22,8 @@ public class TestActivity extends Activity
    GestureDetector  gesture;
    Toast            currentToast;
 
-   String[] fileList = {"acid1_noerrors.svg",
+   String[] fileList = {//"!acid1_noerrors_nocss.svg",
+                        "test_strokedasharray.svg",
                         "sample_5.6_Use01.svg",
                         "sample_5.6_Use03.svg",
                         "sample_6.4.svg",
@@ -32,7 +33,7 @@ public class TestActivity extends Activity
                         "sample_7.4_Skew.svg",
                         "sample_7.5_Nested.svg",
                         "sample_7.8_PreserveAspectRatio.svg",
-                        "sample_7.10_Units.svg",
+                        "!sample_7.10_Units.svg",
                         "sample_8.3_triangle01.svg",
                         "sample_8.3_cubic01b.svg",
                         "sample_8.3_cubic02b.svg",
@@ -57,7 +58,8 @@ public class TestActivity extends Activity
                         "test_strokedasharray.svg",
                         "test_strokedashoffset.svg",
                         "test_overflow.svg",
-                        "acid1.svg",
+                        "test_inherit.svg",
+                        "!acid1_noerrors_nocss.svg",
                         "Android_robot.svg"};
    int  whichFile = 0;
 
@@ -92,7 +94,7 @@ public class TestActivity extends Activity
                whichFile = (--whichFile + fileList.length) % fileList.length;
 
                // Update the view
-               svgView.setSVGAsset(fileList[whichFile]);
+               setAsset(fileList[whichFile]);
 
                // Show the filename as a Toast
                if (currentToast != null)
@@ -105,7 +107,7 @@ public class TestActivity extends Activity
                whichFile = ++whichFile % fileList.length;
                
                // Update the view
-               svgView.setSVGAsset(fileList[whichFile]);
+               setAsset(fileList[whichFile]);
 
                // Show the filename as a Toast
                if (currentToast != null)
@@ -121,7 +123,6 @@ public class TestActivity extends Activity
    }
 
 
-   
    @Override
    protected void onResume()
    {
@@ -130,10 +131,24 @@ public class TestActivity extends Activity
       if (svgView == null)
          return;
 
-      svgView.setSVGAsset(fileList[whichFile]);
+      setAsset(fileList[whichFile]);
       Toast.makeText(getApplicationContext(), fileList[whichFile], Toast.LENGTH_SHORT).show();
    }
 
+
+   private void setAsset(String filename)
+   {
+      if (filename.charAt(0) == '!')
+      {
+         svgView.setRenderDPI(96f);
+         svgView.setSVGAsset(filename.substring(1));
+      }
+      else
+      {
+         svgView.setRenderDPI(null);
+         svgView.setSVGAsset(filename);
+      }
+   }
 
 
    @Override

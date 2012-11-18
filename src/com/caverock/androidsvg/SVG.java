@@ -212,6 +212,7 @@ public class SVG
       {
          Style  def = new Style();
          def.specifiedFlags = SPECIFIED_ALL;
+         //def.inheritFlags = 0;
          def.fill = new Colour(0);  // black
          def.fillRule = FillRule.NonZero;
          def.fillOpacity = 1f;
@@ -276,7 +277,7 @@ public class SVG
       
       public String toString()
       {
-         return String.format("%02x%02x%02x", (colour>>16)&0xFF, (colour>>8)&0xFF, colour&0xFF);
+         return String.format("#%06x", colour);
       }
    }
 
@@ -398,6 +399,12 @@ public class SVG
       public boolean isNegative()
       {
          return value < 0f;
+      }
+
+      @Override
+      public String toString()
+      {
+         return String.valueOf(value) + unit;
       }
    }
 

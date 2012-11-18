@@ -29,6 +29,7 @@ public class SVGAndroidRenderer
 
    // Renderer state
    private RendererState  state = new RendererState();
+   private RendererState  parentState;
 
    private Stack<RendererState> stateStack = new Stack<RendererState>();  // Keeps track of render state as we render
 
@@ -86,6 +87,8 @@ public class SVGAndroidRenderer
       state.style = new Style();
       // Initialise the style state
       updateStyle(Style.getDefaultStyle());
+      // Push a copy of the state with 'default' style, so that inherit works for top level objects
+      stateStack.push((RendererState) state.clone());   // Manual push here - don't use statePush();
    }
 
 
@@ -162,6 +165,7 @@ public class SVGAndroidRenderer
       // Save matrix and clip
       canvas.save();
       // Save style state
+      parentState = statePeek();
       stateStack.push((RendererState) state.clone());
    }
 
@@ -172,6 +176,13 @@ public class SVGAndroidRenderer
       canvas.restore();
       // Restore style state
       state = stateStack.pop();
+      parentState = statePeek();
+   }
+
+
+   private RendererState  statePeek()
+   {
+      return stateStack.peek();
    }
 
 
@@ -656,6 +667,14 @@ public class SVGAndroidRenderer
    {
       return (style.specifiedFlags & flag) != 0;
    }
+
+
+   /*
+   private boolean  isInherited(Style style, long flag)
+   {
+      return (style.inheritFlags & flag) != 0;
+   }
+   */
 
 
    /*

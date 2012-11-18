@@ -21,6 +21,7 @@ public class SVGImageView extends View
    private SVG      svg = null;
    private Bitmap   bm = null;
    private Paint    paint = new Paint();
+   private Float    renderDPI = null;
 
 
    public SVGImageView(Context context, AttributeSet attrs)
@@ -69,8 +70,11 @@ public class SVGImageView extends View
       bmcanvas.drawRGB(255, 255, 255);  // Clear bg to white
       if (this.svg != null) {
          svg.ensureRootViewBox();
-         bmcanvas.drawPicture(this.svg.getPicture(width, height, getResources().getDisplayMetrics().xdpi));
-         //bmcanvas.drawPicture(this.svg.getPicture(width, height, 96f));
+         if (this.renderDPI == null) {
+            bmcanvas.drawPicture(this.svg.getPicture(width, height, getResources().getDisplayMetrics().xdpi));
+         } else {
+            bmcanvas.drawPicture(this.svg.getPicture(width, height, this.renderDPI));
+         }
       }
       this.bm = newBM;
    }
@@ -115,4 +119,19 @@ public class SVGImageView extends View
       }
    }
 
+
+   /**
+    * Set the DPI to be used when rendering the SVG file.
+    * Some files assume a DPI of 96 or so, which is the typical DPI of a PC screen.
+    * Modern mobile screens can have a DPI that is much higher, meaning dimensions
+    * based on real world units can be rendered much larger.
+    * 
+    * You should call this method before calling setSVGAsset() or setSVGResource(). 
+    *    
+    * @param dpi The DPI to use when rendering. Null if you want to use the default for this device.
+    */
+   public void  setRenderDPI(Float dpi)
+   {
+      this.renderDPI = dpi;
+   }
 }
