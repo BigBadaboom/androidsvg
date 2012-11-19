@@ -1574,6 +1574,17 @@ dumpNode(svgDocument.getRootElement(), "");
             return null;
          }
       }
+
+      /*
+       * Check whether the next character is a letter.
+       */
+      public boolean  hasLetter()
+      {
+         if (position == input.length())
+            return false;
+         char  ch = input.charAt(position);
+         return ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z'));
+      }
    }
 
 
@@ -1836,7 +1847,6 @@ dumpNode(svgDocument.getRootElement(), "");
             while (!scan.empty())
             {
                String  cmd = scan.nextFunction();
-/**/Log.d(TAG, ">>>"+cmd+")");
 
                if (cmd.equals("matrix("))
                {
@@ -1857,18 +1867,8 @@ dumpNode(svgDocument.getRootElement(), "");
                   if (f == null || !scan.consume(')'))
                      throw new SAXException("Invalid transform list: "+val);
 
-                  float[] vals = new float[9];
-                  vals[0] = a;
-                  vals[3] = b;
-                  vals[1] = c;
-                  vals[4] = d;
-                  vals[2] = e;
-                  vals[5] = f;
-                  vals[6] = 0f;
-                  vals[7] = 0f;
-                  vals[8] = 1f;
                   Matrix m = new Matrix();
-                  m.getValues(vals);
+                  m.setValues(new float[] {a, c, e, b, d, f, 0, 0, 1});
                   matrix.preConcat(m);
                }
                else if (cmd.equals("translate("))
@@ -1877,7 +1877,6 @@ dumpNode(svgDocument.getRootElement(), "");
                   Float  tx = scan.nextFloat();
                   Float  ty = scan.possibleNextFloat();
                   scan.skipWhitespace();
-/**/Log.d(TAG, "tx = "+tx+" ty="+ty);
 
                   if (tx == null || !scan.consume(')'))
                      throw new SAXException("Invalid transform list: "+val);
@@ -2359,15 +2358,19 @@ dumpNode(svgDocument.getRootElement(), "");
       Float   x,y, x1,y1, x2,y2;
       Float   rx,ry, xAxisRotation;
       Boolean largeArcFlag, sweepFlag;
-      boolean startOfPath = true;              // Are we at the start of the whole path?
       Path    path = new Path();
+
+      if (scan.empty())
+         return path;
+
+      pathCommand = scan.nextChar();
+
+      if (pathCommand != 'M' && pathCommand != 'm')
+         return path;  // Invalid path - doesn't start with a move
 
       while (!scan.empty())
       {
-         pathCommand = scan.nextChar();
-
-         if (startOfPath && pathCommand != 'M' && pathCommand != 'm')
-            return path;  // Invalid path - doesn't start with a move
+         scan.skipWhitespace();
 
          switch (pathCommand)
          {
@@ -2382,7 +2385,7 @@ dumpNode(svgDocument.getRootElement(), "");
                   return path;
                }
                // Relative moveto at the start of a path is treated as an absolute moveto.
-               if (pathCommand=='m' && !startOfPath) {
+               if (pathCommand=='m' && !path.isEmpty()) {
                   x += currentX;
                   y += currentY;
                }
@@ -2594,9 +2597,16 @@ dumpNode(svgDocument.getRootElement(), "");
             default:
                return path;
          }
-         startOfPath = false;
 
          scan.skipWhitespace();
+         if (scan.empty())
+            break;
+
+         // Test to see if there is another set of coords for the current path command
+         if (scan.hasLetter()) {
+            // Nope, so get the new path command instead
+            pathCommand = scan.nextChar();
+         }
       }
       return path;
    }
