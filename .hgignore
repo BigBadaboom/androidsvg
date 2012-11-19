@@ -1,3 +1,5 @@
 
 syntax: regexp
 ^bin$
+syntax: regexp
+^bin$
