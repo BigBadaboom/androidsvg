@@ -5,13 +5,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Picture;
-import android.util.Log;
 
 public class SVG
 {
@@ -432,7 +432,17 @@ public class SVG
       public Style   style = new Style();
    }
 
-   protected static class SvgContainer extends SvgElement
+
+   // Any element that can appear inside a <switch> element.
+   protected static abstract class SvgConditionalElement extends SvgElement
+   {
+      public Set<String>  requiredFeatures = null;
+      public String       requiredExtensions = null;
+      public Set<String>  systemLanguage = null;
+   }
+
+
+   protected static class SvgContainer extends SvgConditionalElement
    {
       public List<SvgObject> children = new ArrayList<SvgObject>();
 
@@ -453,6 +463,12 @@ public class SVG
    protected interface HasPreserveAspectRatio
    {
       public void setPreserveAspectRatio(AspectRatioAlignment alignment, boolean slice);
+   }
+
+
+   protected interface HasTransform
+   {
+      public void setTransform(Matrix matrix);
    }
 
 
@@ -479,12 +495,6 @@ public class SVG
    }
 
 
-   protected interface HasTransform
-   {
-      public void setTransform(Matrix matrix);
-   }
-
-
    // An SVG element that can contain other elements.
    protected static class Group extends SvgContainer implements HasTransform
    {
@@ -504,7 +514,7 @@ public class SVG
 
    // One of the element types that can cause graphics to be drawn onto the target canvas.
    // Specifically: ‘circle’, ‘ellipse’, ‘image’, ‘line’, ‘path’, ‘polygon’, ‘polyline’, ‘rect’, ‘text’ and ‘use’.
-   protected static abstract class GraphicsElement extends SvgElement implements HasTransform
+   protected static abstract class GraphicsElement extends SvgConditionalElement implements HasTransform
    {
       public Matrix transform;
 
@@ -513,7 +523,7 @@ public class SVG
    }
 
 
-   protected static class Use extends GraphicsElement
+   protected static class Use extends GraphicsElement // TODO: OverridesDisplayNone
    {
       public String href;
       public Length x;
@@ -618,6 +628,12 @@ public class SVG
    protected static class TRef extends SvgElement
    {
       String href;
+   }
+
+
+   // An SVG element that can contain other elements.
+   protected static class Switch extends Group // TODO: OverridesDisplayNone
+   {
    }
 
 

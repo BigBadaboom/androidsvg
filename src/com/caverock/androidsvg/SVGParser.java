@@ -4,12 +4,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
-import java.util.NoSuchElementException;
-import java.util.Scanner;
-import java.util.regex.Matcher;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -43,6 +42,7 @@ public class SVGParser extends DefaultHandler
 
    private static final String  SVG_NAMESPACE = "http://www.w3.org/2000/svg";
    private static final String  XLINK_NAMESPACE = "http://www.w3.org/1999/xlink";
+   private static final String  FEATURE_STRING_PREFIX = "http://www.w3.org/TR/SVG11/feature#";
 
    // SVG parser
    private float    dpi = 96f;   // inches to pixels conversion
@@ -63,6 +63,7 @@ public class SVGParser extends DefaultHandler
    private static final String  TAG_RADIALGRADIENT = "radialGradient";
    private static final String  TAG_RECT           = "rect";
    private static final String  TAG_STOP           = "stop";
+   private static final String  TAG_SWITCH         = "switch";
    private static final String  TAG_TEXT           = "text";
    private static final String  TAG_TEXTPATH       = "textPath";
    private static final String  TAG_TREF           = "tref";
@@ -90,6 +91,7 @@ public class SVGParser extends DefaultHandler
       points,
       preserveAspectRatio,
       r,
+      requiredFeatures, requiredExtensions,
       rx, ry,
       stroke,
       stroke_dasharray,
@@ -100,6 +102,7 @@ public class SVGParser extends DefaultHandler
       stroke_opacity,
       stroke_width,
       //style,
+      systemLanguage,
       text_anchor,
       text_decoration,
       transform,
@@ -129,6 +132,7 @@ public class SVGParser extends DefaultHandler
    private static HashMap<String, Length> fontSizeKeywords = new HashMap<String, Length>();
    private static HashMap<String, String> fontWeightKeywords = new HashMap<String, String>();
    private static HashMap<String, SVG.AspectRatioAlignment> aspectRatioKeywords = new HashMap<String, SVG.AspectRatioAlignment>();
+   private static HashSet<String> supportedFeatures = new HashSet<String>();
 
    private static Pattern  FLOAT_PATTERN = null;
 
@@ -316,14 +320,60 @@ public class SVGParser extends DefaultHandler
       aspectRatioKeywords.put("xMidYMax", SVG.AspectRatioAlignment.xMidYMax);
       aspectRatioKeywords.put("xMaxYMax", SVG.AspectRatioAlignment.xMaxYMax);
 
-      // Regex pattern for matching floats
-      String  digitSequence = "([0-9]++)";
-      String  fractionalConstant = "(" + digitSequence + "?\\." + digitSequence + "|" + digitSequence + "\\.)";
-      String  exponent = "([eE][+-]?" + digitSequence + ")";
-      String  floatingPointConstant = "(" + fractionalConstant + exponent + "?|" + digitSequence + exponent + ")";
-      String  integerConstant = digitSequence;
-      String  number = "([+-]?" + integerConstant +"|[+-]?" + floatingPointConstant +")";
-      FLOAT_PATTERN = Pattern.compile("^" + number);
+      // SVG features this SVG implementation supports
+      // Actual feature strings have the prefix: FEATURE_STRING_PREFIX (see above)
+      // NO indicates feature will probable not ever be implemented
+      // NYI indicates support is in progress, or is planned
+      
+      // Feature sets that represent sets of other feature strings (ie a group of features strings)
+      //supportedFeatures.add("SVG");                       // NO
+      //supportedFeatures.add("SVGDOM");                    // NO
+      //supportedFeatures.add("SVG-static");                // NO
+      //supportedFeatures.add("SVGDOM-static");             // NO
+      //supportedFeatures.add("SVG-animation");             // NO
+      //supportedFeatures.add("SVGDOM-animation");          // NO 
+      //supportedFeatures.add("SVG-dynamic");               // NO
+      //supportedFeatures.add("SVGDOM-dynamic");            // NO
+
+      // Individual features
+      //supportedFeatures.add("CoreAttribute");             // NO
+      supportedFeatures.add("Structure");                   // YES (although desc title and metadata are ignored)
+      supportedFeatures.add("BasicStructure");              // YES (although desc title and metadata are ignored)
+      //supportedFeatures.add("ContainerAttribute");        // NO (filter related. NYI)
+      supportedFeatures.add("ConditionalProcessing");       // YES
+      //supportedFeatures.add("Image");                     // NYI
+      //supportedFeatures.add("Style");                     // NO (CSS not intended to be supported)
+      //supportedFeatures.add("ViewportAttribute");         // NYI
+      supportedFeatures.add("Shape");                       // YES
+      //supportedFeatures.add("Text");                      // NO
+      supportedFeatures.add("BasicText");                   // YES
+      //supportedFeatures.add("PaintAttribute");            // NYI
+      //supportedFeatures.add("BasicPaintAttribute");       // NYI (stroke-miterlimit and color-rendering NYI)
+      supportedFeatures.add("OpacityAttribute");            // YES
+      //supportedFeatures.add("GraphicsAttribute");         // NO     
+      //supportedFeatures.add("BasicGraphicsAttribute");    // NYI
+      //supportedFeatures.add("Marker");                    // NYI
+      //supportedFeatures.add("ColorProfile");              // NO
+      //supportedFeatures.add("Gradient");                  // NYI
+      //supportedFeatures.add("Pattern");                   // NYI
+      //supportedFeatures.add("Clip");                      // NYI
+      //supportedFeatures.add("BasicClip");                 // NYI
+      //supportedFeatures.add("Mask");                      // NO?
+      //supportedFeatures.add("Filter");                    // NO
+      //supportedFeatures.add("BasicFilter");               // NO
+      //supportedFeatures.add("DocumentEventsAttribute");   // NO
+      //supportedFeatures.add("GraphicalEventsAttribute");  // NO
+      //supportedFeatures.add("AnimationEventsAttribute");  // NO
+      //supportedFeatures.add("Cursor");                    // NO
+      //supportedFeatures.add("Hyperlinking");              // NO
+      //supportedFeatures.add("XlinkAttribute");            // NO
+      //supportedFeatures.add("ExternalResourcesRequired"); // NO
+      //supportedFeatures.add("View");                      // NO
+      //supportedFeatures.add("Script");                    // NO
+      //supportedFeatures.add("Animation");                 // NO
+      //supportedFeatures.add("Font");                      // NYI
+      //supportedFeatures.add("BasicFont");                 // NYI
+      //supportedFeatures.add("Extensibility");             // NO
    }
 
 
@@ -406,6 +456,8 @@ public class SVGParser extends DefaultHandler
          text(attributes);
       } else if (localName.equalsIgnoreCase(TAG_TSPAN)) {
          tspan(attributes);
+      } else if (localName.equalsIgnoreCase(TAG_SWITCH)) {
+         zwitch(attributes);
       }
    }
 
@@ -443,11 +495,16 @@ public class SVGParser extends DefaultHandler
          collapseSpaces((SVG.Text) currentElement);
       }
 
+      if (localName.equalsIgnoreCase(TAG_SWITCH)) {
+         switchPostFilter((SVG.Switch) currentElement);
+      }
+
       if (localName.equalsIgnoreCase(TAG_SVG) ||
           localName.equalsIgnoreCase(TAG_DEFS) ||
           localName.equalsIgnoreCase(TAG_G) ||
           localName.equalsIgnoreCase(TAG_TEXT) ||
-          localName.equalsIgnoreCase(TAG_TSPAN)) {
+          localName.equalsIgnoreCase(TAG_TSPAN) ||
+          localName.equalsIgnoreCase(TAG_SWITCH)) {
          currentElement = currentElement.parent;
       }
 
@@ -489,6 +546,7 @@ dumpNode(svgDocument.getRootElement(), "");
       obj.parent = currentElement;
       parseAttributesCore(obj, attributes);
       parseAttributesStyle(obj, attributes);
+      parseAttributesConditional(obj, attributes);
       parseAttributesSVG(obj, attributes);
       if (currentElement == null) {
          svgDocument.setRootElement(obj);
@@ -550,6 +608,7 @@ dumpNode(svgDocument.getRootElement(), "");
       parseAttributesCore(obj, attributes);
       parseAttributesStyle(obj, attributes);
       parseAttributesTransform(obj, attributes);
+      parseAttributesConditional(obj, attributes);
       currentElement.addChild(obj);
       currentElement = obj;
    }
@@ -590,6 +649,7 @@ dumpNode(svgDocument.getRootElement(), "");
       parseAttributesCore(obj, attributes);
       parseAttributesStyle(obj, attributes);
       parseAttributesTransform(obj, attributes);
+      parseAttributesConditional(obj, attributes);
       parseAttributesUse(obj, attributes);
       currentElement.addChild(obj);
    }
@@ -646,6 +706,7 @@ dumpNode(svgDocument.getRootElement(), "");
       parseAttributesCore(obj, attributes);
       parseAttributesStyle(obj, attributes);
       parseAttributesTransform(obj, attributes);
+      parseAttributesConditional(obj, attributes);
       parseAttributesPath(obj, attributes);
       currentElement.addChild(obj);     
    }
@@ -688,6 +749,7 @@ dumpNode(svgDocument.getRootElement(), "");
       parseAttributesCore(obj, attributes);
       parseAttributesStyle(obj, attributes);
       parseAttributesTransform(obj, attributes);
+      parseAttributesConditional(obj, attributes);
       parseAttributesRect(obj, attributes);
       currentElement.addChild(obj);     
    }
@@ -748,6 +810,7 @@ dumpNode(svgDocument.getRootElement(), "");
       parseAttributesCore(obj, attributes);
       parseAttributesStyle(obj, attributes);
       parseAttributesTransform(obj, attributes);
+      parseAttributesConditional(obj, attributes);
       parseAttributesCircle(obj, attributes);
       currentElement.addChild(obj);     
    }
@@ -793,6 +856,7 @@ dumpNode(svgDocument.getRootElement(), "");
       parseAttributesCore(obj, attributes);
       parseAttributesStyle(obj, attributes);
       parseAttributesTransform(obj, attributes);
+      parseAttributesConditional(obj, attributes);
       parseAttributesEllipse(obj, attributes);
       currentElement.addChild(obj);     
    }
@@ -843,6 +907,7 @@ dumpNode(svgDocument.getRootElement(), "");
       parseAttributesCore(obj, attributes);
       parseAttributesStyle(obj, attributes);
       parseAttributesTransform(obj, attributes);
+      parseAttributesConditional(obj, attributes);
       parseAttributesLine(obj, attributes);
       currentElement.addChild(obj);     
    }
@@ -893,6 +958,7 @@ dumpNode(svgDocument.getRootElement(), "");
       parseAttributesCore(obj, attributes);
       parseAttributesStyle(obj, attributes);
       parseAttributesTransform(obj, attributes);
+      parseAttributesConditional(obj, attributes);
       parseAttributesPolyLine(obj, attributes);
       currentElement.addChild(obj);     
    }
@@ -948,6 +1014,7 @@ dumpNode(svgDocument.getRootElement(), "");
       parseAttributesCore(obj, attributes);
       parseAttributesStyle(obj, attributes);
       parseAttributesTransform(obj, attributes);
+      parseAttributesConditional(obj, attributes);
       parseAttributesPolyLine(obj, attributes); // reuse of polyline "points" parser
       currentElement.addChild(obj);     
    }
@@ -968,6 +1035,7 @@ dumpNode(svgDocument.getRootElement(), "");
       parseAttributesCore(obj, attributes);
       parseAttributesStyle(obj, attributes);
       parseAttributesTransform(obj, attributes);
+      parseAttributesConditional(obj, attributes);
       parseAttributesText(obj, attributes);
       currentElement.addChild(obj);
       currentElement = obj;
@@ -1093,6 +1161,100 @@ dumpNode(svgDocument.getRootElement(), "");
       parseAttributesText(obj, attributes);
       currentElement.addChild(obj);
       currentElement = obj;
+   }
+
+
+   //=========================================================================
+   // <switch> element
+
+
+   private void  zwitch(Attributes attributes) throws SAXException
+   {
+/**/Log.d(TAG, "<switch>");
+      if (currentElement == null)
+         throw new SAXException("Invalid document. Root element must be <svg>");
+      SVG.Switch  obj = new SVG.Switch();
+      obj.document = svgDocument;
+      obj.parent = currentElement;
+      parseAttributesCore(obj, attributes);
+      parseAttributesStyle(obj, attributes);
+      parseAttributesTransform(obj, attributes);
+      parseAttributesConditional(obj, attributes);
+      currentElement.addChild(obj);
+      currentElement = obj;
+   }
+
+
+   private void  parseAttributesConditional(SVG.SvgConditionalElement obj, Attributes attributes) throws SAXException
+   {
+      for (int i=0; i<attributes.getLength(); i++)
+      {
+         String val = attributes.getValue(i).trim();
+         switch (SVGAttr.fromString(attributes.getLocalName(i)))
+         {
+            case requiredFeatures:
+               obj.requiredFeatures = parseRequiredFeatures(val);
+               break;
+            case requiredExtensions:
+               obj.requiredExtensions = val;
+               break;
+            case systemLanguage:
+               obj.systemLanguage = parseSystemLanguage(val);
+               break;
+            default:
+               break;
+         }
+      }
+   }
+
+
+   // Find the first child of the switch that passes the feature tests and disable all others.
+   // Called when the end tag (</switch>) is reached.
+   private void  switchPostFilter(SVG.Switch obj)
+   {
+      Iterator<SVG.SvgObject>  iter = obj.children.iterator();
+      boolean                  matchFound = false;
+      String                   deviceLanguage = Locale.getDefault().getLanguage();
+
+      while (iter.hasNext())
+      {
+         SVG.SvgObject  childObj = iter.next();
+
+         // If a match has been found, continue the iterator loop
+         // removing all subsequent children
+         if (matchFound) {
+            iter.remove();
+            continue;
+         }
+
+         // Remove any objects that don't belong in a <switch>
+         if (!(childObj instanceof SVG.SvgConditionalElement)) {
+            iter.remove();
+         }
+         SVG.SvgConditionalElement  condObj = (SVG.SvgConditionalElement) childObj;
+
+         // We don't support extensions
+         if (condObj.requiredExtensions != null) {
+/**/Log.d(TAG, "Rejecting requiredExtensions: "+condObj.requiredExtensions);
+            iter.remove();
+            continue;
+         }
+         // Check language
+         if (condObj.systemLanguage != null && (condObj.systemLanguage.isEmpty() || !condObj.systemLanguage.contains(deviceLanguage))) {
+/**/Log.d(TAG, "Rejecting systemLanguage: "+deviceLanguage);
+            iter.remove();
+            continue;
+         }
+         // Check features
+         if (condObj.requiredFeatures != null && (condObj.requiredFeatures.isEmpty() || !supportedFeatures.containsAll(condObj.requiredFeatures))) {
+/**/Log.d(TAG, "Rejecting requiredFeatures");
+            iter.remove();
+            continue;
+         }
+         
+         // All checks passed!
+         matchFound = true;
+      }
    }
 
 
@@ -2428,6 +2590,59 @@ dumpNode(svgDocument.getRootElement(), "");
          scan.skipWhitespace();
       }
       return path;
+   }
+
+
+   //=========================================================================
+   // Conditional processing (ie for <switch> element)
+
+   
+   // Parse the attribute that declares the list of SVG features that must be
+   // supported if we are to render this element
+   private Set<String>  parseRequiredFeatures(String val) throws SAXException
+   {
+/**/Log.d(TAG, "parseRequiredFeatures: "+val);
+      TextScanner      scan = new TextScanner(val);
+      HashSet<String>  result = new HashSet<String>();
+
+      while (!scan.empty())
+      {
+         String feature = scan.nextToken();
+         if (feature.startsWith(FEATURE_STRING_PREFIX)) {
+            result.add(feature.substring(FEATURE_STRING_PREFIX.length()));
+         } else {
+            // Not a feature string we recognise or support. (In order to avoid accidentally
+            // matches with our truncated feature strings, we'll replace it with a string
+            // we know for sure won't match anything.
+            result.add("UNSUPPORTED");
+         }
+         scan.skipWhitespace();
+      }
+      return result;
+   }
+
+
+   // Parse the attribute that declares the list of languages, one of which
+   // must be supported if we are to render this element
+   private Set<String>  parseSystemLanguage(String val) throws SAXException
+   {
+/**/Log.d(TAG, "parseSystemLanguage: "+val);
+      TextScanner      scan = new TextScanner(val);
+      HashSet<String>  result = new HashSet<String>();
+
+      while (!scan.empty())
+      {
+         String language = scan.nextToken();
+         int  hyphenPos = language.indexOf('-'); 
+         if (hyphenPos != -1) {
+            language = language.substring(0, hyphenPos);
+         }
+         // Get canonical version of language code in case it has changed (see the JavaDoc for Locale.getLanguage())
+         language = new Locale(language, "", "").getLanguage();
+         result.add(language);
+         scan.skipWhitespace();
+      }
+      return result;
    }
 
 
