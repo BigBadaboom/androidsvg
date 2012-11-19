@@ -3,7 +3,7 @@
   "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
 <svg width="12cm" height="3cm" viewBox="0 0 1200 300" version="1.1"
      xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-  <desc>Overflow test sample</desc>
+  <desc>systemLanguage test sample</desc>
 
   <rect x="1" y="1" width="1198" height="298" fill="none" stroke="blue" stroke-width="2" />
 
