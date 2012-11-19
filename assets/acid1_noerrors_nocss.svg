@@ -218,7 +218,7 @@ circle[cx="-120"][cy="-22.5%"][r="2%"] {
            <!-- Test 17 -->
            <!-- Test 20 -->           
            <!-- SVG:circle cx="-120" cy="-22.5%" r="2%" fill="red" / -->
-           <SVG:circle cx="-120" cy="-22.5%" r="2%" fill="green" /><!--  from CSS rule above -->
+           <SVG:circle cx="-120" cy="-22.5%" r="2%" fill="green" /><!--  green from CSS rule above -->
          </g>
        </g>
      

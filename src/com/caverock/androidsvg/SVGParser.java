@@ -620,6 +620,8 @@ dumpNode(svgDocument.getRootElement(), "");
                break;
             case href:
 /**/Log.d(TAG,"***Use/href: "+attributes.getQName(i)+" "+attributes.getURI(i));
+               if (!XLINK_NAMESPACE.equals(attributes.getURI(i)))
+                  break;
                obj.href = val;
                break;
             default:
@@ -1141,7 +1143,6 @@ dumpNode(svgDocument.getRootElement(), "");
          }
          if (position == input.length())
             return;
-/**/Log.d(TAG, "skipCommaWhitespace: pos="+position);
          if (!(input.charAt(position) == ','))
             return;
          position++;
@@ -1804,7 +1805,6 @@ dumpNode(svgDocument.getRootElement(), "");
       }
       try
       {
-/**/Log.d(TAG, "@@@ parseLength: "+val.substring(0, end));
          float scalar = Float.parseFloat(val.substring(0, end));
          return new Length(scalar, unit);
       }
@@ -2114,7 +2114,6 @@ dumpNode(svgDocument.getRootElement(), "");
          return null;
       
       Length dash = scan.nextLength();
-/**/Log.d(TAG, "@@@ parseStrokeDashArray: dash="+dash);
       if (dash == null)
          return null;
       if (dash.isNegative())
@@ -2128,7 +2127,6 @@ dumpNode(svgDocument.getRootElement(), "");
       {
          scan.skipCommaWhitespace();
          dash = scan.nextLength();
-/**/Log.d(TAG, "@@@ parseStrokeDashArray: dash="+dash);
          if (dash == null)  // must have hit something unexpected
             throw new SAXException("Invalid stroke-dasharray. Non-Length content found: "+val);
          if (dash.isNegative())
