@@ -130,14 +130,15 @@ public class SVG
    public static final long SPECIFIED_STROKE_DASHARRAY  = (1<<8);
    public static final long SPECIFIED_STROKE_DASHOFFSET = (1<<9);
    public static final long SPECIFIED_OPACITY           = (1<<10);
-   public static final long SPECIFIED_FONT_FAMILY       = (1<<11);
-   public static final long SPECIFIED_FONT_SIZE         = (1<<12);
-   public static final long SPECIFIED_FONT_WEIGHT       = (1<<13);
-   public static final long SPECIFIED_FONT_STYLE        = (1<<14);
-   public static final long SPECIFIED_TEXT_DECORATION   = (1<<15);
-   public static final long SPECIFIED_TEXT_ANCHOR       = (1<<16);
-   public static final long SPECIFIED_OVERFLOW          = (1<<17);
-   public static final long SPECIFIED_CLIP              = (1<<18);
+   public static final long SPECIFIED_COLOR             = (1<<11);
+   public static final long SPECIFIED_FONT_FAMILY       = (1<<12);
+   public static final long SPECIFIED_FONT_SIZE         = (1<<13);
+   public static final long SPECIFIED_FONT_WEIGHT       = (1<<14);
+   public static final long SPECIFIED_FONT_STYLE        = (1<<15);
+   public static final long SPECIFIED_TEXT_DECORATION   = (1<<16);
+   public static final long SPECIFIED_TEXT_ANCHOR       = (1<<17);
+   public static final long SPECIFIED_OVERFLOW          = (1<<18);
+   public static final long SPECIFIED_CLIP              = (1<<19);
 
    public static final long SPECIFIED_ALL = 0xffffffff;
 
@@ -161,6 +162,8 @@ public class SVG
       public Length     strokeDashOffset;
 
       public Float      opacity; // master opacity of both stroke and fill
+
+      public Colour     color;
 
       public String     fontFamily;
       public Length     fontSize;
@@ -224,6 +227,7 @@ public class SVG
          def.strokeDashArray = null;
          def.strokeDashOffset = new Length(0f);
          def.opacity = 1f;
+         def.color = new Colour(0); // currentColor defaults to black
          def.fontFamily = null;
          def.fontSize = new Length(12, Unit.pt);
          def.fontWeight = "normal";
@@ -235,7 +239,7 @@ public class SVG
          return def;
       }
 
-      // CAlled just before we update the current style state with the current objects style.
+      // Called just before we update the current style state with the current objects style.
       // These are the properties that don't inherit.
       public void  resetNonInheritingProperties()
       {
@@ -250,7 +254,9 @@ public class SVG
          try
          {
             obj = (Style) super.clone();
-            obj.strokeDashArray = (Length[]) strokeDashArray.clone();
+            if (strokeDashArray != null) {
+               obj.strokeDashArray = (Length[]) strokeDashArray.clone();
+            }
             return obj;
          }
          catch (CloneNotSupportedException e)
@@ -275,11 +281,27 @@ public class SVG
          this.colour = val;
       }
       
-      public String toString()
+      public String toStringXXX()
       {
          return String.format("#%06x", colour);
       }
    }
+
+   // Special version of Colour that indicates use of 'currentColor' keyword
+   protected static class CurrentColor extends SvgPaint
+   {
+      private static CurrentColor  instance = new CurrentColor();
+      
+      private CurrentColor()
+      {
+      }
+      
+      public static CurrentColor  getInstance()
+      {
+         return instance;
+      }
+   }
+
 
    protected static class Length implements Cloneable
    {

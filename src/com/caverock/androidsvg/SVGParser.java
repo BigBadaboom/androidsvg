@@ -27,8 +27,10 @@ import android.util.Log;
 
 import com.caverock.androidsvg.SVG.Box;
 import com.caverock.androidsvg.SVG.Colour;
+import com.caverock.androidsvg.SVG.CurrentColor;
 import com.caverock.androidsvg.SVG.Length;
 import com.caverock.androidsvg.SVG.Style;
+import com.caverock.androidsvg.SVG.SvgPaint;
 import com.caverock.androidsvg.SVG.Unit;
 
 /**
@@ -43,7 +45,7 @@ public class SVGParser extends DefaultHandler
    private static final String  SVG_NAMESPACE = "http://www.w3.org/2000/svg";
    private static final String  XLINK_NAMESPACE = "http://www.w3.org/1999/xlink";
    private static final String  FEATURE_STRING_PREFIX = "http://www.w3.org/TR/SVG11/feature#";
-
+   
    // SVG parser
    private float    dpi = 96f;   // inches to pixels conversion
    SVG              svgDocument = null;
@@ -73,13 +75,13 @@ public class SVGParser extends DefaultHandler
    // Supported SVG attributes
    private enum  SVGAttr
    {
+      color,
       cx, cy,
       fx, fy,
       d,
       fill,
       fill_rule,
       fill_opacity,
-      // Font properties
       font_family, font_size, font_weight, font_style, // font, font_size_adjust, font_stretch, font_variant,  
       gradientTransform,
       height,
@@ -96,7 +98,6 @@ public class SVGParser extends DefaultHandler
       stroke,
       stroke_dasharray,
       stroke_dashoffset,
-      //stroke_fill,
       stroke_linecap,
       stroke_linejoin,
       stroke_opacity,
@@ -128,13 +129,16 @@ public class SVGParser extends DefaultHandler
    }
 
 
+   // Special attribute keywords
+   private static final String  NONE = "none";
+   private static final String  CURRENTCOLOR = "currentColor";
+
+
    private static HashMap<String, Integer> colourKeywords = new HashMap<String, Integer>();
    private static HashMap<String, Length> fontSizeKeywords = new HashMap<String, Length>();
    private static HashMap<String, String> fontWeightKeywords = new HashMap<String, String>();
    private static HashMap<String, SVG.AspectRatioAlignment> aspectRatioKeywords = new HashMap<String, SVG.AspectRatioAlignment>();
    private static HashSet<String> supportedFeatures = new HashSet<String>();
-
-   private static Pattern  FLOAT_PATTERN = null;
 
    static {
       colourKeywords.put("aliceblue", 0xf0f8ff);
@@ -1613,8 +1617,10 @@ dumpNode(svgDocument.getRootElement(), "");
                   break;
                }
                obj.style.specifiedFlags |= SVG.SPECIFIED_FILL;
-               if (val.equals("none")) {
+               if (val.equals(NONE)) {
                   obj.style.fill = null;
+               } else if (val.equals(CURRENTCOLOR)) {
+                  obj.style.fill = CurrentColor.getInstance();
                } else  if (val.startsWith("url")) {
                   //gradient
                } else {
@@ -1647,7 +1653,10 @@ dumpNode(svgDocument.getRootElement(), "");
                   break;
                }
                obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE;
-               if (val.equals("none")) {
+               if (val.equals(NONE)) {
+                  obj.style.stroke = null;
+               } else if (val.equals(CURRENTCOLOR)) {
+                  obj.style.stroke = CurrentColor.getInstance();
                } else  if (val.startsWith("url")) {
                   //gradient
                } else {
@@ -1720,6 +1729,15 @@ dumpNode(svgDocument.getRootElement(), "");
                }
                obj.style.opacity = parseFloat(val);
                obj.style.specifiedFlags |= SVG.SPECIFIED_OPACITY;
+               break;
+
+            case color:
+               if (inherit) {
+                  //setInherit(obj, SVG.SPECIFIED_COLOR);
+                  break;
+               }
+               obj.style.specifiedFlags |= SVG.SPECIFIED_COLOR;
+               obj.style.color = parseColour(val);
                break;
 
             case font_family:
@@ -1927,8 +1945,6 @@ dumpNode(svgDocument.getRootElement(), "");
                }
                else if (cmd != null) {
                   throw new SAXException("Invalid transform list fn: "+cmd+")");
-               } else {
-                  throw new SAXException("Invalid transform list: "+val);
                }
 
                if (scan.empty())
@@ -2111,7 +2127,7 @@ dumpNode(svgDocument.getRootElement(), "");
             throw new SAXException("Bad colour value: "+val);
          }
       }
-      if (val.startsWith("rgb("))
+      if (val.toLowerCase().startsWith("rgb("))
       {
          TextScanner scan = new TextScanner(val.substring(4));
          scan.skipWhitespace();
@@ -2138,12 +2154,11 @@ dumpNode(svgDocument.getRootElement(), "");
    {
       int  comp = scan.nextInteger();
       if (scan.consume('%')) {
-         if (comp < 0 || comp > 100)
-            throw new SAXException("Invalid colour component: "+comp+"%");
+         // Spec says to follow CSS rules, which says out-of-range values should be clamped.
+         comp = (comp < 0) ? 0 : (comp > 100) ? 100 : comp;
          return (comp * 255 / 100);
       } else {
-         if (comp < 0 || comp > 255)
-            throw new SAXException("Invalid colour component: "+comp);
+         comp = (comp < 0) ? 0 : (comp > 255) ? 255 : comp;
          return comp;
       }
    }
@@ -2153,12 +2168,6 @@ dumpNode(svgDocument.getRootElement(), "");
    private Colour  parseColourKeyword(String name) throws SAXException
    {
 //Log.d(TAG, "parseColourKeyword: "+name);
-      if (name.equals("currentColor")) {
-         // Intended for when SVG is embedded in othe documents. Allows the
-         // SVG to inherit the current colour from the parent document.
-         // We are just going to treat it as black.
-         return new Colour(0);
-      }
       Integer  col = colourKeywords.get(name.toLowerCase());
       if (col == null) {
          throw new SAXException("Invalid colour keyword: "+name);

@@ -14,6 +14,7 @@ import android.util.Log;
 
 import com.caverock.androidsvg.SVG.AspectRatioAlignment;
 import com.caverock.androidsvg.SVG.Box;
+import com.caverock.androidsvg.SVG.CurrentColor;
 import com.caverock.androidsvg.SVG.Style;
 import com.caverock.androidsvg.SVG.Text;
 import com.caverock.androidsvg.SVG.TextContainer;
@@ -29,7 +30,6 @@ public class SVGAndroidRenderer
 
    // Renderer state
    private RendererState  state = new RendererState();
-   private RendererState  parentState;
 
    private Stack<RendererState> stateStack = new Stack<RendererState>();  // Keeps track of render state as we render
 
@@ -55,6 +55,7 @@ public class SVGAndroidRenderer
          try
          {
             obj = (RendererState) super.clone();
+            obj.style = (Style) style.clone();
             obj.fillPaint = new Paint(fillPaint);
             obj.strokePaint = new Paint(strokePaint);
             return obj;
@@ -165,7 +166,6 @@ public class SVGAndroidRenderer
       // Save matrix and clip
       canvas.save();
       // Save style state
-      parentState = statePeek();
       stateStack.push((RendererState) state.clone());
    }
 
@@ -176,13 +176,6 @@ public class SVGAndroidRenderer
       canvas.restore();
       // Restore style state
       state = stateStack.pop();
-      parentState = statePeek();
-   }
-
-
-   private RendererState  statePeek()
-   {
-      return stateStack.peek();
    }
 
 
@@ -400,7 +393,6 @@ public class SVGAndroidRenderer
 
       updateStyle(obj.style);
 
-/**/Log.d(TAG, "LR hasStroke "+state.hasStroke+" "+obj.style.specifiedFlags);
       if (!state.hasStroke)
          return;
 
@@ -687,6 +679,11 @@ public class SVGAndroidRenderer
       state.style.resetNonInheritingProperties();
 
       // Now update each style property we know about
+      if (isSpecified(style, SVG.SPECIFIED_COLOR))
+      {
+         state.style.color = style.color;
+      }
+
       if (isSpecified(style, SVG.SPECIFIED_FILL))
       {
          state.style.fill = style.fill;
@@ -699,11 +696,17 @@ public class SVGAndroidRenderer
       }
 
       // If either fill or its opacity has changed, update the fillPaint
-      if (isSpecified(style, SVG.SPECIFIED_FILL | SVG.SPECIFIED_FILL_OPACITY))
+      if (isSpecified(style, SVG.SPECIFIED_FILL | SVG.SPECIFIED_FILL_OPACITY | SVG.SPECIFIED_COLOR))
       {
-         if (style.fill instanceof SVG.Colour)
+         if (state.style.fill instanceof SVG.Colour)
          {
-            int col = ((SVG.Colour) style.fill).colour;
+            int col = ((SVG.Colour) state.style.fill).colour;
+            col = clamp(state.style.fillOpacity) << 24 | col;
+            state.fillPaint.setColor(col);
+         }
+         else if (state.style.fill instanceof CurrentColor)
+         {
+            int col = state.style.color.colour;
             col = clamp(state.style.fillOpacity) << 24 | col;
             state.fillPaint.setColor(col);
          }
@@ -726,11 +729,17 @@ public class SVGAndroidRenderer
          state.style.strokeOpacity = style.strokeOpacity;
       }
 
-      if (isSpecified(style, SVG.SPECIFIED_STROKE | SVG.SPECIFIED_STROKE_OPACITY))
+      if (isSpecified(style, SVG.SPECIFIED_STROKE | SVG.SPECIFIED_STROKE_OPACITY | SVG.SPECIFIED_COLOR))
       {
-         if (style.stroke instanceof SVG.Colour)
+         if (state.style.stroke instanceof SVG.Colour)
          {
-            int col = ((SVG.Colour) style.stroke).colour;
+            int col = ((SVG.Colour) state.style.stroke).colour;
+            col = clamp(state.style.strokeOpacity) << 24 | col;
+            state.strokePaint.setColor(col);
+         }
+         else if (state.style.stroke instanceof CurrentColor)
+         {
+            int col = state.style.color.colour;
             col = clamp(state.style.strokeOpacity) << 24 | col;
             state.strokePaint.setColor(col);
          }

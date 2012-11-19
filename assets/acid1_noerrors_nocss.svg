@@ -162,17 +162,18 @@ circle[cx="-120"][cy="-22.5%"][r="2%"] {
      
      <defs>
        <g id="right-eye-defn">
-         <circle cx="10%" cy="-180" r="33.9" fill="red" stroke="red" stroke-width="5" />
+         <!-- circle cx="10%" cy="-180" r="33.9" fill="red" stroke="red" stroke-width="5" / -->
+         <circle cx="10%" cy="-180" r="33.9" fill="inherit" stroke="red" stroke-width="5" />
          <!-- Test 8 -->
          <!-- Test 23 -->
          <scalable_vector_graphics:path fill="inherit" stroke="black" stroke-width="5" 
-                                        d="M153.9,-180 A33.9,33.9 90 1 1 120,-213.9 a33.9,33.9 90 0 1 33.9,33.9Z" />
+                                        d="M153.9,-180 A33.9,33.9 90 1 1 120,-213.9 a33.9,33.9 90 0 1 33.9,33.9Z"/>
          <!-- Test 12 -->
          <!-- Test 20 -->
-         <!-- ellipse cx="120" cy="-22.5%" rx="0.0000000000000000000000000000000000002E+38" ry="+2000000000000000000000000000000000000000e-38" fill="rgb(-5%,
-                 128,	 0%)" -->
+         <ellipse cx="120" cy="-22.5%" rx="0.0000000000000000000000000000000000002E+38" ry="+2000000000000000000000000000000000000000e-38" fill="rgb(-5%,
+                 128,    0%)">
            <!--set attributeName="ry" to="2%" /-->
-         <!-- /ellipse -->
+         </ellipse>
        </g>
      </defs>
 
@@ -235,7 +236,7 @@ circle[cx="-120"][cy="-22.5%"][r="2%"] {
            <!-- Test 9 -->
            <!-- Test 17 -->
            <use id="right-eye" xl:href="#right-eye-defn" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Shape
-                             "/>
+                             " fill="rgb(109%,302%,100%)"/><!-- fill is from #right-eye CSS rule -->
            <rect x="-200" y="-300" width="200" height="200" fill="red"/>
      	 </switch>
        </g>
