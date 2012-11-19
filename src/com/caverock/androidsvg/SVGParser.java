@@ -1152,12 +1152,6 @@ dumpNode(svgDocument.getRootElement(), "");
          }
       }
 
-      public boolean  hasFloat()
-      {
-         int  floatEnd = scanForFloat();
-         return (floatEnd > position);
-      }
-
       public Float  nextFloat()
       {
          int  floatEnd = scanForFloat();
@@ -1197,6 +1191,13 @@ dumpNode(svgDocument.getRootElement(), "");
          return result;
       }
 
+      public Integer  nextChar()
+      {
+         if (position == input.length())
+            return null;
+         return Integer.valueOf(input.charAt(position++));
+      }
+
       public Length  nextLength()
       {
          Float  scalar = nextFloat();
@@ -1209,9 +1210,19 @@ dumpNode(svgDocument.getRootElement(), "");
             return new Length(scalar, unit);
       }
 
-      public boolean  hasNext(char ch)
+      /*
+       * Scan for a 'flag'. A flag is a '0' or '1' digit character.
+       */
+      public Boolean  nextFlag()
       {
-         return (position < input.length() && input.charAt(position) == ch);
+         if (position == input.length())
+            return null;
+         char  ch = input.charAt(position);
+         if (ch == '0' || ch == '1') {
+            position++;
+            return Boolean.valueOf(ch == '1');
+         }
+         return null;
       }
 
       public boolean  consume(char ch)
@@ -1223,7 +1234,7 @@ dumpNode(svgDocument.getRootElement(), "");
          return found;
       }
 
-      private int  nextChar()
+      private int  advanceChar()
       {
          if (position == input.length())
             return -1;
@@ -1246,7 +1257,7 @@ dumpNode(svgDocument.getRootElement(), "");
        * use this if you want to scan for a value that might terminate with
        * comma-whitespace.
        */
-      private String  nextToken()
+      public String  nextToken()
       {
          if (empty())
             return null;
@@ -1256,9 +1267,9 @@ dumpNode(svgDocument.getRootElement(), "");
             return null;
          
          int  start = position;
-         ch = nextChar();
+         ch = advanceChar();
          while (isTokenChar(ch)) {
-            ch = nextChar();
+            ch = advanceChar();
          }
          return input.substring(start, position);
       }
@@ -1268,7 +1279,7 @@ dumpNode(svgDocument.getRootElement(), "");
        * of letter characters terminated by an open bracket.  Both the function
        * name and the bracket are returned.
        */
-      private String  nextFunction()
+      public String  nextFunction()
       {
          if (empty())
             return null;
@@ -1276,7 +1287,7 @@ dumpNode(svgDocument.getRootElement(), "");
 
          int  ch = input.charAt(position);
          while ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z'))
-            ch = nextChar();
+            ch = advanceChar();
          if (ch == '(') {
             position ++;
             return input.substring(start, position);
@@ -1300,35 +1311,35 @@ dumpNode(svgDocument.getRootElement(), "");
          int  ch = input.charAt(position);
          // Check whole part of mantissa
          if (ch == '-' || ch == '+')
-            ch = nextChar();
+            ch = advanceChar();
          if (Character.isDigit(ch)) {
             lastValidPos = position + 1;
-            ch = nextChar();
+            ch = advanceChar();
             while (Character.isDigit(ch)) {
                lastValidPos = position + 1;
-               ch = nextChar();
+               ch = advanceChar();
             }
          }
          // Fraction or exponent starts here
          if (ch == '.') {
             lastValidPos = position + 1;
-            ch = nextChar();
+            ch = advanceChar();
             while (Character.isDigit(ch)) {
                lastValidPos = position + 1;
-               ch = nextChar();
+               ch = advanceChar();
             }
          }
          // Exponent
          if (ch == 'e' || ch == 'E') {
-            ch = nextChar();
+            ch = advanceChar();
             if (ch == '-' || ch == '+')
-               ch = nextChar();
+               ch = advanceChar();
             if (Character.isDigit(ch)) {
                lastValidPos = position + 1;
-               ch = nextChar();
+               ch = advanceChar();
                while (Character.isDigit(ch)) {
                   lastValidPos = position + 1;
-                  ch = nextChar();
+                  ch = advanceChar();
                }
             }
          }
@@ -1352,13 +1363,13 @@ dumpNode(svgDocument.getRootElement(), "");
          int  ch = input.charAt(position);
          // Check whole part of mantissa
          if (ch == '-' || ch == '+')
-            ch = nextChar();
+            ch = advanceChar();
          if (Character.isDigit(ch)) {
             lastValidPos = position + 1;
-            ch = nextChar();
+            ch = advanceChar();
             while (Character.isDigit(ch)) {
                lastValidPos = position + 1;
-               ch = nextChar();
+               ch = advanceChar();
             }
          }
 
@@ -1396,81 +1407,6 @@ dumpNode(svgDocument.getRootElement(), "");
             return null;
          }
       }
-   }
-
-
-   /*
-    * Tokenises SVG path data.
-    */
-   private class PathTokeniser
-   {
-      private int nextToken = 0;
-      private ArrayList<String>  list = new ArrayList<String>();
-
-      public PathTokeniser(String src)
-      {
-         int start = 0;
-         int pos = 0;
-         boolean skipWs = false;
-         while (pos < src.length())
-         {
-            char c = src.charAt(pos);
-            if (Character.isLetter(c)) {
-               if (!skipWs && pos>start) {
-//Log.d(TAG, "pt0: "+src.substring(start, pos));
-                  list.add(src.substring(start, pos));
-               }
-//Log.d(TAG, "pt1: "+c);
-               list.add(String.valueOf(c));
-               skipWs = true;
-            } else if (c == ',' || Character.isWhitespace(c)) {
-               if (!skipWs) {
-//Log.d(TAG, "pt2: "+src.substring(start, pos));
-                  list.add(src.substring(start, pos));
-                  skipWs = true;
-               }
-               skipWs = true;
-            } else if (skipWs) {
-               skipWs = false;
-               start = pos;
-            }
-            pos++;
-         }
-         if (!skipWs) {
-//Log.d(TAG, "pt3: "+src.substring(start, pos));
-            list.add(src.substring(start, pos));
-         }
-      }
-      
-      public boolean hasMoreTokens()
-      {
-         return nextToken < list.size();
-      }
-      
-      public String nextToken()
-      {
-         if (nextToken == list.size())
-            throw new NoSuchElementException();
-         return list.get(nextToken++);
-      }
-
-      public String peekToken()
-      {
-         if (nextToken == list.size())
-            throw new NoSuchElementException();
-         return list.get(nextToken);
-      }
-
-      public int countTokens()
-      {
-         return list.size() - nextToken;
-      }
-   }
-
-
-   private boolean  isPathCommandLetter(String s)
-   {
-      return (s.length() == 1 && Character.isLetter(s.charAt(0)));
    }
 
 
@@ -2245,208 +2181,255 @@ dumpNode(svgDocument.getRootElement(), "");
    private Path  parsePath(String val) throws SAXException
    {
 /**/Log.d(TAG, "parsePath: "+val);
-      PathTokeniser tok = new PathTokeniser(val);
-/**/Log.d(TAG, "parsePath: num tokens = "+tok.countTokens());
+      TextScanner  scan = new TextScanner(val);
 
-      char    pathCommand = '?';
+      int     pathCommand = '?';
       float   currentX = 0f, currentY = 0f;    // The last point visited in the subpath
       float   lastMoveX = 0f, lastMoveY = 0f;  // The initial point of current subpath
       float   lastControlX = 0f, lastControlY = 0f;  // Last control point of the just completed bezier curve.
-      float   x,y, x1,y1, x2,y2;
-      float   rx,ry, xAxisRotation;
-      boolean largeArcFlag, sweepFlag;
+      Float   x,y, x1,y1, x2,y2;
+      Float   rx,ry, xAxisRotation;
+      Boolean largeArcFlag, sweepFlag;
       boolean startOfPath = true;              // Are we at the start of the whole path?
       Path    path = new Path();
 
-      try
+      while (!scan.empty())
       {
-         while (tok.hasMoreTokens())
+         pathCommand = scan.nextChar();
+
+         if (startOfPath && pathCommand != 'M' && pathCommand != 'm')
+            return path;  // Invalid path - doesn't start with a move
+
+         switch (pathCommand)
          {
-            if (isPathCommandLetter(tok.peekToken()))
-               pathCommand = tok.nextToken().charAt(0);
-
-            if (startOfPath && pathCommand != 'M' && pathCommand != 'm')
-               return path;  // Invalid path - doesn't start with a move
-
-            switch (pathCommand)
-            {
-                  // Move
-               case 'M':
-               case 'm':
-                  x = parseFloat(tok.nextToken());
-                  y = parseFloat(tok.nextToken());
-                  // Relative moveto at the start of a path is treated as an absolute moveto.
-                  if (pathCommand=='m' && !startOfPath) {
-                     x += currentX;
-                     y += currentY;
-                  }
-                  path.moveTo(x, y);
-                  currentX = lastMoveX = lastControlX = x;
-                  currentY = lastMoveY = lastControlY = y;
-                  // Any subsequent coord pairs should be treated as a lineto.
-                  pathCommand = (pathCommand=='m') ? 'l' : 'L';
-                  break;
-
-                  // Line
-               case 'L':
-               case 'l':
-                  x = parseFloat(tok.nextToken());
-                  y = parseFloat(tok.nextToken());
-                  if (pathCommand=='l') {
-                     x += currentX;
-                     y += currentY;
-                  }
-                  path.lineTo(x, y);
-                  currentX = lastControlX = x;
-                  currentY = lastControlY = y;
-                  break;
-
-                  // Cubic bezier
-               case 'C':
-               case 'c':
-                  x1 = parseFloat(tok.nextToken());
-                  y1 = parseFloat(tok.nextToken());
-                  x2 = parseFloat(tok.nextToken());
-                  y2 = parseFloat(tok.nextToken());
-                  x = parseFloat(tok.nextToken());
-                  y = parseFloat(tok.nextToken());
-                  if (pathCommand=='c') {
-                     x += currentX;
-                     y += currentY;
-                     x1 += currentX;
-                     y1 += currentY;
-                     x2 += currentX;
-                     y2 += currentY;
-                  }
-                  path.cubicTo(x1, y1, x2, y2, x, y);
-                  lastControlX = x2;
-                  lastControlY = y2;
-                  currentX = x;
-                  currentY = y;
-                  break;
-
-                  // Smooth curve (first control point calculated)
-               case 'S':
-               case 's':
-                  x1 = 2 * currentX - lastControlX;
-                  y1 = 2 * currentY - lastControlY;
-                  x2 = parseFloat(tok.nextToken());
-                  y2 = parseFloat(tok.nextToken());
-                  x = parseFloat(tok.nextToken());
-                  y = parseFloat(tok.nextToken());
-                  if (pathCommand=='c') {
-                     x += currentX;
-                     y += currentY;
-                     x2 += currentX;
-                     y2 += currentY;
-                  }
-                  path.cubicTo(x1, y1, x2, y2, x, y);
-                  lastControlX = x2;
-                  lastControlY = y2;
-                  currentX = x;
-                  currentY = y;
-                  break;
-
-                  // Close path
-               case 'Z':
-               case 'z':
-                  path.close();
-                  currentX = lastControlX = lastMoveX;
-                  currentY = lastControlY = lastMoveY;
-                  break;
-
-                  // Horizontal line
-               case 'H':
-               case 'h':
-                  x = parseFloat(tok.nextToken());
-                  if (pathCommand=='h') {
-                     x += currentX;
-                  }
-                  path.lineTo(x, currentY);
-                  currentX = lastControlX = x;
-                  break;
-
-                  // Vertical line
-               case 'V':
-               case 'v':
-                  y = parseFloat(tok.nextToken());
-                  if (pathCommand=='v') {
-                     y += currentY;
-                  }
-                  path.lineTo(currentX, y);
-                  currentY = lastControlY = y;
-                  break;
-
-                  // Quadratic bezier
-               case 'Q':
-               case 'q':
-                  x1 = parseFloat(tok.nextToken());
-                  y1 = parseFloat(tok.nextToken());
-                  x = parseFloat(tok.nextToken());
-                  y = parseFloat(tok.nextToken());
-                  if (pathCommand=='q') {
-                     x += currentX;
-                     y += currentY;
-                     x1 += currentX;
-                     y1 += currentY;
-                  }
-                  path.quadTo(x1, y1, x, y);
-                  lastControlX = x1;
-                  lastControlY = y1;
-                  currentX = x;
-                  currentY = y;
-                  break;
-
-                  // Smooth quadratic bezier
-               case 'T':
-               case 't':
-                  x1 = 2 * currentX - lastControlX;
-                  y1 = 2 * currentY - lastControlY;
-                  x = parseFloat(tok.nextToken());
-                  y = parseFloat(tok.nextToken());
-                  if (pathCommand=='t') {
-                     x += currentX;
-                     y += currentY;
-                  }
-                  path.quadTo(x1, y1, x, y);
-                  lastControlX = x1;
-                  lastControlY = y1;
-                  currentX = x;
-                  currentY = y;
-                  break;
-
-                  // Arc
-               case 'A':
-               case 'a':
-                  rx = parseFloat(tok.nextToken());
-                  ry = parseFloat(tok.nextToken());
-                  xAxisRotation = parseFloat(tok.nextToken());
-                  largeArcFlag = ("0".equals(tok.nextToken())) ? false : true;
-                  sweepFlag = ("0".equals(tok.nextToken())) ? false : true;
-                  x = parseFloat(tok.nextToken());
-                  y = parseFloat(tok.nextToken());
-                  if (pathCommand=='a') {
-                     x += currentX;
-                     y += currentY;
-                  }
-                  arcTo(path, currentX, currentY, rx, ry, xAxisRotation, largeArcFlag, sweepFlag, x, y);
-                  currentX = lastControlX = x;
-                  currentY = lastControlY = y;
-                  break;
-
-               default:
+            // Move
+            case 'M':
+            case 'm':
+               x = scan.nextFloat();
+               scan.skipCommaWhitespace();
+               y = scan.nextFloat();
+               if (y == null) {
+                  Log.e(TAG, "Bad path coords for "+pathCommand+" path segment");
                   return path;
-            }
-            startOfPath = false;
+               }
+               // Relative moveto at the start of a path is treated as an absolute moveto.
+               if (pathCommand=='m' && !startOfPath) {
+                  x += currentX;
+                  y += currentY;
+               }
+               path.moveTo(x, y);
+               currentX = lastMoveX = lastControlX = x;
+               currentY = lastMoveY = lastControlY = y;
+               // Any subsequent coord pairs should be treated as a lineto.
+               pathCommand = (pathCommand=='m') ? 'l' : 'L';
+               break;
+
+               // Line
+            case 'L':
+            case 'l':
+               x = scan.nextFloat();
+               scan.skipCommaWhitespace();
+               y = scan.nextFloat();
+               if (y == null) {
+                  Log.e(TAG, "Bad path coords for "+pathCommand+" path segment");
+                  return path;
+               }
+               if (pathCommand=='l') {
+                  x += currentX;
+                  y += currentY;
+               }
+               path.lineTo(x, y);
+               currentX = lastControlX = x;
+               currentY = lastControlY = y;
+               break;
+
+               // Cubic bezier
+            case 'C':
+            case 'c':
+               x1 = scan.nextFloat();
+               scan.skipCommaWhitespace();
+               y1 = scan.nextFloat();
+               scan.skipCommaWhitespace();
+               x2 = scan.nextFloat();
+               scan.skipCommaWhitespace();
+               y2 = scan.nextFloat();
+               scan.skipCommaWhitespace();
+               x = scan.nextFloat();
+               scan.skipCommaWhitespace();
+               y = scan.nextFloat();
+               if (y == null) {
+                  Log.e(TAG, "Bad path coords for "+pathCommand+" path segment");
+                  return path;
+               }
+               if (pathCommand=='c') {
+                  x += currentX;
+                  y += currentY;
+                  x1 += currentX;
+                  y1 += currentY;
+                  x2 += currentX;
+                  y2 += currentY;
+               }
+               path.cubicTo(x1, y1, x2, y2, x, y);
+               lastControlX = x2;
+               lastControlY = y2;
+               currentX = x;
+               currentY = y;
+               break;
+
+               // Smooth curve (first control point calculated)
+            case 'S':
+            case 's':
+               x1 = 2 * currentX - lastControlX;
+               y1 = 2 * currentY - lastControlY;
+               x2 = scan.nextFloat();
+               scan.skipCommaWhitespace();
+               y2 = scan.nextFloat();
+               scan.skipCommaWhitespace();
+               x = scan.nextFloat();
+               scan.skipCommaWhitespace();
+               y = scan.nextFloat();
+               if (y == null) {
+                  Log.e(TAG, "Bad path coords for "+pathCommand+" path segment");
+                  return path;
+               }
+               if (pathCommand=='c') {
+                  x += currentX;
+                  y += currentY;
+                  x2 += currentX;
+                  y2 += currentY;
+               }
+               path.cubicTo(x1, y1, x2, y2, x, y);
+               lastControlX = x2;
+               lastControlY = y2;
+               currentX = x;
+               currentY = y;
+               break;
+
+               // Close path
+            case 'Z':
+            case 'z':
+               path.close();
+               currentX = lastControlX = lastMoveX;
+               currentY = lastControlY = lastMoveY;
+               break;
+
+               // Horizontal line
+            case 'H':
+            case 'h':
+               x = scan.nextFloat();
+               if (x == null) {
+                  Log.e(TAG, "Bad path coords for "+pathCommand+" path segment");
+                  return path;
+               }
+               if (pathCommand=='h') {
+                  x += currentX;
+               }
+               path.lineTo(x, currentY);
+               currentX = lastControlX = x;
+               break;
+
+               // Vertical line
+            case 'V':
+            case 'v':
+               y = scan.nextFloat();
+               if (y == null) {
+                  Log.e(TAG, "Bad path coords for "+pathCommand+" path segment");
+                  return path;
+               }
+               if (pathCommand=='v') {
+                  y += currentY;
+               }
+               path.lineTo(currentX, y);
+               currentY = lastControlY = y;
+               break;
+
+               // Quadratic bezier
+            case 'Q':
+            case 'q':
+               x1 = scan.nextFloat();
+               scan.skipCommaWhitespace();
+               y1 = scan.nextFloat();
+               scan.skipCommaWhitespace();
+               x = scan.nextFloat();
+               scan.skipCommaWhitespace();
+               y = scan.nextFloat();
+               if (y == null) {
+                  Log.e(TAG, "Bad path coords for "+pathCommand+" path segment");
+                  return path;
+               }
+               if (pathCommand=='q') {
+                  x += currentX;
+                  y += currentY;
+                  x1 += currentX;
+                  y1 += currentY;
+               }
+               path.quadTo(x1, y1, x, y);
+               lastControlX = x1;
+               lastControlY = y1;
+               currentX = x;
+               currentY = y;
+               break;
+
+               // Smooth quadratic bezier
+            case 'T':
+            case 't':
+               x1 = 2 * currentX - lastControlX;
+               y1 = 2 * currentY - lastControlY;
+               x = scan.nextFloat();
+               scan.skipCommaWhitespace();
+               y = scan.nextFloat();
+               if (y == null) {
+                  Log.e(TAG, "Bad path coords for "+pathCommand+" path segment");
+                  return path;
+               }
+               if (pathCommand=='t') {
+                  x += currentX;
+                  y += currentY;
+               }
+               path.quadTo(x1, y1, x, y);
+               lastControlX = x1;
+               lastControlY = y1;
+               currentX = x;
+               currentY = y;
+               break;
+
+               // Arc
+            case 'A':
+            case 'a':
+               rx = scan.nextFloat();
+               scan.skipCommaWhitespace();
+               ry = scan.nextFloat();
+               scan.skipCommaWhitespace();
+               xAxisRotation = scan.nextFloat();
+               scan.skipCommaWhitespace();
+               largeArcFlag = scan.nextFlag();
+               scan.skipCommaWhitespace();
+               sweepFlag = scan.nextFlag();
+               scan.skipCommaWhitespace();
+               x = scan.nextFloat();
+               scan.skipCommaWhitespace();
+               y = scan.nextFloat();
+               if (y == null || rx < 0 || ry < 0) {
+                  Log.e(TAG, "Bad path coords for "+pathCommand+" path segment");
+                  return path;
+               }
+               if (pathCommand=='a') {
+                  x += currentX;
+                  y += currentY;
+               }
+               arcTo(path, currentX, currentY, rx, ry, xAxisRotation, largeArcFlag, sweepFlag, x, y);
+               currentX = lastControlX = x;
+               currentY = lastControlY = y;
+               break;
+
+            default:
+               return path;
          }
-         return path;
+         startOfPath = false;
+
+         scan.skipWhitespace();
       }
-      catch (NoSuchElementException e)
-      {
-         // Path tokens ran out before we were finished.
-         // Spec says to return what we can
-         return path;
-      }
+      return path;
    }
 
 

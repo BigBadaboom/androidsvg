@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="utf-8" ?>
+     <!--
+     
+       Description of Tests
+       ====================
+     
+       Test 1:  width/height specified on outermost svg element.  The HTML harness should override 
+                this width and height such that the image is contained within a 300x200 frame
+                http://www.w3.org/TR/SVG11/coords.html#ViewportSpace
+                
+       Test 2:  viewBox with negative x,y values.  Unitless coordinates in this file should be in the 
+                coordinate system established by the viewBox attribute, with 0,0 as the center 
+                http://www.w3.org/TR/SVG11/coords.html#ViewBoxAttribute
+                
+       Test 3:  foreign markup inside the title and desc elements.  This should not cause an issue
+                with rendering of the graphics.
+                http://www.w3.org/TR/SVG11/struct.html#DescriptionAndTitleElements
+                
+       Test 4:  percentage and unitless lengths for x-coordinate values (width), y-coordinate
+                values (height) and other length values which are calculated differently:
+                (radius = sqrt((w**2) + (h**2))/sqrt(2) = 1019,8039027185569660056448218046
+                http://www.w3.org/TR/SVG11/coords.html#Units
+                
+       Test 5:  other units (pt, pc, in, mm)
+                http://www.w3.org/TR/CSS21/syndata.html#x41
+       
+       Test 6:  #rrggbb and #rgb color formats
+                http://www.w3.org/TR/SVG11/types.html#DataTypeColor
+       
+       Test 7:  test inherited color and rgb() format
+                http://www.w3.org/TR/SVG11/painting.html#SpecifyingPaint
+                http://www.w3.org/TR/SVG11/types.html#DataTypeColor
+                http://www.w3.org/TR/REC-CSS2/syndata.html#value-def-color
+        
+       Test 8:  XML namespace prefixes
+                http://www.w3.org/TR/SVG11/struct.html#NewDocument
+       
+       Test 9:  use element referencing SVG element from defs elements
+                http://www.w3.org/TR/SVG11/struct.html#UseElement
+
+       Test 10: switch element with requiredFeatures and requiredExtensions attribute
+                http://www.w3.org/TR/SVG11/struct.html#SwitchElement
+                http://www.w3.org/TR/SVG11/struct.html#RequiredFeaturesAttribute
+                http://www.w3.org/TR/SVG11/struct.html#RequiredExtensionsAttribute
+
+       Test 11: transform attribute, multiple transformations
+                http://www.w3.org/TR/SVG11/coords.html#TransformAttribute
+       
+       Test 12: test path grammar (scientific notation, decimal number format, 
+                whitespace and precision)
+                http://www.w3.org/TR/SVG11/paths.html#PathDataBNF
+                http://www.w3.org/TR/SVG11/types.html#DataTypeDecimalNumber
+                http://www.w3.org/TR/SVG11/types.html#BasicDataTypes
+    
+       Test 13: symbol element, display attribute should have no effect
+                http://www.w3.org/TR/SVG11/struct.html#SymbolElement
+       
+       Test 14: nested svg elements.  x,y attributes on outermost svg have no effect.
+                http://www.w3.org/TR/SVG11/struct.html#SVGElement
+                
+       Test 15: image element referencing an external png and jpg files
+                http://www.w3.org/TR/SVG11/struct.html#ImageElement
+       
+       Test 16: CSS properties take precedence over presentational attributes
+                http://www.w3.org/TR/SVG11/styling.html#UsingPresentationAttributes
+       
+       Test 17: External CSS file testing type, attribute, class and id selectors
+                http://www.w3.org/TR/SVG11/styling.html#StylingWithCSS
+                http://www.w3.org/TR/CSS21/selector.html#type-selectors
+                http://www.w3.org/TR/CSS21/selector.html#attribute-selectors
+                http://www.w3.org/TR/CSS21/selector.html#class-html
+                http://www.w3.org/TR/CSS21/selector.html#id-selectors
+
+       Test 18: style element and CSS :hover pseudo-class
+                http://www.w3.org/TR/SVG11/styling.html#StyleElement
+                http://www.w3.org/TR/CSS21/selector.html#dynamic-pseudo-classes
+
+       Test 19: path element and moveto, cubic bezier, closepath commands
+                (absolute and relative coordinates)
+                http://www.w3.org/TR/SVG11/paths.html#PathElement
+                http://www.w3.org/TR/SVG11/paths.html#PathDataMovetoCommands
+                http://www.w3.org/TR/SVG11/paths.html#PathDataCubicBézierCommands
+                http://www.w3.org/TR/SVG11/paths.html#PathDataClosePathCommand
+
+       Test 20: basic shapes (circle, rect, ellipse)
+                http://www.w3.org/TR/SVG11/shapes.html#CircleElement
+                http://www.w3.org/TR/SVG11/shapes.html#RectElement
+                http://www.w3.org/TR/SVG11/shapes.html#EllipseElement
+
+       Test 21: test currentColor
+ 	        http://www.w3.org/TR/SVG11/painting.html#SpecifyingPaint
+
+       Test 22: test skewX, skewY, matrix and rotate transforms
+                http://www.w3.org/TR/SVG11/coords.html#SkewXDefined
+                http://www.w3.org/TR/SVG11/coords.html#SkewYDefined
+                http://www.w3.org/TR/SVG11/coords.html#TransformMatrixDefined
+                http://www.w3.org/TR/SVG11/coords.html#TransformAttribute
+                
+       Test 23: test cubic bezier, quadratic bezier, and elliptical arcs
+       
+ TODO:
+   - test clipping?  (SVG Basic feature, could be moved to SVG Acid 2 with opacity, gradients, etc)
+   - error handling of path data? http://www.w3.org/TR/SVG11/implnote.html#PathElementImplementationNotes
+   - error handling for invalid color value (#red for instance) http://www.w3.org/TR/SVG11/implnote.html#ErrorProcessing
+       - Safari has a bug on this that I'd like to highlight (fill="#red" results in a red fill)
+   
+
+QUESTIONS:
+   - is the following syntax ok:  rgb(%,num,%) or do they all have to be num or all have to be %?
+     It appears that Safari might handle mixing % with numbers but Opera does not.  I believe the CSS
+     spec makes it clear that it's all % or all numbers.  If it turns out to be valid syntax, then 
+     change #right-eye's fill to be rgb(109%,302,100%)
+
+     -->
+
+<!-- Test 17 -->
+<?xml-stylesheet href="acid1.css" type="text/css"?>
+
+<!-- Test 1 -->
+<!-- Test 2 -->
+<!-- Test 14 -->
+<svg xmlns="http://www.w3.org/2000/svg" 
+     xmlns:svg="http://invalid-url/"
+     xmlns:SVG="http://www.w3.org/2000/svg" 
+     xmlns:scalable_vector_graphics="http://www.w3.org/2000/svg" 
+     xmlns:xlink="http://www.w3.org/1999/xlink"
+     xmlns:xl="http://www.w3.org/1999/xlink"
+     xmlns:html="http://www.w3.org/1999/xhtml"
+     width="600px" height="400px" viewBox="-600 -400 1200 800" x="-10000" y="-10000"
+     version="1.1">
+     
+     <!-- Test 3 -->
+     <title><html:h1>SVG Acid Test 1</html:h1></title>
+     <desc>
+           <html:p>This test incorporates many key features of 
+           <html:a href="http://www.w3.org/TR/SVG11/index.html">SVG</html:a>
+           Tiny 1.1 into one document.  It is embedded into the HTML harness 
+           document in a variety of manners.</html:p>
+     </desc>
+     
+     <!-- Test 18 -->
+     <style type="text/css"><![CDATA[
+     /* Test 21 */
+     path,g { color: white; }
+     #nose:hover { fill: rgb(0,0, 258); }
+     ]]></style>
+     
+     <defs>
+       <g id="right-eye-defn">
+         <circle cx="10%" cy="-180" r="33.9" fill="red" stroke="red" stroke-width="5" />
+         <!-- Test 8 -->
+         <!-- Test 23 -->
+         <scalable_vector_graphics:path fill="inherit" stroke="black" stroke-width="5" 
+                                        d="M153.9,-180 A33.9,33.9 90 1 1 120,-213.9 a33.9,33.9 90 0 1 33.9,33.9Z" />
+         <!-- Test 12 -->
+         <!-- Test 20 -->
+         <ellipse cx="120" cy="-22.5%" rx="0.0000000000000000000000000000000000002E+38" ry="+2000000000000000000000000000000000000000e-38" fill="rgb(-5%,
+                 128,	 0%)">
+           <!--set attributeName="ry" to="2%" /-->
+         </ellipse>
+       </g>
+     </defs>
+
+     <!-- Test 11 -->
+     <!-- Test 12 -->
+     <g id="top-group" transform="translate(0,5.E1),scale(.85)">
+     
+       <!-- Head -->
+       <!-- Test 5 -->
+       <!-- Test 6 -->
+       <circle fill="cyan" stroke="red" stroke-width="4.2333mm" cx="0" cy="-5%" r="4in" />
+       <!-- Test 8 -->
+       <!-- Test 20 -->
+       <SVG:circle id="head" fill="#FffF00" class="head" cx="0" cy="-5%" r="288pt" />
+       
+       <!-- Horns, should not be displayed -->
+       <!-- Test 8 -->
+       <svg:path d="M-250,-500 L-190,-380 L-250,-343 Z" fill="red" />
+       <path xmlns="http://invalid.namespace/" d="M250,-500 L190,-380 L250,-343 Z" fill="red" />
+
+       <!-- Eyebrows -->
+       <!-- Test 14 -->     
+       <svg x="-200" y="-250" width="400" height="100">
+         <!--path fill="purple" d="m0,60 C40,0 20,10 100,0 C30,30 40,20 0,60 Z" /-->
+         <!-- Test 15 -->
+         <!-- TODO: uncomment these two images, Renesis currently crashes with it in the document -->
+         <!--image xlink:href="left-eyebrow.png" width="84" height="50"/>
+         <image xlink:href="right-eyebrow.jpg" x="316" width="84" height="50"/-->
+       </svg>
+     
+       <!-- Left Eye -->
+       <!-- Test 4 -->
+       <!-- Test 8 -->
+       <g style="fill:white" fill="red" xmlns="http://www.w3.org/2000/svg">
+         <g id="left-eye">
+           <circle cx="-10%" cy="-180" r="33.9" fill="red" stroke="red" stroke-width="5" />
+           <!-- Test 8 -->
+           <!-- Test 20 -->           
+           <scalable_vector_graphics:circle cx="-120" cy="-22.5%" r="3.4%" fill="inherit" stroke="black" stroke-width="5" />
+           <!-- Test 16 -->
+           <!-- Test 17 -->
+           <!-- Test 20 -->           
+           <SVG:circle cx="-120" cy="-22.5%" r="2%" fill="red" />
+         </g>
+       </g>
+     
+       <!-- Right Eye -->
+       <!-- Test 7 -->
+       <g fill="red">
+         <!-- Test 10, whitespace should be ignored, right-eye should match -->
+         <switch>
+           <rect x="-200" y="-300" width="200" height="200" fill="orange" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Shape
+           										  bogus-feature"/>
+           <rect x="-200" y="-300" width="200" height="200" fill="purple" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Shape"
+                                                                        requiredExtensions="bogus-extension"/>
+           <!-- Test 8 -->
+           <!-- Test 9 -->
+           <!-- Test 17 -->
+           <use id="right-eye" xl:href="#right-eye-defn" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Shape
+                             "/>
+           <rect x="-200" y="-300" width="200" height="200" fill="red"/>
+     	 </switch>
+       </g>
+       
+       <!-- Nose -->
+       <!-- Test 13 TODO: put display="none" on the symbol (removed to avoid painful error message in Batik) -->
+       <symbol id="nose-symbol">
+         <!-- Test 20 -->           
+         <rect x="-55" y="-55" width="110" height="110" fill="inherit" />
+       </symbol>
+       <circle cx="0" cy="0" r="25" fill="red" />
+       <!-- Test 18 -->
+       <use id="nose" xlink:href="#nose-symbol" x="-27.5" y="-27.5" display="inline" fill="black" transform="rotate(45)"/>
+       
+       <!-- Mouth -->
+       <!-- Test 19 -->
+       <!-- Test 12 -->
+       <!-- Test 22 -->
+       <path fill="black" stroke="black" stroke-width="5" transform="scale(1-1)translate(470-200)rotate(180
+       -235+100)"	d="M-335,10000E-2 m100,0 	C-.15E3,150 150,	150 235,100 
+                                                             c-85,200 -385,+2.E2 -470.0000,0 Z"/>
+       
+       <!-- Curves around mouth -->
+       <!-- Test 23 -->
+       <path fill="none" stroke="black" stroke-width="5" d="M-230,65 C-265,60 -290,85 -280,110" />
+       <path fill="none" stroke="red" stroke-width="4" d="M230,65 C265,60 290,85 280,110" />
+       <path fill="none" stroke="rgb(00,0,0)" stroke-width="5" d="M230,65 Q290,64 280,110" />
+       
+       <!-- Teeth -->
+       <!-- Test 21 -->
+       <path fill="currentColor" stroke="#333" stroke-width="5" d="M1,138 l44,-2 v49 h-44 Z" />
+       <!-- Test 21 -->
+       <g fill="currentColor" stroke="#333" stroke-width="5">
+         <!-- Test 22  -->
+         <path transform="skewX(45)" d="M-139,138 L-183,136 -230,185 H-186 Z" /> 
+       </g>
+       <!-- Test 22 -->	
+       <path transform="skewY(45)" fill="WHITE" stroke="#333" stroke-width="5" d="M48,88 L91,43 V93 L48,136 Z" />
+       <!-- Test 22 -->
+       <path transform="matrix(0 1 1 0 1000 1000)" fill="White" stroke="#333333" stroke-width="5.0" d="M-864-1048L-866-1091L-816-1091L-816-1048z" />
+
+
+       <!-- TODO: put two teeth and text into tests -->
+       
+       <g fill="white" stroke="#333" stroke-width="5">
+         <path d="M-135,130 L-95,134 -95,180 -135,180 Z" />
+         <path d="M135,130 L95,134 95,180 135,180 Z" />
+       </g>
+
+       <text font-family="Arial" font-size="100" fill="blue" x="0" y="-440" text-anchor="middle">Hello World!</text>
+       
+     </g> <!-- top-group -->
+
+</svg>
