@@ -248,11 +248,9 @@ QUESTIONS:
        
        <!-- Teeth -->
        <!-- Test 21 -->
-       <!-- path fill="currentColor" stroke="#333" stroke-width="5" d="M1,138 l44,-2 v49 h-44 Z" / -->
-       <path fill="currentColor" stroke="#333" stroke-width="5" d="M1,138 l44,-2 v49 h-44 Z" color="white" /><!--  color=white is from path CSS rule -->
+       <path fill="currentColor" stroke="#333" stroke-width="5" d="M1,138 l44,-2 v49 h-44 Z" />
        <!-- Test 21 -->
-       <!-- g fill="currentColor" stroke="#333" stroke-width="5" -->
-       <g fill="currentColor" stroke="#333" stroke-width="5" color="white"><!--  color=white is from g CSS rule -->
+       <g fill="currentColor" stroke="#333" stroke-width="5">
          <!-- Test 22  -->
          <path transform="skewX(45)" d="M-139,138 L-183,136 -230,185 H-186 Z" /> 
        </g>
