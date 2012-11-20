@@ -17,7 +17,7 @@ public class SVG
 {
    private static final String  TAG = "AndroidSVG";
 
-   private static final float   DEFAULT_DPI = 90;
+   private static final float   DEFAULT_DPI = 96;
    private static final int     DEFAULT_PICTURE_WIDTH = 512;
    private static final int     DEFAULT_PICTURE_HEIGHT = 512;
 
@@ -90,7 +90,7 @@ public class SVG
    }
 
 
-   public SVG.SvgObject getRootElement()
+   public SVG.Svg  getRootElement()
    {
       return rootElement;
    }
@@ -659,6 +659,25 @@ public class SVG
    }
 
 
+   protected static class Symbol extends SvgContainer implements HasViewBox, HasPreserveAspectRatio
+   {
+      public Box                  viewBox;
+      public AspectRatioAlignment preserveAspectRatioAlignment = null;
+      public boolean              preserveAspectRatioSlice;
+
+      @Override
+      public Box  getViewBox()            { return this.viewBox; }
+      @Override
+      public void setViewBox(Box viewBox) { this.viewBox = viewBox; }
+      @Override
+      public void setPreserveAspectRatio(AspectRatioAlignment alignment, boolean slice)
+      {
+         this.preserveAspectRatioAlignment = alignment;
+         this.preserveAspectRatioSlice = slice;
+      }
+   }
+
+
    //===============================================================================
    // SVG document rendering
 
@@ -687,26 +706,29 @@ public class SVG
       }
       else
       {
-         return getPicture(DEFAULT_PICTURE_WIDTH, DEFAULT_PICTURE_HEIGHT, DEFAULT_DPI);
+         return getPicture(DEFAULT_PICTURE_WIDTH, DEFAULT_PICTURE_HEIGHT, DEFAULT_DPI, null, true);
       }
    }
 
 
    public Picture  getPicture(int widthInPixels, int heightInPixels)
    {
-      return getPicture(widthInPixels, heightInPixels, DEFAULT_DPI);
+      return getPicture(widthInPixels, heightInPixels, DEFAULT_DPI, null, true);
    }
 
 
-   public Picture  getPicture(int widthInPixels, int heightInPixels, float dpi)
+   public Picture  getPicture(int widthInPixels, int heightInPixels, float dpi, AspectRatioAlignment alignment, boolean fitToCanvas)
    {
       Picture             picture = new Picture();
       Canvas              canvas = picture.beginRecording(widthInPixels, heightInPixels);
 
+      if (alignment == null)
+         alignment = AspectRatioAlignment.xMidYMid;
+
       Box                 viewPort = new Box(0f, 0f, (float) widthInPixels, (float) heightInPixels);
       SVGAndroidRenderer  renderer= new SVGAndroidRenderer(canvas, viewPort, dpi);
 
-      renderer.render(rootElement);
+      renderer.renderDocument(this, alignment, fitToCanvas);
 
       picture.endRecording();
       return picture;

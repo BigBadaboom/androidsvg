@@ -90,6 +90,7 @@ public class SVGAndroidRenderer
       updateStyle(Style.getDefaultStyle());
       // Push a copy of the state with 'default' style, so that inherit works for top level objects
       stateStack.push((RendererState) state.clone());   // Manual push here - don't use statePush();
+
    }
 
 
@@ -120,6 +121,25 @@ public class SVGAndroidRenderer
    {
       return state.viewBox;
    }
+
+
+   public void  renderDocument(SVG document, AspectRatioAlignment alignment, boolean fitToCanvas)
+   {
+      // Calculate the initial transform to position the document in our canvas
+      SVG.Svg  obj = document.getRootElement();
+      
+      if (obj.viewBox != null) {
+         canvas.concat(calculateViewBoxTransform(obj.viewBox, alignment, !fitToCanvas));
+         state.viewPort = obj.viewBox;
+//         state.viewPort = new Box(0, 0, obj.viewBox.width, obj.viewBox.height);
+      }
+
+      render(obj);
+   }
+
+
+   // ==============================================================================
+   // Render dispatcher
 
 
    public void  render(SVG.SvgObject obj)
@@ -183,12 +203,19 @@ public class SVGAndroidRenderer
    // Renderers for each element type
 
 
-   public void render(SVG.Svg obj)
+   private void render(SVG.Svg obj)
+   {
+      render(obj, obj.width, obj.height);
+   }
+
+
+   // When referenced by a <use> element, it's width and height take precedence over the ones in the <svg> object.
+   private void render(SVG.Svg obj, SVG.Length width, SVG.Length height)
    {
 /**/Log.d(TAG, "Svg render");
 
-      if ((obj.width != null && obj.width.isZero()) ||
-          (obj.height != null && obj.height.isZero()))
+      if ((width != null && width.isZero()) ||
+          (height != null && height.isZero()))
          return;
 
       updateStyle(obj.style);
@@ -201,12 +228,15 @@ public class SVGAndroidRenderer
       {
          float  _x = (obj.x != null) ? obj.x.floatValueX(this) : 0f;
          float  _y = (obj.y != null) ? obj.y.floatValueY(this) : 0f;
-         float  _w = (obj.width != null) ? obj.width.floatValueX(this) : state.viewPort.width;
-         float  _h = (obj.height != null) ? obj.height.floatValueX(this) : state.viewPort.height;
+         float  _w = (width != null) ? width.floatValueX(this) : state.viewPort.width;
+         float  _h = (height != null) ? height.floatValueX(this) : state.viewPort.height;
          state.viewPort = new SVG.Box(_x, _y, _w, _h);
       }
       if (!state.style.overflow) {
-         canvas.clipRect(state.viewPort.minX, state.viewPort.minY, state.viewPort.width, state.viewPort.height);  //TODO only do clipRect if overflow property says so
+         canvas.clipRect(state.viewPort.minX,
+                         state.viewPort.minY,
+                         state.viewPort.minX + state.viewPort.width,
+                         state.viewPort.minY + state.viewPort.height);
       }
 
       if (obj.viewBox != null) {
@@ -216,14 +246,14 @@ public class SVGAndroidRenderer
             canvas.concat(calculateViewBoxTransform(obj.viewBox));
          }
       }
-      
+
       for (SVG.SvgObject child: obj.children) {
          render(child);
       }
    }
 
 
-   public void render(SVG.Group obj)
+   private void render(SVG.Group obj)
    {
 /**/Log.d(TAG, "Group render");
       updateStyle(obj.style);
@@ -240,7 +270,7 @@ public class SVGAndroidRenderer
    }
 
 
-   public void render(SVG.Use obj)
+   private void render(SVG.Use obj)
    {
 /**/Log.d(TAG, "Use render");
 
@@ -262,11 +292,17 @@ public class SVGAndroidRenderer
       m.preTranslate(_x, _y);
       canvas.concat(m);
 
-      render(ref);
+      if (ref instanceof SVG.Svg) {
+         render((SVG.Svg) ref, obj.width, obj.height);
+      } else if (ref instanceof SVG.Symbol){
+         render((SVG.Symbol) ref, obj.width, obj.height);
+      } else {
+         render(ref);
+      }
    }
 
 
-   public void render(SVG.Path obj)
+   private void render(SVG.Path obj)
    {
 /**/Log.d(TAG, "Path render");
 
@@ -285,7 +321,7 @@ public class SVGAndroidRenderer
    }
 
 
-   public void render(SVG.Rect obj)
+   private void render(SVG.Rect obj)
    {
 /**/Log.d(TAG, "Rect render");
       if (obj.width == null || obj.height == null || obj.width.isZero() || obj.height.isZero())
@@ -333,7 +369,7 @@ public class SVGAndroidRenderer
    }
 
 
-   public void render(SVG.Circle obj)
+   private void render(SVG.Circle obj)
    {
 /**/Log.d(TAG, "Circle render");
       if (obj.r == null || obj.r.isZero())
@@ -359,7 +395,7 @@ public class SVGAndroidRenderer
    }
 
 
-   public void render(SVG.Ellipse obj)
+   private void render(SVG.Ellipse obj)
    {
 /**/Log.d(TAG, "Ellipse render");
       if (obj.rx == null || obj.ry == null || obj.rx.isZero() || obj.ry.isZero())
@@ -387,7 +423,7 @@ public class SVGAndroidRenderer
    }
 
 
-   public void render(SVG.Line obj)
+   private void render(SVG.Line obj)
    {
 /**/Log.d(TAG, "Line render");
 
@@ -409,7 +445,7 @@ public class SVGAndroidRenderer
    }
 
 
-   public void render(SVG.PolyLine obj)
+   private void render(SVG.PolyLine obj)
    {
 /**/Log.d(TAG, "PolyLine render");
 
@@ -434,7 +470,7 @@ public class SVGAndroidRenderer
    }
 
 
-   public void render(SVG.Polygon obj)
+   private void render(SVG.Polygon obj)
    {
 /**/Log.d(TAG, "Polygon render");
 
@@ -477,7 +513,7 @@ public class SVGAndroidRenderer
    }
 
 
-   public void render(SVG.Text obj)
+   private void render(SVG.Text obj)
    {
 /**/Log.d(TAG, "Text render");
 
@@ -575,6 +611,40 @@ public class SVGAndroidRenderer
    }
  
 
+   private void render(SVG.Symbol obj, SVG.Length width, SVG.Length height)
+   {
+/**/Log.d(TAG, "Symbol render");
+
+      if ((width != null && width.isZero()) ||
+          (height != null && height.isZero()))
+         return;
+
+      updateStyle(obj.style);
+
+      state.viewBox = obj.viewBox;
+
+      float  _w = (width != null) ? width.floatValueX(this) : state.viewPort.width;
+      float  _h = (height != null) ? height.floatValueX(this) : state.viewPort.height;
+      state.viewPort = new SVG.Box(0, 0, _w, _h);
+
+      if (!state.style.overflow) {
+         canvas.clipRect(state.viewPort.minX, state.viewPort.minY, state.viewPort.width, state.viewPort.height);  //TODO only do clipRect if overflow property says so
+      }
+
+      if (obj.viewBox != null) {
+         if (obj.preserveAspectRatioAlignment != null) {
+            canvas.concat(calculateViewBoxTransform(obj.viewBox, obj.preserveAspectRatioAlignment, obj.preserveAspectRatioSlice));
+         } else {
+            canvas.concat(calculateViewBoxTransform(obj.viewBox));
+         }
+      }
+      
+      for (SVG.SvgObject child: obj.children) {
+         render(child);
+      }
+   }
+
+
    // ==============================================================================
 
 
@@ -644,6 +714,8 @@ public class SVGAndroidRenderer
             // nothing to do 
             break;
       }
+
+      m.preTranslate(state.viewPort.minX, state.viewPort.minY);
       m.preScale(aspectScale, aspectScale);
       m.preTranslate(xOffset, yOffset);
       return m;

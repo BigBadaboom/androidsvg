@@ -66,6 +66,7 @@ public class SVGParser extends DefaultHandler
    private static final String  TAG_RECT           = "rect";
    private static final String  TAG_STOP           = "stop";
    private static final String  TAG_SWITCH         = "switch";
+   private static final String  TAG_SYMBOL         = "symbol";
    private static final String  TAG_TEXT           = "text";
    private static final String  TAG_TEXTPATH       = "textPath";
    private static final String  TAG_TREF           = "tref";
@@ -345,8 +346,8 @@ public class SVGParser extends DefaultHandler
       supportedFeatures.add("BasicStructure");              // YES (although desc title and metadata are ignored)
       //supportedFeatures.add("ContainerAttribute");        // NO (filter related. NYI)
       supportedFeatures.add("ConditionalProcessing");       // YES
-      //supportedFeatures.add("Image");                     // NYI
-      //supportedFeatures.add("Style");                     // NO (CSS not intended to be supported)
+      //supportedFeatures.add("Image");                     // NO?
+      //supportedFeatures.add("Style");                     // NYI
       //supportedFeatures.add("ViewportAttribute");         // NYI
       supportedFeatures.add("Shape");                       // YES
       //supportedFeatures.add("Text");                      // NO
@@ -462,6 +463,8 @@ public class SVGParser extends DefaultHandler
          tspan(attributes);
       } else if (localName.equalsIgnoreCase(TAG_SWITCH)) {
          zwitch(attributes);
+      } else if (localName.equalsIgnoreCase(TAG_SYMBOL)) {
+         symbol(attributes);
       }
    }
 
@@ -508,7 +511,8 @@ public class SVGParser extends DefaultHandler
           localName.equalsIgnoreCase(TAG_G) ||
           localName.equalsIgnoreCase(TAG_TEXT) ||
           localName.equalsIgnoreCase(TAG_TSPAN) ||
-          localName.equalsIgnoreCase(TAG_SWITCH)) {
+          localName.equalsIgnoreCase(TAG_SWITCH) ||
+          localName.equalsIgnoreCase(TAG_SYMBOL)) {
          currentElement = currentElement.parent;
       }
 
@@ -1258,6 +1262,47 @@ dumpNode(svgDocument.getRootElement(), "");
          
          // All checks passed!
          matchFound = true;
+      }
+   }
+
+
+   //=========================================================================
+   // <symbol> element
+
+
+   private void  symbol(Attributes attributes) throws SAXException
+   {
+/**/Log.d(TAG, "<symbol>");
+      if (currentElement == null)
+         throw new SAXException("Invalid document. Root element must be <svg>");
+      SVG.Symbol  obj = new SVG.Symbol();
+      obj.document = svgDocument;
+      obj.parent = currentElement;
+      parseAttributesCore(obj, attributes);
+      parseAttributesStyle(obj, attributes);
+      parseAttributesConditional(obj, attributes);
+      parseAttributesSymbol(obj, attributes);
+      currentElement.addChild(obj);
+      currentElement = obj;
+   }
+
+   
+   private void  parseAttributesSymbol(SVG.Symbol obj, Attributes attributes) throws SAXException
+   {
+      for (int i=0; i<attributes.getLength(); i++)
+      {
+         String val = attributes.getValue(i).trim();
+         switch (SVGAttr.fromString(attributes.getLocalName(i)))
+         {
+            case viewBox:
+               obj.viewBox = parseViewBox(val);
+               break;
+            case preserveAspectRatio:
+               parsePreserveAspectRatio(obj, val);
+               break;
+            default:
+               break;
+         }
       }
    }
 
