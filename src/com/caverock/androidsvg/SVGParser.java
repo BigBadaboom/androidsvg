@@ -2413,7 +2413,7 @@ dumpNode(svgDocument.getRootElement(), "");
       if (pathCommand != 'M' && pathCommand != 'm')
          return path;  // Invalid path - doesn't start with a move
 
-      while (!scan.empty())
+      while (true)
       {
          scan.skipWhitespace();
 
