@@ -23,7 +23,7 @@ public class TestActivity extends Activity
    Toast            currentToast;
 
    String[] fileList = {//"!acid1_noerrors_nocss.svg",
-                        "test_miterlimit.svg",
+                        "test_style.svg",
                         //"inkscape.svg",
                         "sample_14.5_opacity01.svg",
                         "sample_5.6_Use01.svg",
@@ -69,6 +69,7 @@ public class TestActivity extends Activity
                         "test_currentColor.svg",
                         "test_use_svg.svg",
                         "test_miterlimit.svg",
+                        "test_style.svg",
                         "inkscape.svg",
                         "!acid1_noerrors_nocss.svg",
                         "Android_robot.svg"};

@@ -30,6 +30,7 @@ import com.caverock.androidsvg.SVG.Colour;
 import com.caverock.androidsvg.SVG.CurrentColor;
 import com.caverock.androidsvg.SVG.Length;
 import com.caverock.androidsvg.SVG.Style;
+import com.caverock.androidsvg.SVG.SvgElement;
 import com.caverock.androidsvg.SVG.SvgPaint;
 import com.caverock.androidsvg.SVG.Unit;
 
@@ -83,7 +84,11 @@ public class SVGParser extends DefaultHandler
       fill,
       fill_rule,
       fill_opacity,
-      font_family, font_size, font_weight, font_style, // font, font_size_adjust, font_stretch, font_variant,  
+      font_family,
+      font_size,
+      font_weight,
+      font_style,
+      // font, font_size_adjust, font_stretch, font_variant,  
       gradientTransform,
       height,
       href,
@@ -104,7 +109,7 @@ public class SVGParser extends DefaultHandler
       stroke_miterlimit,
       stroke_opacity,
       stroke_width,
-      //style,
+      style,
       systemLanguage,
       text_anchor,
       text_decoration,
@@ -348,7 +353,7 @@ public class SVGParser extends DefaultHandler
       //supportedFeatures.add("ContainerAttribute");        // NO (filter related. NYI)
       supportedFeatures.add("ConditionalProcessing");       // YES
       //supportedFeatures.add("Image");                     // NO?
-      //supportedFeatures.add("Style");                     // NYI
+      supportedFeatures.add("Style");                       // YES
       //supportedFeatures.add("ViewportAttribute");         // NYI
       supportedFeatures.add("Shape");                       // YES
       //supportedFeatures.add("Text");                      // NO
@@ -1384,9 +1389,7 @@ dumpNode(svgDocument.getRootElement(), "");
       {
          int  start = position;
          skipCommaWhitespace();
-/**/Log.d(TAG, "possibleNextFloat: pos="+start+" skip="+position);
          Float  result = nextFloat();
-/**/Log.d(TAG, "possibleNextFloat: pos="+start+" res="+result);
          if (result != null)
             return result;
          position = start;
@@ -1458,30 +1461,35 @@ dumpNode(svgDocument.getRootElement(), "");
             return -1;
       }
 
-      private boolean  isTokenChar(int c)
+
+      /*
+       * Scans the input starting immediately at 'position' for the next token.
+       * A token is a sequence of characters terminating at a whitespace character.
+       * Note that this routine only checks for whitespace characters.  Use nextToken(char)
+       * if token might end with another character.
+       */
+      public String  nextToken()
       {
-         return (c != -1 && !isWhitespace(c));
+         return nextToken(' ');
       }
 
       /*
        * Scans the input starting immediately at 'position' for the next token.
-       * A token is a sequence of character terminating at a whitespace character.
-       * Note that this routine only checks for whitespace characters.  Do not
-       * use this if you want to scan for a value that might terminate with
-       * comma-whitespace.
+       * A token is a sequence of character terminating at either a whitespace character
+       * or the supplied terminating character.
        */
-      public String  nextToken()
+      public String  nextToken(char terminator)
       {
          if (empty())
             return null;
 
          int  ch = input.charAt(position);
-         if (isWhitespace(ch))
+         if (isWhitespace(ch) || ch == terminator)
             return null;
          
          int  start = position;
          ch = advanceChar();
-         while (isTokenChar(ch)) {
+         while (ch != -1 && ch != terminator && !isWhitespace(ch)) {
             ch = advanceChar();
          }
          return input.substring(start, position);
@@ -1639,7 +1647,7 @@ dumpNode(svgDocument.getRootElement(), "");
    //=========================================================================
 
 
-   private void  parseAttributesCore(SVG.SvgElement obj, Attributes attributes)
+   private void  parseAttributesCore(SvgElement obj, Attributes attributes)
    {
       for (int i=0; i<attributes.getLength(); i++)
       {
@@ -1655,9 +1663,11 @@ dumpNode(svgDocument.getRootElement(), "");
    /*
     * Parse the style attributes for an element.
     */
-   private void  parseAttributesStyle(SVG.SvgElement obj, Attributes attributes) throws SAXException
+   private void  parseAttributesStyle(SvgElement obj, Attributes attributes) throws SAXException
    {
 //Log.d(TAG, "parseAttributesStyle");
+      String  cssStyle = null;
+
       for (int i=0; i<attributes.getLength(); i++)
       {
          String  val = attributes.getValue(i).trim();
@@ -1668,210 +1678,257 @@ dumpNode(svgDocument.getRootElement(), "");
 
          switch (SVGAttr.fromString(attributes.getLocalName(i)))
          {
-            case fill:
-               if (inherit) {
-                  //setInherit(obj, SVG.SPECIFIED_FILL);
-                  break;
-               }
-               obj.style.specifiedFlags |= SVG.SPECIFIED_FILL;
-               if (val.equals(NONE)) {
-                  obj.style.fill = null;
-               } else if (val.equals(CURRENTCOLOR)) {
-                  obj.style.fill = CurrentColor.getInstance();
-               } else  if (val.startsWith("url")) {
-                  //gradient
-               } else {
-                  obj.style.fill = parseColour(val);
-               }
-//Log.d(TAG, "<?> style.fill="+obj.style.fill);
-               break;
-
-            case fill_rule:
-               if (inherit) {
-                  //setInherit(obj, SVG.SPECIFIED_FILL_RULE);
-                  break;
-               }
-               obj.style.fillRule = parseFillRule(val);
-               obj.style.specifiedFlags |= SVG.SPECIFIED_FILL_RULE;
-               break;
-
-            case fill_opacity:
-               if (inherit) {
-                  //setInherit(obj, SVG.SPECIFIED_FILL_OPACITY);
-                  break;
-               }
-               obj.style.fillOpacity = parseFloat(val);
-               obj.style.specifiedFlags |= SVG.SPECIFIED_FILL_OPACITY;
-               break;
-
-            case stroke:
-               if (inherit) {
-                  //setInherit(obj, SVG.SPECIFIED_STROKE);
-                  break;
-               }
-               obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE;
-               if (val.equals(NONE)) {
-                  obj.style.stroke = null;
-               } else if (val.equals(CURRENTCOLOR)) {
-                  obj.style.stroke = CurrentColor.getInstance();
-               } else  if (val.startsWith("url")) {
-                  //gradient
-               } else {
-                  obj.style.stroke = parseColour(val);
-               }
-//Log.d(TAG, "<?> style.stroke="+obj.style.stroke);
-               break;
-
-            case stroke_opacity:
-               if (inherit) {
-                  //setInherit(obj, SVG.SPECIFIED_STROKE_OPACITY);
-                  break;
-               }
-               obj.style.strokeOpacity = parseFloat(val);
-               obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE_OPACITY;
-               break;
-
-            case stroke_width:
-               if (inherit) {
-                  //setInherit(obj, SVG.SPECIFIED_STROKE_WIDTH);
-                  break;
-               }
-               obj.style.strokeWidth = parseLength(val);
-               obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE_WIDTH;
-               break;
-
-            case stroke_linecap:
-               if (inherit) {
-                  //setInherit(obj, SVG.SPECIFIED_STROKE_LINECAP);
-                  break;
-               }
-               obj.style.strokeLineCap = parseStrokeLineCap(val);
-               obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE_LINECAP;
-               break;
-
-            case stroke_linejoin:
-               if (inherit) {
-                  //setInherit(obj, SVG.SPECIFIED_STROKE_LINEJOIN);
-                  break;
-               }
-               obj.style.strokeLineJoin = parseStrokeLineJoin(val);
-               obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE_LINEJOIN;
-               break;
-
-            case stroke_miterlimit:
-               if (inherit) {
-                  //setInherit(obj, SVG.SPECIFIED_STROKE_MITERLIMIT);
-                  break;
-               }
-               obj.style.strokeMiterLimit = parseFloat(val);
-               obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE_MITERLIMIT;
-               break;
-
-            case stroke_dasharray:
-               if (inherit) {
-                  //setInherit(obj, SVG.SPECIFIED_STROKE_DASHARRAY);
-                  break;
-               }
-               if ("none".equals(val))
-                  obj.style.strokeDashArray = null;
-               else
-                  obj.style.strokeDashArray = parseStrokeDashArray(val);
-               obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE_DASHARRAY;
-               break;
-
-            case stroke_dashoffset:
-               if (inherit) {
-                  //setInherit(obj, SVG.SPECIFIED_STROKE_DASHOFFSET);
-                  break;
-               }
-               obj.style.strokeDashOffset = parseLength(val);
-               obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE_DASHOFFSET;
-               break;
-
-            case opacity:
-               if (inherit) {
-                  //setInherit(obj, SVG.SPECIFIED_OPACITY);
-                  break;
-               }
-               obj.style.opacity = parseFloat(val);
-               obj.style.specifiedFlags |= SVG.SPECIFIED_OPACITY;
-               break;
-
-            case color:
-               if (inherit) {
-                  //setInherit(obj, SVG.SPECIFIED_COLOR);
-                  break;
-               }
-               obj.style.specifiedFlags |= SVG.SPECIFIED_COLOR;
-               obj.style.color = parseColour(val);
-               break;
-
-            case font_family:
-               if (inherit) {
-                  //setInherit(obj, SVG.SPECIFIED_FONT_FAMILY);
-                  break;
-               }
-               obj.style.fontFamily = val;
-               obj.style.specifiedFlags |= SVG.SPECIFIED_FONT_FAMILY;
-               break;
-
-            case font_size:
-               if (inherit) {
-                  //setInherit(obj, SVG.SPECIFIED_FONT_SIZE);
-                  break;
-               }
-               obj.style.fontSize = parseFontSize(val);
-               obj.style.specifiedFlags |= SVG.SPECIFIED_FONT_SIZE;
-               break;
-
-            case font_weight:
-               if (inherit) {
-                  //setInherit(obj, SVG.SPECIFIED_FONT_WEIGHT);
-                  break;
-               }
-               obj.style.fontWeight = val;
-               obj.style.specifiedFlags |= SVG.SPECIFIED_FONT_WEIGHT;
-               break;
-
-            case font_style:
-               if (inherit) {
-                  //setInherit(obj, SVG.SPECIFIED_FONT_STYLE);
-                  break;
-               }
-               obj.style.fontStyle = parseFontStyle(val);
-               obj.style.specifiedFlags |= SVG.SPECIFIED_FONT_STYLE;
-               break;
-
-            case text_decoration:
-               if (inherit) {
-                  //setInherit(obj, SVG.SPECIFIED_TEXT_DECORATION);
-                  break;
-               }
-               obj.style.textDecoration = parseTextDecoration(val);
-               obj.style.specifiedFlags |= SVG.SPECIFIED_TEXT_DECORATION;
-               break;
-
-            case text_anchor:
-               if (inherit) {
-                  //setInherit(obj, SVG.SPECIFIED_TEXT_ANCHOR);
-                  break;
-               }
-               obj.style.textAnchor = parseTextAnchor(val);
-               obj.style.specifiedFlags |= SVG.SPECIFIED_TEXT_ANCHOR;
-               break;
-
-            case overflow:
-               if (inherit) {
-                  //setInherit(obj, SVG.SPECIFIED_OVERFLOW);
-                  break;
-               }
-               obj.style.overflow = parseOverflow(val);
-               obj.style.specifiedFlags |= SVG.SPECIFIED_OVERFLOW;
+            case style:
+               cssStyle = val;
                break;
 
             default:
+               processStyleProperty(obj, attributes.getLocalName(i), attributes.getValue(i).trim());
                break;
          }
+      }
+
+      // If we encounted a 'style' attribute, process its contents now.
+      // Properties specified in a style attribute (or in CSS rules) override style attribute values.
+      if (cssStyle != null)
+         parseStyle(obj, cssStyle);
+
+   }
+
+
+   private void  parseStyle(SvgElement obj, String style) throws SAXException
+   {
+      TextScanner  scan = new TextScanner(style);
+
+      while (true)
+      {
+         String  propertyName = scan.nextToken(':');
+         scan.skipWhitespace();
+         if (!scan.consume(':'))
+            break;  // Syntax error. Stop processing CSS rules.
+         scan.skipWhitespace();
+         String  propertyValue = scan.nextToken(';');
+         if (propertyValue == null)
+            break;  // Syntax error
+         scan.skipWhitespace();
+         if (scan.empty() || scan.consume(';')) {
+            processStyleProperty(obj, propertyName, propertyValue);
+            scan.skipWhitespace();
+         }
+      }
+   }
+
+
+   private void  processStyleProperty(SvgElement obj, String localName, String val) throws SAXException
+   {
+      if (val.length() == 0) { // The spec doesn't say how to handle empty style attributes.
+         return;               // Our strategy is just to ignore them.
+      }
+      boolean  inherit = val.equals("inherit");
+
+      switch (SVGAttr.fromString(localName))
+      {
+         case fill:
+            if (inherit) {
+               //setInherit(obj, SVG.SPECIFIED_FILL);
+               break;
+            }
+            obj.style.specifiedFlags |= SVG.SPECIFIED_FILL;
+            if (val.equals(NONE)) {
+               obj.style.fill = null;
+            } else if (val.equals(CURRENTCOLOR)) {
+               obj.style.fill = CurrentColor.getInstance();
+            } else  if (val.startsWith("url")) {
+               //gradient
+            } else {
+               obj.style.fill = parseColour(val);
+            }
+            break;
+
+         case fill_rule:
+            if (inherit) {
+               //setInherit(obj, SVG.SPECIFIED_FILL_RULE);
+               break;
+            }
+            obj.style.fillRule = parseFillRule(val);
+            obj.style.specifiedFlags |= SVG.SPECIFIED_FILL_RULE;
+            break;
+
+         case fill_opacity:
+            if (inherit) {
+               //setInherit(obj, SVG.SPECIFIED_FILL_OPACITY);
+               break;
+            }
+            obj.style.fillOpacity = parseFloat(val);
+            obj.style.specifiedFlags |= SVG.SPECIFIED_FILL_OPACITY;
+            break;
+
+         case stroke:
+            if (inherit) {
+               //setInherit(obj, SVG.SPECIFIED_STROKE);
+               break;
+            }
+            obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE;
+            if (val.equals(NONE)) {
+               obj.style.stroke = null;
+            } else if (val.equals(CURRENTCOLOR)) {
+               obj.style.stroke = CurrentColor.getInstance();
+            } else  if (val.startsWith("url")) {
+               //gradient
+            } else {
+               obj.style.stroke = parseColour(val);
+            }
+            break;
+
+         case stroke_opacity:
+            if (inherit) {
+               //setInherit(obj, SVG.SPECIFIED_STROKE_OPACITY);
+               break;
+            }
+            obj.style.strokeOpacity = parseFloat(val);
+            obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE_OPACITY;
+            break;
+
+         case stroke_width:
+            if (inherit) {
+               //setInherit(obj, SVG.SPECIFIED_STROKE_WIDTH);
+               break;
+            }
+            obj.style.strokeWidth = parseLength(val);
+            obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE_WIDTH;
+            break;
+
+         case stroke_linecap:
+            if (inherit) {
+               //setInherit(obj, SVG.SPECIFIED_STROKE_LINECAP);
+               break;
+            }
+            obj.style.strokeLineCap = parseStrokeLineCap(val);
+            obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE_LINECAP;
+            break;
+
+         case stroke_linejoin:
+            if (inherit) {
+               //setInherit(obj, SVG.SPECIFIED_STROKE_LINEJOIN);
+               break;
+            }
+            obj.style.strokeLineJoin = parseStrokeLineJoin(val);
+            obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE_LINEJOIN;
+            break;
+
+         case stroke_miterlimit:
+            if (inherit) {
+               //setInherit(obj, SVG.SPECIFIED_STROKE_MITERLIMIT);
+               break;
+            }
+            obj.style.strokeMiterLimit = parseFloat(val);
+            obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE_MITERLIMIT;
+            break;
+
+         case stroke_dasharray:
+            if (inherit) {
+               //setInherit(obj, SVG.SPECIFIED_STROKE_DASHARRAY);
+               break;
+            }
+            if ("none".equals(val))
+               obj.style.strokeDashArray = null;
+            else
+               obj.style.strokeDashArray = parseStrokeDashArray(val);
+            obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE_DASHARRAY;
+            break;
+
+         case stroke_dashoffset:
+            if (inherit) {
+               //setInherit(obj, SVG.SPECIFIED_STROKE_DASHOFFSET);
+               break;
+            }
+            obj.style.strokeDashOffset = parseLength(val);
+            obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE_DASHOFFSET;
+            break;
+
+         case opacity:
+            if (inherit) {
+               //setInherit(obj, SVG.SPECIFIED_OPACITY);
+               break;
+            }
+            obj.style.opacity = parseFloat(val);
+            obj.style.specifiedFlags |= SVG.SPECIFIED_OPACITY;
+            break;
+
+         case color:
+            if (inherit) {
+               //setInherit(obj, SVG.SPECIFIED_COLOR);
+               break;
+            }
+            obj.style.specifiedFlags |= SVG.SPECIFIED_COLOR;
+            obj.style.color = parseColour(val);
+            break;
+
+         case font_family:
+            if (inherit) {
+               //setInherit(obj, SVG.SPECIFIED_FONT_FAMILY);
+               break;
+            }
+            obj.style.fontFamily = val;
+            obj.style.specifiedFlags |= SVG.SPECIFIED_FONT_FAMILY;
+            break;
+
+         case font_size:
+            if (inherit) {
+               //setInherit(obj, SVG.SPECIFIED_FONT_SIZE);
+               break;
+            }
+            obj.style.fontSize = parseFontSize(val);
+            obj.style.specifiedFlags |= SVG.SPECIFIED_FONT_SIZE;
+            break;
+
+         case font_weight:
+            if (inherit) {
+               //setInherit(obj, SVG.SPECIFIED_FONT_WEIGHT);
+               break;
+            }
+            obj.style.fontWeight = val;
+            obj.style.specifiedFlags |= SVG.SPECIFIED_FONT_WEIGHT;
+            break;
+
+         case font_style:
+            if (inherit) {
+               //setInherit(obj, SVG.SPECIFIED_FONT_obj.style);
+               break;
+            }
+            obj.style.fontStyle = parseFontStyle(val);
+            obj.style.specifiedFlags |= SVG.SPECIFIED_FONT_STYLE;
+            break;
+
+         case text_decoration:
+            if (inherit) {
+               //setInherit(obj, SVG.SPECIFIED_TEXT_DECORATION);
+               break;
+            }
+            obj.style.textDecoration = parseTextDecoration(val);
+            obj.style.specifiedFlags |= SVG.SPECIFIED_TEXT_DECORATION;
+            break;
+
+         case text_anchor:
+            if (inherit) {
+               //setInherit(obj, SVG.SPECIFIED_TEXT_ANCHOR);
+               break;
+            }
+            obj.style.textAnchor = parseTextAnchor(val);
+            obj.style.specifiedFlags |= SVG.SPECIFIED_TEXT_ANCHOR;
+            break;
+
+         case overflow:
+            if (inherit) {
+               //setInherit(obj, SVG.SPECIFIED_OVERFLOW);
+               break;
+            }
+            obj.style.overflow = parseOverflow(val);
+            obj.style.specifiedFlags |= SVG.SPECIFIED_OVERFLOW;
+            break;
+
+         default:
+            break;
       }
    }
 
