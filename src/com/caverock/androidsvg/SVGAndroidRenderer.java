@@ -69,8 +69,31 @@ public class SVGAndroidRenderer
    }
 
 
+   /**
+    * Create a new renderer instance with default paint flags.
+    * The default paint flags enable anti-aliasing, kerning and subpixel text.
+    * 
+    * @param canvas The canvase to draw to.
+    * @param viewPort The default viewport to be rendered into. For example the dimensions of the bitmap.
+    * @param dpi The DPI setting to use when converting real-world units such as centimetres.
+    */
 
    public SVGAndroidRenderer(Canvas canvas, SVG.Box viewPort, float dpi)
+   {
+      this(canvas, viewPort, dpi, Paint.ANTI_ALIAS_FLAG | Paint.DEV_KERN_TEXT_FLAG | Paint.SUBPIXEL_TEXT_FLAG );
+   }
+
+
+   /**
+    * Create a new renderer instance.
+    *
+    * @param canvas The canvase to draw to.
+    * @param viewPort The default viewport to be rendered into. For example the dimensions of the bitmap.
+    * @param dpi The DPI setting to use when converting real-world units such as centimetres.
+    * @param paintFlags The paint flags to use for the fill and stroke Paint objects.
+    */
+
+   public SVGAndroidRenderer(Canvas canvas, SVG.Box viewPort, float dpi, int paintFlags)
    {
       this.canvas = canvas;
       this.dpi = dpi;
@@ -78,10 +101,12 @@ public class SVGAndroidRenderer
       state.viewPort = viewPort;
 
       state.fillPaint = new Paint();
+      state.fillPaint.setFlags(paintFlags);
       state.fillPaint.setStyle(Paint.Style.FILL);
       state.fillPaint.setTypeface(Typeface.DEFAULT);
 
       state.strokePaint = new Paint();
+      state.strokePaint.setFlags(paintFlags);
       state.strokePaint.setStyle(Paint.Style.STROKE);
       state.strokePaint.setTypeface(Typeface.DEFAULT);
 
