@@ -781,6 +781,11 @@ public class SVGAndroidRenderer
          state.style.color = style.color;
       }
 
+      if (isSpecified(style, SVG.SPECIFIED_OPACITY))
+      {
+         state.style.opacity = style.opacity;
+      }
+
       if (isSpecified(style, SVG.SPECIFIED_FILL))
       {
          state.style.fill = style.fill;
@@ -793,18 +798,18 @@ public class SVGAndroidRenderer
       }
 
       // If either fill or its opacity has changed, update the fillPaint
-      if (isSpecified(style, SVG.SPECIFIED_FILL | SVG.SPECIFIED_FILL_OPACITY | SVG.SPECIFIED_COLOR))
+      if (isSpecified(style, SVG.SPECIFIED_FILL | SVG.SPECIFIED_FILL_OPACITY | SVG.SPECIFIED_COLOR | SVG.SPECIFIED_OPACITY))
       {
          if (state.style.fill instanceof SVG.Colour)
          {
             int col = ((SVG.Colour) state.style.fill).colour;
-            col = clamp(state.style.fillOpacity) << 24 | col;
+            col = clamp(state.style.fillOpacity * state.style.opacity) << 24 | col;
             state.fillPaint.setColor(col);
          }
          else if (state.style.fill instanceof CurrentColor)
          {
             int col = state.style.color.colour;
-            col = clamp(state.style.fillOpacity) << 24 | col;
+            col = clamp(state.style.fillOpacity * state.style.opacity) << 24 | col;
             state.fillPaint.setColor(col);
          }
       }
@@ -826,18 +831,18 @@ public class SVGAndroidRenderer
          state.style.strokeOpacity = style.strokeOpacity;
       }
 
-      if (isSpecified(style, SVG.SPECIFIED_STROKE | SVG.SPECIFIED_STROKE_OPACITY | SVG.SPECIFIED_COLOR))
+      if (isSpecified(style, SVG.SPECIFIED_STROKE | SVG.SPECIFIED_STROKE_OPACITY | SVG.SPECIFIED_COLOR | SVG.SPECIFIED_OPACITY))
       {
          if (state.style.stroke instanceof SVG.Colour)
          {
             int col = ((SVG.Colour) state.style.stroke).colour;
-            col = clamp(state.style.strokeOpacity) << 24 | col;
+            col = clamp(state.style.strokeOpacity * state.style.opacity) << 24 | col;
             state.strokePaint.setColor(col);
          }
          else if (state.style.stroke instanceof CurrentColor)
          {
             int col = state.style.color.colour;
-            col = clamp(state.style.strokeOpacity) << 24 | col;
+            col = clamp(state.style.strokeOpacity * state.style.opacity) << 24 | col;
             state.strokePaint.setColor(col);
          }
       }
@@ -927,12 +932,6 @@ public class SVGAndroidRenderer
                state.strokePaint.setPathEffect( new DashPathEffect(intervals, offset) );
             }
          }
-      }
-
-      if (isSpecified(style, SVG.SPECIFIED_OPACITY))
-      {
-         state.style.opacity = style.opacity;
-         // NYI
       }
 
       if (isSpecified(style, SVG.SPECIFIED_FONT_FAMILY))
