@@ -1,0 +1,30 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="12cm" height="3.5cm" viewBox="0 0 1200 350" version="1.1"
+     xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <desc>Example miterlimit</desc>
+  <rect x="1" y="1" width="1198" height="348" fill="none" stroke="blue" />
+  <defs>
+    <path id="path1" d="M -125,150 L 0,25 L 125,150" fill="none" />
+    <circle id="circle1" cx="0" cy="25" r="8" fill="#ffcccc" stroke="none" />
+  </defs>
+  <g transform="translate(200,75)">
+    <use stroke="black" stroke-width="70" class="thick" xlink:href="#path1" stroke-linejoin="miter" stroke-miterlimit="1.415"/>
+    <use stroke="#ffcccc" stroke-width="5" class="thin" xlink:href="#path1"/>
+    <use xlink:href="#circle1"/>
+    <text text-anchor="middle" font-size="50" y="230">mitre 1.415</text>
+  </g>
+  <g transform="translate(600,75)">
+    <use stroke="black" stroke-width="70" class="thick" xlink:href="#path1" stroke-linejoin="miter" stroke-miterlimit="1.414"/>
+    <use stroke="#ffcccc" stroke-width="5" class="thin" xlink:href="#path1"/>
+    <use xlink:href="#circle1"/>
+    <text text-anchor="middle" font-size="50" y="230">mitre 1.414</text>
+  </g>
+  <g transform="translate(1000,75)">
+    <use stroke="black" stroke-width="70" class="thick" xlink:href="#path1" stroke-linejoin="miter"/>
+    <use stroke="#ffcccc" stroke-width="5" class="thin" xlink:href="#path1"/>
+    <use stroke="#ffcccc" stroke-width="5" xlink:href="#circle1"/>
+    <text text-anchor="middle" font-size="50" y="230">mitre 4 (def)</text>
+  </g>
+</svg>

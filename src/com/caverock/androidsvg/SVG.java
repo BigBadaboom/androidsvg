@@ -127,18 +127,19 @@ public class SVG
    public static final long SPECIFIED_STROKE_WIDTH      = (1<<5);
    public static final long SPECIFIED_STROKE_LINECAP    = (1<<6);
    public static final long SPECIFIED_STROKE_LINEJOIN   = (1<<7);
-   public static final long SPECIFIED_STROKE_DASHARRAY  = (1<<8);
-   public static final long SPECIFIED_STROKE_DASHOFFSET = (1<<9);
-   public static final long SPECIFIED_OPACITY           = (1<<10);
-   public static final long SPECIFIED_COLOR             = (1<<11);
-   public static final long SPECIFIED_FONT_FAMILY       = (1<<12);
-   public static final long SPECIFIED_FONT_SIZE         = (1<<13);
-   public static final long SPECIFIED_FONT_WEIGHT       = (1<<14);
-   public static final long SPECIFIED_FONT_STYLE        = (1<<15);
-   public static final long SPECIFIED_TEXT_DECORATION   = (1<<16);
-   public static final long SPECIFIED_TEXT_ANCHOR       = (1<<17);
-   public static final long SPECIFIED_OVERFLOW          = (1<<18);
-   public static final long SPECIFIED_CLIP              = (1<<19);
+   public static final long SPECIFIED_STROKE_MITERLIMIT = (1<<8);
+   public static final long SPECIFIED_STROKE_DASHARRAY  = (1<<9);
+   public static final long SPECIFIED_STROKE_DASHOFFSET = (1<<10);
+   public static final long SPECIFIED_OPACITY           = (1<<11);
+   public static final long SPECIFIED_COLOR             = (1<<12);
+   public static final long SPECIFIED_FONT_FAMILY       = (1<<13);
+   public static final long SPECIFIED_FONT_SIZE         = (1<<14);
+   public static final long SPECIFIED_FONT_WEIGHT       = (1<<15);
+   public static final long SPECIFIED_FONT_STYLE        = (1<<16);
+   public static final long SPECIFIED_TEXT_DECORATION   = (1<<17);
+   public static final long SPECIFIED_TEXT_ANCHOR       = (1<<18);
+   public static final long SPECIFIED_OVERFLOW          = (1<<19);
+   public static final long SPECIFIED_CLIP              = (1<<20);
 
    public static final long SPECIFIED_ALL = 0xffffffff;
 
@@ -158,6 +159,7 @@ public class SVG
       public Length     strokeWidth;
       public LineCaps   strokeLineCap;
       public LineJoin   strokeLineJoin;
+      public Float      strokeMiterLimit;
       public Length[]   strokeDashArray;
       public Length     strokeDashOffset;
 
@@ -224,6 +226,7 @@ public class SVG
          def.strokeWidth = new Length(1f);
          def.strokeLineCap = LineCaps.Butt;
          def.strokeLineJoin = LineJoin.Miter;
+         def.strokeMiterLimit = 4f;
          def.strokeDashArray = null;
          def.strokeDashOffset = new Length(0f);
          def.opacity = 1f;

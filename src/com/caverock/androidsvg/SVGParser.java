@@ -101,6 +101,7 @@ public class SVGParser extends DefaultHandler
       stroke_dashoffset,
       stroke_linecap,
       stroke_linejoin,
+      stroke_miterlimit,
       stroke_opacity,
       stroke_width,
       //style,
@@ -352,8 +353,8 @@ public class SVGParser extends DefaultHandler
       supportedFeatures.add("Shape");                       // YES
       //supportedFeatures.add("Text");                      // NO
       supportedFeatures.add("BasicText");                   // YES
-      //supportedFeatures.add("PaintAttribute");            // NYI
-      //supportedFeatures.add("BasicPaintAttribute");       // NYI (stroke-miterlimit and color-rendering NYI)
+      supportedFeatures.add("PaintAttribute");              // YES (except color-interpolation and color-rendering)
+      supportedFeatures.add("BasicPaintAttribute");         // YES (except color-rendering)
       supportedFeatures.add("OpacityAttribute");            // YES
       //supportedFeatures.add("GraphicsAttribute");         // NO     
       //supportedFeatures.add("BasicGraphicsAttribute");    // NYI
@@ -1755,6 +1756,15 @@ dumpNode(svgDocument.getRootElement(), "");
                }
                obj.style.strokeLineJoin = parseStrokeLineJoin(val);
                obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE_LINEJOIN;
+               break;
+
+            case stroke_miterlimit:
+               if (inherit) {
+                  //setInherit(obj, SVG.SPECIFIED_STROKE_MITERLIMIT);
+                  break;
+               }
+               obj.style.strokeMiterLimit = parseFloat(val);
+               obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE_MITERLIMIT;
                break;
 
             case stroke_dasharray:

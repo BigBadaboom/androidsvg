@@ -891,6 +891,12 @@ public class SVGAndroidRenderer
          }
       }
 
+      if (isSpecified(style, SVG.SPECIFIED_STROKE_MITERLIMIT))
+      {
+         state.style.strokeMiterLimit = style.strokeMiterLimit;
+         state.strokePaint.setStrokeMiter(style.strokeMiterLimit);
+      }
+
       if (isSpecified(style, SVG.SPECIFIED_STROKE_DASHARRAY))
       {
          state.style.strokeDashArray = style.strokeDashArray;
