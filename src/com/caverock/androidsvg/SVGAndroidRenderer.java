@@ -339,8 +339,11 @@ public class SVGAndroidRenderer
       if (obj.transform != null)
          canvas.concat(obj.transform);
 
-      if (state.hasFill)
+      if (state.hasFill) {
+/**/Log.w(TAG, "Setting path FillType to "+getFillTypeFromState()+" from "+state.style.fillRule);
+         obj.path.setFillType(getFillTypeFromState());
          canvas.drawPath(obj.path, state.fillPaint);
+      }
       if (state.hasStroke)
          canvas.drawPath(obj.path, state.strokePaint);
    }
@@ -816,7 +819,7 @@ public class SVGAndroidRenderer
 
       if (isSpecified(style, SVG.SPECIFIED_FILL_RULE))
       {
-         // Not supported by Android? It always uses a non-zero winding rule.
+         state.style.fillRule = style.fillRule;
       }
 
 
@@ -1008,5 +1011,21 @@ public class SVGAndroidRenderer
       int  i = (int)(val * 256f);
       return (i<0) ? 0 : (i>255) ? 255 : i;
    }
+
+
+   private Path.FillType  getFillTypeFromState()
+   {
+      if (state.style.fillRule == null)
+         return Path.FillType.WINDING;
+      switch (state.style.fillRule)
+      {
+         case EvenOdd:
+            return Path.FillType.EVEN_ODD;
+         case NonZero:
+         default:
+            return Path.FillType.WINDING;
+      }
+   }
+
 
 }
