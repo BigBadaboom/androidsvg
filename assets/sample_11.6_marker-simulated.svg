@@ -1,0 +1,71 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="4in" height="2in" 
+     viewBox="0 0 4000 2000" version="1.1"
+     xmlns="http://www.w3.org/2000/svg">
+  <desc>File which produces the same effect
+      as the marker example file, but without
+      using markers.
+  </desc>
+  <rect x="10" y="10" width="3980" height="1980"
+       fill="none" stroke="blue" stroke-width="10" />
+  <!-- The path draws as before, but without the marker properties -->
+  <path d="M 1000 750 L 2000 750 L 2500 1250"
+        fill="none" stroke="black" stroke-width="100"  />
+  <!-- The following logic simulates drawing a marker 
+       at final vertex of the path. -->
+  <!-- First off, move the origin of the user coordinate system
+       so that the origin is now aligned with the end point of the path. -->
+  <g transform="translate(2500,1250)" >
+    <!-- Rotate the coordinate system 45 degrees because
+         the marker specified orient="auto" and the final segment
+         of the path is going in the direction of 45 degrees. -->
+    <g transform="rotate(45)" >
+      <!-- Scale the coordinate system to match the coordinate system
+           indicated by the 'markerUnits' attributes, which in this case has
+           a value of 'strokeWidth'. Therefore, scale the coordinate system
+           by the current value of the 'stroke-width' property, which is 100. -->
+      <g transform="scale(100)" >
+        <!-- Translate the coordinate system by 
+             (-refX*viewBoxToMarkerUnitsScaleX, -refY*viewBoxToMarkerUnitsScaleY)
+             in order that (refX,refY) within the marker will align with the vertex.
+             In this case, we use the default value for preserveAspectRatio
+             ('xMidYMid meet'), which means find a uniform scale factor
+             (i.e., viewBoxToMarkerUnitsScaleX=viewBoxToMarkerUnitsScaleY)
+             such that the viewBox fits entirely within the viewport ('meet') and 
+             is center-aligned ('xMidYMid'). In this case, the uniform scale factor
+             is markerHeight/viewBoxHeight=3/10=.3. Therefore, translate by
+             (-refX*.3,-refY*.3)=(0*.3,-5*.3)=(0,-1.5). -->
+        <g transform="translate(0,-1.5)" >
+          <!-- There is an implicit clipping path because the user agent style
+               sheet says that the 'overflow' property for markers has the value
+               'hidden'. To achieve this, create a clipping path at the bounds
+               of the viewport. Note that in this case the viewport extends
+               0.5 units to the left and right of the viewBox due to 
+               a uniform scale factor, different ratios for markerWidth/viewBoxWidth
+               and markerHeight/viewBoxHeight, and 'xMidYMid' alignment -->
+          <clipPath id="cp1" >
+            <!-- <rect x="-0.5" y="0" width="4" height="3" /> -->
+          </clipPath>
+          <g clip-path="url(#cp1)" >
+            <!-- Scale the coordinate system by the uniform scale factor
+                 markerHeight/viewBoxHeight=3/10=.3 to set the coordinate
+                 system to viewBox units. -->
+            <g transform="scale(.3)" >
+              <!-- This 'g' element carries all property values that result from
+                   cascading and inheritance of properties on the original 'marker' element.
+                   In this example, neither fill nor stroke was specified on the 'marker'
+                   element or any ancestors of the 'marker', so the initial values of
+                   "black" and "none" are used, respectively. -->
+             <g fill="black" stroke="none" >
+                <!-- Expand out the contents of the 'marker' element. -->
+                <path d="M 0 0 L 10 5 L 0 10 z" />
+              </g>
+            </g>
+          </g>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

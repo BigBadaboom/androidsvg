@@ -9,7 +9,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -31,7 +30,6 @@ import com.caverock.androidsvg.SVG.CurrentColor;
 import com.caverock.androidsvg.SVG.Length;
 import com.caverock.androidsvg.SVG.Style;
 import com.caverock.androidsvg.SVG.SvgElement;
-import com.caverock.androidsvg.SVG.SvgPaint;
 import com.caverock.androidsvg.SVG.Unit;
 
 /**
@@ -60,6 +58,7 @@ public class SVGParser extends DefaultHandler
    private static final String  TAG_G              = "g";
    private static final String  TAG_LINE           = "line";
    private static final String  TAG_LINEARGRADIENT = "linearGradient";
+   private static final String  TAG_MARKER         = "marker";
    private static final String  TAG_PATH           = "path";
    private static final String  TAG_POLYGON        = "polygon";
    private static final String  TAG_POLYLINE       = "polyline";
@@ -93,12 +92,22 @@ public class SVGParser extends DefaultHandler
       height,
       href,
       id,
+      marker,
+      marker_start,
+      marker_mid,
+      marker_end,
+      markerHeight,
+      markerUnits,
+      markerWidth,
       opacity,
+      orient,
       overflow,
       pathLength,
       points,
       preserveAspectRatio,
       r,
+      refX,
+      refY,
       requiredFeatures, requiredExtensions,
       rx, ry,
       stroke,
@@ -363,7 +372,7 @@ public class SVGParser extends DefaultHandler
       supportedFeatures.add("OpacityAttribute");            // YES
       //supportedFeatures.add("GraphicsAttribute");         // NO     
       //supportedFeatures.add("BasicGraphicsAttribute");    // NYI
-      //supportedFeatures.add("Marker");                    // NYI
+      supportedFeatures.add("Marker");                      // YES
       //supportedFeatures.add("ColorProfile");              // NO
       //supportedFeatures.add("Gradient");                  // NYI
       //supportedFeatures.add("Pattern");                   // NYI
@@ -437,7 +446,7 @@ public class SVGParser extends DefaultHandler
    public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException
    {
       super.startElement(uri, localName, qName, attributes);
-/**/Log.d(TAG, "startElement: "+localName+" "+uri);
+/**/Log.d(TAG, "startElement: "+localName);
       if (!SVG_NAMESPACE.equals(uri))
          return;
       
@@ -471,6 +480,8 @@ public class SVGParser extends DefaultHandler
          zwitch(attributes);
       } else if (localName.equalsIgnoreCase(TAG_SYMBOL)) {
          symbol(attributes);
+      } else if (localName.equalsIgnoreCase(TAG_MARKER)) {
+         marker(attributes);
       }
    }
 
@@ -518,7 +529,8 @@ public class SVGParser extends DefaultHandler
           localName.equalsIgnoreCase(TAG_TEXT) ||
           localName.equalsIgnoreCase(TAG_TSPAN) ||
           localName.equalsIgnoreCase(TAG_SWITCH) ||
-          localName.equalsIgnoreCase(TAG_SYMBOL)) {
+          localName.equalsIgnoreCase(TAG_SYMBOL) ||
+          localName.equalsIgnoreCase(TAG_MARKER)) {
          currentElement = currentElement.parent;
       }
 
@@ -561,6 +573,7 @@ dumpNode(svgDocument.getRootElement(), "");
       parseAttributesCore(obj, attributes);
       parseAttributesStyle(obj, attributes);
       parseAttributesConditional(obj, attributes);
+      parseAttributesViewBox(obj, attributes);
       parseAttributesSVG(obj, attributes);
       if (currentElement == null) {
          svgDocument.setRootElement(obj);
@@ -593,12 +606,6 @@ dumpNode(svgDocument.getRootElement(), "");
                obj.height = parseLength(val);
                if (obj.height.isNegative())
                   throw new SAXException("Invalid <svg> element. height cannot be negative");
-               break;
-            case viewBox:
-               obj.viewBox = parseViewBox(val);
-               break;
-            case preserveAspectRatio:
-               parsePreserveAspectRatio(obj, val);
                break;
             default:
                break;
@@ -693,7 +700,6 @@ dumpNode(svgDocument.getRootElement(), "");
                   throw new SAXException("Invalid <use> element. height cannot be negative");
                break;
             case href:
-/**/Log.d(TAG,"***Use/href: "+attributes.getQName(i)+" "+attributes.getURI(i));
                if (!XLINK_NAMESPACE.equals(attributes.getURI(i)))
                   break;
                obj.href = val;
@@ -936,19 +942,15 @@ dumpNode(svgDocument.getRootElement(), "");
          {
             case x1:
                obj.x1 = parseLength(val);
-/**/Log.d(TAG, "<line> x1="+obj.x1);
                break;
             case y1:
                obj.y1 = parseLength(val);
-/**/Log.d(TAG, "<line> y1="+obj.y1);
                break;
             case x2:
                obj.x2 = parseLength(val);
-/**/Log.d(TAG, "<line> x2="+obj.x2);
                break;
             case y2:
                obj.y2 = parseLength(val);
-/**/Log.d(TAG, "<line> y2="+obj.y2);
                break;
             default:
                break;
@@ -1249,19 +1251,16 @@ dumpNode(svgDocument.getRootElement(), "");
 
          // We don't support extensions
          if (condObj.requiredExtensions != null) {
-/**/Log.d(TAG, "Rejecting requiredExtensions: "+condObj.requiredExtensions);
             iter.remove();
             continue;
          }
          // Check language
          if (condObj.systemLanguage != null && (condObj.systemLanguage.isEmpty() || !condObj.systemLanguage.contains(deviceLanguage))) {
-/**/Log.d(TAG, "Rejecting systemLanguage: "+deviceLanguage);
             iter.remove();
             continue;
          }
          // Check features
          if (condObj.requiredFeatures != null && (condObj.requiredFeatures.isEmpty() || !supportedFeatures.containsAll(condObj.requiredFeatures))) {
-/**/Log.d(TAG, "Rejecting requiredFeatures");
             iter.remove();
             continue;
          }
@@ -1287,24 +1286,70 @@ dumpNode(svgDocument.getRootElement(), "");
       parseAttributesCore(obj, attributes);
       parseAttributesStyle(obj, attributes);
       parseAttributesConditional(obj, attributes);
-      parseAttributesSymbol(obj, attributes);
+      parseAttributesViewBox(obj, attributes);
       currentElement.addChild(obj);
       currentElement = obj;
    }
 
    
-   private void  parseAttributesSymbol(SVG.Symbol obj, Attributes attributes) throws SAXException
+   //=========================================================================
+   // <symbol> element
+
+
+   private void  marker(Attributes attributes) throws SAXException
+   {
+/**/Log.d(TAG, "<marker>");
+      if (currentElement == null)
+         throw new SAXException("Invalid document. Root element must be <svg>");
+      SVG.Marker  obj = new SVG.Marker();
+      obj.document = svgDocument;
+      obj.parent = currentElement;
+      parseAttributesCore(obj, attributes);
+      parseAttributesStyle(obj, attributes);
+      parseAttributesConditional(obj, attributes);
+      parseAttributesViewBox(obj, attributes);
+      parseAttributesMarker(obj, attributes);
+      currentElement.addChild(obj);
+      currentElement = obj;
+   }
+
+
+   private void  parseAttributesMarker(SVG.Marker obj, Attributes attributes) throws SAXException
    {
       for (int i=0; i<attributes.getLength(); i++)
       {
          String val = attributes.getValue(i).trim();
          switch (SVGAttr.fromString(attributes.getLocalName(i)))
          {
-            case viewBox:
-               obj.viewBox = parseViewBox(val);
+            case refX:
+               obj.refX = parseLength(val);
                break;
-            case preserveAspectRatio:
-               parsePreserveAspectRatio(obj, val);
+            case refY:
+               obj.refY = parseLength(val);
+               break;
+            case markerWidth:
+               obj.markerWidth = parseLength(val);
+               if (obj.markerWidth.isNegative())
+                  throw new SAXException("Invalid <marker> element. markerWidth cannot be negative");
+               break;
+            case markerHeight:
+               obj.markerHeight = parseLength(val);
+               if (obj.markerHeight.isNegative())
+                  throw new SAXException("Invalid <marker> element. markerHeight cannot be negative");
+               break;
+            case markerUnits:
+               if ("strokeWidth".equals(val)) {
+                  obj.markerUnitsAreUser = false;
+               } else if ("userSpaceOnUse".equals(val)) {
+                  obj.markerUnitsAreUser = false;
+               } 
+               break;
+            case orient:
+               if ("auto".equals(val)) {
+                  obj.orient = Float.NaN;
+               } else {
+                  obj.orient = parseFloat(val);
+               }
                break;
             default:
                break;
@@ -1443,7 +1488,6 @@ dumpNode(svgDocument.getRootElement(), "");
 
       public boolean  consume(char ch)
       {
-/**/Log.d(TAG, "consume: pos="+position);
          boolean  found = (position < input.length() && input.charAt(position) == ch);
          if (found)
             position++;
@@ -1927,8 +1971,66 @@ dumpNode(svgDocument.getRootElement(), "");
             obj.style.specifiedFlags |= SVG.SPECIFIED_OVERFLOW;
             break;
 
+         case marker:
+            if (inherit) {
+               //setInherit(obj, SVG.SPECIFIED_MARKER_START | SVG.SPECIFIED_MARKER_MID | SVG.SPECIFIED_MARKER_END);
+               break;
+            }
+            obj.style.markerStart = parseFunctionalIRI(val, localName);
+            obj.style.markerMid = obj.style.markerStart;
+            obj.style.markerEnd = obj.style.markerStart;
+            obj.style.specifiedFlags |= (SVG.SPECIFIED_MARKER_START | SVG.SPECIFIED_MARKER_MID | SVG.SPECIFIED_MARKER_END);
+            break;
+
+         case marker_start:
+            if (inherit) {
+               //setInherit(obj, SVG.SPECIFIED_MARKER_START);
+               break;
+            }
+            obj.style.markerStart = parseFunctionalIRI(val, localName);
+            obj.style.specifiedFlags |= SVG.SPECIFIED_MARKER_START;
+            break;
+
+         case marker_mid:
+            if (inherit) {
+               //setInherit(obj, SVG.SPECIFIED_MARKER_MID);
+               break;
+            }
+            obj.style.markerMid = parseFunctionalIRI(val, localName);
+            obj.style.specifiedFlags |= SVG.SPECIFIED_MARKER_MID;
+            break;
+
+         case marker_end:
+            if (inherit) {
+               //setInherit(obj, SVG.SPECIFIED_MARKER_END);
+               break;
+            }
+            obj.style.markerEnd = parseFunctionalIRI(val, localName);
+            obj.style.specifiedFlags |= SVG.SPECIFIED_MARKER_END;
+            break;
+
          default:
             break;
+      }
+   }
+
+
+   private void  parseAttributesViewBox(SVG.SvgViewBoxContainer obj, Attributes attributes) throws SAXException
+   {
+      for (int i=0; i<attributes.getLength(); i++)
+      {
+         String val = attributes.getValue(i).trim();
+         switch (SVGAttr.fromString(attributes.getLocalName(i)))
+         {
+            case viewBox:
+               obj.viewBox = parseViewBox(val);
+               break;
+            case preserveAspectRatio:
+               parsePreserveAspectRatio(obj, val);
+               break;
+            default:
+               break;
+         }
       }
    }
 
@@ -1944,7 +2046,6 @@ dumpNode(svgDocument.getRootElement(), "");
 
    private void  parseAttributesTransform(SVG.HasTransform obj, Attributes attributes) throws SAXException
    {
-//Log.d(TAG, "parseAttributesTransform");
       for (int i=0; i<attributes.getLength(); i++)
       {
          if (SVGAttr.fromString(attributes.getLocalName(i)) == SVGAttr.transform)
@@ -1952,7 +2053,6 @@ dumpNode(svgDocument.getRootElement(), "");
             Matrix  matrix = new Matrix();
 
             String  val = attributes.getValue(i);
-/**/Log.d(TAG, "parseAttributesTransform: "+val);
             TextScanner  scan = new TextScanner(val);
             scan.skipWhitespace();
 
@@ -2068,6 +2168,11 @@ dumpNode(svgDocument.getRootElement(), "");
    }
 
 
+   //=========================================================================
+   // Parsing various SVG value types
+   //=========================================================================
+
+
    /*
     * Parse an SVG 'Length' value (usually a coordinate).
     * Spec says: length ::= number ("em" | "ex" | "px" | "in" | "cm" | "mm" | "pt" | "pc" | "%")?
@@ -2180,7 +2285,7 @@ dumpNode(svgDocument.getRootElement(), "");
    /*
     * 
     */
-   private void  parsePreserveAspectRatio(SVG.HasPreserveAspectRatio obj, String val) throws SAXException
+   private void  parsePreserveAspectRatio(SVG.SvgViewBoxContainer obj, String val) throws SAXException
    {
       TextScanner scan = new TextScanner(val);
       scan.skipWhitespace();
@@ -2193,13 +2298,11 @@ dumpNode(svgDocument.getRootElement(), "");
          scan.skipWhitespace();
          word = scan.nextToken();
       }
-/**/Log.d(TAG, "parsePreserveAspectRatio: word="+word);
       align = aspectRatioKeywords.get(word);
       scan.skipWhitespace();
 
       if (!scan.empty()) {
          String meetOrSlice = scan.nextToken();
-/**/Log.d(TAG, "parsePreserveAspectRatio: meetOrSlice="+meetOrSlice);
          if (meetOrSlice.equals("meet")) {
             slice = false;
          } else if (meetOrSlice.equals("slice")) {
@@ -2208,7 +2311,8 @@ dumpNode(svgDocument.getRootElement(), "");
             throw new SAXException("Invalid preserveAspectRatio definition: "+val);
          }
       }
-      obj.setPreserveAspectRatio(align, slice);
+      obj.preserveAspectRatioAlignment = align;
+      obj.preserveAspectRatioSlice = slice;
    }
 
 
@@ -2290,8 +2394,6 @@ dumpNode(svgDocument.getRootElement(), "");
    // Parse a font size keyword or numerical value
    private Length  parseFontSize(String val) throws SAXException
    {
-/**/Log.d(TAG, "parseFontSize: "+val);
-
       Length  size = fontSizeKeywords.get(val);
       if (size == null) {
          size = parseLength(val);
@@ -2303,8 +2405,6 @@ dumpNode(svgDocument.getRootElement(), "");
    // Parse a font weight keyword or numerical value
    private String  parseFontWeight(String val) throws SAXException
    {
-/**/Log.d(TAG, "parseFontWeight: "+val);
-
       String  wt = fontWeightKeywords.get(val);
       if (wt == null) {
          throw new SAXException("Invalid font-weight property: "+val);
@@ -2316,8 +2416,6 @@ dumpNode(svgDocument.getRootElement(), "");
    // Parse a font style keyword
    private Style.FontStyle  parseFontStyle(String val) throws SAXException
    {
-/**/Log.d(TAG, "parseFontStyle: "+val);
-
       if ("normal".equals(val))
          return Style.FontStyle.Normal;
       if ("italic".equals(val))
@@ -2331,8 +2429,6 @@ dumpNode(svgDocument.getRootElement(), "");
    // Parse a text decoration keyword
    private String  parseTextDecoration(String val) throws SAXException
    {
-/**/Log.d(TAG, "parseTextDecoration: "+val);
-
       if ("none".equals(val) || "overline".equals(val) || "blink".equals(val))
          return "none";
       if ("underline".equals(val) || "line-through".equals(val))
@@ -2344,8 +2440,6 @@ dumpNode(svgDocument.getRootElement(), "");
    // Parse fill rule
    private Style.FillRule  parseFillRule(String val) throws SAXException
    {
-/**/Log.d(TAG, "parseFillRule: "+val);
-
       if ("nonzero".equals(val))
          return Style.FillRule.NonZero;
       if ("evenodd".equals(val))
@@ -2357,8 +2451,6 @@ dumpNode(svgDocument.getRootElement(), "");
    // Parse stroke-linecap
    private Style.LineCaps  parseStrokeLineCap(String val) throws SAXException
    {
-/**/Log.d(TAG, "parseStrokeLineCap: "+val);
-
       if ("butt".equals(val))
          return Style.LineCaps.Butt;
       if ("round".equals(val))
@@ -2372,8 +2464,6 @@ dumpNode(svgDocument.getRootElement(), "");
    // Parse stroke-linejoin
    private Style.LineJoin  parseStrokeLineJoin(String val) throws SAXException
    {
-/**/Log.d(TAG, "parseStrokeLineJoin: "+val);
-
       if ("miter".equals(val))
          return Style.LineJoin.Miter;
       if ("round".equals(val))
@@ -2387,8 +2477,6 @@ dumpNode(svgDocument.getRootElement(), "");
    // Parse stroke-dasharray
    private Length[]  parseStrokeDashArray(String val) throws SAXException
    {
-/**/Log.d(TAG, "parseStrokeDashArray: "+val);
-
       TextScanner scan = new TextScanner(val);
       scan.skipWhitespace();
 
@@ -2429,8 +2517,6 @@ dumpNode(svgDocument.getRootElement(), "");
    // Parse a text anchor keyword
    private Style.TextAnchor  parseTextAnchor(String val) throws SAXException
    {
-/**/Log.d(TAG, "parseTextAnchor: "+val);
-
       if ("start".equals(val))
          return Style.TextAnchor.Start;
       if ("middle".equals(val))
@@ -2444,8 +2530,6 @@ dumpNode(svgDocument.getRootElement(), "");
    // Parse a text anchor keyword
    private Boolean  parseOverflow(String val) throws SAXException
    {
-/**/Log.d(TAG, "parseOverflow: "+val);
-
       if ("visible".equals(val) || "auto".equals(val))
          return Boolean.TRUE;
       if ("hidden".equals(val) || "scroll".equals(val))
@@ -2458,9 +2542,8 @@ dumpNode(svgDocument.getRootElement(), "");
 
 
    // Parse the string that defines a path.
-   private Path  parsePath(String val) throws SAXException
+   private SVG.PathDefinition  parsePath(String val) throws SAXException
    {
-/**/Log.d(TAG, "parsePath: "+val);
       TextScanner  scan = new TextScanner(val);
 
       int     pathCommand = '?';
@@ -2470,7 +2553,8 @@ dumpNode(svgDocument.getRootElement(), "");
       Float   x,y, x1,y1, x2,y2;
       Float   rx,ry, xAxisRotation;
       Boolean largeArcFlag, sweepFlag;
-      Path    path = new Path();
+
+      SVG.PathDefinition  path = new SVG.PathDefinition();
 
       if (scan.empty())
          return path;
@@ -2701,7 +2785,7 @@ dumpNode(svgDocument.getRootElement(), "");
                   x += currentX;
                   y += currentY;
                }
-               arcTo(path, currentX, currentY, rx, ry, xAxisRotation, largeArcFlag, sweepFlag, x, y);
+               path.arcTo(rx, ry, xAxisRotation, largeArcFlag, sweepFlag, x, y);
                currentX = lastControlX = x;
                currentY = lastControlY = y;
                break;
@@ -2732,7 +2816,6 @@ dumpNode(svgDocument.getRootElement(), "");
    // supported if we are to render this element
    private Set<String>  parseRequiredFeatures(String val) throws SAXException
    {
-/**/Log.d(TAG, "parseRequiredFeatures: "+val);
       TextScanner      scan = new TextScanner(val);
       HashSet<String>  result = new HashSet<String>();
 
@@ -2757,7 +2840,6 @@ dumpNode(svgDocument.getRootElement(), "");
    // must be supported if we are to render this element
    private Set<String>  parseSystemLanguage(String val) throws SAXException
    {
-/**/Log.d(TAG, "parseSystemLanguage: "+val);
       TextScanner      scan = new TextScanner(val);
       HashSet<String>  result = new HashSet<String>();
 
@@ -2777,201 +2859,16 @@ dumpNode(svgDocument.getRootElement(), "");
    }
 
 
-   //=========================================================================
-   // Handling of Arcs
-
-   /*
-    * SVG arc representation uses "endpoint parameterisation" where we specify the endpoint of the arc.
-    * This is to be consistent with the other path commands.  However we need to convert this to "centre point
-    * parameterisation" in order to calculate the arc. Handily, the SVG spec provides all the required maths
-    * in section "F.6 Elliptical arc implementation notes".
-    * 
-    * Some of this code has been borrowed from the Batik library (Apache-2 license).
-    */
-
-   private static void arcTo(Path path, float lastX, float lastY, float rx, float ry, float angle, boolean largeArcFlag, boolean sweepFlag, float x, float y)
+   private String parseFunctionalIRI(String val, String attrName) throws SAXException
    {
-//Log.d(TAG,  "arcto: "+lastX+" "+lastY+" "+rx+" "+ry+" "+angle+" "+largeArcFlag+" "+sweepFlag+" "+x+" "+y);
+      if (val.equals("none"))
+         return null;
+      if (!val.startsWith("url(") || !val.endsWith(")"))
+         throw new SAXException("Bad "+attrName+" attribute. Expected \"none\" or \"url()\" format");
 
-      if (lastX == x && lastY == y) {
-         // If the endpoints (x, y) and (x0, y0) are identical, then this
-         // is equivalent to omitting the elliptical arc segment entirely.
-         // (behaviour specified by the spec)
-         return;
-      }
-
-      // Handle degenerate case (behaviour specified by the spec)
-      if (rx == 0 || ry == 0) {
-         path.lineTo(x, y);
-         return;
-      }
-
-      // Sign of the radii is ignored (behaviour specified by the spec)
-      rx = Math.abs(rx);
-      ry = Math.abs(ry);
-
-      // Convert angle from degrees to radians
-      float  angleRad = (float) Math.toRadians(angle % 360.0);
-      double cosAngle = Math.cos(angleRad);
-      double sinAngle = Math.sin(angleRad);
-      
-      // We simplify the calculations by transforming the arc so that the origin is at the
-      // midpoint calculated above followed by a rotation to line up the coordinate axes
-      // with the axes of the ellipse.
-
-      // Compute the midpoint of the line between the current and the end point
-      double dx2 = (lastX - x) / 2.0;
-      double dy2 = (lastY - y) / 2.0;
-
-      // Step 1 : Compute (x1', y1') - the transformed start point
-      double x1 = (cosAngle * dx2 + sinAngle * dy2);
-      double y1 = (-sinAngle * dx2 + cosAngle * dy2);
-
-      double rx_sq = rx * rx;
-      double ry_sq = ry * ry;
-      double x1_sq = x1 * x1;
-      double y1_sq = y1 * y1;
-
-      // Check that radii are large enough.
-      // If they are not, the spec says to scale them up so they are.
-      // This is to compensate for potential rounding errors/differences between SVG implementations.
-      double radiiCheck = x1_sq / rx_sq + y1_sq / ry_sq;
-      if (radiiCheck > 1) {
-         rx = (float) Math.sqrt(radiiCheck) * rx;
-         ry = (float) Math.sqrt(radiiCheck) * ry;
-         rx_sq = rx * rx;
-         ry_sq = ry * ry;
-      }
-
-      // Step 2 : Compute (cx1, cy1) - the transformed centre point
-      double sign = (largeArcFlag == sweepFlag) ? -1 : 1;
-      double sq = ((rx_sq * ry_sq) - (rx_sq * y1_sq) - (ry_sq * x1_sq)) / ((rx_sq * y1_sq) + (ry_sq * x1_sq));
-      sq = (sq < 0) ? 0 : sq;
-      double coef = (sign * Math.sqrt(sq));
-      double cx1 = coef * ((rx * y1) / ry);
-      double cy1 = coef * -((ry * x1) / rx);
-
-      // Step 3 : Compute (cx, cy) from (cx1, cy1)
-      double sx2 = (lastX + x) / 2.0;
-      double sy2 = (lastY + y) / 2.0;
-      double cx = sx2 + (cosAngle * cx1 - sinAngle * cy1);
-      double cy = sy2 + (sinAngle * cx1 + cosAngle * cy1);
-
-      // Step 4 : Compute the angleStart (angle1) and the angleExtent (dangle)
-      double ux = (x1 - cx1) / rx;
-      double uy = (y1 - cy1) / ry;
-      double vx = (-x1 - cx1) / rx;
-      double vy = (-y1 - cy1) / ry;
-      double p, n;
-
-      // Compute the angle start
-      n = Math.sqrt((ux * ux) + (uy * uy));
-      p = ux; // (1 * ux) + (0 * uy)
-      sign = (uy < 0) ? -1.0 : 1.0;
-      double angleStart = Math.toDegrees(sign * Math.acos(p / n));
-
-      // Compute the angle extent
-      n = Math.sqrt((ux * ux + uy * uy) * (vx * vx + vy * vy));
-      p = ux * vx + uy * vy;
-      sign = (ux * vy - uy * vx < 0) ? -1.0 : 1.0;
-      double angleExtent = Math.toDegrees(sign * Math.acos(p / n));
-      if (!sweepFlag && angleExtent > 0) {
-         angleExtent -= 360f;
-      } else if (sweepFlag && angleExtent < 0) {
-         angleExtent += 360f;
-      }
-      angleExtent %= 360f;
-      angleStart %= 360f;
-
-      // Many elliptical arc implementations including the Java2D and Android ones, only
-      // support arcs that are axis aligned.  Therefore we need to substitute the arc
-      // with bezier curves.  The following method call will generate the beziers for
-      // a unit circle that covers the arc angles we want.
-      float[]  bezierPoints = arcToBeziers(angleStart, angleExtent);
-
-      // Calculate a transformation matrix that will move and scale these bezier points to the correct location.
-      Matrix m = new Matrix();
-      m.postScale(rx, ry);
-      m.postRotate(angle);
-      m.postTranslate((float) cx, (float) cy);
-      m.mapPoints(bezierPoints);
-
-      // The last point in the bezier set should match exactly the last coord pair in the arc (ie: x,y). But
-      // considering all the mathematical manipulation we have been doing, it is bound to be off by a tiny
-      // fraction. Experiments show that it can be up to around 0.00002.  So why don't we just set it to
-      // exactly what it ought to be.
-      bezierPoints[bezierPoints.length-2] = x;
-      bezierPoints[bezierPoints.length-1] = y;
-
-      // Final step is to add the bezier curves to the path
-      for (int i=0; i<bezierPoints.length; i+=6)
-      {
-         path.cubicTo(bezierPoints[i], bezierPoints[i+1], bezierPoints[i+2], bezierPoints[i+3], bezierPoints[i+4], bezierPoints[i+5]);
-      }
+      return val.substring(4,  val.length()-1).trim();
+      // Unlike CSS, the SVG spec seems to indicate that quotes are not allowed in "url()" references
    }
-
-
-   /*
-    * Generate the control points and endpoints for a set of bezier curves that match
-    * a circular arc starting from angle 'angleStart' and sweep the angle 'angleExtent'.
-    * The circle the arc follows will be centred on (0,0) and have a radius of 1.0.
-    * 
-    * Each bezier can cover no more than 90 degrees, so the arc will be divided evenly
-    * into a maximum of four curves.
-    * 
-    * The resulting control points will later be scaled and rotated to match the final
-    * arc required.
-    * 
-    * The returned array has the format [x0,y0, x1,y1,...] and excludes the start point
-    * of the arc.
-    */
-   private static float[]  arcToBeziers(double angleStart, double angleExtent)
-   {
-//Log.d(TAG, "arcToBeziers: "+angleStart+" "+angleExtent);
-      int    numSegments = (int) Math.ceil(Math.abs(angleExtent) / 90.0);
-      
-      angleStart = Math.toRadians(angleStart);
-      angleExtent = Math.toRadians(angleExtent);
-      float  angleIncrement = (float) (angleExtent / numSegments);
-      
-      // The length of each control point vector is given by the following formula.
-      double  controlLength = 4.0 / 3.0 * Math.sin(angleIncrement / 2.0) / (1.0 + Math.cos(angleIncrement / 2.0));
-      
-      float[] coords = new float[numSegments * 6];
-      int     pos = 0;
-
-//Log.d(TAG, "arcToBeziers: num="+numSegments+" contLen="+controlLength);
-      for (int i=0; i<numSegments; i++)
-      {
-         double  angle = angleStart + i * angleIncrement;
-         // Calculate the control vector at this angle
-         double  dx = Math.cos(angle);
-         double  dy = Math.sin(angle);
-         // First control point
-         coords[pos++]   = (float) (dx - controlLength * dy);
-         coords[pos++] = (float) (dy + controlLength * dx);
-//Log.d(TAG, "arcToBeziers: x1,y1 = "+coords[pos-2]+","+coords[pos-1]);
-         // Second control point
-         angle += angleIncrement;
-         dx = Math.cos(angle);
-         dy = Math.sin(angle);
-         coords[pos++] = (float) (dx + controlLength * dy);
-         coords[pos++] = (float) (dy - controlLength * dx);
-//Log.d(TAG, "arcToBeziers: x2,y2 = "+coords[pos-2]+","+coords[pos-1]);
-         // Endpoint of bezier
-         coords[pos++] = (float) dx;
-         coords[pos++] = (float) dy;
-//Log.d(TAG, "arcToBeziers: x,y = "+coords[pos-2]+","+coords[pos-1]);
-      }
-      return coords;
-   }
-
-
-
-
-
-
-
 
 
 }

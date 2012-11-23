@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -140,6 +141,9 @@ public class SVG
    public static final long SPECIFIED_TEXT_ANCHOR       = (1<<18);
    public static final long SPECIFIED_OVERFLOW          = (1<<19);
    public static final long SPECIFIED_CLIP              = (1<<20);
+   public static final long SPECIFIED_MARKER_START      = (1<<21);
+   public static final long SPECIFIED_MARKER_MID        = (1<<22);
+   public static final long SPECIFIED_MARKER_END        = (1<<23);
 
    public static final long SPECIFIED_ALL = 0xffffffff;
 
@@ -177,6 +181,10 @@ public class SVG
 
       public Boolean    overflow;  // true if overflow visible
       public Box        clip;
+
+      public String     markerStart;
+      public String     markerMid;
+      public String     markerEnd;
 
       
       public enum FillRule
@@ -239,6 +247,9 @@ public class SVG
          def.textAnchor = TextAnchor.Start;
          def.overflow = true;  // Overflow shown/visible for root, but not for other elements (see section 14.3.3).
          def.clip = null;
+         def.markerStart = null;
+         def.markerMid = null;
+         def.markerEnd = null;
          return def;
       }
 
@@ -284,7 +295,7 @@ public class SVG
          this.colour = val;
       }
       
-      public String toStringXXX()
+      public String toString()
       {
          return String.format("#%06x", colour);
       }
@@ -436,6 +447,7 @@ public class SVG
 
    //===============================================================================
    // The objects in the SVG object tree
+   //===============================================================================
 
 
    // Any object that can be part of the tree
@@ -446,7 +458,8 @@ public class SVG
 
       public String  toString()
       {
-         return this.getClass().getSimpleName();
+//         return this.getClass().getSimpleName();
+         return super.toString();
       }
    }
 
@@ -478,45 +491,26 @@ public class SVG
    }
 
 
-   protected interface HasViewBox
-   {
-      public Box  getViewBox();
-      public void setViewBox(Box viewBox);
-   }
-
-
-   protected interface HasPreserveAspectRatio
-   {
-      public void setPreserveAspectRatio(AspectRatioAlignment alignment, boolean slice);
-   }
-
-
    protected interface HasTransform
    {
       public void setTransform(Matrix matrix);
    }
 
 
-   protected static class Svg extends SvgContainer implements HasViewBox, HasPreserveAspectRatio
+   protected static class SvgViewBoxContainer extends SvgContainer
+   {
+      public Box                  viewBox;
+      public AspectRatioAlignment preserveAspectRatioAlignment = null;
+      public boolean              preserveAspectRatioSlice;
+   }
+
+
+   protected static class Svg extends SvgViewBoxContainer
    {
       public Length               x;
       public Length               y;
       public Length               width;
       public Length               height;
-      public Box                  viewBox;
-      public AspectRatioAlignment preserveAspectRatioAlignment = null;
-      public boolean              preserveAspectRatioSlice;
-
-      @Override
-      public Box  getViewBox()            { return this.viewBox; }
-      @Override
-      public void setViewBox(Box viewBox) { this.viewBox = viewBox; }
-      @Override
-      public void setPreserveAspectRatio(AspectRatioAlignment alignment, boolean slice)
-      {
-         this.preserveAspectRatioAlignment = alignment;
-         this.preserveAspectRatioSlice = slice;
-      }
    }
 
 
@@ -560,8 +554,8 @@ public class SVG
 
    protected static class Path extends GraphicsElement
    {
-      public android.graphics.Path  path;
-      public Float                  pathLength;
+      public PathDefinition  path;
+      public Float           pathLength;
    }
 
 
@@ -662,22 +656,156 @@ public class SVG
    }
 
 
-   protected static class Symbol extends SvgContainer implements HasViewBox, HasPreserveAspectRatio
+   protected static class Symbol extends SvgViewBoxContainer
    {
-      public Box                  viewBox;
-      public AspectRatioAlignment preserveAspectRatioAlignment = null;
-      public boolean              preserveAspectRatioSlice;
+   }
+
+
+   protected static class Marker extends SvgViewBoxContainer
+   {
+      public boolean              markerUnitsAreUser;
+      public Length               refX;
+      public Length               refY;
+      public Length               markerWidth;
+      public Length               markerHeight;
+      public Float                orient;
+   }
+
+
+   //===============================================================================
+   // Path definition
+
+
+   public interface PathInterface
+   {
+      public void  moveTo(float x, float y);
+      public void  lineTo(float x, float y);
+      public void  cubicTo(float x1, float y1, float x2, float y2, float x3, float y3);
+      public void  quadTo(float x1, float y1, float x2, float y2);
+      public void  arcTo(float rx, float ry, float xAxisRotation, boolean largeArcFlag, boolean sweepFlag, float x, float y);
+      public void  close();
+   }
+
+
+   public static class PathDefinition implements PathInterface
+   {
+      private List<Byte>   commands = null;
+      private List<Float>  coords = null;
+
+      private static final byte  MOVETO  = 0;
+      private static final byte  LINETO  = 1;
+      private static final byte  CUBICTO = 2;
+      private static final byte  QUADTO  = 3;
+      private static final byte  ARCTO   = 4;   // 4-7
+      private static final byte  CLOSE   = 8;
+
+
+      public PathDefinition()
+      {
+         this.commands = new ArrayList<Byte>();
+         this.coords = new ArrayList<Float>();
+      }
+
+
+      public boolean  isEmpty()
+      {
+         return commands.isEmpty();
+      }
+
 
       @Override
-      public Box  getViewBox()            { return this.viewBox; }
-      @Override
-      public void setViewBox(Box viewBox) { this.viewBox = viewBox; }
-      @Override
-      public void setPreserveAspectRatio(AspectRatioAlignment alignment, boolean slice)
+      public void  moveTo(float x, float y)
       {
-         this.preserveAspectRatioAlignment = alignment;
-         this.preserveAspectRatioSlice = slice;
+         commands.add(MOVETO);
+         coords.add(x);
+         coords.add(y);
       }
+
+
+      @Override
+      public void  lineTo(float x, float y)
+      {
+         commands.add(LINETO);
+         coords.add(x);
+         coords.add(y);
+      }
+
+
+      @Override
+      public void  cubicTo(float x1, float y1, float x2, float y2, float x3, float y3)
+      {
+         commands.add(CUBICTO);
+         coords.add(x1);
+         coords.add(y1);
+         coords.add(x2);
+         coords.add(y2);
+         coords.add(x3);
+         coords.add(y3);
+      }
+
+
+      @Override
+      public void  quadTo(float x1, float y1, float x2, float y2)
+      {
+         commands.add(QUADTO);
+         coords.add(x1);
+         coords.add(y1);
+         coords.add(x2);
+         coords.add(y2);
+      }
+
+
+      @Override
+      public void  arcTo(float rx, float ry, float xAxisRotation, boolean largeArcFlag, boolean sweepFlag, float x, float y)
+      {
+         int  arc = ARCTO | (largeArcFlag?2:0) | (sweepFlag?1:0);
+         commands.add((byte) arc);
+         coords.add(rx);
+         coords.add(ry);
+         coords.add(xAxisRotation);
+         coords.add(x);
+         coords.add(y);
+      }
+
+
+      @Override
+      public void  close()
+      {
+         commands.add(CLOSE);
+      }
+
+
+      public void enumeratePath(PathInterface handler)
+      {
+         Iterator<Float>  coordsIter = coords.iterator();
+
+         for (byte command: commands)
+         {
+            switch (command)
+            {
+               case MOVETO:
+                  handler.moveTo(coordsIter.next(), coordsIter.next());
+                  break;
+               case LINETO:
+                  handler.lineTo(coordsIter.next(), coordsIter.next());
+                  break;
+               case CUBICTO:
+                  handler.cubicTo(coordsIter.next(), coordsIter.next(), coordsIter.next(), coordsIter.next(),coordsIter.next(), coordsIter.next());
+                  break;
+               case QUADTO:
+                  handler.quadTo(coordsIter.next(), coordsIter.next(), coordsIter.next(), coordsIter.next());
+                  break;
+               case CLOSE:
+                  handler.close();
+                  break;
+               default:
+                  boolean  largeArcFlag = (command & 2) != 0;
+                  boolean  sweepFlag = (command & 1) != 0;
+                  handler.arcTo(coordsIter.next(), coordsIter.next(), coordsIter.next(), largeArcFlag, sweepFlag, coordsIter.next(), coordsIter.next());
+            }
+         }
+      }
+
    }
 
 
@@ -808,7 +936,7 @@ public class SVG
       {
          float  w = rootElement.width.floatValue(DEFAULT_DPI);
          float  h = rootElement.height.floatValue(DEFAULT_DPI);
-         rootElement.setViewBox(new SVG.Box(0,0, w,h));
+         rootElement.viewBox = new SVG.Box(0,0, w,h);
       }
    }
 

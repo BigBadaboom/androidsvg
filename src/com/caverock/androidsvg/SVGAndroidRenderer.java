@@ -1,6 +1,8 @@
 package com.caverock.androidsvg;
 
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Stack;
 
 import android.graphics.Canvas;
@@ -15,6 +17,9 @@ import android.util.Log;
 import com.caverock.androidsvg.SVG.AspectRatioAlignment;
 import com.caverock.androidsvg.SVG.Box;
 import com.caverock.androidsvg.SVG.CurrentColor;
+import com.caverock.androidsvg.SVG.Marker;
+import com.caverock.androidsvg.SVG.PathDefinition;
+import com.caverock.androidsvg.SVG.PathInterface;
 import com.caverock.androidsvg.SVG.Style;
 import com.caverock.androidsvg.SVG.Text;
 import com.caverock.androidsvg.SVG.TextContainer;
@@ -34,7 +39,7 @@ public class SVGAndroidRenderer
    private Stack<RendererState> stateStack = new Stack<RendererState>();  // Keeps track of render state as we render
 
 
-   private static class RendererState implements Cloneable
+   private class RendererState implements Cloneable
    {
       public Style    style;
       public boolean  hasFill;
@@ -66,21 +71,22 @@ public class SVGAndroidRenderer
          }
       }
 
-   }
+      protected void  resetStyle()
+      {
+         fillPaint = new Paint();
+         fillPaint.setFlags(Paint.ANTI_ALIAS_FLAG | Paint.DEV_KERN_TEXT_FLAG | Paint.SUBPIXEL_TEXT_FLAG);
+         fillPaint.setStyle(Paint.Style.FILL);
+         fillPaint.setTypeface(Typeface.DEFAULT);
 
+         strokePaint = new Paint();
+         strokePaint.setFlags(Paint.ANTI_ALIAS_FLAG | Paint.DEV_KERN_TEXT_FLAG | Paint.SUBPIXEL_TEXT_FLAG);
+         strokePaint.setStyle(Paint.Style.STROKE);
+         strokePaint.setTypeface(Typeface.DEFAULT);
 
-   /**
-    * Create a new renderer instance with default paint flags.
-    * The default paint flags enable anti-aliasing, kerning and subpixel text.
-    * 
-    * @param canvas The canvase to draw to.
-    * @param viewPort The default viewport to be rendered into. For example the dimensions of the bitmap.
-    * @param dpi The DPI setting to use when converting real-world units such as centimetres.
-    */
-
-   public SVGAndroidRenderer(Canvas canvas, SVG.Box viewPort, float dpi)
-   {
-      this(canvas, viewPort, dpi, Paint.ANTI_ALIAS_FLAG | Paint.DEV_KERN_TEXT_FLAG | Paint.SUBPIXEL_TEXT_FLAG );
+         style = new Style();
+         // Initialise the style state
+         updateStyle(Style.getDefaultStyle());
+      }
    }
 
 
@@ -90,10 +96,9 @@ public class SVGAndroidRenderer
     * @param canvas The canvase to draw to.
     * @param viewPort The default viewport to be rendered into. For example the dimensions of the bitmap.
     * @param dpi The DPI setting to use when converting real-world units such as centimetres.
-    * @param paintFlags The paint flags to use for the fill and stroke Paint objects.
     */
 
-   public SVGAndroidRenderer(Canvas canvas, SVG.Box viewPort, float dpi, int paintFlags)
+   public SVGAndroidRenderer(Canvas canvas, SVG.Box viewPort, float dpi)
    {
       this.canvas = canvas;
       this.dpi = dpi;
@@ -101,18 +106,19 @@ public class SVGAndroidRenderer
       state.viewPort = viewPort;
 
       state.fillPaint = new Paint();
-      state.fillPaint.setFlags(paintFlags);
+      state.fillPaint.setFlags(Paint.ANTI_ALIAS_FLAG | Paint.DEV_KERN_TEXT_FLAG | Paint.SUBPIXEL_TEXT_FLAG);
       state.fillPaint.setStyle(Paint.Style.FILL);
       state.fillPaint.setTypeface(Typeface.DEFAULT);
 
       state.strokePaint = new Paint();
-      state.strokePaint.setFlags(paintFlags);
+      state.strokePaint.setFlags(Paint.ANTI_ALIAS_FLAG | Paint.DEV_KERN_TEXT_FLAG | Paint.SUBPIXEL_TEXT_FLAG);
       state.strokePaint.setStyle(Paint.Style.STROKE);
       state.strokePaint.setTypeface(Typeface.DEFAULT);
 
       state.style = new Style();
       // Initialise the style state
       updateStyle(Style.getDefaultStyle());
+
       // Push a copy of the state with 'default' style, so that inherit works for top level objects
       stateStack.push((RendererState) state.clone());   // Manual push here - don't use statePush();
 
@@ -174,7 +180,7 @@ public class SVGAndroidRenderer
 
       if (obj instanceof SVG.Svg) {
          render((SVG.Svg) obj);
-      } else if (obj instanceof SVG.Defs) {
+      } else if (obj instanceof SVG.Defs) { // A subclass of Group so it needs to come before that
          // do nothing
       } else if (obj instanceof SVG.Group) {
          render((SVG.Group) obj);
@@ -196,6 +202,10 @@ public class SVGAndroidRenderer
          render((SVG.PolyLine) obj);
       } else if (obj instanceof SVG.Text) {
          render((SVG.Text) obj);
+      } else if (obj instanceof SVG.Symbol) {
+         // do nothing
+      } else if (obj instanceof SVG.Marker) {
+         // do nothing
       }
 
       // Restore state
@@ -287,8 +297,6 @@ public class SVGAndroidRenderer
          canvas.concat(obj.transform);
       }
 
-      updateStyle(obj.style);
-
       for (SVG.SvgObject child: obj.children) {
          render(child);
       }
@@ -329,7 +337,8 @@ public class SVGAndroidRenderer
 
    private void render(SVG.Path obj)
    {
-/**/Log.d(TAG, "Path render");
+//Log.d(TAG, "Path render");
+/**/Log.d(TAG, "Path render "+obj);
 
       updateStyle(obj.style);
 
@@ -339,13 +348,17 @@ public class SVGAndroidRenderer
       if (obj.transform != null)
          canvas.concat(obj.transform);
 
+      Path  path = (new PathConverter(obj.path)).getPath();
+
       if (state.hasFill) {
-/**/Log.w(TAG, "Setting path FillType to "+getFillTypeFromState()+" from "+state.style.fillRule);
-         obj.path.setFillType(getFillTypeFromState());
-         canvas.drawPath(obj.path, state.fillPaint);
+/**/Log.w(TAG, "FILLING "+state.hasStroke);
+         path.setFillType(getFillTypeFromState());
+         canvas.drawPath(path, state.fillPaint);
       }
       if (state.hasStroke)
-         canvas.drawPath(obj.path, state.strokePaint);
+         canvas.drawPath(path, state.strokePaint);
+
+      renderMarkers(obj);
    }
 
 
@@ -993,6 +1006,21 @@ public class SVGAndroidRenderer
          state.style.overflow = style.overflow;
       }
 
+      if (isSpecified(style, SVG.SPECIFIED_MARKER_START))
+      {
+         state.style.markerStart = style.markerStart;
+      }
+
+      if (isSpecified(style, SVG.SPECIFIED_MARKER_MID))
+      {
+         state.style.markerMid = style.markerMid;
+      }
+
+      if (isSpecified(style, SVG.SPECIFIED_MARKER_END))
+      {
+         state.style.markerEnd = style.markerEnd;
+      }
+
    }
 
 
@@ -1025,6 +1053,474 @@ public class SVGAndroidRenderer
          default:
             return Path.FillType.WINDING;
       }
+   }
+
+
+   // ==============================================================================
+
+   /*
+    *  Convert an internal PathDefinition to an android.graphics.Path object
+    */
+   private class  PathConverter implements PathInterface
+   {
+      Path   path = new Path();
+      float  lastX, lastY;
+      
+      public PathConverter(PathDefinition pathDef)
+      {
+         pathDef.enumeratePath(this);
+      }
+
+      public Path  getPath()
+      {
+         return path;
+      }
+
+      @Override
+      public void moveTo(float x, float y)
+      {
+         path.moveTo(x, y);
+         lastX = x;
+         lastY = y;
+      }
+
+      @Override
+      public void lineTo(float x, float y)
+      {
+         path.lineTo(x, y);
+         lastX = x;
+         lastY = y;
+      }
+
+      @Override
+      public void cubicTo(float x1, float y1, float x2, float y2, float x3, float y3)
+      {
+         path.cubicTo(x1, y1, x2, y2, x3, y3);
+         lastX = x3;
+         lastY = y3;
+      }
+
+      @Override
+      public void quadTo(float x1, float y1, float x2, float y2)
+      {
+         path.quadTo(x1, y1, x2, y2);
+         lastX = x2;
+         lastY = y2;
+      }
+
+      @Override
+      public void arcTo(float rx, float ry, float xAxisRotation, boolean largeArcFlag, boolean sweepFlag, float x, float y)
+      {
+         SVGAndroidRenderer.arcTo(lastX, lastY, rx, ry, xAxisRotation, largeArcFlag, sweepFlag, x, y, this);
+         lastX = x;
+         lastY = y;
+      }
+
+      @Override
+      public void close()
+      {
+         path.close();
+      }
+         
+   }
+
+
+   //=========================================================================
+   // Handling of Arcs
+
+   /*
+    * SVG arc representation uses "endpoint parameterisation" where we specify the endpoint of the arc.
+    * This is to be consistent with the other path commands.  However we need to convert this to "centre point
+    * parameterisation" in order to calculate the arc. Handily, the SVG spec provides all the required maths
+    * in section "F.6 Elliptical arc implementation notes".
+    * 
+    * Some of this code has been borrowed from the Batik library (Apache-2 license).
+    */
+
+   private static void arcTo(float lastX, float lastY, float rx, float ry, float angle, boolean largeArcFlag, boolean sweepFlag, float x, float y, PathInterface pather)
+   {
+      if (lastX == x && lastY == y) {
+         // If the endpoints (x, y) and (x0, y0) are identical, then this
+         // is equivalent to omitting the elliptical arc segment entirely.
+         // (behaviour specified by the spec)
+         return;
+      }
+
+      // Handle degenerate case (behaviour specified by the spec)
+      if (rx == 0 || ry == 0) {
+         pather.lineTo(x, y);
+         return;
+      }
+
+      // Sign of the radii is ignored (behaviour specified by the spec)
+      rx = Math.abs(rx);
+      ry = Math.abs(ry);
+
+      // Convert angle from degrees to radians
+      float  angleRad = (float) Math.toRadians(angle % 360.0);
+      double cosAngle = Math.cos(angleRad);
+      double sinAngle = Math.sin(angleRad);
+      
+      // We simplify the calculations by transforming the arc so that the origin is at the
+      // midpoint calculated above followed by a rotation to line up the coordinate axes
+      // with the axes of the ellipse.
+
+      // Compute the midpoint of the line between the current and the end point
+      double dx2 = (lastX - x) / 2.0;
+      double dy2 = (lastY - y) / 2.0;
+
+      // Step 1 : Compute (x1', y1') - the transformed start point
+      double x1 = (cosAngle * dx2 + sinAngle * dy2);
+      double y1 = (-sinAngle * dx2 + cosAngle * dy2);
+
+      double rx_sq = rx * rx;
+      double ry_sq = ry * ry;
+      double x1_sq = x1 * x1;
+      double y1_sq = y1 * y1;
+
+      // Check that radii are large enough.
+      // If they are not, the spec says to scale them up so they are.
+      // This is to compensate for potential rounding errors/differences between SVG implementations.
+      double radiiCheck = x1_sq / rx_sq + y1_sq / ry_sq;
+      if (radiiCheck > 1) {
+         rx = (float) Math.sqrt(radiiCheck) * rx;
+         ry = (float) Math.sqrt(radiiCheck) * ry;
+         rx_sq = rx * rx;
+         ry_sq = ry * ry;
+      }
+
+      // Step 2 : Compute (cx1, cy1) - the transformed centre point
+      double sign = (largeArcFlag == sweepFlag) ? -1 : 1;
+      double sq = ((rx_sq * ry_sq) - (rx_sq * y1_sq) - (ry_sq * x1_sq)) / ((rx_sq * y1_sq) + (ry_sq * x1_sq));
+      sq = (sq < 0) ? 0 : sq;
+      double coef = (sign * Math.sqrt(sq));
+      double cx1 = coef * ((rx * y1) / ry);
+      double cy1 = coef * -((ry * x1) / rx);
+
+      // Step 3 : Compute (cx, cy) from (cx1, cy1)
+      double sx2 = (lastX + x) / 2.0;
+      double sy2 = (lastY + y) / 2.0;
+      double cx = sx2 + (cosAngle * cx1 - sinAngle * cy1);
+      double cy = sy2 + (sinAngle * cx1 + cosAngle * cy1);
+
+      // Step 4 : Compute the angleStart (angle1) and the angleExtent (dangle)
+      double ux = (x1 - cx1) / rx;
+      double uy = (y1 - cy1) / ry;
+      double vx = (-x1 - cx1) / rx;
+      double vy = (-y1 - cy1) / ry;
+      double p, n;
+
+      // Compute the angle start
+      n = Math.sqrt((ux * ux) + (uy * uy));
+      p = ux; // (1 * ux) + (0 * uy)
+      sign = (uy < 0) ? -1.0 : 1.0;
+      double angleStart = Math.toDegrees(sign * Math.acos(p / n));
+
+      // Compute the angle extent
+      n = Math.sqrt((ux * ux + uy * uy) * (vx * vx + vy * vy));
+      p = ux * vx + uy * vy;
+      sign = (ux * vy - uy * vx < 0) ? -1.0 : 1.0;
+      double angleExtent = Math.toDegrees(sign * Math.acos(p / n));
+      if (!sweepFlag && angleExtent > 0) {
+         angleExtent -= 360f;
+      } else if (sweepFlag && angleExtent < 0) {
+         angleExtent += 360f;
+      }
+      angleExtent %= 360f;
+      angleStart %= 360f;
+
+      // Many elliptical arc implementations including the Java2D and Android ones, only
+      // support arcs that are axis aligned.  Therefore we need to substitute the arc
+      // with bezier curves.  The following method call will generate the beziers for
+      // a unit circle that covers the arc angles we want.
+      float[]  bezierPoints = arcToBeziers(angleStart, angleExtent);
+
+      // Calculate a transformation matrix that will move and scale these bezier points to the correct location.
+      Matrix m = new Matrix();
+      m.postScale(rx, ry);
+      m.postRotate(angle);
+      m.postTranslate((float) cx, (float) cy);
+      m.mapPoints(bezierPoints);
+
+      // The last point in the bezier set should match exactly the last coord pair in the arc (ie: x,y). But
+      // considering all the mathematical manipulation we have been doing, it is bound to be off by a tiny
+      // fraction. Experiments show that it can be up to around 0.00002.  So why don't we just set it to
+      // exactly what it ought to be.
+      bezierPoints[bezierPoints.length-2] = x;
+      bezierPoints[bezierPoints.length-1] = y;
+
+      // Final step is to add the bezier curves to the path
+      for (int i=0; i<bezierPoints.length; i+=6)
+      {
+         pather.cubicTo(bezierPoints[i], bezierPoints[i+1], bezierPoints[i+2], bezierPoints[i+3], bezierPoints[i+4], bezierPoints[i+5]);
+      }
+   }
+
+
+   /*
+    * Generate the control points and endpoints for a set of bezier curves that match
+    * a circular arc starting from angle 'angleStart' and sweep the angle 'angleExtent'.
+    * The circle the arc follows will be centred on (0,0) and have a radius of 1.0.
+    * 
+    * Each bezier can cover no more than 90 degrees, so the arc will be divided evenly
+    * into a maximum of four curves.
+    * 
+    * The resulting control points will later be scaled and rotated to match the final
+    * arc required.
+    * 
+    * The returned array has the format [x0,y0, x1,y1,...] and excludes the start point
+    * of the arc.
+    */
+   private static float[]  arcToBeziers(double angleStart, double angleExtent)
+   {
+      int    numSegments = (int) Math.ceil(Math.abs(angleExtent) / 90.0);
+      
+      angleStart = Math.toRadians(angleStart);
+      angleExtent = Math.toRadians(angleExtent);
+      float  angleIncrement = (float) (angleExtent / numSegments);
+      
+      // The length of each control point vector is given by the following formula.
+      double  controlLength = 4.0 / 3.0 * Math.sin(angleIncrement / 2.0) / (1.0 + Math.cos(angleIncrement / 2.0));
+      
+      float[] coords = new float[numSegments * 6];
+      int     pos = 0;
+
+      for (int i=0; i<numSegments; i++)
+      {
+         double  angle = angleStart + i * angleIncrement;
+         // Calculate the control vector at this angle
+         double  dx = Math.cos(angle);
+         double  dy = Math.sin(angle);
+         // First control point
+         coords[pos++]   = (float) (dx - controlLength * dy);
+         coords[pos++] = (float) (dy + controlLength * dx);
+         // Second control point
+         angle += angleIncrement;
+         dx = Math.cos(angle);
+         dy = Math.sin(angle);
+         coords[pos++] = (float) (dx + controlLength * dy);
+         coords[pos++] = (float) (dy - controlLength * dx);
+         // Endpoint of bezier
+         coords[pos++] = (float) dx;
+         coords[pos++] = (float) dy;
+      }
+      return coords;
+   }
+
+
+   // ==============================================================================
+   // Marker handling
+   // ==============================================================================
+
+
+   private class MarkerVector
+   {
+      public float x, y, dx, dy;
+
+      public MarkerVector(float x, float y, float dx, float dy)
+      {
+         this.x = x;
+         this.y = y;
+         this.dx = dx;
+         this.dy = dy;
+      }
+
+      public void add(float x, float y)
+      {
+         this.dx += (x - this.x);
+         this.dy += (y - this.y);
+      }
+   }
+   
+
+   /*
+    *  Calculates the positions and orientations of any markers that should be placed on the given path.
+    */
+   private class  MarkerPositionCalculator implements PathInterface
+   {
+      List<MarkerVector>  markers = new ArrayList<MarkerVector>();
+      float  startX, startY;
+      MarkerVector  lastPos = null;
+      boolean startArc = false, normalCubic = true;
+
+      
+      public MarkerPositionCalculator(PathDefinition pathDef)
+      {
+         // Generate and add markers for the first N-1 points
+         pathDef.enumeratePath(this);
+         // Add the marker for the pending last point
+         if (lastPos != null) {
+            markers.add(lastPos);
+         }
+      }
+
+      public List<MarkerVector>  getMarkers()
+      {
+         return markers;
+      }
+
+      @Override
+      public void moveTo(float x, float y)
+      {
+         startX = x;
+         startY = y;
+         lastPos = new MarkerVector(x, y, 0, 0);
+      }
+
+      @Override
+      public void lineTo(float x, float y)
+      {
+         lastPos.add(x, y);
+         markers.add(lastPos);
+         MarkerVector  newPos = new MarkerVector(x, y, x-lastPos.x, y-lastPos.y);
+         lastPos = newPos;
+      }
+
+      @Override
+      public void cubicTo(float x1, float y1, float x2, float y2, float x3, float y3)
+      {
+         if (normalCubic || startArc) {
+            lastPos.add(x1, y1);
+            markers.add(lastPos);
+            startArc = false;
+         }
+         MarkerVector  newPos = new MarkerVector(x3, y3, x3-x2, y3-y2);
+         lastPos = newPos;
+      }
+
+      @Override
+      public void quadTo(float x1, float y1, float x2, float y2)
+      {
+         lastPos.add(x1, y1);
+         markers.add(lastPos);
+         MarkerVector  newPos = new MarkerVector(x2, y2, x2-x1, y2-y1);
+         lastPos = newPos;
+      }
+
+      @Override
+      public void arcTo(float rx, float ry, float xAxisRotation, boolean largeArcFlag, boolean sweepFlag, float x, float y)
+      {
+         startArc = true;
+         normalCubic = false;
+         SVGAndroidRenderer.arcTo(lastPos.x, lastPos.y, rx, ry, xAxisRotation, largeArcFlag, sweepFlag, x, y, this);
+         normalCubic = true;
+      }
+
+      @Override
+      public void close()
+      {
+         if (lastPos.x != startX && lastPos.y != startY) {
+            lineTo(startX, startY);
+            lastPos = new MarkerVector(startX,  startY,  startX-lastPos.x,  startY-lastPos.y);
+         }
+      }
+         
+   }
+
+
+   private void  renderMarkers(SVG.Path obj)
+   {
+      if (state.style.markerStart == null && state.style.markerMid == null && state.style.markerEnd == null)
+         return;
+/**/Log.w(TAG, "renderMarkers A "+((Object)obj));
+
+      SVG.Marker  _markerStart = null;
+      SVG.Marker  _markerMid = null;
+      SVG.Marker  _markerEnd = null;
+
+      if (state.style.markerStart != null) {
+         SVG.SvgObject  ref = obj.document.resolveIRI(state.style.markerStart);
+         if (ref != null)
+            _markerStart = (SVG.Marker) ref;
+      }
+
+      if (state.style.markerMid != null) {
+         SVG.SvgObject  ref = obj.document.resolveIRI(state.style.markerMid);
+         if (ref != null)
+            _markerMid = (SVG.Marker) ref;
+      }
+
+      if (state.style.markerEnd != null) {
+         SVG.SvgObject  ref = obj.document.resolveIRI(state.style.markerEnd);
+         if (ref != null)
+            _markerEnd = (SVG.Marker) ref;
+      }
+
+      List<MarkerVector>  markers = (new MarkerPositionCalculator(obj.path)).getMarkers();
+      int  markerCount = markers.size();
+      if (markerCount == 0)
+         return;
+/**/Log.w(TAG, "num markers = "+markers.size());
+/**/Log.w(TAG, "markers = "+_markerStart+"\n"+_markerMid+"\n"+_markerEnd);
+
+      // We don't want the markers to inherit themselves as markers, otherwise we get a infinite recursion. 
+      state.style.markerStart = state.style.markerMid = state.style.markerEnd = null;
+
+      if (_markerStart != null)
+         renderMarker(_markerStart, markers.get(0));
+
+      if (_markerMid != null)
+      {
+         for (int i=1; i<(markerCount-1); i++) {
+            renderMarker(_markerMid, markers.get(i));
+         }
+      }
+
+      if (_markerEnd != null)
+         renderMarker(_markerEnd, markers.get(markerCount-1));
+   }
+
+
+   /*
+    * Render the given marker type at the given position
+    */
+   private void renderMarker(Marker marker, MarkerVector pos)
+   {
+      float  angle = 0f;
+      float  unitsScale;
+
+      statePush();
+
+      // Calculate vector angle
+      if (marker.orient != null)
+      {
+         if (Float.isNaN(marker.orient))  // Indicates "auto"
+         {
+            if (pos.dx != 0 || pos.dy != 0) {
+               angle = (float) Math.toDegrees( Math.atan(pos.dy / pos.dx) );
+            }
+         } else {
+            angle = marker.orient;
+         }
+      }
+      // Calculate units scale
+      unitsScale = marker.markerUnitsAreUser ? 1f : state.style.strokeWidth.floatValue(dpi);
+/**/Log.w(TAG, "marker: "+angle+" "+unitsScale+" "+pos.x+","+pos.y);
+
+      Matrix m = new Matrix();
+      m.preTranslate(pos.x, pos.y);
+      m.preRotate(angle);
+      m.preScale(unitsScale, unitsScale);
+      // Scale and/or translate the marker to fit in the marker viewPort
+      // TODO
+      /**/m.preTranslate(0f, -1.5f);
+      /**/m.preScale(0.3f, 0.3f);
+      // Apply a clip path is required (taking into account overflow setting)
+      // TODO
+      canvas.concat(m);
+
+      // "Properties inherit into the <marker> element from its ancestors; properties do not
+      // inherit from the element referencing the <marker> element." (sect 11.6.2)
+      // We do not (yet/ever?) have a mechanism for this, so a simple copy of style is the
+      // best we can manage for now.
+      state.resetStyle();
+      updateStyle(marker.style);
+
+      for (SVG.SvgObject child: marker.children) {
+         render(child);
+      }
+
+      statePop();
    }
 
 
