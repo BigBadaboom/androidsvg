@@ -458,8 +458,8 @@ public class SVG
 
       public String  toString()
       {
-//         return this.getClass().getSimpleName();
-         return super.toString();
+         return this.getClass().getSimpleName();
+         //return super.toString();
       }
    }
 

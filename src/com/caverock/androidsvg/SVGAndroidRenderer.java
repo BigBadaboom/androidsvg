@@ -160,9 +160,8 @@ public class SVGAndroidRenderer
       SVG.Svg  obj = document.getRootElement();
       
       if (obj.viewBox != null) {
-         canvas.concat(calculateViewBoxTransform(obj.viewBox, alignment, !fitToCanvas));
+         canvas.concat(calculateViewBoxTransform(state.viewPort, obj.viewBox, alignment, !fitToCanvas));
          state.viewPort = obj.viewBox;
-//         state.viewPort = new Box(0, 0, obj.viewBox.width, obj.viewBox.height);
       }
 
       render(obj);
@@ -275,11 +274,7 @@ public class SVGAndroidRenderer
       }
 
       if (obj.viewBox != null) {
-         if (obj.preserveAspectRatioAlignment != null) {
-            canvas.concat(calculateViewBoxTransform(obj.viewBox, obj.preserveAspectRatioAlignment, obj.preserveAspectRatioSlice));
-         } else {
-            canvas.concat(calculateViewBoxTransform(obj.viewBox));
-         }
+         canvas.concat(calculateViewBoxTransform(state.viewPort, obj.viewBox, obj.preserveAspectRatioAlignment, obj.preserveAspectRatioSlice));
       }
 
       for (SVG.SvgObject child: obj.children) {
@@ -351,7 +346,6 @@ public class SVGAndroidRenderer
       Path  path = (new PathConverter(obj.path)).getPath();
 
       if (state.hasFill) {
-/**/Log.w(TAG, "FILLING "+state.hasStroke);
          path.setFillType(getFillTypeFromState());
          canvas.drawPath(path, state.fillPaint);
       }
@@ -673,11 +667,7 @@ public class SVGAndroidRenderer
       }
 
       if (obj.viewBox != null) {
-         if (obj.preserveAspectRatioAlignment != null) {
-            canvas.concat(calculateViewBoxTransform(obj.viewBox, obj.preserveAspectRatioAlignment, obj.preserveAspectRatioSlice));
-         } else {
-            canvas.concat(calculateViewBoxTransform(obj.viewBox));
-         }
+         canvas.concat(calculateViewBoxTransform(state.viewPort, obj.viewBox, obj.preserveAspectRatioAlignment, obj.preserveAspectRatioSlice));
       }
       
       for (SVG.SvgObject child: obj.children) {
@@ -698,18 +688,22 @@ public class SVGAndroidRenderer
     * slice determines whether we see the whole image or not. True fill the whole viewport.
     *    If slice is false, the image will be "letter-boxed". 
     */
-   private Matrix calculateViewBoxTransform(Box viewBox, AspectRatioAlignment aspectRule, boolean slice)
+   private Matrix calculateViewBoxTransform(Box viewPort, Box viewBox, AspectRatioAlignment aspectRule, boolean slice)
    {
+      if (aspectRule == null)
+         aspectRule = AspectRatioAlignment.xMidYMid;
+
       Matrix m = new Matrix();
 
-      float  xScale = state.viewPort.width / viewBox.width;
-      float  yScale = state.viewPort.height / viewBox.height;
+      float  xScale = viewPort.width / viewBox.width;
+      float  yScale = viewPort.height / viewBox.height;
       float  xOffset = -viewBox.minX;
       float  yOffset = -viewBox.minY;
 
       // 'none' means scale both dimensions to fit the viewport
       if (aspectRule == AspectRatioAlignment.none)
       {
+         m.preTranslate(viewPort.minX, viewPort.minY);
          m.preScale(xScale, yScale);
          m.preTranslate(xOffset, yOffset);
          return m;
@@ -756,15 +750,10 @@ public class SVGAndroidRenderer
             break;
       }
 
-      m.preTranslate(state.viewPort.minX, state.viewPort.minY);
+      m.preTranslate(viewPort.minX, viewPort.minY);
       m.preScale(aspectScale, aspectScale);
       m.preTranslate(xOffset, yOffset);
       return m;
-   }
-
-   private Matrix calculateViewBoxTransform(Box viewBox)
-   {
-      return calculateViewBoxTransform(viewBox, AspectRatioAlignment.xMidYMid, false);
    }
 
 
@@ -1315,20 +1304,29 @@ public class SVGAndroidRenderer
 
    private class MarkerVector
    {
-      public float x, y, dx, dy;
+      public float x, y, dx=0f, dy=0f;
 
       public MarkerVector(float x, float y, float dx, float dy)
       {
          this.x = x;
          this.y = y;
-         this.dx = dx;
-         this.dy = dy;
+         // normalise direction vector
+         double  len = Math.sqrt( dx*dx + dy*dy );
+         if (len != 0) {
+            this.dx = (float) (dx / len);
+            this.dy = (float) (dy / len);
+         }
       }
 
       public void add(float x, float y)
       {
-         this.dx += (x - this.x);
-         this.dy += (y - this.y);
+         float dx = (x - this.x);
+         float dy = (y - this.y);
+         double  len = Math.sqrt( dx*dx + dy*dy );
+         if (len != 0) {
+            this.dx += (float) (dx / len);
+            this.dy += (float) (dy / len);
+         }
       }
    }
    
@@ -1400,6 +1398,7 @@ public class SVGAndroidRenderer
       @Override
       public void arcTo(float rx, float ry, float xAxisRotation, boolean largeArcFlag, boolean sweepFlag, float x, float y)
       {
+         // We'll piggy-back on the arc->bezier conversion to get our start and end vectors
          startArc = true;
          normalCubic = false;
          SVGAndroidRenderer.arcTo(lastPos.x, lastPos.y, rx, ry, xAxisRotation, largeArcFlag, sweepFlag, x, y, this);
@@ -1409,9 +1408,8 @@ public class SVGAndroidRenderer
       @Override
       public void close()
       {
-         if (lastPos.x != startX && lastPos.y != startY) {
+         if (lastPos.x != startX || lastPos.y != startY) {
             lineTo(startX, startY);
-            lastPos = new MarkerVector(startX,  startY,  startX-lastPos.x,  startY-lastPos.y);
          }
       }
          
@@ -1422,7 +1420,6 @@ public class SVGAndroidRenderer
    {
       if (state.style.markerStart == null && state.style.markerMid == null && state.style.markerEnd == null)
          return;
-/**/Log.w(TAG, "renderMarkers A "+((Object)obj));
 
       SVG.Marker  _markerStart = null;
       SVG.Marker  _markerMid = null;
@@ -1450,10 +1447,8 @@ public class SVGAndroidRenderer
       int  markerCount = markers.size();
       if (markerCount == 0)
          return;
-/**/Log.w(TAG, "num markers = "+markers.size());
-/**/Log.w(TAG, "markers = "+_markerStart+"\n"+_markerMid+"\n"+_markerEnd);
 
-      // We don't want the markers to inherit themselves as markers, otherwise we get a infinite recursion. 
+      // We don't want the markers to inherit themselves as markers, otherwise we get infinite recursion. 
       state.style.markerStart = state.style.markerMid = state.style.markerEnd = null;
 
       if (_markerStart != null)
@@ -1487,7 +1482,7 @@ public class SVGAndroidRenderer
          if (Float.isNaN(marker.orient))  // Indicates "auto"
          {
             if (pos.dx != 0 || pos.dy != 0) {
-               angle = (float) Math.toDegrees( Math.atan(pos.dy / pos.dx) );
+               angle = (float) Math.toDegrees( Math.atan2(pos.dy, pos.dx) );
             }
          } else {
             angle = marker.orient;
@@ -1495,18 +1490,39 @@ public class SVGAndroidRenderer
       }
       // Calculate units scale
       unitsScale = marker.markerUnitsAreUser ? 1f : state.style.strokeWidth.floatValue(dpi);
-/**/Log.w(TAG, "marker: "+angle+" "+unitsScale+" "+pos.x+","+pos.y);
 
       Matrix m = new Matrix();
       m.preTranslate(pos.x, pos.y);
       m.preRotate(angle);
       m.preScale(unitsScale, unitsScale);
       // Scale and/or translate the marker to fit in the marker viewPort
-      // TODO
-      /**/m.preTranslate(0f, -1.5f);
-      /**/m.preScale(0.3f, 0.3f);
-      // Apply a clip path is required (taking into account overflow setting)
-      // TODO
+      float _refX = (marker.refX != null) ? marker.refX.floatValueX(this) : 0f;
+      float _refY = (marker.refY != null) ? marker.refY.floatValueY(this) : 0f;
+      float _markerWidth = (marker.markerWidth != null) ? marker.markerWidth.floatValueX(this) : 3f;
+      float _markerHeight = (marker.markerHeight != null) ? marker.markerHeight.floatValueY(this) : 3f;
+      
+      // We now do a simplified version of calculateViewBoxTransform().  Although the spec suggests that
+      // we honour the alignment setting, we can't actually do that because the fact that refX and refY
+      // have to be aligned with the marker position overrides that.
+      float xScale, yScale;
+      if (marker.viewBox != null) {
+         xScale = _markerWidth / marker.viewBox.width;
+         yScale = _markerHeight / marker.viewBox.height;
+      } else {
+         xScale = _markerWidth / state.viewPort.width;
+         yScale = _markerHeight / state.viewPort.height;
+      }
+      // If we are keeping aspect ratio, then set both scales to the appropriate value depending on 'slice'
+      if (marker.preserveAspectRatioAlignment != AspectRatioAlignment.none)
+      {
+         float  aspectScale = (marker.preserveAspectRatioSlice) ? Math.max(xScale,  yScale) : Math.min(xScale,  yScale);
+         xScale = yScale = aspectScale;
+      }
+
+      //m.preTranslate(viewPort.minX, viewPort.minY);
+      m.preTranslate(-_refX * xScale, -_refY * yScale);
+      m.preScale(xScale, yScale);
+
       canvas.concat(m);
 
       // "Properties inherit into the <marker> element from its ancestors; properties do not

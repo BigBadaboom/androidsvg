@@ -17,8 +17,16 @@
   <rect x="1" y="1" width="1198" height="398"
         fill="none" stroke="blue" stroke-width="1" />
 
-  <rect x="150" y="50" width="300" height="200"
-        fill="red" stroke="blue" stroke-width="5" marker-end="url(#Triangle)" />
+  <rect x="0" y="0" width="150" height="200" transform="translate(100,50)"
+        fill="red" stroke="blue" stroke-width="20" marker-end="url(#Triangle)" />
+
+  <path d="M0,0 150,0 150,200 0,200 Z" transform="translate(300,50)"
+        fill="red" stroke="blue" stroke-width="20"
+        marker-start="url(#Triangle)" marker-mid="url(#Triangle)" marker-end="url(#Triangle)" />
+
+  <path d="M100,350 L450,350"
+        fill="red" stroke="blue" stroke-width="20"
+        marker="url(#Triangle)" stroke-dasharray="30" />
 
   <path d="M600,350 l 50,-25 
            a25,25 -30 0,1 50,-25 l 50,-25 
@@ -27,4 +35,5 @@
            a25,100 -30 0,1 50,-25 l 50,-25"
         fill="none" stroke="red" stroke-width="10"
         marker-start="url(#Triangle)" marker-mid="url(#Triangle)" marker-end="url(#Triangle)" />
+
 </svg>
