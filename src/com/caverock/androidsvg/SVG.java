@@ -106,7 +106,7 @@ public class SVG
    //===============================================================================
    // Object sub-types used in the SVG object tree
 
-   public static class  Box
+   public static class  Box implements Cloneable
    {
       public float  minX, minY, width, height;
 
@@ -150,7 +150,7 @@ public class SVG
 
    public static class  Style implements Cloneable
    {
-      // Which properties have been explicity specified by this element
+      // Which properties have been explicitly specified by this element
       public long       specifiedFlags = 0;
       //public long       inheritFlags = 0;
 

@@ -21,6 +21,8 @@ import com.caverock.androidsvg.SVG.Marker;
 import com.caverock.androidsvg.SVG.PathDefinition;
 import com.caverock.androidsvg.SVG.PathInterface;
 import com.caverock.androidsvg.SVG.Style;
+import com.caverock.androidsvg.SVG.SvgElement;
+import com.caverock.androidsvg.SVG.SvgObject;
 import com.caverock.androidsvg.SVG.Text;
 import com.caverock.androidsvg.SVG.TextContainer;
 import com.caverock.androidsvg.SVG.TextSequence;
@@ -51,6 +53,19 @@ public class SVGAndroidRenderer
 
       public RendererState()
       {
+         fillPaint = new Paint();
+         fillPaint.setFlags(Paint.ANTI_ALIAS_FLAG | Paint.DEV_KERN_TEXT_FLAG | Paint.SUBPIXEL_TEXT_FLAG);
+         fillPaint.setStyle(Paint.Style.FILL);
+         fillPaint.setTypeface(Typeface.DEFAULT);
+
+         strokePaint = new Paint();
+         strokePaint.setFlags(Paint.ANTI_ALIAS_FLAG | Paint.DEV_KERN_TEXT_FLAG | Paint.SUBPIXEL_TEXT_FLAG);
+         strokePaint.setStyle(Paint.Style.STROKE);
+         strokePaint.setTypeface(Typeface.DEFAULT);
+
+         style = new Style();
+         // Initialise the style state
+         updateStyle(this, Style.getDefaultStyle());
       }
 
       @Override
@@ -71,22 +86,6 @@ public class SVGAndroidRenderer
          }
       }
 
-      protected void  resetStyle()
-      {
-         fillPaint = new Paint();
-         fillPaint.setFlags(Paint.ANTI_ALIAS_FLAG | Paint.DEV_KERN_TEXT_FLAG | Paint.SUBPIXEL_TEXT_FLAG);
-         fillPaint.setStyle(Paint.Style.FILL);
-         fillPaint.setTypeface(Typeface.DEFAULT);
-
-         strokePaint = new Paint();
-         strokePaint.setFlags(Paint.ANTI_ALIAS_FLAG | Paint.DEV_KERN_TEXT_FLAG | Paint.SUBPIXEL_TEXT_FLAG);
-         strokePaint.setStyle(Paint.Style.STROKE);
-         strokePaint.setTypeface(Typeface.DEFAULT);
-
-         style = new Style();
-         // Initialise the style state
-         updateStyle(Style.getDefaultStyle());
-      }
    }
 
 
@@ -105,23 +104,8 @@ public class SVGAndroidRenderer
 
       state.viewPort = viewPort;
 
-      state.fillPaint = new Paint();
-      state.fillPaint.setFlags(Paint.ANTI_ALIAS_FLAG | Paint.DEV_KERN_TEXT_FLAG | Paint.SUBPIXEL_TEXT_FLAG);
-      state.fillPaint.setStyle(Paint.Style.FILL);
-      state.fillPaint.setTypeface(Typeface.DEFAULT);
-
-      state.strokePaint = new Paint();
-      state.strokePaint.setFlags(Paint.ANTI_ALIAS_FLAG | Paint.DEV_KERN_TEXT_FLAG | Paint.SUBPIXEL_TEXT_FLAG);
-      state.strokePaint.setStyle(Paint.Style.STROKE);
-      state.strokePaint.setTypeface(Typeface.DEFAULT);
-
-      state.style = new Style();
-      // Initialise the style state
-      updateStyle(Style.getDefaultStyle());
-
       // Push a copy of the state with 'default' style, so that inherit works for top level objects
       stateStack.push((RendererState) state.clone());   // Manual push here - don't use statePush();
-
    }
 
 
@@ -252,7 +236,7 @@ public class SVGAndroidRenderer
           (height != null && height.isZero()))
          return;
 
-      updateStyle(obj.style);
+      updateStyle(state, obj.style);
 
       state.viewBox = obj.viewBox;
 
@@ -286,7 +270,7 @@ public class SVGAndroidRenderer
    private void render(SVG.Group obj)
    {
 /**/Log.d(TAG, "Group render");
-      updateStyle(obj.style);
+      updateStyle(state, obj.style);
 
       if (obj.transform != null) {
          canvas.concat(obj.transform);
@@ -302,7 +286,7 @@ public class SVGAndroidRenderer
    {
 /**/Log.d(TAG, "Use render");
 
-      updateStyle(obj.style);
+      updateStyle(state, obj.style);
 
       // Locate the referenced object
       SVG.SvgObject  ref = obj.document.resolveIRI(obj.href);
@@ -335,7 +319,7 @@ public class SVGAndroidRenderer
 //Log.d(TAG, "Path render");
 /**/Log.d(TAG, "Path render "+obj);
 
-      updateStyle(obj.style);
+      updateStyle(state, obj.style);
 
       if (!state.hasStroke && !state.hasFill)
          return;
@@ -362,7 +346,7 @@ public class SVGAndroidRenderer
       if (obj.width == null || obj.height == null || obj.width.isZero() || obj.height.isZero())
          return;
 
-      updateStyle(obj.style);
+      updateStyle(state, obj.style);
 
       if (obj.transform != null)
          canvas.concat(obj.transform);
@@ -410,7 +394,7 @@ public class SVGAndroidRenderer
       if (obj.r == null || obj.r.isZero())
          return;
 
-      updateStyle(obj.style);
+      updateStyle(state, obj.style);
 
       if (obj.transform != null)
          canvas.concat(obj.transform);
@@ -436,7 +420,7 @@ public class SVGAndroidRenderer
       if (obj.rx == null || obj.ry == null || obj.rx.isZero() || obj.ry.isZero())
          return;
 
-      updateStyle(obj.style);
+      updateStyle(state, obj.style);
 
       if (obj.transform != null)
          canvas.concat(obj.transform);
@@ -462,7 +446,7 @@ public class SVGAndroidRenderer
    {
 /**/Log.d(TAG, "Line render");
 
-      updateStyle(obj.style);
+      updateStyle(state, obj.style);
 
       if (!state.hasStroke)
          return;
@@ -484,7 +468,7 @@ public class SVGAndroidRenderer
    {
 /**/Log.d(TAG, "PolyLine render");
 
-      updateStyle(obj.style);
+      updateStyle(state, obj.style);
 
       if (!state.hasStroke)
          return;
@@ -509,7 +493,7 @@ public class SVGAndroidRenderer
    {
 /**/Log.d(TAG, "Polygon render");
 
-      updateStyle(obj.style);
+      updateStyle(state, obj.style);
 
       if (!state.hasStroke && !state.hasFill)
          return;
@@ -552,7 +536,7 @@ public class SVGAndroidRenderer
    {
 /**/Log.d(TAG, "Text render");
 
-      updateStyle(obj.style);
+      updateStyle(state, obj.style);
 
       if (obj.transform != null)
          canvas.concat(obj.transform);
@@ -589,7 +573,7 @@ public class SVGAndroidRenderer
 
          SVG.TSpan tspan = (SVG.TSpan) obj; 
 
-         updateStyle(tspan.style);
+         updateStyle(state, tspan.style);
 
          for (SVG.SvgObject child: tspan.children) {
             renderText(child, currentTextPosition);
@@ -654,7 +638,7 @@ public class SVGAndroidRenderer
           (height != null && height.isZero()))
          return;
 
-      updateStyle(obj.style);
+      updateStyle(state, obj.style);
 
       state.viewBox = obj.viewBox;
 
@@ -775,7 +759,7 @@ public class SVGAndroidRenderer
     * Updates the global style state with the style defined by the current object.
     * Will also update the current paints etc where appropriate.
     */
-   private void updateStyle(Style style)
+   private void updateStyle(RendererState state, Style style)
    {
       // Some style attributes don't inherit, so first, lets reset those
       state.style.resetNonInheritingProperties();
@@ -1501,19 +1485,18 @@ public class SVGAndroidRenderer
       float _markerWidth = (marker.markerWidth != null) ? marker.markerWidth.floatValueX(this) : 3f;
       float _markerHeight = (marker.markerHeight != null) ? marker.markerHeight.floatValueY(this) : 3f;
       
-      // We now do a simplified version of calculateViewBoxTransform().  Although the spec suggests that
-      // we honour the alignment setting, we can't actually do that because the fact that refX and refY
-      // have to be aligned with the marker position overrides that.
+      // We now do a simplified version of calculateViewBoxTransform().  For now we will
+      // ignore the alignment setting because refX and refY have to be aligned with the
+      // marker position, and alignment would complicate the calculations.
+      Box   _viewBox = (marker.viewBox != null) ? marker.viewBox : state.viewPort;
       float xScale, yScale;
-      if (marker.viewBox != null) {
-         xScale = _markerWidth / marker.viewBox.width;
-         yScale = _markerHeight / marker.viewBox.height;
-      } else {
-         xScale = _markerWidth / state.viewPort.width;
-         yScale = _markerHeight / state.viewPort.height;
-      }
+
+      xScale = _markerWidth / _viewBox.width;
+      yScale = _markerHeight / _viewBox.height;
+
       // If we are keeping aspect ratio, then set both scales to the appropriate value depending on 'slice'
-      if (marker.preserveAspectRatioAlignment != AspectRatioAlignment.none)
+      AspectRatioAlignment  align = (marker.preserveAspectRatioAlignment != null) ? marker.preserveAspectRatioAlignment :  AspectRatioAlignment.xMidYMid;
+      if (align != AspectRatioAlignment.none)
       {
          float  aspectScale = (marker.preserveAspectRatioSlice) ? Math.max(xScale,  yScale) : Math.min(xScale,  yScale);
          xScale = yScale = aspectScale;
@@ -1521,22 +1504,91 @@ public class SVGAndroidRenderer
 
       //m.preTranslate(viewPort.minX, viewPort.minY);
       m.preTranslate(-_refX * xScale, -_refY * yScale);
-      m.preScale(xScale, yScale);
+      canvas.concat(m);
 
+      if (!state.style.overflow) {
+         // Now we need to take account of alignment setting, because it affects the
+         // size and position of the clip rectangle.
+         float  imageW = _viewBox.width * xScale;
+         float  imageH = _viewBox.height * yScale;
+         float  xOffset = 0f;
+         float  yOffset = 0f;
+         switch (align)
+         {
+            case xMidYMin:
+            case xMidYMid:
+            case xMidYMax:
+               xOffset -= (_markerWidth - imageW) / 2;
+               break;
+            case xMaxYMin:
+            case xMaxYMid:
+            case xMaxYMax:
+               xOffset -= (_markerWidth - imageW);
+               break;
+            default:
+               // nothing to do 
+               break;
+         }
+         // Determine final Y position
+         switch (align)
+         {
+            case xMinYMid:
+            case xMidYMid:
+            case xMaxYMid:
+               yOffset -= (_markerHeight - imageH) / 2;
+               break;
+            case xMinYMax:
+            case xMidYMax:
+            case xMaxYMax:
+               yOffset -= (_markerHeight - imageH);
+               break;
+            default:
+               // nothing to do 
+               break;
+         }
+         canvas.clipRect(xOffset, yOffset, xOffset+_markerWidth, yOffset+_markerHeight);
+      }
+
+      m.reset();
+      m.preScale(xScale, yScale);
       canvas.concat(m);
 
       // "Properties inherit into the <marker> element from its ancestors; properties do not
       // inherit from the element referencing the <marker> element." (sect 11.6.2)
-      // We do not (yet/ever?) have a mechanism for this, so a simple copy of style is the
-      // best we can manage for now.
-      state.resetStyle();
-      updateStyle(marker.style);
+      state = findInheritFromAncestorState(marker);
 
       for (SVG.SvgObject child: marker.children) {
          render(child);
       }
 
       statePop();
+   }
+
+
+   /*
+    * Determine an elements style based on it's ancestors in the tree rather than
+    * it's render time ancestors.
+    */
+   private RendererState  findInheritFromAncestorState(SvgObject obj)
+   {
+      List<Style>    styles = new ArrayList<Style>();
+
+      // Traverse up the document tree adding element styles to a list.
+      while (true) {
+         if (obj instanceof SvgElement) {
+            styles.add(0, ((SvgElement) obj).style);
+         }
+         if (obj.parent == null)
+            break;
+         obj = obj.parent;
+      }
+      
+      // Now apply the ancestor styles in reverse order to a fresh RendererState object
+      RendererState  newState = new RendererState();
+      for (Style style: styles)
+         updateStyle(newState, style);
+      
+      return newState;
    }
 
 
