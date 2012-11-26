@@ -80,6 +80,7 @@ public class SVGParser extends DefaultHandler
       cx, cy,
       fx, fy,
       d,
+      display,
       fill,
       fill_rule,
       fill_opacity,
@@ -128,7 +129,8 @@ public class SVGParser extends DefaultHandler
       x, y,
       x1, y1,
       x2, y2,
-      unsupported;
+      visibility,
+      UNSUPPORTED;
 
       public static SVGAttr  fromString(String str)
       {
@@ -138,7 +140,7 @@ public class SVGParser extends DefaultHandler
          } 
          catch (Exception e)
          {
-            return unsupported;
+            return UNSUPPORTED;
          }
       }
 
@@ -148,6 +150,11 @@ public class SVGParser extends DefaultHandler
    // Special attribute keywords
    private static final String  NONE = "none";
    private static final String  CURRENTCOLOR = "currentColor";
+
+   private static final String VALID_DISPLAY_VALUES = "|inline|block|list-item|run-in|compact|marker|table|inline-table"+
+                                                      "|table-row-group|table-header-group|table-footer-group|table-row"+
+                                                      "|table-column-group|table-column|table-cell|table-caption|none|";
+   private static final String VALID_VISIBILITY_VALUES = "|visible|hidden|collapse|";
 
 
    private static HashMap<String, Integer> colourKeywords = new HashMap<String, Integer>();
@@ -2007,6 +2014,28 @@ dumpNode(svgDocument.getRootElement(), "");
             }
             obj.style.markerEnd = parseFunctionalIRI(val, localName);
             obj.style.specifiedFlags |= SVG.SPECIFIED_MARKER_END;
+            break;
+
+         case display:
+            if (inherit) {
+               //setInherit(obj, SVG.SPECIFIED_DISPLAY);
+               break;
+            }
+            if (val.indexOf('|') >= 0 || (VALID_DISPLAY_VALUES.indexOf('|'+val+'|') == -1))
+               throw new SAXException("Invalid value for \"display\" attribute: "+val);
+            obj.style.display = !val.equals("none");
+            obj.style.specifiedFlags |= SVG.SPECIFIED_DISPLAY;
+            break;
+
+         case visibility:
+            if (inherit) {
+               //setInherit(obj, SVG.SPECIFIED_VISIBILITY);
+               break;
+            }
+            if (val.indexOf('|') >= 0 || (VALID_VISIBILITY_VALUES.indexOf('|'+val+'|') == -1))
+               throw new SAXException("Invalid value for \"visibility\" attribute: "+val);
+            obj.style.visibility = val.equals("visible");
+            obj.style.specifiedFlags |= SVG.SPECIFIED_VISIBILITY;
             break;
 
          default:

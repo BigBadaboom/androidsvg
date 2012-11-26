@@ -10,7 +10,7 @@
   <g transform="translate(200,50)" stroke-width="2">
     <switch>
        <rect x="0" y="0" width="200" height="100" fill="red" requiredFeatures="bogus" />
-       <rect x="0" y="0" width="200" height="100" fill="orange" requiredFeatures="http://www.w3.org/TR/SVG11/feature#CoreAttribute" />
+       <rect x="0" y="0" width="200" height="100" fill="orange" requiredFeatures="http://www.w3.org/TR/SVG11/feature#BadName" />
        <rect x="0" y="0" width="200" height="100" fill="green" />
     </switch>
   </g>

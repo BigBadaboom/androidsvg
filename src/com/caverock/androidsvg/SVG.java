@@ -144,6 +144,8 @@ public class SVG
    public static final long SPECIFIED_MARKER_START      = (1<<21);
    public static final long SPECIFIED_MARKER_MID        = (1<<22);
    public static final long SPECIFIED_MARKER_END        = (1<<23);
+   public static final long SPECIFIED_DISPLAY           = (1<<24);
+   public static final long SPECIFIED_VISIBILITY        = (1<<25);
 
    public static final long SPECIFIED_ALL = 0xffffffff;
 
@@ -185,6 +187,9 @@ public class SVG
       public String     markerStart;
       public String     markerMid;
       public String     markerEnd;
+      
+      public Boolean    display;    // true if we should display
+      public Boolean    visibility; // true if visible
 
       
       public enum FillRule
@@ -250,6 +255,8 @@ public class SVG
          def.markerStart = null;
          def.markerMid = null;
          def.markerEnd = null;
+         def.display = Boolean.TRUE;
+         def.visibility = Boolean.TRUE;
          return def;
       }
 

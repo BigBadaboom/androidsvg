@@ -51,6 +51,10 @@ public class SVGAndroidRenderer
       public SVG.Box  viewPort;
       public SVG.Box  viewBox;
 
+      // Set when we are about to render an object by reference rather than directly. Eg. via <use>.
+      public boolean  overrideDisplay;
+
+
       public RendererState()
       {
          fillPaint = new Paint();
@@ -92,7 +96,7 @@ public class SVGAndroidRenderer
    /**
     * Create a new renderer instance.
     *
-    * @param canvas The canvase to draw to.
+    * @param canvas The canvas to draw to.
     * @param viewPort The default viewport to be rendered into. For example the dimensions of the bitmap.
     * @param dpi The DPI setting to use when converting real-world units such as centimetres.
     */
@@ -158,6 +162,9 @@ public class SVGAndroidRenderer
 
    public void  render(SVG.SvgObject obj)
    {
+      if (!display(obj))
+         return;
+
       // Save state
       statePush();
 
@@ -262,7 +269,7 @@ public class SVGAndroidRenderer
       }
 
       for (SVG.SvgObject child: obj.children) {
-         render(child);
+         render((SvgElement) child);
       }
    }
 
@@ -277,7 +284,7 @@ public class SVGAndroidRenderer
       }
 
       for (SVG.SvgObject child: obj.children) {
-         render(child);
+         render((SvgElement) child);
       }
    }
 
@@ -306,7 +313,7 @@ public class SVGAndroidRenderer
 
       if (ref instanceof SVG.Svg) {
          render((SVG.Svg) ref, obj.width, obj.height);
-      } else if (ref instanceof SVG.Symbol){
+      } else if (ref instanceof SVG.Symbol) {
          render((SVG.Symbol) ref, obj.width, obj.height);
       } else {
          render(ref);
@@ -321,6 +328,8 @@ public class SVGAndroidRenderer
 
       updateStyle(state, obj.style);
 
+      if (!visible())
+         return;
       if (!state.hasStroke && !state.hasFill)
          return;
 
@@ -347,6 +356,9 @@ public class SVGAndroidRenderer
          return;
 
       updateStyle(state, obj.style);
+
+      if (!visible())
+         return;
 
       if (obj.transform != null)
          canvas.concat(obj.transform);
@@ -396,6 +408,9 @@ public class SVGAndroidRenderer
 
       updateStyle(state, obj.style);
 
+      if (!visible())
+         return;
+
       if (obj.transform != null)
          canvas.concat(obj.transform);
 
@@ -421,6 +436,9 @@ public class SVGAndroidRenderer
          return;
 
       updateStyle(state, obj.style);
+
+      if (!visible())
+         return;
 
       if (obj.transform != null)
          canvas.concat(obj.transform);
@@ -448,6 +466,8 @@ public class SVGAndroidRenderer
 
       updateStyle(state, obj.style);
 
+      if (!visible())
+         return;
       if (!state.hasStroke)
          return;
 
@@ -470,6 +490,8 @@ public class SVGAndroidRenderer
 
       updateStyle(state, obj.style);
 
+      if (!visible())
+         return;
       if (!state.hasStroke)
          return;
 
@@ -495,6 +517,8 @@ public class SVGAndroidRenderer
 
       updateStyle(state, obj.style);
 
+      if (!visible())
+         return;
       if (!state.hasStroke && !state.hasFill)
          return;
 
@@ -565,6 +589,9 @@ public class SVGAndroidRenderer
 
    public void  renderText(SVG.SvgObject obj, TextRenderContext currentTextPosition)
    {
+      if (!display(obj))
+         return;
+
       if (obj instanceof SVG.TSpan)
       {
 /**/Log.d(TAG, "TSpan render");
@@ -585,7 +612,8 @@ public class SVGAndroidRenderer
       else if  (obj instanceof SVG.TextSequence)
       {
 /**/Log.d(TAG, "TextSequence render");
-         drawText(((SVG.TextSequence) obj).text, currentTextPosition);
+         String  text = ((SVG.TextSequence) obj).text;
+         drawText(text, currentTextPosition);
       }
       else if  (obj instanceof SVG.TRef)
       {
@@ -594,15 +622,18 @@ public class SVGAndroidRenderer
    }
 
 
-   private void drawText(String ts, TextRenderContext currentTextPosition)
+   private void drawText(String text, TextRenderContext currentTextPosition)
    {
-      if (state.hasFill)
-         canvas.drawText(ts, currentTextPosition.x, currentTextPosition.y, state.fillPaint);
-      if (state.hasStroke)
-         canvas.drawText(ts, currentTextPosition.x, currentTextPosition.y, state.strokePaint);
+      if (visible())
+      {
+         if (state.hasFill)
+            canvas.drawText(text, currentTextPosition.x, currentTextPosition.y, state.fillPaint);
+         if (state.hasStroke)
+            canvas.drawText(text, currentTextPosition.x, currentTextPosition.y, state.strokePaint);
+      }
 
       // Update the current text position
-      currentTextPosition.x += state.fillPaint.measureText(ts);
+      currentTextPosition.x += state.fillPaint.measureText(text);
    }
 
 
@@ -620,6 +651,9 @@ public class SVGAndroidRenderer
    {
       for (SVG.SvgObject child: parent.children)
       {
+         if (!display(child))
+            continue;
+
          if (child instanceof TextContainer) {
             runningTotal = sumChildWidths((TextContainer) child, runningTotal);
          } else if (child instanceof TextSequence) {
@@ -661,6 +695,27 @@ public class SVGAndroidRenderer
 
 
    // ==============================================================================
+
+
+   private boolean  display(SvgObject obj)
+   {
+      if (!(obj instanceof SvgElement))
+         return true;
+      if (state.overrideDisplay)
+         return true;
+      SvgElement  elem = (SvgElement) obj;
+      if (elem.style.display != null)
+        return elem.style.display;
+      return true;
+   }
+
+
+   private boolean  visible()
+   {
+      if (state.style.visibility != null)
+        return state.style.visibility;
+      return true;
+   }
 
 
    /*
@@ -992,6 +1047,16 @@ public class SVGAndroidRenderer
       if (isSpecified(style, SVG.SPECIFIED_MARKER_END))
       {
          state.style.markerEnd = style.markerEnd;
+      }
+
+      if (isSpecified(style, SVG.SPECIFIED_DISPLAY))
+      {
+         state.style.display = style.display;
+      }
+
+      if (isSpecified(style, SVG.SPECIFIED_VISIBILITY))
+      {
+         state.style.visibility = style.visibility;
       }
 
    }
@@ -1431,6 +1496,9 @@ public class SVGAndroidRenderer
       int  markerCount = markers.size();
       if (markerCount == 0)
          return;
+
+      // Tell children (markers) that they are being indirectly rendered
+      state.overrideDisplay = true;
 
       // We don't want the markers to inherit themselves as markers, otherwise we get infinite recursion. 
       state.style.markerStart = state.style.markerMid = state.style.markerEnd = null;
