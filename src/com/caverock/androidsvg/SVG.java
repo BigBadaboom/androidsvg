@@ -651,7 +651,7 @@ public class SVG
    }
 
 
-   protected static class TRef extends SvgElement
+   protected static class TRef extends SvgConditionalElement
    {
       String href;
    }

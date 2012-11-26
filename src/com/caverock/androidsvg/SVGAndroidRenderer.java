@@ -543,6 +543,9 @@ public class SVGAndroidRenderer
    }
 
 
+   // ==============================================================================
+
+
    private static class TextRenderContext
    {
       float x;
@@ -609,15 +612,33 @@ public class SVGAndroidRenderer
          // Restore state
          statePop();
       }
+      else if  (obj instanceof SVG.TRef)
+      {
+         // Save state
+         statePush();
+
+         SVG.TRef tref = (SVG.TRef) obj; 
+
+         updateStyle(state, tref.style);
+
+         // Locate the referenced object
+         SVG.SvgObject  ref = obj.document.resolveIRI(tref.href);
+         if (ref != null && (ref instanceof TextContainer))
+         {
+            StringBuilder  str = new StringBuilder();
+            extractRawText((TextContainer) ref, str);
+            if (str.length() > 0)
+               drawText(str.toString(), currentTextPosition);
+         }
+
+         // Restore state
+         statePop();
+      }
       else if  (obj instanceof SVG.TextSequence)
       {
 /**/Log.d(TAG, "TextSequence render");
          String  text = ((SVG.TextSequence) obj).text;
          drawText(text, currentTextPosition);
-      }
-      else if  (obj instanceof SVG.TRef)
-      {
-         // TODO
       }
    }
 
@@ -663,6 +684,25 @@ public class SVGAndroidRenderer
       return runningTotal;
    }
  
+
+   /*
+    * Extract the raw text from a TextContainer. Used by <trref> handler code.
+    */
+   private void  extractRawText(TextContainer parent, StringBuilder str)
+   {
+      for (SVG.SvgObject child: parent.children)
+      {
+         if (child instanceof TextContainer) {
+            extractRawText((TextContainer) child, str);
+         } else if (child instanceof TextSequence) {
+            str.append(((TextSequence) child).text);
+         }
+      }
+   }
+ 
+
+   // ==============================================================================
+
 
    private void render(SVG.Symbol obj, SVG.Length width, SVG.Length height)
    {

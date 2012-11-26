@@ -53,6 +53,7 @@ public class SVGParser extends DefaultHandler
    // Define SVG tags
    private static final String  TAG_SVG            = "svg";
    private static final String  TAG_CIRCLE         = "circle";
+   private static final String  TAG_CLIPPATH       = "clipPath";
    private static final String  TAG_DEFS           = "defs";
    private static final String  TAG_ELLIPSE        = "ellipse";
    private static final String  TAG_G              = "g";
@@ -378,7 +379,7 @@ public class SVGParser extends DefaultHandler
       supportedFeatures.add("BasicPaintAttribute");         // YES (except color-rendering)
       supportedFeatures.add("OpacityAttribute");            // YES
       //supportedFeatures.add("GraphicsAttribute");         // NO     
-      //supportedFeatures.add("BasicGraphicsAttribute");    // NYI
+      supportedFeatures.add("BasicGraphicsAttribute");      // YES
       supportedFeatures.add("Marker");                      // YES
       //supportedFeatures.add("ColorProfile");              // NO
       //supportedFeatures.add("Gradient");                  // NYI
@@ -483,6 +484,8 @@ public class SVGParser extends DefaultHandler
          text(attributes);
       } else if (localName.equalsIgnoreCase(TAG_TSPAN)) {
          tspan(attributes);
+      } else if (localName.equalsIgnoreCase(TAG_TREF)) {
+         tref(attributes);
       } else if (localName.equalsIgnoreCase(TAG_SWITCH)) {
          zwitch(attributes);
       } else if (localName.equalsIgnoreCase(TAG_SYMBOL)) {
@@ -1181,9 +1184,49 @@ dumpNode(svgDocument.getRootElement(), "");
       obj.parent = currentElement;
       parseAttributesCore(obj, attributes);
       parseAttributesStyle(obj, attributes);
+      parseAttributesConditional(obj, attributes);
       parseAttributesText(obj, attributes);
       currentElement.addChild(obj);
       currentElement = obj;
+   }
+
+
+   //=========================================================================
+   // <tref> group element
+
+
+   private void  tref(Attributes attributes) throws SAXException
+   {
+/**/Log.d(TAG, "<tref>");
+      if (currentElement == null)
+         throw new SAXException("Invalid document. Root element must be <svg>");
+      SVG.TRef  obj = new SVG.TRef();
+      obj.document = svgDocument;
+      obj.parent = currentElement;
+      parseAttributesCore(obj, attributes);
+      parseAttributesStyle(obj, attributes);
+      parseAttributesConditional(obj, attributes);
+      parseAttributesTRef(obj, attributes);
+      currentElement.addChild(obj);
+   }
+
+
+   private void  parseAttributesTRef(SVG.TRef obj, Attributes attributes) throws SAXException
+   {
+      for (int i=0; i<attributes.getLength(); i++)
+      {
+         String val = attributes.getValue(i).trim();
+         switch (SVGAttr.fromString(attributes.getLocalName(i)))
+         {
+            case href:
+               if (!XLINK_NAMESPACE.equals(attributes.getURI(i)))
+                  break;
+               obj.href = val;
+               break;
+            default:
+               break;
+         }
+      }
    }
 
 
