@@ -21,12 +21,12 @@ import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
 
 import android.graphics.Matrix;
-import android.graphics.Path;
 import android.util.Log;
 
 import com.caverock.androidsvg.SVG.Box;
 import com.caverock.androidsvg.SVG.Colour;
 import com.caverock.androidsvg.SVG.CurrentColor;
+import com.caverock.androidsvg.SVG.GradientSpread;
 import com.caverock.androidsvg.SVG.Length;
 import com.caverock.androidsvg.SVG.Style;
 import com.caverock.androidsvg.SVG.SvgElement;
@@ -60,7 +60,9 @@ public class SVGParser extends DefaultHandler
    private static final String  TAG_LINE           = "line";
    private static final String  TAG_LINEARGRADIENT = "linearGradient";
    private static final String  TAG_MARKER         = "marker";
+   private static final String  TAG_MASK           = "mask";
    private static final String  TAG_PATH           = "path";
+   private static final String  TAG_PATTERN        = "pattern";
    private static final String  TAG_POLYGON        = "polygon";
    private static final String  TAG_POLYLINE       = "polyline";
    private static final String  TAG_RADIALGRADIENT = "radialGradient";
@@ -77,6 +79,7 @@ public class SVGParser extends DefaultHandler
    // Supported SVG attributes
    private enum  SVGAttr
    {
+      clip,
       color,
       cx, cy,
       fx, fy,
@@ -91,6 +94,7 @@ public class SVGParser extends DefaultHandler
       font_style,
       // font, font_size_adjust, font_stretch, font_variant,  
       gradientTransform,
+      gradientUnits,
       height,
       href,
       id,
@@ -112,6 +116,7 @@ public class SVGParser extends DefaultHandler
       refY,
       requiredFeatures, requiredExtensions,
       rx, ry,
+      spreadMethod,
       stroke,
       stroke_dasharray,
       stroke_dashoffset,
@@ -139,7 +144,7 @@ public class SVGParser extends DefaultHandler
          {
             return valueOf(str.replace('-', '_'));
          } 
-         catch (Exception e)
+         catch (IllegalArgumentException e)
          {
             return UNSUPPORTED;
          }
@@ -492,6 +497,10 @@ public class SVGParser extends DefaultHandler
          symbol(attributes);
       } else if (localName.equalsIgnoreCase(TAG_MARKER)) {
          marker(attributes);
+      } else if (localName.equalsIgnoreCase(TAG_LINEARGRADIENT)) {
+         lineargradient(attributes);
+      } else if (localName.equalsIgnoreCase(TAG_RADIALGRADIENT)) {
+         radialgradient(attributes);
       }
    }
 
@@ -1391,7 +1400,7 @@ dumpNode(svgDocument.getRootElement(), "");
                if ("strokeWidth".equals(val)) {
                   obj.markerUnitsAreUser = false;
                } else if ("userSpaceOnUse".equals(val)) {
-                  obj.markerUnitsAreUser = false;
+                  obj.markerUnitsAreUser = true;
                } 
                break;
             case orient:
@@ -1400,6 +1409,144 @@ dumpNode(svgDocument.getRootElement(), "");
                } else {
                   obj.orient = parseFloat(val);
                }
+               break;
+            default:
+               break;
+         }
+      }
+   }
+
+
+   //=========================================================================
+   // <linearGradient> element
+
+
+   private void  lineargradient(Attributes attributes) throws SAXException
+   {
+/**/Log.d(TAG, "<marker>");
+      if (currentElement == null)
+         throw new SAXException("Invalid document. Root element must be <svg>");
+      SVG.LinearGradient  obj = new SVG.LinearGradient();
+      obj.document = svgDocument;
+      obj.parent = currentElement;
+      parseAttributesCore(obj, attributes);
+      parseAttributesStyle(obj, attributes);
+      parseAttributesGradient(obj, attributes);
+      parseAttributesLinearGradient(obj, attributes);
+      currentElement.addChild(obj);
+//      currentElement = obj;
+   }
+
+
+   private void  parseAttributesGradient(SVG.GradientElement obj, Attributes attributes) throws SAXException
+   {
+      for (int i=0; i<attributes.getLength(); i++)
+      {
+         String val = attributes.getValue(i).trim();
+         switch (SVGAttr.fromString(attributes.getLocalName(i)))
+         {
+            case gradientUnits:
+               if ("objectBoundingBox".equals(val)) {
+                  obj.gradientUnitsAreUser = false;
+               } else if ("userSpaceOnUse".equals(val)) {
+                  obj.gradientUnitsAreUser = true;
+               } 
+               break;
+            case gradientTransform:
+               obj.gradientTransform = parseTransformList(val);
+               break;
+            case spreadMethod:
+               try
+               {
+                  obj.spreadMethod = GradientSpread.valueOf(val);
+               } 
+               catch (IllegalArgumentException e)
+               {
+                  throw new SAXException("Invalid spreadMethod attribute. \""+val+"\" is not a valid value.");
+               }
+               break;
+            case href:
+               if (!XLINK_NAMESPACE.equals(attributes.getURI(i)))
+                  break;
+               obj.href = val;
+               break;
+            default:
+               break;
+         }
+      }
+   }
+
+
+   private void  parseAttributesLinearGradient(SVG.LinearGradient obj, Attributes attributes) throws SAXException
+   {
+      for (int i=0; i<attributes.getLength(); i++)
+      {
+         String val = attributes.getValue(i).trim();
+         switch (SVGAttr.fromString(attributes.getLocalName(i)))
+         {
+            case x1:
+               obj.x1 = parseLength(val);
+               break;
+            case y1:
+               obj.y1 = parseLength(val);
+               break;
+            case x2:
+               obj.x2 = parseLength(val);
+               break;
+            case y2:
+               obj.y2 = parseLength(val);
+               break;
+            default:
+               break;
+         }
+      }
+   }
+
+
+   //=========================================================================
+   // <linearGradient> element
+
+
+   private void  radialgradient(Attributes attributes) throws SAXException
+   {
+/**/Log.d(TAG, "<marker>");
+      if (currentElement == null)
+         throw new SAXException("Invalid document. Root element must be <svg>");
+      SVG.RadialGradient  obj = new SVG.RadialGradient();
+      obj.document = svgDocument;
+      obj.parent = currentElement;
+      parseAttributesCore(obj, attributes);
+      parseAttributesStyle(obj, attributes);
+      parseAttributesGradient(obj, attributes);
+      parseAttributesRadialGradient(obj, attributes);
+      currentElement.addChild(obj);
+//      currentElement = obj;
+   }
+
+
+   private void  parseAttributesRadialGradient(SVG.RadialGradient obj, Attributes attributes) throws SAXException
+   {
+      for (int i=0; i<attributes.getLength(); i++)
+      {
+         String val = attributes.getValue(i).trim();
+         switch (SVGAttr.fromString(attributes.getLocalName(i)))
+         {
+            case cx:
+               obj.cx = parseLength(val);
+               break;
+            case cy:
+               obj.cy = parseLength(val);
+               break;
+            case r:
+               obj.r = parseLength(val);
+               if (obj.r.isNegative())
+                  throw new SAXException("Invalid <radialGradient> element. r cannot be negative");
+               break;
+            case fx:
+               obj.fx = parseLength(val);
+               break;
+            case fy:
+               obj.fy = parseLength(val);
                break;
             default:
                break;
@@ -2081,6 +2228,17 @@ dumpNode(svgDocument.getRootElement(), "");
             obj.style.specifiedFlags |= SVG.SPECIFIED_VISIBILITY;
             break;
 
+         /*
+         case clip:
+            if (inherit) {
+               //setInherit(obj, SVG.SPECIFIED_CLIP);
+               break;
+            }
+            obj.style.clip = parseClip(val);
+            obj.style.specifiedFlags |= SVG.SPECIFIED_CLIP;
+            break;
+         */
+
          default:
             break;
       }
@@ -2122,121 +2280,127 @@ dumpNode(svgDocument.getRootElement(), "");
       {
          if (SVGAttr.fromString(attributes.getLocalName(i)) == SVGAttr.transform)
          {
-            Matrix  matrix = new Matrix();
-
-            String  val = attributes.getValue(i);
-            TextScanner  scan = new TextScanner(val);
-            scan.skipWhitespace();
-
-            while (!scan.empty())
-            {
-               String  cmd = scan.nextFunction();
-
-               if (cmd.equals("matrix("))
-               {
-                  scan.skipWhitespace();
-                  Float a = scan.nextFloat();
-                  scan.skipCommaWhitespace();
-                  Float b = scan.nextFloat();
-                  scan.skipCommaWhitespace();
-                  Float c = scan.nextFloat();
-                  scan.skipCommaWhitespace();
-                  Float d = scan.nextFloat();
-                  scan.skipCommaWhitespace();
-                  Float e = scan.nextFloat();
-                  scan.skipCommaWhitespace();
-                  Float f = scan.nextFloat();
-                  scan.skipWhitespace();
-
-                  if (f == null || !scan.consume(')'))
-                     throw new SAXException("Invalid transform list: "+val);
-
-                  Matrix m = new Matrix();
-                  m.setValues(new float[] {a, c, e, b, d, f, 0, 0, 1});
-                  matrix.preConcat(m);
-               }
-               else if (cmd.equals("translate("))
-               {
-                  scan.skipWhitespace();
-                  Float  tx = scan.nextFloat();
-                  Float  ty = scan.possibleNextFloat();
-                  scan.skipWhitespace();
-
-                  if (tx == null || !scan.consume(')'))
-                     throw new SAXException("Invalid transform list: "+val);
-
-                  if (ty == null)
-                     matrix.preTranslate(tx, 0f);
-                  else
-                     matrix.preTranslate(tx, ty);
-               }
-               else if (cmd.equals("scale("))
-               {
-                  scan.skipWhitespace();
-                  Float  sx = scan.nextFloat();
-                  Float  sy = scan.possibleNextFloat();
-                  scan.skipWhitespace();
-
-                  if (sx == null || !scan.consume(')'))
-                     throw new SAXException("Invalid transform list: "+val);
-
-                  if (sy == null)
-                     matrix.preScale(sx, sx);
-                  else
-                     matrix.preScale(sx, sy);
-               }
-               else if (cmd.equals("rotate("))
-               {
-                  scan.skipWhitespace();
-                  Float  ang = scan.nextFloat();
-                  Float  cx = scan.possibleNextFloat();
-                  Float  cy = scan.possibleNextFloat();
-                  scan.skipWhitespace();
-
-                  if (ang == null || !scan.consume(')'))
-                     throw new SAXException("Invalid transform list: "+val);
-
-                  if (cx == null) {
-                     matrix.preRotate(ang);
-                  } else if (cy != null) {
-                     matrix.preRotate(ang, cx, cy);
-                  } else {
-                     throw new SAXException("Invalid transform list: "+val);
-                  }
-               }
-               else if (cmd.equals("skewX("))
-               {
-                  scan.skipWhitespace();
-                  Float  ang = scan.nextFloat();
-                  scan.skipWhitespace();
-
-                  if (ang == null || !scan.consume(')'))
-                     throw new SAXException("Invalid transform list: "+val);
-
-                  matrix.preSkew((float) Math.tan(Math.toRadians(ang)), 0f);
-               }
-               else if (cmd.equals("skewY("))
-               {
-                  scan.skipWhitespace();
-                  Float  ang = scan.nextFloat();
-                  scan.skipWhitespace();
-
-                  if (ang == null || !scan.consume(')'))
-                     throw new SAXException("Invalid transform list: "+val);
-
-                  matrix.preSkew(0f, (float) Math.tan(Math.toRadians(ang)));
-               }
-               else if (cmd != null) {
-                  throw new SAXException("Invalid transform list fn: "+cmd+")");
-               }
-
-               if (scan.empty())
-                  break;
-               scan.skipCommaWhitespace();
-            }
-            obj.setTransform(matrix);
+            obj.setTransform( parseTransformList(attributes.getValue(i)) );
          }
       }
+   }
+
+
+   private Matrix  parseTransformList(String val) throws SAXException
+   {
+      Matrix  matrix = new Matrix();
+
+      TextScanner  scan = new TextScanner(val);
+      scan.skipWhitespace();
+
+      while (!scan.empty())
+      {
+         String  cmd = scan.nextFunction();
+
+         if (cmd.equals("matrix("))
+         {
+            scan.skipWhitespace();
+            Float a = scan.nextFloat();
+            scan.skipCommaWhitespace();
+            Float b = scan.nextFloat();
+            scan.skipCommaWhitespace();
+            Float c = scan.nextFloat();
+            scan.skipCommaWhitespace();
+            Float d = scan.nextFloat();
+            scan.skipCommaWhitespace();
+            Float e = scan.nextFloat();
+            scan.skipCommaWhitespace();
+            Float f = scan.nextFloat();
+            scan.skipWhitespace();
+
+            if (f == null || !scan.consume(')'))
+               throw new SAXException("Invalid transform list: "+val);
+
+            Matrix m = new Matrix();
+            m.setValues(new float[] {a, c, e, b, d, f, 0, 0, 1});
+            matrix.preConcat(m);
+         }
+         else if (cmd.equals("translate("))
+         {
+            scan.skipWhitespace();
+            Float  tx = scan.nextFloat();
+            Float  ty = scan.possibleNextFloat();
+            scan.skipWhitespace();
+
+            if (tx == null || !scan.consume(')'))
+               throw new SAXException("Invalid transform list: "+val);
+
+            if (ty == null)
+               matrix.preTranslate(tx, 0f);
+            else
+               matrix.preTranslate(tx, ty);
+         }
+         else if (cmd.equals("scale("))
+         {
+            scan.skipWhitespace();
+            Float  sx = scan.nextFloat();
+            Float  sy = scan.possibleNextFloat();
+            scan.skipWhitespace();
+
+            if (sx == null || !scan.consume(')'))
+               throw new SAXException("Invalid transform list: "+val);
+
+            if (sy == null)
+               matrix.preScale(sx, sx);
+            else
+               matrix.preScale(sx, sy);
+         }
+         else if (cmd.equals("rotate("))
+         {
+            scan.skipWhitespace();
+            Float  ang = scan.nextFloat();
+            Float  cx = scan.possibleNextFloat();
+            Float  cy = scan.possibleNextFloat();
+            scan.skipWhitespace();
+
+            if (ang == null || !scan.consume(')'))
+               throw new SAXException("Invalid transform list: "+val);
+
+            if (cx == null) {
+               matrix.preRotate(ang);
+            } else if (cy != null) {
+               matrix.preRotate(ang, cx, cy);
+            } else {
+               throw new SAXException("Invalid transform list: "+val);
+            }
+         }
+         else if (cmd.equals("skewX("))
+         {
+            scan.skipWhitespace();
+            Float  ang = scan.nextFloat();
+            scan.skipWhitespace();
+
+            if (ang == null || !scan.consume(')'))
+               throw new SAXException("Invalid transform list: "+val);
+
+            matrix.preSkew((float) Math.tan(Math.toRadians(ang)), 0f);
+         }
+         else if (cmd.equals("skewY("))
+         {
+            scan.skipWhitespace();
+            Float  ang = scan.nextFloat();
+            scan.skipWhitespace();
+
+            if (ang == null || !scan.consume(')'))
+               throw new SAXException("Invalid transform list: "+val);
+
+            matrix.preSkew(0f, (float) Math.tan(Math.toRadians(ang)));
+         }
+         else if (cmd != null) {
+            throw new SAXException("Invalid transform list fn: "+cmd+")");
+         }
+
+         if (scan.empty())
+            break;
+         scan.skipCommaWhitespace();
+      }
+
+      return matrix;
    }
 
 

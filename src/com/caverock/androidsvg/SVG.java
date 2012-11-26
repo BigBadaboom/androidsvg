@@ -55,6 +55,14 @@ public class SVG
    }
 
 
+   public enum GradientSpread
+   {
+      pad,
+      reflect,
+      repeat
+   }
+
+
    protected SVG()
    {
    }
@@ -637,7 +645,7 @@ public class SVG
 
    protected static class TextSequence extends SvgObject
    {
-      String text;
+      public String text;
       
       public TextSequence(String text)
       {
@@ -653,7 +661,7 @@ public class SVG
 
    protected static class TRef extends SvgConditionalElement
    {
-      String href;
+      public String href;
    }
 
 
@@ -670,12 +678,48 @@ public class SVG
 
    protected static class Marker extends SvgViewBoxContainer
    {
-      public boolean              markerUnitsAreUser;
-      public Length               refX;
-      public Length               refY;
-      public Length               markerWidth;
-      public Length               markerHeight;
-      public Float                orient;
+      public boolean  markerUnitsAreUser;
+      public Length   refX;
+      public Length   refY;
+      public Length   markerWidth;
+      public Length   markerHeight;
+      public Float    orient;
+   }
+
+
+   protected static class GradientElement extends SvgElement
+   {
+      public boolean         gradientUnitsAreUser;
+      public Matrix          gradientTransform;
+      public GradientSpread  spreadMethod;
+      public String          href;
+
+      public List<GradientStop>  stops = new ArrayList<GradientStop>();
+   }
+
+
+   protected static class GradientStop extends SvgElement
+   {
+      public Float  offset;
+   }
+
+
+   protected static class LinearGradient extends GradientElement
+   {
+      public Length  x1;
+      public Length  y1;
+      public Length  x2;
+      public Length  y2;
+   }
+
+
+   protected static class RadialGradient extends GradientElement
+   {
+      public Length  cx;
+      public Length  cy;
+      public Length  r;
+      public Length  fx;
+      public Length  fy;
    }
 
 
