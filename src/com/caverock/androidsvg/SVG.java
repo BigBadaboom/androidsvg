@@ -8,6 +8,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import org.xml.sax.SAXException;
+
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.graphics.Canvas;
@@ -154,6 +156,8 @@ public class SVG
    public static final long SPECIFIED_MARKER_END        = (1<<23);
    public static final long SPECIFIED_DISPLAY           = (1<<24);
    public static final long SPECIFIED_VISIBILITY        = (1<<25);
+   public static final long SPECIFIED_STOP_COLOR        = (1<<26);
+   public static final long SPECIFIED_STOP_OPACITY      = (1<<27);
 
    public static final long SPECIFIED_ALL = 0xffffffff;
 
@@ -199,6 +203,9 @@ public class SVG
       public Boolean    display;    // true if we should display
       public Boolean    visibility; // true if visible
 
+      public SvgPaint   stopColor;
+      public Float      stopOpacity;
+
       
       public enum FillRule
       {
@@ -239,7 +246,7 @@ public class SVG
          Style  def = new Style();
          def.specifiedFlags = SPECIFIED_ALL;
          //def.inheritFlags = 0;
-         def.fill = new Colour(0);  // black
+         def.fill = Colour.BLACK;
          def.fillRule = FillRule.NonZero;
          def.fillOpacity = 1f;
          def.stroke = null;         // none
@@ -251,7 +258,7 @@ public class SVG
          def.strokeDashArray = null;
          def.strokeDashOffset = new Length(0f);
          def.opacity = 1f;
-         def.color = new Colour(0); // currentColor defaults to black
+         def.color = Colour.BLACK; // currentColor defaults to black
          def.fontFamily = null;
          def.fontSize = new Length(12, Unit.pt);
          def.fontWeight = "normal";
@@ -265,6 +272,8 @@ public class SVG
          def.markerEnd = null;
          def.display = Boolean.TRUE;
          def.visibility = Boolean.TRUE;
+         def.stopColor = Colour.BLACK;
+         def.stopOpacity = 1f;
          return def;
       }
 
@@ -305,6 +314,8 @@ public class SVG
    {
       public int colour;
       
+      public static final Colour BLACK = new Colour(0);  // Black singleton - a common default value.
+      
       public Colour(int val)
       {
          this.colour = val;
@@ -328,6 +339,22 @@ public class SVG
       public static CurrentColor  getInstance()
       {
          return instance;
+      }
+   }
+
+
+   protected static class PaintReference extends SvgPaint
+   {
+      public String  href;
+      
+      public PaintReference(String href)
+      {
+         this.href = href;
+      }
+      
+      public String toString()
+      {
+         return href;
       }
    }
 
@@ -468,8 +495,8 @@ public class SVG
    // Any object that can be part of the tree
    protected static class SvgObject
    {
-      public SVG          document;
-      public SvgContainer parent;
+      public SVG           document;
+      public SvgContainer  parent;
 
       public String  toString()
       {
@@ -487,22 +514,53 @@ public class SVG
 
 
    // Any element that can appear inside a <switch> element.
-   protected static abstract class SvgConditionalElement extends SvgElement
+   protected interface SvgConditional
+   {
+      public void  setRequiredFeatures(Set<String> features);
+      public void  setRequiredExtensions(String extensions);
+      public void  setSystemLanguage(Set<String> languages);
+   }
+
+
+   // Any element that can appear inside a <switch> element.
+   protected static class  SvgConditionalElement extends SvgElement implements SvgConditional
    {
       public Set<String>  requiredFeatures = null;
       public String       requiredExtensions = null;
       public Set<String>  systemLanguage = null;
+
+      @Override
+      public void setRequiredFeatures(Set<String> features) { this.requiredFeatures = features; }
+      @Override
+      public void setRequiredExtensions(String extensions) { this.requiredExtensions = extensions; }
+      @Override
+      public void setSystemLanguage(Set<String> languages) { this.systemLanguage = languages; }
    }
 
 
-   protected static class SvgContainer extends SvgConditionalElement
+   protected static class SvgContainer extends SvgElement
    {
       public List<SvgObject> children = new ArrayList<SvgObject>();
 
-      public void addChild(SvgObject elem)
+      public void addChild(SvgObject elem) throws SAXException
       {
          children.add(elem);
       }
+   }
+
+
+   protected static class SvgConditionalContainer extends SvgContainer implements SvgConditional
+   {
+      public Set<String>  requiredFeatures = null;
+      public String       requiredExtensions = null;
+      public Set<String>  systemLanguage = null;
+
+      @Override
+      public void setRequiredFeatures(Set<String> features) { this.requiredFeatures = features; }
+      @Override
+      public void setRequiredExtensions(String extensions) { this.requiredExtensions = extensions; }
+      @Override
+      public void setSystemLanguage(Set<String> languages) { this.systemLanguage = languages; }
    }
 
 
@@ -512,7 +570,7 @@ public class SVG
    }
 
 
-   protected static class SvgViewBoxContainer extends SvgContainer
+   protected static class SvgViewBoxContainer extends SvgConditionalContainer
    {
       public Box                  viewBox;
       public AspectRatioAlignment preserveAspectRatioAlignment = null;
@@ -530,7 +588,7 @@ public class SVG
 
 
    // An SVG element that can contain other elements.
-   protected static class Group extends SvgContainer implements HasTransform
+   protected static class Group extends SvgConditionalContainer implements HasTransform
    {
       public Matrix transform;
 
@@ -622,7 +680,7 @@ public class SVG
    }
 
 
-   protected static class TextContainer extends SvgContainer
+   protected static class TextContainer extends SvgConditionalContainer
    {
       public List<Length> x;
       public List<Length> y;
@@ -687,24 +745,32 @@ public class SVG
    }
 
 
-   protected static class GradientElement extends SvgElement
+   protected static class GradientElement extends SvgContainer
    {
       public boolean         gradientUnitsAreUser;
       public Matrix          gradientTransform;
       public GradientSpread  spreadMethod;
       public String          href;
 
-      public List<GradientStop>  stops = new ArrayList<GradientStop>();
+      @Override
+      public void addChild(SvgObject elem) throws SAXException
+      {
+         if (elem instanceof Stop)
+            children.add(elem);
+         else
+            throw new SAXException("Gradient elements cannot contain "+elem+" elements.");
+         
+      }
    }
 
 
-   protected static class GradientStop extends SvgElement
+   protected static class Stop extends SvgElement
    {
       public Float  offset;
    }
 
 
-   protected static class LinearGradient extends GradientElement
+   protected static class SvgLinearGradient extends GradientElement
    {
       public Length  x1;
       public Length  y1;
@@ -713,7 +779,7 @@ public class SVG
    }
 
 
-   protected static class RadialGradient extends GradientElement
+   protected static class SvgRadialGradient extends GradientElement
    {
       public Length  cx;
       public Length  cy;
@@ -941,7 +1007,7 @@ public class SVG
    }
 
 
-   private SvgElement  getElementById(SvgContainer obj, String id)
+   private SvgElement  getElementById(SvgConditionalContainer obj, String id)
    {
       if (id.equals(obj.id))
          return obj;
@@ -952,9 +1018,9 @@ public class SVG
          SvgElement  childElem = (SvgElement) child;
          if (id.equals(childElem.id))
             return childElem;
-         if (child instanceof SvgContainer)
+         if (child instanceof SvgConditionalContainer)
          {
-            SvgElement  found = getElementById((SvgContainer) child, id);
+            SvgElement  found = getElementById((SvgConditionalContainer) child, id);
             if (found != null)
                return found;
          }

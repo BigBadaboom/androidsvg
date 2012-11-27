@@ -28,6 +28,7 @@ import com.caverock.androidsvg.SVG.Colour;
 import com.caverock.androidsvg.SVG.CurrentColor;
 import com.caverock.androidsvg.SVG.GradientSpread;
 import com.caverock.androidsvg.SVG.Length;
+import com.caverock.androidsvg.SVG.PaintReference;
 import com.caverock.androidsvg.SVG.Style;
 import com.caverock.androidsvg.SVG.SvgElement;
 import com.caverock.androidsvg.SVG.Unit;
@@ -46,9 +47,9 @@ public class SVGParser extends DefaultHandler
    private static final String  FEATURE_STRING_PREFIX = "http://www.w3.org/TR/SVG11/feature#";
    
    // SVG parser
-   private float    dpi = 96f;   // inches to pixels conversion
-   SVG              svgDocument = null;
-   SVG.SvgContainer currentElement = null;
+   private float     dpi = 96f;   // inches to pixels conversion
+   SVG               svgDocument = null;
+   SVG.SvgContainer  currentElement = null;
 
    // Define SVG tags
    private static final String  TAG_SVG            = "svg";
@@ -105,6 +106,7 @@ public class SVGParser extends DefaultHandler
       markerHeight,
       markerUnits,
       markerWidth,
+      offset,
       opacity,
       orient,
       overflow,
@@ -117,6 +119,7 @@ public class SVGParser extends DefaultHandler
       requiredFeatures, requiredExtensions,
       rx, ry,
       spreadMethod,
+      stop_color, stop_opacity,
       stroke,
       stroke_dasharray,
       stroke_dashoffset,
@@ -498,9 +501,11 @@ public class SVGParser extends DefaultHandler
       } else if (localName.equalsIgnoreCase(TAG_MARKER)) {
          marker(attributes);
       } else if (localName.equalsIgnoreCase(TAG_LINEARGRADIENT)) {
-         lineargradient(attributes);
+         linearGradient(attributes);
       } else if (localName.equalsIgnoreCase(TAG_RADIALGRADIENT)) {
-         radialgradient(attributes);
+         radialGradient(attributes);
+      } else if (localName.equalsIgnoreCase(TAG_STOP)) {
+         stop(attributes);
       }
    }
 
@@ -514,7 +519,7 @@ public class SVGParser extends DefaultHandler
 
          // The SAX parser can pass us several text nodes in a row. If this happens, we
          // want to collapse them all into one SVG.TextSequence node
-         SVG.SvgContainer  parent = (SVG.SvgContainer) currentElement;
+         SVG.SvgConditionalContainer  parent = (SVG.SvgConditionalContainer) currentElement;
          int  numOlderSiblings = parent.children.size();
          SVG.SvgObject  previousSibling = (numOlderSiblings == 0) ? null : parent.children.get(numOlderSiblings-1);
          if (previousSibling instanceof SVG.TextSequence) {
@@ -522,7 +527,7 @@ public class SVGParser extends DefaultHandler
             ((SVG.TextSequence) previousSibling).text += new String(ch, start, length);
          } else {
             // Add a new TextSequence to the child node list
-            ((SVG.SvgContainer) currentElement).addChild(new SVG.TextSequence( new String(ch, start, length) ));
+            ((SVG.SvgConditionalContainer) currentElement).addChild(new SVG.TextSequence( new String(ch, start, length) ));
          }
       }
 
@@ -549,7 +554,9 @@ public class SVGParser extends DefaultHandler
           localName.equalsIgnoreCase(TAG_TSPAN) ||
           localName.equalsIgnoreCase(TAG_SWITCH) ||
           localName.equalsIgnoreCase(TAG_SYMBOL) ||
-          localName.equalsIgnoreCase(TAG_MARKER)) {
+          localName.equalsIgnoreCase(TAG_MARKER) ||
+          localName.equalsIgnoreCase(TAG_LINEARGRADIENT) ||
+          localName.equalsIgnoreCase(TAG_RADIALGRADIENT)) {
          currentElement = currentElement.parent;
       }
 
@@ -569,9 +576,9 @@ dumpNode(svgDocument.getRootElement(), "");
    private void dumpNode(SVG.SvgObject elem, String indent)
    {
       Log.d(TAG, indent+elem);
-      if (elem instanceof SVG.SvgContainer) {
+      if (elem instanceof SVG.SvgConditionalContainer) {
          indent = indent+"  ";
-         for (SVG.SvgObject child: ((SVG.SvgContainer) elem).children) {
+         for (SVG.SvgObject child: ((SVG.SvgConditionalContainer) elem).children) {
             dumpNode(child, indent);
          }
       }
@@ -1201,7 +1208,7 @@ dumpNode(svgDocument.getRootElement(), "");
 
 
    //=========================================================================
-   // <tref> group element
+   // <tref> element
 
 
    private void  tref(Attributes attributes) throws SAXException
@@ -1209,6 +1216,8 @@ dumpNode(svgDocument.getRootElement(), "");
 /**/Log.d(TAG, "<tref>");
       if (currentElement == null)
          throw new SAXException("Invalid document. Root element must be <svg>");
+      if (!(currentElement instanceof SVG.TextContainer))
+         throw new SAXException("Invalid document. <tref> elements are only valid inside <text> or <tspan> elements.");
       SVG.TRef  obj = new SVG.TRef();
       obj.document = svgDocument;
       obj.parent = currentElement;
@@ -1260,7 +1269,7 @@ dumpNode(svgDocument.getRootElement(), "");
    }
 
 
-   private void  parseAttributesConditional(SVG.SvgConditionalElement obj, Attributes attributes) throws SAXException
+   private void  parseAttributesConditional(SVG.SvgConditional obj, Attributes attributes) throws SAXException
    {
       for (int i=0; i<attributes.getLength(); i++)
       {
@@ -1268,13 +1277,13 @@ dumpNode(svgDocument.getRootElement(), "");
          switch (SVGAttr.fromString(attributes.getLocalName(i)))
          {
             case requiredFeatures:
-               obj.requiredFeatures = parseRequiredFeatures(val);
+               obj.setRequiredFeatures(parseRequiredFeatures(val));
                break;
             case requiredExtensions:
-               obj.requiredExtensions = val;
+               obj.setRequiredExtensions(val);
                break;
             case systemLanguage:
-               obj.systemLanguage = parseSystemLanguage(val);
+               obj.setSystemLanguage(parseSystemLanguage(val));
                break;
             default:
                break;
@@ -1421,12 +1430,12 @@ dumpNode(svgDocument.getRootElement(), "");
    // <linearGradient> element
 
 
-   private void  lineargradient(Attributes attributes) throws SAXException
+   private void  linearGradient(Attributes attributes) throws SAXException
    {
-/**/Log.d(TAG, "<marker>");
+/**/Log.d(TAG, "<linearGradiant>");
       if (currentElement == null)
          throw new SAXException("Invalid document. Root element must be <svg>");
-      SVG.LinearGradient  obj = new SVG.LinearGradient();
+      SVG.SvgLinearGradient  obj = new SVG.SvgLinearGradient();
       obj.document = svgDocument;
       obj.parent = currentElement;
       parseAttributesCore(obj, attributes);
@@ -1434,7 +1443,7 @@ dumpNode(svgDocument.getRootElement(), "");
       parseAttributesGradient(obj, attributes);
       parseAttributesLinearGradient(obj, attributes);
       currentElement.addChild(obj);
-//      currentElement = obj;
+      currentElement = obj;
    }
 
 
@@ -1477,7 +1486,7 @@ dumpNode(svgDocument.getRootElement(), "");
    }
 
 
-   private void  parseAttributesLinearGradient(SVG.LinearGradient obj, Attributes attributes) throws SAXException
+   private void  parseAttributesLinearGradient(SVG.SvgLinearGradient obj, Attributes attributes) throws SAXException
    {
       for (int i=0; i<attributes.getLength(); i++)
       {
@@ -1504,15 +1513,15 @@ dumpNode(svgDocument.getRootElement(), "");
 
 
    //=========================================================================
-   // <linearGradient> element
+   // <radialGradient> element
 
 
-   private void  radialgradient(Attributes attributes) throws SAXException
+   private void  radialGradient(Attributes attributes) throws SAXException
    {
 /**/Log.d(TAG, "<marker>");
       if (currentElement == null)
          throw new SAXException("Invalid document. Root element must be <svg>");
-      SVG.RadialGradient  obj = new SVG.RadialGradient();
+      SVG.SvgRadialGradient  obj = new SVG.SvgRadialGradient();
       obj.document = svgDocument;
       obj.parent = currentElement;
       parseAttributesCore(obj, attributes);
@@ -1520,11 +1529,11 @@ dumpNode(svgDocument.getRootElement(), "");
       parseAttributesGradient(obj, attributes);
       parseAttributesRadialGradient(obj, attributes);
       currentElement.addChild(obj);
-//      currentElement = obj;
+      currentElement = obj;
    }
 
 
-   private void  parseAttributesRadialGradient(SVG.RadialGradient obj, Attributes attributes) throws SAXException
+   private void  parseAttributesRadialGradient(SVG.SvgRadialGradient obj, Attributes attributes) throws SAXException
    {
       for (int i=0; i<attributes.getLength(); i++)
       {
@@ -1551,6 +1560,69 @@ dumpNode(svgDocument.getRootElement(), "");
             default:
                break;
          }
+      }
+   }
+
+
+   //=========================================================================
+   // Gradiant <stop> element
+
+
+   private void  stop(Attributes attributes) throws SAXException
+   {
+/**/Log.d(TAG, "<marker>");
+      if (currentElement == null)
+         throw new SAXException("Invalid document. Root element must be <svg>");
+      if (!(currentElement instanceof SVG.GradientElement))
+         throw new SAXException("Invalid document. <stop> elements are only valid inside <linearGradiant> or <radialGradient> elements.");
+      SVG.Stop  obj = new SVG.Stop();
+      obj.document = svgDocument;
+      obj.parent = currentElement;
+      parseAttributesCore(obj, attributes);
+      parseAttributesStyle(obj, attributes);
+      parseAttributesStop(obj, attributes);
+      currentElement.addChild(obj);
+   }
+
+
+   private void  parseAttributesStop(SVG.Stop obj, Attributes attributes) throws SAXException
+   {
+      for (int i=0; i<attributes.getLength(); i++)
+      {
+         String val = attributes.getValue(i).trim();
+         switch (SVGAttr.fromString(attributes.getLocalName(i)))
+         {
+            case offset:
+               obj.offset = parseGradiantOffset(val);
+               break;
+            default:
+               break;
+         }
+      }
+   }
+
+
+   private Float parseGradiantOffset(String val) throws SAXException
+   {
+      if (val.length() == 0)
+         throw new SAXException("Invalid offset value in <stop> (empty string)");
+      int      end = val.length();
+      boolean  isPercent = false;
+
+      if (val.charAt(val.length()-1) == '%') {
+         end -= 1;
+         isPercent = true;
+      }
+      try
+      {
+         float scalar = Float.parseFloat(val.substring(0, end));
+         if (isPercent)
+            scalar /= 100f;
+         return (scalar < 0) ? 0 : (scalar > 100) ? 100 : scalar;
+      }
+      catch (NumberFormatException e)
+      {
+         throw new SAXException("Invalid offset value in <stop>: "+val, e);
       }
    }
 
@@ -1974,16 +2046,18 @@ dumpNode(svgDocument.getRootElement(), "");
                //setInherit(obj, SVG.SPECIFIED_FILL);
                break;
             }
-            obj.style.specifiedFlags |= SVG.SPECIFIED_FILL;
             if (val.equals(NONE)) {
                obj.style.fill = null;
             } else if (val.equals(CURRENTCOLOR)) {
                obj.style.fill = CurrentColor.getInstance();
             } else  if (val.startsWith("url")) {
-               //gradient
+               // Reference to gradient or pattern
+               String  href = parseFunctionalIRI(val, "fill");
+               obj.style.fill = new PaintReference(href);
             } else {
                obj.style.fill = parseColour(val);
             }
+            obj.style.specifiedFlags |= SVG.SPECIFIED_FILL;
             break;
 
          case fill_rule:
@@ -2009,16 +2083,18 @@ dumpNode(svgDocument.getRootElement(), "");
                //setInherit(obj, SVG.SPECIFIED_STROKE);
                break;
             }
-            obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE;
             if (val.equals(NONE)) {
                obj.style.stroke = null;
             } else if (val.equals(CURRENTCOLOR)) {
                obj.style.stroke = CurrentColor.getInstance();
             } else  if (val.startsWith("url")) {
-               //gradient
+               // Reference to gradient or pattern
+               String  href = parseFunctionalIRI(val, "stroke");
+               obj.style.stroke = new PaintReference(href);
             } else {
                obj.style.stroke = parseColour(val);
             }
+            obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE;
             break;
 
          case stroke_opacity:
@@ -2101,8 +2177,8 @@ dumpNode(svgDocument.getRootElement(), "");
                //setInherit(obj, SVG.SPECIFIED_COLOR);
                break;
             }
-            obj.style.specifiedFlags |= SVG.SPECIFIED_COLOR;
             obj.style.color = parseColour(val);
+            obj.style.specifiedFlags |= SVG.SPECIFIED_COLOR;
             break;
 
          case font_family:
@@ -2226,6 +2302,28 @@ dumpNode(svgDocument.getRootElement(), "");
                throw new SAXException("Invalid value for \"visibility\" attribute: "+val);
             obj.style.visibility = val.equals("visible");
             obj.style.specifiedFlags |= SVG.SPECIFIED_VISIBILITY;
+            break;
+
+         case stop_color:
+            if (inherit) {
+               //setInherit(obj, SVG.SPECIFIED_STOP_COLOR);
+               break;
+            }
+            if (val.equals(CURRENTCOLOR)) {
+               obj.style.stopColor = CurrentColor.getInstance();
+            } else {
+               obj.style.stopColor = parseColour(val);
+            }
+            obj.style.specifiedFlags |= SVG.SPECIFIED_STOP_COLOR;
+            break;
+
+         case stop_opacity:
+            if (inherit) {
+               //setInherit(obj, SVG.SPECIFIED_STOP_OPACITY);
+               break;
+            }
+            obj.style.stopOpacity = parseFloat(val);
+            obj.style.specifiedFlags |= SVG.SPECIFIED_STOP_OPACITY;
             break;
 
          /*

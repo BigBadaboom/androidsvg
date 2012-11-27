@@ -6,23 +6,35 @@ import java.util.List;
 import java.util.Stack;
 
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.DashPathEffect;
+import android.graphics.LinearGradient;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
+import android.graphics.Shader;
+import android.graphics.Shader.TileMode;
 import android.graphics.Typeface;
 import android.util.Log;
 
 import com.caverock.androidsvg.SVG.AspectRatioAlignment;
 import com.caverock.androidsvg.SVG.Box;
+import com.caverock.androidsvg.SVG.Colour;
 import com.caverock.androidsvg.SVG.CurrentColor;
+import com.caverock.androidsvg.SVG.GradientSpread;
+import com.caverock.androidsvg.SVG.GraphicsElement;
 import com.caverock.androidsvg.SVG.Marker;
+import com.caverock.androidsvg.SVG.PaintReference;
 import com.caverock.androidsvg.SVG.PathDefinition;
 import com.caverock.androidsvg.SVG.PathInterface;
+import com.caverock.androidsvg.SVG.Rect;
+import com.caverock.androidsvg.SVG.Stop;
 import com.caverock.androidsvg.SVG.Style;
 import com.caverock.androidsvg.SVG.SvgElement;
+import com.caverock.androidsvg.SVG.SvgLinearGradient;
 import com.caverock.androidsvg.SVG.SvgObject;
+import com.caverock.androidsvg.SVG.SvgRadialGradient;
 import com.caverock.androidsvg.SVG.Text;
 import com.caverock.androidsvg.SVG.TextContainer;
 import com.caverock.androidsvg.SVG.TextSequence;
@@ -356,6 +368,7 @@ public class SVGAndroidRenderer
          return;
 
       updateStyle(state, obj.style);
+      checkForGradiants(obj);      
 
       if (!visible())
          return;
@@ -1697,6 +1710,134 @@ public class SVGAndroidRenderer
          updateStyle(newState, style);
       
       return newState;
+   }
+
+
+   /*
+    * Check for gradiant fills or strokes on this object.  These are always relative
+    * to the object, so can't be preconfigured. They have to be initialised at the
+    * time each object is rendered.
+    */
+   private void  checkForGradiants(GraphicsElement obj)
+   {
+/**/Log.w(TAG, "checkForGradiants");
+      if (state.style.fill instanceof PaintReference) {
+         Shader  shader = decodePaintReference(obj, (PaintReference) state.style.fill);
+/**/Log.w(TAG, "checkForGradiants shader = "+shader);
+         if (shader != null)
+            state.fillPaint.setShader(shader);
+         else
+            state.fillPaint.setColor(Color.BLACK);
+      }
+      if (state.style.stroke instanceof PaintReference) {
+         Shader  shader = decodePaintReference(obj, (PaintReference) state.style.stroke);
+         if (shader != null)
+            state.strokePaint.setShader(shader); 
+         else
+            state.strokePaint.setColor(Color.BLACK);
+      }
+   }
+
+
+   /*
+    * Takes a PaintReference object and generates an appropriate Android Shader object from it.
+    */
+   private Shader  decodePaintReference(GraphicsElement obj, PaintReference paintref)
+   {
+      SVG.SvgObject  ref = obj.document.resolveIRI(paintref.href);
+      if (ref == null)
+         return null;
+      if (ref instanceof SvgLinearGradient)
+         return makeLinearGradiant(obj, (SvgLinearGradient) ref);
+      if (ref instanceof SvgRadialGradient)
+         return makeRadialGradiant(obj, (SvgRadialGradient) ref);
+      return null;
+   }
+
+
+   private Shader  makeLinearGradiant(GraphicsElement obj, SvgLinearGradient gradient)
+   {
+      Box  gradientBounds = (gradient.gradientUnitsAreUser) ? state.viewPort : getBoundsForElement(obj);
+      //float  _x1 = (obj.x1 != null) ? obj.x1.floatValueX(this) : state.viewPort.width;
+/**/Log.w(TAG, "makeLinearGradiant");
+      float  _x1 = (gradient.x1 != null) ? gradient.x1.floatValueX(this): 0f;
+      float  _y1 = (gradient.y1 != null) ? gradient.y1.floatValueY(this): 0f;
+      float  _x2 = (gradient.x2 != null) ? gradient.x2.floatValueX(this): 1f;
+      float  _y2 = (gradient.y2 != null) ? gradient.y2.floatValueY(this): 0f;
+      _x1 = interpolate(gradientBounds.minX, gradientBounds.width, _x1);
+      _y1 = interpolate(gradientBounds.minY, gradientBounds.height, _y1);
+      _x2 = interpolate(gradientBounds.minX, gradientBounds.width, _x2);
+      _y2 = interpolate(gradientBounds.minY, gradientBounds.height, _y2);
+      int    numStops = gradient.children.size();
+      int[]  colours = new int[numStops];
+      float[]  positions = new float[numStops];
+      int  i = 0;
+      for (SvgObject child: gradient.children)
+      {
+         Stop  stop = (Stop) child;
+         positions[i] = stop.offset;
+         Colour col = (SVG.Colour) stop.style.stopColor;
+         if (col == null)
+            col = Colour.BLACK;
+         float opacity = (stop.style.stopOpacity != null) ? stop.style.stopOpacity : 1f;
+         colours[i] = clamp(opacity * state.style.opacity) << 24 | col.colour;
+         i++;
+      }
+      TileMode  tileMode = TileMode.CLAMP;
+      if (gradient.spreadMethod != null)
+      {
+         if (gradient.spreadMethod == GradientSpread.reflect)
+            tileMode = TileMode.MIRROR;
+         else if (gradient.spreadMethod == GradientSpread.repeat)
+            tileMode = TileMode.REPEAT;
+      }
+      return new LinearGradient(_x1, _y1, _x2, _y2, colours, positions, tileMode);
+   }
+
+
+   private Shader makeRadialGradiant(GraphicsElement obj, SvgRadialGradient gradiant)
+   {
+      // TODO Auto-generated method stub
+      return null;
+   }
+
+
+   private Box  getBoundsForElement(GraphicsElement obj)
+   {
+      if (obj instanceof SVG.Path)
+      {
+      }
+      else if (obj instanceof SVG.Rect)
+      {
+         Rect  rect = (Rect) obj;
+         float _x = (rect.x != null) ? rect.x.floatValueX(this) : 0f;
+         float _y = (rect.y != null) ? rect.y.floatValueY(this) : 0f;
+         float _w = rect.width.floatValueX(this);
+         float _h = rect.height.floatValueY(this);
+         return new Box(_x, _y, _w, _h);
+      }
+      else if (obj instanceof SVG.Circle)
+      {
+      }
+      else if (obj instanceof SVG.Ellipse)
+      {
+      }
+      else if (obj instanceof SVG.Line)
+      {
+      }
+      else if (obj instanceof SVG.Polygon)
+      {
+      }
+      else if (obj instanceof SVG.PolyLine)
+      {
+      }
+      return null;
+   }
+
+
+   private float interpolate(float start, float length, float d)
+   {
+      return start + d * length;
    }
 
 
