@@ -20,14 +20,18 @@ import android.util.Log;
 
 import com.caverock.androidsvg.SVG.AspectRatioAlignment;
 import com.caverock.androidsvg.SVG.Box;
+import com.caverock.androidsvg.SVG.Circle;
 import com.caverock.androidsvg.SVG.Colour;
 import com.caverock.androidsvg.SVG.CurrentColor;
+import com.caverock.androidsvg.SVG.Ellipse;
 import com.caverock.androidsvg.SVG.GradientSpread;
 import com.caverock.androidsvg.SVG.GraphicsElement;
+import com.caverock.androidsvg.SVG.Line;
 import com.caverock.androidsvg.SVG.Marker;
 import com.caverock.androidsvg.SVG.PaintReference;
 import com.caverock.androidsvg.SVG.PathDefinition;
 import com.caverock.androidsvg.SVG.PathInterface;
+import com.caverock.androidsvg.SVG.PolyLine;
 import com.caverock.androidsvg.SVG.Rect;
 import com.caverock.androidsvg.SVG.Stop;
 import com.caverock.androidsvg.SVG.Style;
@@ -168,7 +172,7 @@ public class SVGAndroidRenderer
    }
 
 
-   // ==============================================================================
+   //==============================================================================
    // Render dispatcher
 
 
@@ -215,7 +219,7 @@ public class SVGAndroidRenderer
    }
 
 
-   // ==============================================================================
+   //==============================================================================
 
 
    private void  statePush()
@@ -236,7 +240,7 @@ public class SVGAndroidRenderer
    }
 
 
-   // ==============================================================================
+   //==============================================================================
    // Renderers for each element type
 
 
@@ -333,10 +337,12 @@ public class SVGAndroidRenderer
    }
 
 
+   //==============================================================================
+
+
    private void render(SVG.Path obj)
    {
 //Log.d(TAG, "Path render");
-/**/Log.d(TAG, "Path render "+obj);
 
       updateStyle(state, obj.style);
 
@@ -350,6 +356,11 @@ public class SVGAndroidRenderer
 
       Path  path = (new PathConverter(obj.path)).getPath();
 
+      if (obj.boundingBox == null) {
+         obj.boundingBox = calculatePathBounds(path);
+      }
+      checkForGradiants(obj);      
+      
       if (state.hasFill) {
          path.setFillType(getFillTypeFromState());
          canvas.drawPath(path, state.fillPaint);
@@ -361,6 +372,17 @@ public class SVGAndroidRenderer
    }
 
 
+   private Box  calculatePathBounds(Path path)
+   {
+      RectF  pathBounds = new RectF();
+      path.computeBounds(pathBounds, true);
+      return new Box(pathBounds.left, pathBounds.bottom, pathBounds.width(), pathBounds.height());
+   }
+
+
+   //==============================================================================
+
+
    private void render(SVG.Rect obj)
    {
 /**/Log.d(TAG, "Rect render");
@@ -368,7 +390,6 @@ public class SVGAndroidRenderer
          return;
 
       updateStyle(state, obj.style);
-      checkForGradiants(obj);      
 
       if (!visible())
          return;
@@ -376,7 +397,7 @@ public class SVGAndroidRenderer
       if (obj.transform != null)
          canvas.concat(obj.transform);
 
-      float _x, _y, _rx, _ry;
+      float _x, _y, _w, _h, _rx, _ry;
       if (obj.rx == null && obj.ry == null) {
          _rx = 0;
          _ry = 0;
@@ -392,21 +413,28 @@ public class SVGAndroidRenderer
       _ry = Math.min(_ry, obj.height.floatValueY(this) / 2f);
       _x = (obj.x != null) ? obj.x.floatValueX(this) : 0f;
       _y = (obj.y != null) ? obj.y.floatValueY(this) : 0f;
+      _w = obj.width.floatValueX(this);
+      _h = obj.height.floatValueY(this);
+
+      if (obj.boundingBox == null) {
+         obj.boundingBox = new Box(_x, _y, _w, _h);
+      }
+      checkForGradiants(obj);      
 
       if (state.hasFill)
       {
          if (_rx == 0f || _ry == 0f) {
-            canvas.drawRect(_x, _y, _x + obj.width.floatValueX(this), _y + obj.height.floatValueY(this), state.fillPaint);
+            canvas.drawRect(_x, _y, _x + _w, _y + _h, state.fillPaint);
          } else {
-            canvas.drawRoundRect(new RectF(_x, _y, _x + obj.width.floatValueX(this), _y + obj.height.floatValueY(this)), _rx, _ry, state.fillPaint);
+            canvas.drawRoundRect(new RectF(_x, _y, _x + _w, _y + _h), _rx, _ry, state.fillPaint);
          }
       }
       if (state.hasStroke)
       {
          if (_rx == 0f || _ry == 0f) {
-            canvas.drawRect(_x, _y, _x + obj.width.floatValueX(this), _y + obj.height.floatValueY(this), state.strokePaint);
+            canvas.drawRect(_x, _y, _x + _w, _y + _h, state.strokePaint);
          } else {
-            canvas.drawRoundRect(new RectF(_x, _y, _x + obj.width.floatValueX(this), _y + obj.height.floatValueY(this)), _rx, _ry, state.strokePaint);
+            canvas.drawRoundRect(new RectF(_x, _y, _x + _w, _y + _h), _rx, _ry, state.strokePaint);
          }
       }
 
@@ -431,6 +459,11 @@ public class SVGAndroidRenderer
       _cx = (obj.cx != null) ? obj.cx.floatValueX(this) : 0f;
       _cy = (obj.cy != null) ? obj.cy.floatValueY(this) : 0f;
       _r = obj.r.floatValue(this);
+
+      if (obj.boundingBox == null) {
+         obj.boundingBox = new Box(_cx-_r, _cy-_r, _r*2, _r*2);
+      }
+      checkForGradiants(obj);      
 
       if (state.hasFill) {
          canvas.drawCircle(_cx, _cy, _r, state.fillPaint);
@@ -463,6 +496,11 @@ public class SVGAndroidRenderer
       _ry = obj.ry.floatValueY(this);
       RectF oval = new RectF(_cx-_rx, _cy-_ry, _cx+_rx, _cy+_ry);
 
+      if (obj.boundingBox == null) {
+         obj.boundingBox = new Box(oval.left, oval.bottom, oval.width(), oval.height());
+      }
+      checkForGradiants(obj);      
+
       if (state.hasFill) {
          canvas.drawOval(oval, state.fillPaint);
       }
@@ -493,6 +531,11 @@ public class SVGAndroidRenderer
       _x2 = (obj.x2 != null) ? obj.x2.floatValueX(this) : 0f;
       _y2 = (obj.y2 != null) ? obj.y2.floatValueY(this) : 0f;
 
+      if (obj.boundingBox == null) {
+         obj.boundingBox = Box.fromLimits(Math.min(_x1, _x2), Math.min(_y1, _y2), Math.max(_x1, _x2), Math.max(_y1, _y2));
+      }
+      checkForGradiants(obj);      
+
       canvas.drawLine(_x1, _y1, _x2, _y2, state.strokePaint);
    }
 
@@ -505,7 +548,7 @@ public class SVGAndroidRenderer
 
       if (!visible())
          return;
-      if (!state.hasStroke)
+      if (!state.hasStroke && !state.hasFill)
          return;
 
       if (obj.transform != null)
@@ -520,7 +563,16 @@ public class SVGAndroidRenderer
       for (int i=2; i<numPoints; i+=2) {
          path.lineTo(obj.points[i], obj.points[i+1]);
       }
-      canvas.drawPath(path, state.strokePaint);
+
+      if (obj.boundingBox == null) {
+         obj.boundingBox = calculatePathBounds(path);
+      }
+      checkForGradiants(obj);      
+      
+      if (state.hasFill)
+         canvas.drawPath(path, state.fillPaint);
+      if (state.hasStroke)
+         canvas.drawPath(path, state.strokePaint);
    }
 
 
@@ -549,6 +601,11 @@ public class SVGAndroidRenderer
       }
       path.close();
 
+      if (obj.boundingBox == null) {
+         obj.boundingBox = calculatePathBounds(path);
+      }
+      checkForGradiants(obj);      
+      
       if (state.hasFill)
          canvas.drawPath(path, state.fillPaint);
       if (state.hasStroke)
@@ -556,7 +613,7 @@ public class SVGAndroidRenderer
    }
 
 
-   // ==============================================================================
+   //==============================================================================
 
 
    private static class TextRenderContext
@@ -596,6 +653,16 @@ public class SVGAndroidRenderer
          }
       }
 
+      if (obj.boundingBox == null) {
+         StringBuilder  sb = new StringBuilder();
+         extractRawText((TextContainer) obj, sb);
+         String  str = sb.toString();
+         android.graphics.Rect  bbox = new android.graphics.Rect();
+         state.fillPaint.getTextBounds(str, 0, str.length(), bbox);
+         obj.boundingBox = new Box(bbox.left, bbox.bottom, bbox.width(), bbox.height());
+      }
+      checkForGradiants(obj);      
+      
       for (SVG.SvgObject child: obj.children) {
          renderText(child, currentTextPosition);
       }
@@ -699,7 +766,7 @@ public class SVGAndroidRenderer
  
 
    /*
-    * Extract the raw text from a TextContainer. Used by <trref> handler code.
+    * Extract the raw text from a TextContainer. Used by <tref> handler code.
     */
    private void  extractRawText(TextContainer parent, StringBuilder str)
    {
@@ -714,7 +781,7 @@ public class SVGAndroidRenderer
    }
  
 
-   // ==============================================================================
+   //==============================================================================
 
 
    private void render(SVG.Symbol obj, SVG.Length width, SVG.Length height)
@@ -747,7 +814,7 @@ public class SVGAndroidRenderer
    }
 
 
-   // ==============================================================================
+   //==============================================================================
 
 
    private boolean  display(SvgObject obj)
@@ -1147,7 +1214,7 @@ public class SVGAndroidRenderer
    }
 
 
-   // ==============================================================================
+   //==============================================================================
 
    /*
     *  Convert an internal PathDefinition to an android.graphics.Path object
@@ -1399,9 +1466,9 @@ public class SVGAndroidRenderer
    }
 
 
-   // ==============================================================================
+   //==============================================================================
    // Marker handling
-   // ==============================================================================
+   //==============================================================================
 
 
    private class MarkerVector
@@ -1713,12 +1780,17 @@ public class SVGAndroidRenderer
    }
 
 
+   //==============================================================================
+   // Gradients
+   //==============================================================================
+
+
    /*
     * Check for gradiant fills or strokes on this object.  These are always relative
     * to the object, so can't be preconfigured. They have to be initialised at the
     * time each object is rendered.
     */
-   private void  checkForGradiants(GraphicsElement obj)
+   private void  checkForGradiants(SvgElement obj)
    {
 /**/Log.w(TAG, "checkForGradiants");
       if (state.style.fill instanceof PaintReference) {
@@ -1742,7 +1814,7 @@ public class SVGAndroidRenderer
    /*
     * Takes a PaintReference object and generates an appropriate Android Shader object from it.
     */
-   private Shader  decodePaintReference(GraphicsElement obj, PaintReference paintref)
+   private Shader  decodePaintReference(SvgElement obj, PaintReference paintref)
    {
       SVG.SvgObject  ref = obj.document.resolveIRI(paintref.href);
       if (ref == null)
@@ -1755,9 +1827,9 @@ public class SVGAndroidRenderer
    }
 
 
-   private Shader  makeLinearGradiant(GraphicsElement obj, SvgLinearGradient gradient)
+   private Shader  makeLinearGradiant(SvgElement obj, SvgLinearGradient gradient)
    {
-      Box  gradientBounds = (gradient.gradientUnitsAreUser) ? state.viewPort : getBoundsForElement(obj);
+      Box  gradientBounds = (gradient.gradientUnitsAreUser) ? state.viewPort : obj.boundingBox;
       //float  _x1 = (obj.x1 != null) ? obj.x1.floatValueX(this) : state.viewPort.width;
 /**/Log.w(TAG, "makeLinearGradiant");
       float  _x1 = (gradient.x1 != null) ? gradient.x1.floatValueX(this): 0f;
@@ -1806,49 +1878,10 @@ public class SVGAndroidRenderer
    }
 
 
-   private Shader makeRadialGradiant(GraphicsElement obj, SvgRadialGradient gradiant)
+   private Shader makeRadialGradiant(SvgElement obj, SvgRadialGradient gradiant)
    {
       // TODO Auto-generated method stub
       return null;
-   }
-
-
-   private Box  getBoundsForElement(GraphicsElement obj)
-   {
-      if (obj instanceof SVG.Path)
-      {
-      }
-      else if (obj instanceof SVG.Rect)
-      {
-         Rect  rect = (Rect) obj;
-         float _x = (rect.x != null) ? rect.x.floatValueX(this) : 0f;
-         float _y = (rect.y != null) ? rect.y.floatValueY(this) : 0f;
-         float _w = rect.width.floatValueX(this);
-         float _h = rect.height.floatValueY(this);
-         return new Box(_x, _y, _w, _h);
-      }
-      else if (obj instanceof SVG.Circle)
-      {
-      }
-      else if (obj instanceof SVG.Ellipse)
-      {
-      }
-      else if (obj instanceof SVG.Line)
-      {
-      }
-      else if (obj instanceof SVG.Polygon)
-      {
-      }
-      else if (obj instanceof SVG.PolyLine)
-      {
-      }
-      return null;
-   }
-
-
-   private float interpolate(float start, float length, float d)
-   {
-      return start + d * length;
    }
 
 

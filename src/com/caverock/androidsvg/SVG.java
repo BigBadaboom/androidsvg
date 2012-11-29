@@ -127,6 +127,11 @@ public class SVG
          this.width = width;
          this.height = height;
       }
+
+      public static Box  fromLimits(float minX, float minY, float maxX, float maxY)
+      {
+         return new Box(minX, minY, maxX-minX, maxY-minY);
+      }
    }
 
 
@@ -510,6 +515,7 @@ public class SVG
    {
       public String  id = null;
       public Style   style = new Style();
+      public Box     boundingBox = null;
    }
 
 
