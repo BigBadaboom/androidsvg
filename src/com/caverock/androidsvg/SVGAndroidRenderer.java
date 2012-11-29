@@ -900,13 +900,13 @@ public class SVGAndroidRenderer
          if (state.style.fill instanceof SVG.Colour)
          {
             int col = ((SVG.Colour) state.style.fill).colour;
-            col = clamp(state.style.fillOpacity * state.style.opacity) << 24 | col;
+            col = clamp255(state.style.fillOpacity * state.style.opacity) << 24 | col;
             state.fillPaint.setColor(col);
          }
          else if (state.style.fill instanceof CurrentColor)
          {
             int col = state.style.color.colour;
-            col = clamp(state.style.fillOpacity * state.style.opacity) << 24 | col;
+            col = clamp255(state.style.fillOpacity * state.style.opacity) << 24 | col;
             state.fillPaint.setColor(col);
          }
       }
@@ -933,13 +933,13 @@ public class SVGAndroidRenderer
          if (state.style.stroke instanceof SVG.Colour)
          {
             int col = ((SVG.Colour) state.style.stroke).colour;
-            col = clamp(state.style.strokeOpacity * state.style.opacity) << 24 | col;
+            col = clamp255(state.style.strokeOpacity * state.style.opacity) << 24 | col;
             state.strokePaint.setColor(col);
          }
          else if (state.style.stroke instanceof CurrentColor)
          {
             int col = state.style.color.colour;
-            col = clamp(state.style.strokeOpacity * state.style.opacity) << 24 | col;
+            col = clamp255(state.style.strokeOpacity * state.style.opacity) << 24 | col;
             state.strokePaint.setColor(col);
          }
       }
@@ -1125,7 +1125,7 @@ public class SVGAndroidRenderer
    }
 
 
-   private int  clamp(float val)
+   private int  clamp255(float val)
    {
       int  i = (int)(val * 256f);
       return (i<0) ? 0 : (i>255) ? 255 : i;
@@ -1764,10 +1764,15 @@ public class SVGAndroidRenderer
       float  _y1 = (gradient.y1 != null) ? gradient.y1.floatValueY(this): 0f;
       float  _x2 = (gradient.x2 != null) ? gradient.x2.floatValueX(this): 1f;
       float  _y2 = (gradient.y2 != null) ? gradient.y2.floatValueY(this): 0f;
-      _x1 = interpolate(gradientBounds.minX, gradientBounds.width, _x1);
-      _y1 = interpolate(gradientBounds.minY, gradientBounds.height, _y1);
-      _x2 = interpolate(gradientBounds.minX, gradientBounds.width, _x2);
-      _y2 = interpolate(gradientBounds.minY, gradientBounds.height, _y2);
+      // Calculate the gradient transform matrix
+      Matrix m = new Matrix();
+      m.preTranslate(gradientBounds.minX, gradientBounds.minY);
+      m.preScale(gradientBounds.width, gradientBounds.height);
+      if (gradient.gradientTransform != null)
+      {
+         m.preConcat(gradient.gradientTransform);
+      }
+      // Create the colour and position arrays for the shader
       int    numStops = gradient.children.size();
       int[]  colours = new int[numStops];
       float[]  positions = new float[numStops];
@@ -1780,9 +1785,11 @@ public class SVGAndroidRenderer
          if (col == null)
             col = Colour.BLACK;
          float opacity = (stop.style.stopOpacity != null) ? stop.style.stopOpacity : 1f;
-         colours[i] = clamp(opacity * state.style.opacity) << 24 | col.colour;
+         colours[i] = clamp255(opacity * state.style.opacity) << 24 | col.colour;
          i++;
       }
+      // Convert spreadMethod->TileMode
+/**/Log.w(TAG,"spreadMethod="+gradient.spreadMethod);
       TileMode  tileMode = TileMode.CLAMP;
       if (gradient.spreadMethod != null)
       {
@@ -1791,7 +1798,11 @@ public class SVGAndroidRenderer
          else if (gradient.spreadMethod == GradientSpread.repeat)
             tileMode = TileMode.REPEAT;
       }
-      return new LinearGradient(_x1, _y1, _x2, _y2, colours, positions, tileMode);
+/**/Log.w(TAG,"tileMode="+tileMode);
+      // Create shader instance
+      LinearGradient gr = new LinearGradient(_x1, _y1, _x2, _y2, colours, positions, tileMode); 
+      gr.setLocalMatrix(m);
+      return gr;
    }
 
 

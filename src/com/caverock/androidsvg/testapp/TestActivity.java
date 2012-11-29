@@ -24,6 +24,9 @@ public class TestActivity extends Activity
 
    String[] fileList = {"sample_13.2_lingrad01.svg",
                         "sample_13.2_radgrad01.svg",
+                        "test_gradient01.svg",
+                        "test_gradient02.svg",
+                        "test_gradient03.svg",
                         //"inkscape.svg",
                         "sample_14.5_opacity01.svg",
                         "sample_5.6_Use01.svg",
@@ -59,6 +62,8 @@ public class TestActivity extends Activity
                         "sample_11.4_linecapb.svg",
                         "sample_11.4_linejoinb.svg",
                         "sample_11.6_marker.svg",
+                        "sample_13.2_lingrad01.svg",
+                        "sample_13.2_radgrad01.svg",
                         "sample_14.5_opacity01.svg",
                         "test_textanchor.svg",
                         "test_strokedasharray.svg",
@@ -77,6 +82,9 @@ public class TestActivity extends Activity
                         "test_markers03.svg",
                         "test_displaynone.svg",
                         "test_visibilityhidden.svg",
+                        "test_gradient01.svg",
+                        "test_gradient02.svg",
+                        "test_gradient03.svg",
                         "inkscape.svg",
                         "!acid1_noerrors_nocss.svg",
                         "Android_robot.svg"};
