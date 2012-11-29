@@ -1001,7 +1001,7 @@ dumpNode(svgDocument.getRootElement(), "");
       parseAttributesStyle(obj, attributes);
       parseAttributesTransform(obj, attributes);
       parseAttributesConditional(obj, attributes);
-      parseAttributesPolyLine(obj, attributes);
+      parseAttributesPolyLine(obj, attributes, "polyline");
       currentElement.addChild(obj);     
    }
 
@@ -1009,7 +1009,7 @@ dumpNode(svgDocument.getRootElement(), "");
    /*
     *  Parse the "points" attribute. Used by both <polyline> and <polygon>.
     */
-   private void  parseAttributesPolyLine(SVG.PolyLine obj, Attributes attributes) throws SAXException
+   private void  parseAttributesPolyLine(SVG.PolyLine obj, Attributes attributes, String tag) throws SAXException
    {
       for (int i=0; i<attributes.getLength(); i++)
       {
@@ -1022,12 +1022,12 @@ dumpNode(svgDocument.getRootElement(), "");
             while (!scan.empty()) {
                Float x = scan.nextFloat();
                if (x == null)
-                  throw new SAXException("Invalid <polyline> points attribute. Non-coordinate content found in list.");
+                  throw new SAXException("Invalid <"+tag+"> points attribute. Non-coordinate content found in list.");
                scan.skipCommaWhitespace();
                Float y = scan.nextFloat();
                if (y == null)
-                  throw new SAXException("Invalid <polyline> points attribute. There should be an even number of coordinates.");
-               scan.skipWhitespace();
+                  throw new SAXException("Invalid <"+tag+"> points attribute. There should be an even number of coordinates.");
+               scan.skipCommaWhitespace();
                points.add(x);
                points.add(y);
             }
@@ -1057,7 +1057,7 @@ dumpNode(svgDocument.getRootElement(), "");
       parseAttributesStyle(obj, attributes);
       parseAttributesTransform(obj, attributes);
       parseAttributesConditional(obj, attributes);
-      parseAttributesPolyLine(obj, attributes); // reuse of polyline "points" parser
+      parseAttributesPolyLine(obj, attributes, "polygon"); // reuse of polyline "points" parser
       currentElement.addChild(obj);     
    }
 
