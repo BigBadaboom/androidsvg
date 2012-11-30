@@ -801,7 +801,7 @@ public class SVGAndroidRenderer
       state.viewPort = new SVG.Box(0, 0, _w, _h);
 
       if (!state.style.overflow) {
-         canvas.clipRect(state.viewPort.minX, state.viewPort.minY, state.viewPort.width, state.viewPort.height);  //TODO only do clipRect if overflow property says so
+         canvas.clipRect(state.viewPort.minX, state.viewPort.minY, state.viewPort.width, state.viewPort.height);
       }
 
       if (obj.viewBox != null) {
@@ -1139,9 +1139,13 @@ public class SVGAndroidRenderer
       {
          state.style.textDecoration = style.textDecoration;
          state.fillPaint.setStrikeThruText(style.textDecoration.equals("line-through"));
-         //state.strokePaint.setStrikeThruText(style.textDecoration.equals("line-through"));  // Bug in Android (39511) - can't stroke an underline
          state.fillPaint.setUnderlineText(style.textDecoration.equals("underline"));
-         //state.strokePaint.setUnderlineText(style.textDecoration.equals("underline"));
+         // There is a bug in Android <= JELLY_BEAN (16) that causes stroked underlines to
+         // not be drawn properly. See bug (39511). This has been fixed in JELLY_BEAN_MR1 (4.2)
+         if (android.os.Build.VERSION.SDK_INT >= 17) {
+            state.strokePaint.setStrikeThruText(style.textDecoration.equals("line-through"));
+            state.strokePaint.setUnderlineText(style.textDecoration.equals("underline"));
+         }
       }
 
       if (isSpecified(style, SVG.SPECIFIED_TEXT_ANCHOR))
