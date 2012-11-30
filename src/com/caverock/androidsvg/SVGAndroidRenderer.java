@@ -12,6 +12,7 @@ import android.graphics.LinearGradient;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.RadialGradient;
 import android.graphics.RectF;
 import android.graphics.Shader;
 import android.graphics.Shader.TileMode;
@@ -20,19 +21,13 @@ import android.util.Log;
 
 import com.caverock.androidsvg.SVG.AspectRatioAlignment;
 import com.caverock.androidsvg.SVG.Box;
-import com.caverock.androidsvg.SVG.Circle;
 import com.caverock.androidsvg.SVG.Colour;
 import com.caverock.androidsvg.SVG.CurrentColor;
-import com.caverock.androidsvg.SVG.Ellipse;
 import com.caverock.androidsvg.SVG.GradientSpread;
-import com.caverock.androidsvg.SVG.GraphicsElement;
-import com.caverock.androidsvg.SVG.Line;
 import com.caverock.androidsvg.SVG.Marker;
 import com.caverock.androidsvg.SVG.PaintReference;
 import com.caverock.androidsvg.SVG.PathDefinition;
 import com.caverock.androidsvg.SVG.PathInterface;
-import com.caverock.androidsvg.SVG.PolyLine;
-import com.caverock.androidsvg.SVG.Rect;
 import com.caverock.androidsvg.SVG.Stop;
 import com.caverock.androidsvg.SVG.Style;
 import com.caverock.androidsvg.SVG.SvgElement;
@@ -1796,10 +1791,8 @@ public class SVGAndroidRenderer
     */
    private void  checkForGradiants(SvgElement obj)
    {
-/**/Log.w(TAG, "checkForGradiants");
       if (state.style.fill instanceof PaintReference) {
          Shader  shader = decodePaintReference(obj, (PaintReference) state.style.fill);
-/**/Log.w(TAG, "checkForGradiants shader = "+shader);
          if (shader != null)
             state.fillPaint.setShader(shader);
          else
@@ -1834,20 +1827,24 @@ public class SVGAndroidRenderer
    private Shader  makeLinearGradiant(SvgElement obj, SvgLinearGradient gradient)
    {
       Box  gradientBounds = (gradient.gradientUnitsAreUser) ? state.viewPort : obj.boundingBox;
-      //float  _x1 = (obj.x1 != null) ? obj.x1.floatValueX(this) : state.viewPort.width;
-/**/Log.w(TAG, "makeLinearGradiant");
+
       float  _x1 = (gradient.x1 != null) ? gradient.x1.floatValueX(this): 0f;
       float  _y1 = (gradient.y1 != null) ? gradient.y1.floatValueY(this): 0f;
       float  _x2 = (gradient.x2 != null) ? gradient.x2.floatValueX(this): 1f;
       float  _y2 = (gradient.y2 != null) ? gradient.y2.floatValueY(this): 0f;
+
       // Calculate the gradient transform matrix
       Matrix m = new Matrix();
-      m.preTranslate(gradientBounds.minX, gradientBounds.minY);
-      m.preScale(gradientBounds.width, gradientBounds.height);
+      if (!gradient.gradientUnitsAreUser)
+      {
+         m.preTranslate(gradientBounds.minX, gradientBounds.minY);
+         m.preScale(gradientBounds.width, gradientBounds.height);
+      }
       if (gradient.gradientTransform != null)
       {
          m.preConcat(gradient.gradientTransform);
       }
+
       // Create the colour and position arrays for the shader
       int    numStops = gradient.children.size();
       int[]  colours = new int[numStops];
@@ -1864,8 +1861,8 @@ public class SVGAndroidRenderer
          colours[i] = clamp255(opacity * state.style.opacity) << 24 | col.colour;
          i++;
       }
+
       // Convert spreadMethod->TileMode
-/**/Log.w(TAG,"spreadMethod="+gradient.spreadMethod);
       TileMode  tileMode = TileMode.CLAMP;
       if (gradient.spreadMethod != null)
       {
@@ -1874,18 +1871,67 @@ public class SVGAndroidRenderer
          else if (gradient.spreadMethod == GradientSpread.repeat)
             tileMode = TileMode.REPEAT;
       }
-/**/Log.w(TAG,"tileMode="+tileMode);
+
       // Create shader instance
-      LinearGradient gr = new LinearGradient(_x1, _y1, _x2, _y2, colours, positions, tileMode); 
+      LinearGradient  gr = new LinearGradient(_x1, _y1, _x2, _y2, colours, positions, tileMode); 
       gr.setLocalMatrix(m);
       return gr;
    }
 
 
-   private Shader makeRadialGradiant(SvgElement obj, SvgRadialGradient gradiant)
+   private Shader makeRadialGradiant(SvgElement obj, SvgRadialGradient gradient)
    {
-      // TODO Auto-generated method stub
-      return null;
+      Box  gradientBounds = (gradient.gradientUnitsAreUser) ? state.viewPort : obj.boundingBox;
+      
+      float  _cx = (gradient.cx != null) ? gradient.cx.floatValueX(this): 0.5f;
+      float  _cy = (gradient.cy != null) ? gradient.cy.floatValueY(this): 0.5f;
+      float  _r = (gradient.r != null) ? gradient.r.floatValue(this): 0.5f;
+      // fx and fy are ignored because Android RadialGradient doesn't support a
+      // 'focus' point that is different from cx,cy.
+
+      // Calculate the gradient transform matrix
+      Matrix m = new Matrix();
+      if (!gradient.gradientUnitsAreUser)
+      {
+         m.preTranslate(gradientBounds.minX, gradientBounds.minY);
+         m.preScale(gradientBounds.width, gradientBounds.height);
+      }
+      if (gradient.gradientTransform != null)
+      {
+         m.preConcat(gradient.gradientTransform);
+      }
+
+      // Create the colour and position arrays for the shader
+      int    numStops = gradient.children.size();
+      int[]  colours = new int[numStops];
+      float[]  positions = new float[numStops];
+      int  i = 0;
+      for (SvgObject child: gradient.children)
+      {
+         Stop  stop = (Stop) child;
+         positions[i] = stop.offset;
+         Colour col = (SVG.Colour) stop.style.stopColor;
+         if (col == null)
+            col = Colour.BLACK;
+         float opacity = (stop.style.stopOpacity != null) ? stop.style.stopOpacity : 1f;
+         colours[i] = clamp255(opacity * state.style.opacity) << 24 | col.colour;
+         i++;
+      }
+
+      // Convert spreadMethod->TileMode
+      TileMode  tileMode = TileMode.CLAMP;
+      if (gradient.spreadMethod != null)
+      {
+         if (gradient.spreadMethod == GradientSpread.reflect)
+            tileMode = TileMode.MIRROR;
+         else if (gradient.spreadMethod == GradientSpread.repeat)
+            tileMode = TileMode.REPEAT;
+      }
+
+      // Create shader instance
+      RadialGradient  gr = new RadialGradient(_cx, _cy, _r, colours, positions, tileMode); 
+      gr.setLocalMatrix(m);
+      return gr;
    }
 
 
