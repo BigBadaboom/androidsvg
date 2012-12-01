@@ -22,7 +22,8 @@ public class TestActivity extends Activity
    GestureDetector  gesture;
    Toast            currentToast;
 
-   String[] fileList = {"test_gradient10_zerovector.svg",
+   String[] fileList = {"test_gradient12_zerostops.svg",
+                        "test_gradient11_onestop.svg",
                         "inkscape.svg",
                         "sample_14.5_opacity01.svg",
                         "sample_5.6_Use01.svg",
@@ -86,6 +87,10 @@ public class TestActivity extends Activity
                         "test_gradient06_badhref.svg",
                         "test_gradient07_href.svg",
                         "test_gradient08_href2.svg",
+                        "test_gradient09_misorderedoffsets.svg",
+                        "test_gradient10_zerovector.svg",
+                        "test_gradient11_toofewstops.svg",
+                        "test_gradient12_zerostops.svg",
                         "inkscape.svg",
                         "!acid1_noerrors_nocss.svg",
                         "Android_robot.svg"};

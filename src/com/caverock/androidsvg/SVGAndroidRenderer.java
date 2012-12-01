@@ -1796,10 +1796,10 @@ public class SVGAndroidRenderer
    private void  checkForGradiants(SvgElement obj)
    {
       if (state.style.fill instanceof PaintReference) {
-         decodePaintReference(state.fillPaint, obj, (PaintReference) state.style.fill);
+         decodePaintReference(true, obj, (PaintReference) state.style.fill);
       }
       if (state.style.stroke instanceof PaintReference) {
-         decodePaintReference(state.strokePaint, obj, (PaintReference) state.style.stroke);
+         decodePaintReference(false, obj, (PaintReference) state.style.stroke);
       }
    }
 
@@ -1807,24 +1807,25 @@ public class SVGAndroidRenderer
    /*
     * Takes a PaintReference object and generates an appropriate Android Shader object from it.
     */
-   private void  decodePaintReference(Paint paint, SvgElement obj, PaintReference paintref)
+   private void  decodePaintReference(boolean isFill, SvgElement obj, PaintReference paintref)
    {
       SVG.SvgObject  ref = obj.document.resolveIRI(paintref.href);
       if (ref == null)
          return;
       if (ref instanceof SvgLinearGradient)
-         makeLinearGradiant(paint, obj, (SvgLinearGradient) ref);
+         makeLinearGradiant(isFill, obj, (SvgLinearGradient) ref);
       if (ref instanceof SvgRadialGradient)
-         makeRadialGradiant(paint, obj, (SvgRadialGradient) ref);
+         makeRadialGradiant(isFill, obj, (SvgRadialGradient) ref);
    }
 
 
-   private void  makeLinearGradiant(Paint paint, SvgElement obj, SvgLinearGradient gradient)
+   private void  makeLinearGradiant(boolean isFill, SvgElement obj, SvgLinearGradient gradient)
    {
       if (gradient.href != null)
          fillInChainedGradientFields(gradient, gradient.href);
 
       boolean  userUnits = (gradient.gradientUnitsAreUser != null && gradient.gradientUnitsAreUser);
+      Paint    paint = isFill ? state.fillPaint : state.strokePaint;
 
       if (!userUnits)
          state.viewBox = UNIT_BBOX;  // So that <coord> = "100%" works out correctly
@@ -1847,8 +1848,12 @@ public class SVGAndroidRenderer
 
       // Create the colour and position arrays for the shader
       int    numStops = gradient.children.size();
-      if (numStops < 2) {
-         paint.setColor(Color.BLACK);
+      if (numStops == 0) {
+         // If there are no stops defined, we are to treat it as paint = 'none' (see spec 13.2.4)
+         if (isFill)
+            state.hasFill = false;
+         else
+            state.hasStroke = false;
          return;
       }
 
@@ -1876,8 +1881,7 @@ public class SVGAndroidRenderer
       }
 
       // If gradient vector is zero length, we instead fill with last stop colour
-Log.w(TAG, "vector: "+_x1+" "+_x2+" "+_y1+" "+_y2);
-      if (_x1 == _x2 && _y1 == _y2) {
+      if ((_x1 == _x2 && _y1 == _y2) || numStops == 1) {
          paint.setColor(colours[numStops - 1]);
          return;
       }
@@ -1899,12 +1903,13 @@ Log.w(TAG, "vector: "+_x1+" "+_x2+" "+_y1+" "+_y2);
    }
 
 
-   private void makeRadialGradiant(Paint paint, SvgElement obj, SvgRadialGradient gradient)
+   private void makeRadialGradiant(boolean isFill, SvgElement obj, SvgRadialGradient gradient)
    {
       if (gradient.href != null)
          fillInChainedGradientFields(gradient, gradient.href);
 
       boolean  userUnits = (gradient.gradientUnitsAreUser != null && gradient.gradientUnitsAreUser);
+      Paint    paint = isFill ? state.fillPaint : state.strokePaint;
       
       if (!userUnits)
          state.viewBox = UNIT_BBOX;  // So that <coord> = "100%" works out correctly
@@ -1928,8 +1933,12 @@ Log.w(TAG, "vector: "+_x1+" "+_x2+" "+_y1+" "+_y2);
 
       // Create the colour and position arrays for the shader
       int    numStops = gradient.children.size();
-      if (numStops < 2) {
-         paint.setColor(Color.BLACK);
+      if (numStops == 0) {
+         // If there are no stops defined, we are to treat it as paint = 'none' (see spec 13.2.4)
+         if (isFill)
+            state.hasFill = false;
+         else
+            state.hasStroke = false;
          return;
       }
 
@@ -1949,7 +1958,7 @@ Log.w(TAG, "vector: "+_x1+" "+_x2+" "+_y1+" "+_y2);
       }
 
       // If gradient radius is zero, we instead fill with last stop colour
-      if (_r == 0) {
+      if (_r == 0 || numStops == 1) {
          paint.setColor(colours[numStops - 1]);
          return;
       }
