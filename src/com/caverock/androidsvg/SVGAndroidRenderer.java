@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
 
+import org.xml.sax.SAXException;
+
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.DashPathEffect;
@@ -23,6 +25,7 @@ import com.caverock.androidsvg.SVG.AspectRatioAlignment;
 import com.caverock.androidsvg.SVG.Box;
 import com.caverock.androidsvg.SVG.Colour;
 import com.caverock.androidsvg.SVG.CurrentColor;
+import com.caverock.androidsvg.SVG.GradientElement;
 import com.caverock.androidsvg.SVG.GradientSpread;
 import com.caverock.androidsvg.SVG.Marker;
 import com.caverock.androidsvg.SVG.PaintReference;
@@ -1826,7 +1829,10 @@ public class SVGAndroidRenderer
 
    private Shader  makeLinearGradiant(SvgElement obj, SvgLinearGradient gradient)
    {
-      Box  gradientBounds = (gradient.gradientUnitsAreUser) ? state.viewPort : obj.boundingBox;
+      if (gradient.href != null)
+         fillInChainedGradientFields(gradient, gradient.href);
+
+      Box  gradientBounds = (gradient.gradientUnitsAreUser != null && gradient.gradientUnitsAreUser) ? state.viewPort : obj.boundingBox;
 
       float  _x1 = (gradient.x1 != null) ? gradient.x1.floatValueX(this): 0f;
       float  _y1 = (gradient.y1 != null) ? gradient.y1.floatValueY(this): 0f;
@@ -1881,7 +1887,10 @@ public class SVGAndroidRenderer
 
    private Shader makeRadialGradiant(SvgElement obj, SvgRadialGradient gradient)
    {
-      Box  gradientBounds = (gradient.gradientUnitsAreUser) ? state.viewPort : obj.boundingBox;
+      if (gradient.href != null)
+         fillInChainedGradientFields(gradient, gradient.href);
+
+      Box  gradientBounds = (gradient.gradientUnitsAreUser != null && gradient.gradientUnitsAreUser) ? state.viewPort : obj.boundingBox;
       
       float  _cx = (gradient.cx != null) ? gradient.cx.floatValueX(this): 0.5f;
       float  _cy = (gradient.cy != null) ? gradient.cy.floatValueY(this): 0.5f;
@@ -1932,6 +1941,81 @@ public class SVGAndroidRenderer
       RadialGradient  gr = new RadialGradient(_cx, _cy, _r, colours, positions, tileMode); 
       gr.setLocalMatrix(m);
       return gr;
+   }
+
+
+   /*
+    * Any unspecified fields in this gradient can be 'borrowed' from another
+    * gradient specified by the href attribute.
+    */
+   private void fillInChainedGradientFields(GradientElement gradient, String href)
+   {
+      // Locate the referenced object
+      SVG.SvgObject  ref = gradient.document.resolveIRI(href);
+      if (ref == null) {
+         // Non-existent - return silently and hope we have enough info to render the gradient
+         return;
+      }
+      if (!(ref instanceof GradientElement)) {
+         Log.e(TAG, "Gradient href attributes must point to other gradient elements");
+         return;
+      }
+      if (ref == gradient) {
+         Log.e(TAG, "Circular reference in gradient href attribute: "+href);
+         return;
+      }
+
+      GradientElement  grRef = (GradientElement) ref;
+
+      if (gradient.gradientUnitsAreUser == null)
+         gradient.gradientUnitsAreUser = grRef.gradientUnitsAreUser;
+      if (gradient.gradientTransform == null)
+         gradient.gradientTransform = grRef.gradientTransform;
+      if (gradient.spreadMethod == null)
+         gradient.spreadMethod = grRef.spreadMethod;
+      if (gradient.children.isEmpty())
+         gradient.children = grRef.children;
+
+      try
+      {
+         if (gradient instanceof SvgLinearGradient) {
+            fillInChainedGradientFields((SvgLinearGradient) gradient, (SvgLinearGradient) ref);
+         } else {
+            fillInChainedGradientFields((SvgRadialGradient) gradient, (SvgRadialGradient) ref);
+         }
+      }
+      catch (ClassCastException e) { /* expected - do nothing */ }
+
+      if (grRef.href != null)
+         fillInChainedGradientFields(gradient, grRef.href);
+   }
+
+
+   private void fillInChainedGradientFields(SvgLinearGradient gradient, SvgLinearGradient grRef)
+   {
+      if (gradient.x1 == null)
+         gradient.x1 = grRef.x1;
+      if (gradient.y1 == null)
+         gradient.y1 = grRef.y1;
+      if (gradient.x2 == null)
+         gradient.x2 = grRef.x2;
+      if (gradient.y2 == null)
+         gradient.y2 = grRef.y2;
+   }
+
+
+   private void fillInChainedGradientFields(SvgRadialGradient gradient, SvgRadialGradient grRef)
+   {
+      if (gradient.cx == null)
+         gradient.cx = grRef.cx;
+      if (gradient.cy == null)
+         gradient.cy = grRef.cy;
+      if (gradient.r == null)
+         gradient.r = grRef.r;
+      if (gradient.fx == null)
+         gradient.fx = grRef.fx;
+      if (gradient.fy == null)
+         gradient.fy = grRef.fy;
    }
 
 

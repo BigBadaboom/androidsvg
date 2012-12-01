@@ -1,0 +1,31 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="8cm" height="4cm" viewBox="0 0 800 400" version="1.1"
+     xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+
+  <g>
+    <defs>
+      <linearGradient id="G1" gradientUnits="userSpaceOnUse" xlink:href="#G2"></linearGradient>
+      <radialGradient id="G2" gradientTransform="skewX(20)" xlink:href="#G3"></radialGradient>
+      <radialGradient id="G3" spreadMethod="repeat" xlink:href="#G4"></radialGradient>
+      <linearGradient id="G4" x1="400" gradientUnits="objectBoundingBox" xlink:href="#G5"></linearGradient>
+      <linearGradient id="G5" y1="200" xlink:href="#G6"></linearGradient>
+      <linearGradient id="G6" x2="300" xlink:href="#G7"></linearGradient>
+      <linearGradient id="G7" y2="400" xlink:href="#G8"></linearGradient>
+      <radialGradient id="G8" xlink:href="#G10">
+        <stop offset="0%" stop-color="green" />
+        <stop offset="50%" stop-color="blue" />
+        <stop offset="100%" stop-color="red" />
+      </radialGradient>
+    </defs>
+
+    <!-- Outline the drawing area in blue -->
+    <rect fill="none" stroke="blue" 
+          x="1" y="1" width="798" height="398"/>
+
+    <!-- The rectangle is filled using a radial gradient paint server -->
+    <rect fill="url(#G1)" stroke="black" stroke-width="5"  
+          x="100" y="100" width="600" height="200"/>
+  </g>
+</svg>

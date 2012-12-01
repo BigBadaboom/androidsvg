@@ -753,7 +753,7 @@ public class SVG
 
    protected static class GradientElement extends SvgContainer
    {
-      public boolean         gradientUnitsAreUser;
+      public Boolean         gradientUnitsAreUser;
       public Matrix          gradientTransform;
       public GradientSpread  spreadMethod;
       public String          href;
