@@ -89,7 +89,7 @@ public class TestActivity extends Activity
                         "test_gradient08_href2.svg",
                         "test_gradient09_misorderedoffsets.svg",
                         "test_gradient10_zerovector.svg",
-                        "test_gradient11_toofewstops.svg",
+                        "test_gradient11_onestop.svg",
                         "test_gradient12_zerostops.svg",
                         "inkscape.svg",
                         "!acid1_noerrors_nocss.svg",
