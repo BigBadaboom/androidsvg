@@ -51,8 +51,9 @@ public class SVGAndroidRenderer
 
    // Renderer state
    private RendererState  state = new RendererState();
-
    private Stack<RendererState> stateStack = new Stack<RendererState>();  // Keeps track of render state as we render
+
+   private static final Box  UNIT_BBOX = new Box(0,0,1,1);
 
 
    private class RendererState implements Cloneable
@@ -1795,18 +1796,10 @@ public class SVGAndroidRenderer
    private void  checkForGradiants(SvgElement obj)
    {
       if (state.style.fill instanceof PaintReference) {
-         Shader  shader = decodePaintReference(obj, (PaintReference) state.style.fill);
-         if (shader != null)
-            state.fillPaint.setShader(shader);
-         else
-            state.fillPaint.setColor(Color.BLACK);
+         decodePaintReference(state.fillPaint, obj, (PaintReference) state.style.fill);
       }
       if (state.style.stroke instanceof PaintReference) {
-         Shader  shader = decodePaintReference(obj, (PaintReference) state.style.stroke);
-         if (shader != null)
-            state.strokePaint.setShader(shader); 
-         else
-            state.strokePaint.setColor(Color.BLACK);
+         decodePaintReference(state.strokePaint, obj, (PaintReference) state.style.stroke);
       }
    }
 
@@ -1814,27 +1807,27 @@ public class SVGAndroidRenderer
    /*
     * Takes a PaintReference object and generates an appropriate Android Shader object from it.
     */
-   private Shader  decodePaintReference(SvgElement obj, PaintReference paintref)
+   private void  decodePaintReference(Paint paint, SvgElement obj, PaintReference paintref)
    {
       SVG.SvgObject  ref = obj.document.resolveIRI(paintref.href);
       if (ref == null)
-         return null;
+         return;
       if (ref instanceof SvgLinearGradient)
-         return makeLinearGradiant(obj, (SvgLinearGradient) ref);
+         makeLinearGradiant(paint, obj, (SvgLinearGradient) ref);
       if (ref instanceof SvgRadialGradient)
-         return makeRadialGradiant(obj, (SvgRadialGradient) ref);
-      return null;
+         makeRadialGradiant(paint, obj, (SvgRadialGradient) ref);
    }
 
 
-   private Shader  makeLinearGradiant(SvgElement obj, SvgLinearGradient gradient)
+   private void  makeLinearGradiant(Paint paint, SvgElement obj, SvgLinearGradient gradient)
    {
       if (gradient.href != null)
          fillInChainedGradientFields(gradient, gradient.href);
 
       boolean  userUnits = (gradient.gradientUnitsAreUser != null && gradient.gradientUnitsAreUser);
-      Box  gradientBounds = userUnits ? state.viewPort : obj.boundingBox;
 
+      if (!userUnits)
+         state.viewBox = UNIT_BBOX;  // So that <coord> = "100%" works out correctly
       float  _x1 = (gradient.x1 != null) ? gradient.x1.floatValueX(this): 0f;
       float  _y1 = (gradient.y1 != null) ? gradient.y1.floatValueY(this): 0f;
       float  _x2 = (gradient.x2 != null) ? gradient.x2.floatValueX(this): 1f;
@@ -1844,8 +1837,8 @@ public class SVGAndroidRenderer
       Matrix m = new Matrix();
       if (!userUnits)
       {
-         m.preTranslate(gradientBounds.minX, gradientBounds.minY);
-         m.preScale(gradientBounds.width, gradientBounds.height);
+         m.preTranslate(obj.boundingBox.minX, obj.boundingBox.minY);
+         m.preScale(obj.boundingBox.width, obj.boundingBox.height);
       }
       if (gradient.gradientTransform != null)
       {
@@ -1854,6 +1847,11 @@ public class SVGAndroidRenderer
 
       // Create the colour and position arrays for the shader
       int    numStops = gradient.children.size();
+      if (numStops < 2) {
+         paint.setColor(Color.BLACK);
+         return;
+      }
+
       int[]  colours = new int[numStops];
       float[]  positions = new float[numStops];
       int  i = 0;
@@ -1877,6 +1875,13 @@ public class SVGAndroidRenderer
          i++;
       }
 
+      // If gradient vector is zero length, we instead fill with last stop colour
+Log.w(TAG, "vector: "+_x1+" "+_x2+" "+_y1+" "+_y2);
+      if (_x1 == _x2 && _y1 == _y2) {
+         paint.setColor(colours[numStops - 1]);
+         return;
+      }
+
       // Convert spreadMethod->TileMode
       TileMode  tileMode = TileMode.CLAMP;
       if (gradient.spreadMethod != null)
@@ -1890,18 +1895,19 @@ public class SVGAndroidRenderer
       // Create shader instance
       LinearGradient  gr = new LinearGradient(_x1, _y1, _x2, _y2, colours, positions, tileMode); 
       gr.setLocalMatrix(m);
-      return gr;
+      paint.setShader(gr);
    }
 
 
-   private Shader makeRadialGradiant(SvgElement obj, SvgRadialGradient gradient)
+   private void makeRadialGradiant(Paint paint, SvgElement obj, SvgRadialGradient gradient)
    {
       if (gradient.href != null)
          fillInChainedGradientFields(gradient, gradient.href);
 
       boolean  userUnits = (gradient.gradientUnitsAreUser != null && gradient.gradientUnitsAreUser);
-      Box  gradientBounds = userUnits ? state.viewPort : obj.boundingBox;
       
+      if (!userUnits)
+         state.viewBox = UNIT_BBOX;  // So that <coord> = "100%" works out correctly
       float  _cx = (gradient.cx != null) ? gradient.cx.floatValueX(this): 0.5f;
       float  _cy = (gradient.cy != null) ? gradient.cy.floatValueY(this): 0.5f;
       float  _r = (gradient.r != null) ? gradient.r.floatValue(this): 0.5f;
@@ -1912,8 +1918,8 @@ public class SVGAndroidRenderer
       Matrix m = new Matrix();
       if (!userUnits)
       {
-         m.preTranslate(gradientBounds.minX, gradientBounds.minY);
-         m.preScale(gradientBounds.width, gradientBounds.height);
+         m.preTranslate(obj.boundingBox.minX, obj.boundingBox.minY);
+         m.preScale(obj.boundingBox.width, obj.boundingBox.height);
       }
       if (gradient.gradientTransform != null)
       {
@@ -1922,6 +1928,11 @@ public class SVGAndroidRenderer
 
       // Create the colour and position arrays for the shader
       int    numStops = gradient.children.size();
+      if (numStops < 2) {
+         paint.setColor(Color.BLACK);
+         return;
+      }
+
       int[]  colours = new int[numStops];
       float[]  positions = new float[numStops];
       int  i = 0;
@@ -1937,6 +1948,12 @@ public class SVGAndroidRenderer
          i++;
       }
 
+      // If gradient radius is zero, we instead fill with last stop colour
+      if (_r == 0) {
+         paint.setColor(colours[numStops - 1]);
+         return;
+      }
+
       // Convert spreadMethod->TileMode
       TileMode  tileMode = TileMode.CLAMP;
       if (gradient.spreadMethod != null)
@@ -1950,7 +1967,7 @@ public class SVGAndroidRenderer
       // Create shader instance
       RadialGradient  gr = new RadialGradient(_cx, _cy, _r, colours, positions, tileMode); 
       gr.setLocalMatrix(m);
-      return gr;
+      paint.setShader(gr);
    }
 
 
