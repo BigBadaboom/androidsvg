@@ -1899,7 +1899,8 @@ public class SVGAndroidRenderer
       if (gradient.href != null)
          fillInChainedGradientFields(gradient, gradient.href);
 
-      Box  gradientBounds = (gradient.gradientUnitsAreUser != null && gradient.gradientUnitsAreUser) ? state.viewPort : obj.boundingBox;
+      boolean  userUnits = (gradient.gradientUnitsAreUser != null && gradient.gradientUnitsAreUser);
+      Box  gradientBounds = userUnits ? state.viewPort : obj.boundingBox;
       
       float  _cx = (gradient.cx != null) ? gradient.cx.floatValueX(this): 0.5f;
       float  _cy = (gradient.cy != null) ? gradient.cy.floatValueY(this): 0.5f;
@@ -1909,7 +1910,7 @@ public class SVGAndroidRenderer
 
       // Calculate the gradient transform matrix
       Matrix m = new Matrix();
-      if (!gradient.gradientUnitsAreUser)
+      if (!userUnits)
       {
          m.preTranslate(gradientBounds.minX, gradientBounds.minY);
          m.preScale(gradientBounds.width, gradientBounds.height);
