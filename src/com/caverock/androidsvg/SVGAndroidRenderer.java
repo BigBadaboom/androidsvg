@@ -1857,10 +1857,18 @@ public class SVGAndroidRenderer
       int[]  colours = new int[numStops];
       float[]  positions = new float[numStops];
       int  i = 0;
+      float  lastOffset = -1;
       for (SvgObject child: gradient.children)
       {
          Stop  stop = (Stop) child;
-         positions[i] = stop.offset;
+         if (i == 0 || stop.offset >= lastOffset) {
+            positions[i] = stop.offset;
+            lastOffset = stop.offset;
+         } else {
+            // Each offset must be equal or grater than the last one.
+            // If it doesn't we need to replace it with the previous value.
+            positions[i] = lastOffset;
+         }
          Colour col = (SVG.Colour) stop.style.stopColor;
          if (col == null)
             col = Colour.BLACK;
