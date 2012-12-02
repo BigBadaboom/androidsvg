@@ -390,7 +390,7 @@ public class SVGParser extends DefaultHandler
       supportedFeatures.add("BasicGraphicsAttribute");      // YES
       supportedFeatures.add("Marker");                      // YES
       //supportedFeatures.add("ColorProfile");              // NO
-      //supportedFeatures.add("Gradient");                  // NYI
+      supportedFeatures.add("Gradient");                    // YES
       //supportedFeatures.add("Pattern");                   // NYI
       //supportedFeatures.add("Clip");                      // NYI
       //supportedFeatures.add("BasicClip");                 // NYI
