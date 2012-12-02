@@ -5,10 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
 
-import org.xml.sax.SAXException;
-
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.DashPathEffect;
 import android.graphics.LinearGradient;
 import android.graphics.Matrix;
@@ -16,7 +13,6 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RadialGradient;
 import android.graphics.RectF;
-import android.graphics.Shader;
 import android.graphics.Shader.TileMode;
 import android.graphics.Typeface;
 import android.util.Log;
@@ -103,6 +99,20 @@ public class SVGAndroidRenderer
          {
             throw new InternalError(e.toString());
          }
+      }
+
+      @Override
+      public String toString()
+      {
+         StringBuilder sb = new StringBuilder();
+         sb.append(style); sb.append("\n");
+         sb.append(hasFill); sb.append("\n");
+         sb.append(hasStroke); sb.append("\n");
+         sb.append(fillPaint); sb.append("\n");
+         sb.append(strokePaint); sb.append("\n");
+         sb.append(viewPort); sb.append("\n");
+         sb.append(viewBox); sb.append("\n");
+         return sb.toString();
       }
 
    }
@@ -226,7 +236,8 @@ public class SVGAndroidRenderer
       // Save matrix and clip
       canvas.save();
       // Save style state
-      stateStack.push((RendererState) state.clone());
+      stateStack.push(state);
+      state = (RendererState) state.clone();
    }
 
 
@@ -440,6 +451,9 @@ public class SVGAndroidRenderer
    }
 
 
+   //==============================================================================
+
+
    private void render(SVG.Circle obj)
    {
 /**/Log.d(TAG, "Circle render");
@@ -472,6 +486,9 @@ public class SVGAndroidRenderer
       }
 
    }
+
+
+   //==============================================================================
 
 
    private void render(SVG.Ellipse obj)
@@ -510,6 +527,9 @@ public class SVGAndroidRenderer
    }
 
 
+   //==============================================================================
+
+
    private void render(SVG.Line obj)
    {
 /**/Log.d(TAG, "Line render");
@@ -535,8 +555,31 @@ public class SVGAndroidRenderer
       }
       checkForGradiants(obj);      
 
-      canvas.drawLine(_x1, _y1, _x2, _y2, state.strokePaint);
+      if ((_x1 != _x2) || (_y1 != _y2))
+         canvas.drawLine(_x1, _y1, _x2, _y2, state.strokePaint);
+      else
+         canvas.drawPoint(_x1, _y1, state.strokePaint);  // Workaround for Android bug 40780
+
+      renderMarkers(obj);
    }
+
+
+   private List<MarkerVector>  calculateMarkerPositions(SVG.Line obj)
+   {
+      float _x1, _y1, _x2, _y2;
+      _x1 = (obj.x1 != null) ? obj.x1.floatValueX(this) : 0f;
+      _y1 = (obj.y1 != null) ? obj.y1.floatValueY(this) : 0f;
+      _x2 = (obj.x2 != null) ? obj.x2.floatValueX(this) : 0f;
+      _y2 = (obj.y2 != null) ? obj.y2.floatValueY(this) : 0f;
+
+      List<MarkerVector>  markers = new ArrayList<MarkerVector>(2);
+      markers.add(new MarkerVector(_x1, _y1, (_x2-_x1), (_y2-_y1)));
+      markers.add(new MarkerVector(_x2, _y2, (_x2-_x1), (_y2-_y1)));
+      return markers;
+   }
+
+
+   //==============================================================================
 
 
    private void render(SVG.PolyLine obj)
@@ -554,7 +597,7 @@ public class SVGAndroidRenderer
          canvas.concat(obj.transform);
 
       int  numPoints = obj.points.length;
-      if (numPoints < 4)
+      if (numPoints < 2)
          return;
 
       Path  path = new Path();
@@ -570,9 +613,61 @@ public class SVGAndroidRenderer
       
       if (state.hasFill)
          canvas.drawPath(path, state.fillPaint);
-      if (state.hasStroke)
-         canvas.drawPath(path, state.strokePaint);
+      if (state.hasStroke) {
+         if (numPoints == 2) {
+            // Android path render doesn't draw degenerate lines, so we have to use drawPoint instead.
+            canvas.drawPoint(obj.points[0], obj.points[1], state.strokePaint);
+         } else {
+            canvas.drawPath(path, state.strokePaint);
+         }
+      }
+
+      renderMarkers(obj);
    }
+
+
+   private List<MarkerVector>  calculateMarkerPositions(SVG.PolyLine obj)
+   {
+      int  numPoints = obj.points.length; 
+/**/Log.w(TAG, "calculateMarkerPositions "+numPoints);
+      if (numPoints < 2)
+         return null;
+
+      List<MarkerVector>  markers = new ArrayList<MarkerVector>();
+      MarkerVector        lastPos = new MarkerVector(obj.points[0], obj.points[1], 0, 0);
+      float               x = 0, y = 0;
+
+      for (int i=2; i<numPoints; i+=2) {
+         x = obj.points[i];
+         y = obj.points[i+1];
+         lastPos.add(x, y);
+         markers.add(lastPos);
+         MarkerVector  newPos = new MarkerVector(x, y, x-lastPos.x, y-lastPos.y);
+         lastPos = newPos;
+      }
+
+      // Deal with last point
+      if (obj instanceof SVG.Polygon) {
+         if (x != obj.points[0] && y != obj.points[1]) {
+            x = obj.points[0];
+            y = obj.points[1];
+            lastPos.add(x, y);
+            markers.add(lastPos);
+            // Last marker point needs special handling because its orientation depends
+            // on the orientation of the very first segment of the path
+            MarkerVector  newPos = new MarkerVector(x, y, x-lastPos.x, y-lastPos.y);
+            newPos.add(markers.get(0));
+            markers.add(newPos);
+            markers.set(0, newPos);  // Start marker is the same
+         }
+      } else {
+         markers.add(lastPos);
+      }
+      return markers;
+   }
+
+
+   //==============================================================================
 
 
    private void render(SVG.Polygon obj)
@@ -609,6 +704,8 @@ public class SVGAndroidRenderer
          canvas.drawPath(path, state.fillPaint);
       if (state.hasStroke)
          canvas.drawPath(path, state.strokePaint);
+
+      renderMarkers(obj);
    }
 
 
@@ -665,7 +762,6 @@ public class SVGAndroidRenderer
       for (SVG.SvgObject child: obj.children) {
          renderText(child, currentTextPosition);
       }
-
    }
 
 
@@ -1492,6 +1588,9 @@ public class SVGAndroidRenderer
 
       public void add(float x, float y)
       {
+         // In order to get accurate angles, we have to normalise
+         // all vectors before we add them.  As long as they are
+         // all the same length, the angles will work out correctly.
          float dx = (x - this.x);
          float dy = (y - this.y);
          double  len = Math.sqrt( dx*dx + dy*dy );
@@ -1499,6 +1598,18 @@ public class SVGAndroidRenderer
             this.dx += (float) (dx / len);
             this.dy += (float) (dy / len);
          }
+      }
+
+      public void add(MarkerVector v2)
+      {
+         this.dx += v2.dx;
+         this.dy += v2.dy;
+      }
+
+      @Override
+      public String toString()
+      {
+         return "("+x+","+y+" "+dx+","+dy+")";
       }
    }
    
@@ -1512,6 +1623,8 @@ public class SVGAndroidRenderer
       float  startX, startY;
       MarkerVector  lastPos = null;
       boolean startArc = false, normalCubic = true;
+      int subpathStartIndex = -1;
+      private boolean closepathReAdjustPending;
 
       
       public MarkerPositionCalculator(PathDefinition pathDef)
@@ -1532,9 +1645,21 @@ public class SVGAndroidRenderer
       @Override
       public void moveTo(float x, float y)
       {
+         if (closepathReAdjustPending) {
+            // Now correct the start and end marker points of the subpath.
+            // They should both be oriented as if this was a midpoint (ie sum the vectors).
+            lastPos.add(markers.get(subpathStartIndex));
+            // Overwrite start marker. Other (end) marker will be written on exit or at start of next subpath.
+            markers.set(subpathStartIndex,  lastPos);
+            closepathReAdjustPending = false;
+         }
+         if (lastPos != null) {
+            markers.add(lastPos);
+         }
          startX = x;
          startY = y;
          lastPos = new MarkerVector(x, y, 0, 0);
+         subpathStartIndex = markers.size();
       }
 
       @Override
@@ -1544,6 +1669,7 @@ public class SVGAndroidRenderer
          markers.add(lastPos);
          MarkerVector  newPos = new MarkerVector(x, y, x-lastPos.x, y-lastPos.y);
          lastPos = newPos;
+         closepathReAdjustPending = false;
       }
 
       @Override
@@ -1556,6 +1682,7 @@ public class SVGAndroidRenderer
          }
          MarkerVector  newPos = new MarkerVector(x3, y3, x3-x2, y3-y2);
          lastPos = newPos;
+         closepathReAdjustPending = false;
       }
 
       @Override
@@ -1565,6 +1692,7 @@ public class SVGAndroidRenderer
          markers.add(lastPos);
          MarkerVector  newPos = new MarkerVector(x2, y2, x2-x1, y2-y1);
          lastPos = newPos;
+         closepathReAdjustPending = false;
       }
 
       @Override
@@ -1575,20 +1703,25 @@ public class SVGAndroidRenderer
          normalCubic = false;
          SVGAndroidRenderer.arcTo(lastPos.x, lastPos.y, rx, ry, xAxisRotation, largeArcFlag, sweepFlag, x, y, this);
          normalCubic = true;
+         closepathReAdjustPending = false;
       }
 
       @Override
       public void close()
       {
-         if (lastPos.x != startX || lastPos.y != startY) {
-            lineTo(startX, startY);
-         }
+         markers.add(lastPos);
+         lineTo(startX, startY);
+         // We may need to readjust the first and last markers on this subpath so that
+         // the orientation is a sum of the inward and outward vectors.
+         // But this only happens if the path ends or the next subpath starts with a Move.
+         // See description of "orient" attribute in section 11.6.2.
+         closepathReAdjustPending = true;
       }
          
    }
 
 
-   private void  renderMarkers(SVG.Path obj)
+   private void  renderMarkers(SVG.GraphicsElement obj)
    {
       if (state.style.markerStart == null && state.style.markerMid == null && state.style.markerEnd == null)
          return;
@@ -1615,7 +1748,17 @@ public class SVGAndroidRenderer
             _markerEnd = (SVG.Marker) ref;
       }
 
-      List<MarkerVector>  markers = (new MarkerPositionCalculator(obj.path)).getMarkers();
+      List<MarkerVector>  markers = null;
+      if (obj instanceof SVG.Path)
+         markers = (new MarkerPositionCalculator(((SVG.Path) obj).path)).getMarkers();
+      else if (obj instanceof SVG.Line)
+         markers = calculateMarkerPositions((SVG.Line) obj);
+      else // PolyLine and Polygon
+         markers = calculateMarkerPositions((SVG.PolyLine) obj);
+      
+      if (markers == null)
+         return;
+
       int  markerCount = markers.size();
       if (markerCount == 0)
          return;
@@ -1827,8 +1970,9 @@ public class SVGAndroidRenderer
       boolean  userUnits = (gradient.gradientUnitsAreUser != null && gradient.gradientUnitsAreUser);
       Paint    paint = isFill ? state.fillPaint : state.strokePaint;
 
+      // Temporarily set viewBox to (0,0,1,1) for user units calculation (so percentages work)
       if (!userUnits)
-         state.viewBox = UNIT_BBOX;  // So that <coord> = "100%" works out correctly
+         state.viewBox = UNIT_BBOX;
       float  _x1 = (gradient.x1 != null) ? gradient.x1.floatValueX(this): 0f;
       float  _y1 = (gradient.y1 != null) ? gradient.y1.floatValueY(this): 0f;
       float  _x2 = (gradient.x2 != null) ? gradient.x2.floatValueX(this): 1f;
@@ -1910,9 +2054,12 @@ public class SVGAndroidRenderer
 
       boolean  userUnits = (gradient.gradientUnitsAreUser != null && gradient.gradientUnitsAreUser);
       Paint    paint = isFill ? state.fillPaint : state.strokePaint;
-      
+
+      statePush();
+      statePop();
+      // Temporarily set viewBox to (0,0,1,1) for user units calculation (so percentages work)
       if (!userUnits)
-         state.viewBox = UNIT_BBOX;  // So that <coord> = "100%" works out correctly
+         state.viewBox = UNIT_BBOX;
       float  _cx = (gradient.cx != null) ? gradient.cx.floatValueX(this): 0.5f;
       float  _cy = (gradient.cy != null) ? gradient.cy.floatValueY(this): 0.5f;
       float  _r = (gradient.r != null) ? gradient.r.floatValue(this): 0.5f;
