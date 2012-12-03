@@ -48,21 +48,27 @@ public class SVGParser extends DefaultHandler
    private static final String  FEATURE_STRING_PREFIX = "http://www.w3.org/TR/SVG11/feature#";
    
    // SVG parser
-   private float     dpi = 96f;   // inches to pixels conversion
-   SVG               svgDocument = null;
-   SVG.SvgContainer  currentElement = null;
+   private float             dpi = 96f;   // inches to pixels conversion
+   private SVG               svgDocument = null;
+   private SVG.SvgContainer  currentElement = null;
+
+   private boolean   ignoring = false;
+   private int       ignoreDepth;
+
 
    // Define SVG tags
    private static final String  TAG_SVG            = "svg";
+   private static final String  TAG_A              = "a";
    private static final String  TAG_CIRCLE         = "circle";
    private static final String  TAG_CLIPPATH       = "clipPath";
    private static final String  TAG_DEFS           = "defs";
+   private static final String  TAG_DESC           = "desc";
    private static final String  TAG_ELLIPSE        = "ellipse";
    private static final String  TAG_G              = "g";
+   private static final String  TAG_IMAGE          = "image";
    private static final String  TAG_LINE           = "line";
    private static final String  TAG_LINEARGRADIENT = "linearGradient";
    private static final String  TAG_MARKER         = "marker";
-   private static final String  TAG_MASK           = "mask";
    private static final String  TAG_PATH           = "path";
    private static final String  TAG_PATTERN        = "pattern";
    private static final String  TAG_POLYGON        = "polygon";
@@ -74,9 +80,67 @@ public class SVGParser extends DefaultHandler
    private static final String  TAG_SYMBOL         = "symbol";
    private static final String  TAG_TEXT           = "text";
    private static final String  TAG_TEXTPATH       = "textPath";
+   private static final String  TAG_TITLE          = "title";
    private static final String  TAG_TREF           = "tref";
    private static final String  TAG_TSPAN          = "tspan";
    private static final String  TAG_USE            = "use";
+
+   // Element types that we don't support. Those that are containers have their
+   // contents ignored.
+   //private static final String  TAG_ANIMATECOLOR        = "animateColor";
+   //private static final String  TAG_ANIMATEMOTION       = "animateMotion";
+   //private static final String  TAG_ANIMATETRANSFORM    = "animateTransform";
+   //private static final String  TAG_ALTGLYPH            = "altGlyph";
+   //private static final String  TAG_ALTGLYPHDEF         = "altGlyphDef";
+   //private static final String  TAG_ALTGLYPHITEM        = "altGlyphItem";
+   //private static final String  TAG_ANIMATE             = "animate";
+   //private static final String  TAG_COLORPROFILE        = "color-profile";
+   //private static final String  TAG_CURSOR              = "cursor";
+   //private static final String  TAG_FEBLEND             = "feBlend";
+   //private static final String  TAG_FECOLORMATRIX       = "feColorMatrix";
+   //private static final String  TAG_FECOMPONENTTRANSFER = "feComponentTransfer";
+   //private static final String  TAG_FECOMPOSITE         = "feComposite";
+   //private static final String  TAG_FECONVOLVEMATRIX    = "feConvolveMatrix";
+   //private static final String  TAG_FEDIFFUSELIGHTING   = "feDiffuseLighting";
+   //private static final String  TAG_FEDISPLACEMENTMAP   = "feDisplacementMap";
+   //private static final String  TAG_FEDISTANTLIGHT      = "feDistantLight";
+   //private static final String  TAG_FEFLOOD             = "feFlood";
+   //private static final String  TAG_FEFUNCA             = "feFuncA";
+   //private static final String  TAG_FEFUNCB             = "feFuncB";
+   //private static final String  TAG_FEFUNCG             = "feFuncG";
+   //private static final String  TAG_FEFUNCR             = "feFuncR";
+   //private static final String  TAG_FEGAUSSIANBLUR      = "feGaussianBlur";
+   //private static final String  TAG_FEIMAGE             = "feImage";
+   //private static final String  TAG_FEMERGE             = "feMerge";
+   //private static final String  TAG_FEMERGENODE         = "feMergeNode";
+   //private static final String  TAG_FEMORPHOLOGY        = "feMorphology";
+   //private static final String  TAG_FEOFFSET            = "feOffset";
+   //private static final String  TAG_FEPOINTLIGHT        = "fePointLight";
+   //private static final String  TAG_FESPECULARLIGHTING  = "feSpecularLighting";
+   //private static final String  TAG_FESPOTLIGHT         = "feSpotLight";
+   //private static final String  TAG_FETILE              = "feTile";
+   //private static final String  TAG_FETURBULENCE        = "feTurbulence";
+   //private static final String  TAG_FILTER              = "filter";
+   //private static final String  TAG_FONT                = "font";
+   //private static final String  TAG_FONTFACE            = "font-face";
+   //private static final String  TAG_FONTFACEFORMAT      = "font-face-format";
+   //private static final String  TAG_FONTFACENAME        = "font-face-name";
+   //private static final String  TAG_FONTFACESRC         = "font-face-src";
+   //private static final String  TAG_FONTFACEURI         = "font-face-uri";
+   //private static final String  TAG_FOREIGNOBJECT       = "foreignObject";
+   //private static final String  TAG_GLYPH               = "glyph";
+   //private static final String  TAG_GLYPHREF            = "glyphRef";
+   //private static final String  TAG_HKERN               = "hkern";
+   //private static final String  TAG_MASK                = "mask";
+   //private static final String  TAG_METADATA            = "metadata";
+   //private static final String  TAG_MISSINGGLYPH        = "missing-glyph";
+   //private static final String  TAG_MPATH               = "mpath";
+   //private static final String  TAG_SCRIPT              = "script";
+   //private static final String  TAG_SET                 = "set";
+   //private static final String  TAG_STYLE               = "style";
+   //private static final String  TAG_VIEW                = "view";
+   //private static final String  TAG_VKERN               = "vkern";
+
 
    // Supported SVG attributes
    private enum  SVGAttr
@@ -477,9 +541,15 @@ public class SVGParser extends DefaultHandler
    {
       super.startElement(uri, localName, qName, attributes);
 /**/Log.d(TAG, "startElement: "+localName);
-      if (!SVG_NAMESPACE.equals(uri))
+
+      if (ignoring) {
+         ignoreDepth++;
          return;
-      
+      }
+      if (!SVG_NAMESPACE.equals(uri)) {
+         return;
+      }
+
       if (localName.equalsIgnoreCase(TAG_SVG)) {
          svg(attributes);
       } else if (localName.equalsIgnoreCase(TAG_G)) {
@@ -520,6 +590,10 @@ public class SVGParser extends DefaultHandler
          radialGradient(attributes);
       } else if (localName.equalsIgnoreCase(TAG_STOP)) {
          stop(attributes);
+      } else {
+         ignoring = true;
+         ignoreDepth = 1;
+/**/Log.w(TAG, "ignore start");
       }
    }
 
@@ -528,6 +602,9 @@ public class SVGParser extends DefaultHandler
    public void characters(char[] ch, int start, int length) throws SAXException
    {
       super.characters(ch, start, length);
+
+      if (ignoring)
+         return;
 
       if (currentElement instanceof SVG.Text || currentElement instanceof SVG.TSpan) {
 
@@ -552,6 +629,14 @@ public class SVGParser extends DefaultHandler
    public void endElement(String uri, String localName, String qName) throws SAXException
    {
       super.endElement(uri, localName, qName);
+
+      if (ignoring) {
+         if (--ignoreDepth == 0) {
+            ignoring = false;
+/**/Log.w(TAG, "ignore end");
+            return;
+         }
+      }
 
       if (localName.equalsIgnoreCase(TAG_TEXT)) {
          collapseSpaces((SVG.Text) currentElement);
