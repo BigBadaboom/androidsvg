@@ -1619,12 +1619,12 @@ public class SVGAndroidRenderer
     */
    private class  MarkerPositionCalculator implements PathInterface
    {
-      List<MarkerVector>  markers = new ArrayList<MarkerVector>();
-      float  startX, startY;
-      MarkerVector  lastPos = null;
-      boolean startArc = false, normalCubic = true;
-      int subpathStartIndex = -1;
-      private boolean closepathReAdjustPending;
+      private List<MarkerVector>  markers = new ArrayList<MarkerVector>();
+      private float               startX, startY;
+      private MarkerVector        lastPos = null;
+      private boolean             startArc = false, normalCubic = true;
+      private int                 subpathStartIndex = -1;
+      private boolean             closepathReAdjustPending;
 
       
       public MarkerPositionCalculator(PathDefinition pathDef)
