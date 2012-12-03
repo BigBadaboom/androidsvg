@@ -3167,7 +3167,7 @@ dumpNode(svgDocument.getRootElement(), "");
                   Log.e(TAG, "Bad path coords for "+pathCommand+" path segment");
                   return path;
                }
-               if (pathCommand=='c') {
+               if (pathCommand=='s') {
                   x += currentX;
                   y += currentY;
                   x2 += currentX;
