@@ -590,6 +590,8 @@ public class SVGParser extends DefaultHandler
          radialGradient(attributes);
       } else if (localName.equalsIgnoreCase(TAG_STOP)) {
          stop(attributes);
+      } else if (localName.equalsIgnoreCase(TAG_A)) {
+         // do nothing
       } else {
          ignoring = true;
          ignoreDepth = 1;
