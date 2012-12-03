@@ -22,7 +22,7 @@ public class TestActivity extends Activity
    GestureDetector  gesture;
    Toast            currentToast;
 
-   String[] fileList = {"Firefox-logo.svg",
+   String[] fileList = {"chrome-logo.svg",
                         "sample_5.6_Use01.svg",
                         "sample_5.6_Use02.svg",
                         "sample_5.6_Use03.svg",
@@ -104,6 +104,7 @@ public class TestActivity extends Activity
                         "tiger.svg",
                         "eleven_below_single.svg",
                         "Firefox-logo.svg",
+                        "chrome-logo.svg",
                         "!acid1_noerrors_nocss.svg",
                         "Android_robot.svg"};
    int  whichFile = 0;
