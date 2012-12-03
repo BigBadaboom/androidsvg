@@ -1942,8 +1942,8 @@ dumpNode(svgDocument.getRootElement(), "");
 
       /*
        * Scans the input starting immediately at 'position' for the a sequence
-       * of letter characters terminated by an open bracket.  Both the function
-       * name and the bracket are returned.
+       * of letter characters terminated by an open bracket.  The function
+       * name is returned.
        */
       public String  nextFunction()
       {
@@ -1954,9 +1954,12 @@ dumpNode(svgDocument.getRootElement(), "");
          int  ch = input.charAt(position);
          while ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z'))
             ch = advanceChar();
+         int end = position;
+         while (isWhitespace(ch))
+            ch = advanceChar();
          if (ch == '(') {
-            position ++;
-            return input.substring(start, position);
+            position++;
+            return input.substring(start, end);
          }
          position = start;
          return null;
@@ -2517,6 +2520,7 @@ dumpNode(svgDocument.getRootElement(), "");
    private Matrix  parseTransformList(String val) throws SAXException
    {
       Matrix  matrix = new Matrix();
+/**/Log.w(TAG, "transform: "+val);
 
       TextScanner  scan = new TextScanner(val);
       scan.skipWhitespace();
@@ -2525,7 +2529,10 @@ dumpNode(svgDocument.getRootElement(), "");
       {
          String  cmd = scan.nextFunction();
 
-         if (cmd.equals("matrix("))
+         if (cmd == null)
+            throw new SAXException("Bad transform function encountered in transform list: "+val);
+
+         if (cmd.equals("matrix"))
          {
             scan.skipWhitespace();
             Float a = scan.nextFloat();
@@ -2548,7 +2555,7 @@ dumpNode(svgDocument.getRootElement(), "");
             m.setValues(new float[] {a, c, e, b, d, f, 0, 0, 1});
             matrix.preConcat(m);
          }
-         else if (cmd.equals("translate("))
+         else if (cmd.equals("translate"))
          {
             scan.skipWhitespace();
             Float  tx = scan.nextFloat();
@@ -2563,7 +2570,7 @@ dumpNode(svgDocument.getRootElement(), "");
             else
                matrix.preTranslate(tx, ty);
          }
-         else if (cmd.equals("scale("))
+         else if (cmd.equals("scale"))
          {
             scan.skipWhitespace();
             Float  sx = scan.nextFloat();
@@ -2578,7 +2585,7 @@ dumpNode(svgDocument.getRootElement(), "");
             else
                matrix.preScale(sx, sy);
          }
-         else if (cmd.equals("rotate("))
+         else if (cmd.equals("rotate"))
          {
             scan.skipWhitespace();
             Float  ang = scan.nextFloat();
@@ -2597,7 +2604,7 @@ dumpNode(svgDocument.getRootElement(), "");
                throw new SAXException("Invalid transform list: "+val);
             }
          }
-         else if (cmd.equals("skewX("))
+         else if (cmd.equals("skewX"))
          {
             scan.skipWhitespace();
             Float  ang = scan.nextFloat();
@@ -2608,7 +2615,7 @@ dumpNode(svgDocument.getRootElement(), "");
 
             matrix.preSkew((float) Math.tan(Math.toRadians(ang)), 0f);
          }
-         else if (cmd.equals("skewY("))
+         else if (cmd.equals("skewY"))
          {
             scan.skipWhitespace();
             Float  ang = scan.nextFloat();
