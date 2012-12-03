@@ -52,8 +52,13 @@ public class SVGParser extends DefaultHandler
    private SVG               svgDocument = null;
    private SVG.SvgContainer  currentElement = null;
 
+   // For handling elements we don't support
    private boolean   ignoring = false;
    private int       ignoreDepth;
+
+   // For handling <title> and <desc>
+   private boolean   inMetadataElement = false;
+   private String    metadataTag = null;
 
 
    // Define SVG tags
@@ -592,6 +597,9 @@ public class SVGParser extends DefaultHandler
          stop(attributes);
       } else if (localName.equalsIgnoreCase(TAG_A)) {
          // do nothing
+      } else if (localName.equalsIgnoreCase(TAG_TITLE) || localName.equalsIgnoreCase(TAG_DESC)) {
+         inMetadataElement = true;
+         metadataTag = localName;
       } else {
          ignoring = true;
          ignoreDepth = 1;
@@ -607,6 +615,13 @@ public class SVGParser extends DefaultHandler
 
       if (ignoring)
          return;
+
+      if (inMetadataElement) {
+         if (metadataTag.equals(TAG_TITLE))
+            svgDocument.setTitle(new String(ch, start, length));
+         else if (metadataTag.equals(TAG_DESC))
+            svgDocument.setDesc(new String(ch, start, length));
+      }
 
       if (currentElement instanceof SVG.Text || currentElement instanceof SVG.TSpan) {
 
@@ -638,6 +653,10 @@ public class SVGParser extends DefaultHandler
 /**/Log.w(TAG, "ignore end");
             return;
          }
+      }
+
+      if (localName.equalsIgnoreCase(TAG_TITLE) || localName.equalsIgnoreCase(TAG_DESC)) {
+         inMetadataElement = false;
       }
 
       if (localName.equalsIgnoreCase(TAG_TEXT)) {

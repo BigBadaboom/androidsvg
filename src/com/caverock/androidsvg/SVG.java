@@ -27,7 +27,12 @@ public class SVG
    private static final double  SQRT2 = 1.414213562373095;
 
 
-   private Svg  rootElement = null;
+   private Svg     rootElement = null;
+
+   // Metadata
+   private String  title = "";
+   private String  desc = "";
+
 
    public enum Unit
    {
@@ -950,8 +955,20 @@ public class SVG
    }
 
 
+   protected void setTitle(String title)
+   {
+      this.title = title;
+   }
+
+
+   protected void setDesc(String desc)
+   {
+      this.desc = desc;
+   }
+
+
    //===============================================================================
-   // SVG document rendering
+   // SVG document rendering API
 
 
    public Picture  getPicture()
@@ -1008,7 +1025,7 @@ public class SVG
 
 
    //===============================================================================
-   // Other document utility functions
+   // Other document utility API functions
 
 
    public SvgObject  resolveIRI(String iri)
@@ -1018,6 +1035,26 @@ public class SVG
          return getElementById(iri.substring(1));
       }
       return null;
+   }
+
+
+   /**
+    * Return the contents of the <title> element in the SVG document.
+    * @return title contents if declared, otherwise an empty string.
+    */
+   public String getDocumentTitle()
+   {
+      return title;
+   }
+
+
+   /**
+    * Return the contents of the <desc> element in the SVG document.
+    * @return desc contents if declared, otherwise an empty string.
+    */
+   public String getDocumentDescription()
+   {
+      return desc;
    }
 
 
