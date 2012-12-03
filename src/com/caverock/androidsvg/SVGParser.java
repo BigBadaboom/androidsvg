@@ -24,6 +24,7 @@ import android.graphics.Matrix;
 import android.util.Log;
 
 import com.caverock.androidsvg.SVG.Box;
+import com.caverock.androidsvg.SVG.CSSClipRect;
 import com.caverock.androidsvg.SVG.Colour;
 import com.caverock.androidsvg.SVG.CurrentColor;
 import com.caverock.androidsvg.SVG.GradientSpread;
@@ -379,7 +380,7 @@ public class SVGParser extends DefaultHandler
       supportedFeatures.add("ConditionalProcessing");       // YES
       //supportedFeatures.add("Image");                     // NO?
       supportedFeatures.add("Style");                       // YES
-      //supportedFeatures.add("ViewportAttribute");         // NYI
+      supportedFeatures.add("ViewportAttribute");           // YES
       supportedFeatures.add("Shape");                       // YES
       //supportedFeatures.add("Text");                      // NO
       supportedFeatures.add("BasicText");                   // YES
@@ -391,10 +392,10 @@ public class SVGParser extends DefaultHandler
       supportedFeatures.add("Marker");                      // YES
       //supportedFeatures.add("ColorProfile");              // NO
       supportedFeatures.add("Gradient");                    // YES
-      //supportedFeatures.add("Pattern");                   // NYI
+      //supportedFeatures.add("Pattern");                   // NO?
       //supportedFeatures.add("Clip");                      // NYI
       //supportedFeatures.add("BasicClip");                 // NYI
-      //supportedFeatures.add("Mask");                      // NO?
+      //supportedFeatures.add("Mask");                      // NO
       //supportedFeatures.add("Filter");                    // NO
       //supportedFeatures.add("BasicFilter");               // NO
       //supportedFeatures.add("DocumentEventsAttribute");   // NO
@@ -410,6 +411,7 @@ public class SVGParser extends DefaultHandler
       //supportedFeatures.add("Font");                      // NYI
       //supportedFeatures.add("BasicFont");                 // NYI
       //supportedFeatures.add("Extensibility");             // NO
+
    }
 
 
@@ -1755,6 +1757,7 @@ dumpNode(svgDocument.getRootElement(), "");
          return null;
       }
 
+
       public boolean  consume(char ch)
       {
          boolean  found = (position < input.length() && input.charAt(position) == ch);
@@ -1762,6 +1765,17 @@ dumpNode(svgDocument.getRootElement(), "");
             position++;
          return found;
       }
+
+
+      public boolean  consume(String str)
+      {
+         int  len = str.length();
+         boolean  found = (position <= (input.length() - len) && input.substring(position,position+len).equals(str));
+         if (found)
+            position += len;
+         return found;
+      }
+
 
       private int  advanceChar()
       {
@@ -1788,7 +1802,7 @@ dumpNode(svgDocument.getRootElement(), "");
 
       /*
        * Scans the input starting immediately at 'position' for the next token.
-       * A token is a sequence of character terminating at either a whitespace character
+       * A token is a sequence of characters terminating at either a whitespace character
        * or the supplied terminating character.
        */
       public String  nextToken(char terminator)
@@ -2326,7 +2340,6 @@ dumpNode(svgDocument.getRootElement(), "");
             obj.style.specifiedFlags |= SVG.SPECIFIED_STOP_OPACITY;
             break;
 
-         /*
          case clip:
             if (inherit) {
                //setInherit(obj, SVG.SPECIFIED_CLIP);
@@ -2335,7 +2348,6 @@ dumpNode(svgDocument.getRootElement(), "");
             obj.style.clip = parseClip(val);
             obj.style.specifiedFlags |= SVG.SPECIFIED_CLIP;
             break;
-         */
 
          default:
             break;
@@ -2869,6 +2881,42 @@ dumpNode(svgDocument.getRootElement(), "");
       if ("hidden".equals(val) || "scroll".equals(val))
          return Boolean.FALSE;
       throw new SAXException("Invalid toverflow property: "+val);
+   }
+
+
+   // Parse CSS clip shape (always a rect())
+   private CSSClipRect  parseClip(String val) throws SAXException
+   {
+      if ("auto".equals(val))
+         return null;
+      if (!val.toLowerCase().startsWith("rect("))
+         throw new SAXException("Invalid clip attribute shape. Only rect() is supported.");
+
+      TextScanner scan = new TextScanner(val.substring(5));
+      scan.skipWhitespace();
+
+      Length top = parseLengthOrAuto(scan);
+      scan.skipCommaWhitespace();
+      Length right = parseLengthOrAuto(scan);
+      scan.skipCommaWhitespace();
+      Length bottom = parseLengthOrAuto(scan);
+      scan.skipCommaWhitespace();
+      Length left = parseLengthOrAuto(scan);
+
+      scan.skipWhitespace();
+      if (!scan.consume(')'))
+         throw new SAXException("Bad rect() clip definition: "+val);
+
+      return new CSSClipRect(top, right, bottom, left);
+   }
+
+
+   private Length parseLengthOrAuto(TextScanner scan)
+   {
+      if (scan.consume("auto"))
+         return new Length(0f);
+
+      return scan.nextLength();
    }
 
 

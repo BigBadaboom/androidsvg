@@ -284,10 +284,7 @@ public class SVGAndroidRenderer
          state.viewPort = new SVG.Box(_x, _y, _w, _h);
       }
       if (!state.style.overflow) {
-         canvas.clipRect(state.viewPort.minX,
-                         state.viewPort.minY,
-                         state.viewPort.minX + state.viewPort.width,
-                         state.viewPort.minY + state.viewPort.height);
+         setClipRect(state.viewPort.minX, state.viewPort.minY, state.viewPort.width, state.viewPort.height);
       }
 
       if (obj.viewBox != null) {
@@ -896,7 +893,7 @@ public class SVGAndroidRenderer
       state.viewPort = new SVG.Box(0, 0, _w, _h);
 
       if (!state.style.overflow) {
-         canvas.clipRect(state.viewPort.minX, state.viewPort.minY, state.viewPort.width, state.viewPort.height);
+         setClipRect(state.viewPort.minX, state.viewPort.minY, state.viewPort.width, state.viewPort.height);
       }
 
       if (obj.viewBox != null) {
@@ -1278,6 +1275,11 @@ public class SVGAndroidRenderer
          state.style.visibility = style.visibility;
       }
 
+      if (isSpecified(style, SVG.SPECIFIED_CLIP))
+      {
+         state.style.clip = style.clip;
+      }
+
    }
 
 
@@ -1310,6 +1312,24 @@ public class SVGAndroidRenderer
          default:
             return Path.FillType.WINDING;
       }
+   }
+
+
+   private void setClipRect(float minX, float minY, float width, float height)
+   {
+      float  left = minX;
+      float  top = minY;
+      float  right = minX + width;
+      float  bottom = minY + height;
+
+      if (state.style.clip != null) {
+         left += state.style.clip.left.floatValueX(this);
+         top += state.style.clip.top.floatValueY(this);
+         right -= state.style.clip.right.floatValueX(this);
+         bottom -= state.style.clip.bottom.floatValueY(this);
+      }
+
+      canvas.clipRect(left, top, right, bottom);
    }
 
 
@@ -1880,7 +1900,7 @@ public class SVGAndroidRenderer
                // nothing to do 
                break;
          }
-         canvas.clipRect(xOffset, yOffset, xOffset+_markerWidth, yOffset+_markerHeight);
+         setClipRect(xOffset, yOffset, _markerWidth, _markerHeight);
       }
 
       m.reset();

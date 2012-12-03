@@ -199,7 +199,8 @@ public class SVG
       public TextAnchor textAnchor;
 
       public Boolean    overflow;  // true if overflow visible
-      public Box        clip;
+
+      public CSSClipRect  clip;
 
       public String     markerStart;
       public String     markerMid;
@@ -488,6 +489,23 @@ public class SVG
       public String toString()
       {
          return String.valueOf(value) + unit;
+      }
+   }
+
+
+   protected static class CSSClipRect
+   {
+      public Length  top;
+      public Length  right;
+      public Length  bottom;
+      public Length  left;
+      
+      public CSSClipRect(Length top, Length right, Length bottom, Length left)
+      {
+         this.top = top;
+         this.right = right;
+         this.bottom = bottom;
+         this.left = left;
       }
    }
 
