@@ -412,6 +412,18 @@ public class SVGParser extends DefaultHandler
       //supportedFeatures.add("BasicFont");                 // NYI
       //supportedFeatures.add("Extensibility");             // NO
 
+      // SVG 1.0 features - all are too general and include things we are not likely to ever support.
+      // If we ever do support these, we'll need to change how FEATURE_STRING_PREFIX is used.
+      //supportedFeatures.add("org.w3c.svg");
+      //supportedFeatures.add("org.w3c.dom.svg");
+      //supportedFeatures.add("org.w3c.svg.static");
+      //supportedFeatures.add("org.w3c.dom.svg.static");
+      //supportedFeatures.add("org.w3c.svg.animation");
+      //supportedFeatures.add("org.w3c.dom.svg.animation");
+      //supportedFeatures.add("org.w3c.svg.dynamic");
+      //supportedFeatures.add("org.w3c.dom.svg.dynamic");
+      //supportedFeatures.add("org.w3c.svg.all");
+      //supportedFeatures.add("org.w3c.dom.svg.all" );
    }
 
 
