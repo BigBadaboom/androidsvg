@@ -89,6 +89,7 @@ public class SVGParser extends DefaultHandler
    private static final String  TAG_TREF           = "tref";
    private static final String  TAG_TSPAN          = "tspan";
    private static final String  TAG_USE            = "use";
+   private static final String  TAG_VIEW           = "view";
 
    // Element types that we don't support. Those that are containers have their
    // contents ignored.
@@ -143,7 +144,6 @@ public class SVGParser extends DefaultHandler
    //private static final String  TAG_SCRIPT              = "script";
    //private static final String  TAG_SET                 = "set";
    //private static final String  TAG_STYLE               = "style";
-   //private static final String  TAG_VIEW                = "view";
    //private static final String  TAG_VKERN               = "vkern";
 
 
@@ -151,6 +151,9 @@ public class SVGParser extends DefaultHandler
    private enum  SVGAttr
    {
       clip,
+      clip_path,
+      clipPathUnits,
+      clip_rule,
       color,
       cx, cy,
       fx, fy,
@@ -596,10 +599,12 @@ public class SVGParser extends DefaultHandler
       } else if (localName.equalsIgnoreCase(TAG_STOP)) {
          stop(attributes);
       } else if (localName.equalsIgnoreCase(TAG_A)) {
-         // do nothing
+         g(attributes);    // Treat like a group element
       } else if (localName.equalsIgnoreCase(TAG_TITLE) || localName.equalsIgnoreCase(TAG_DESC)) {
          inMetadataElement = true;
          metadataTag = localName;
+      } else if (localName.equalsIgnoreCase(TAG_CLIPPATH)) {
+         clipPath(attributes);
       } else {
          ignoring = true;
          ignoreDepth = 1;
@@ -676,7 +681,8 @@ public class SVGParser extends DefaultHandler
           localName.equalsIgnoreCase(TAG_SYMBOL) ||
           localName.equalsIgnoreCase(TAG_MARKER) ||
           localName.equalsIgnoreCase(TAG_LINEARGRADIENT) ||
-          localName.equalsIgnoreCase(TAG_RADIALGRADIENT)) {
+          localName.equalsIgnoreCase(TAG_RADIALGRADIENT) ||
+          localName.equalsIgnoreCase(TAG_CLIPPATH)) {
          currentElement = currentElement.parent;
       }
 
@@ -1530,6 +1536,8 @@ dumpNode(svgDocument.getRootElement(), "");
                   obj.markerUnitsAreUser = false;
                } else if ("userSpaceOnUse".equals(val)) {
                   obj.markerUnitsAreUser = true;
+               } else {
+                  throw new SAXException("Invalid value for attribute markerUnits");
                } 
                break;
             case orient:
@@ -1579,6 +1587,8 @@ dumpNode(svgDocument.getRootElement(), "");
                   obj.gradientUnitsAreUser = false;
                } else if ("userSpaceOnUse".equals(val)) {
                   obj.gradientUnitsAreUser = true;
+               } else {
+                  throw new SAXException("Invalid value for attribute gradientUnits");
                } 
                break;
             case gradientTransform:
@@ -1743,6 +1753,51 @@ dumpNode(svgDocument.getRootElement(), "");
       catch (NumberFormatException e)
       {
          throw new SAXException("Invalid offset value in <stop>: "+val, e);
+      }
+   }
+
+
+   //=========================================================================
+   // <clipPath> element
+
+
+   private void  clipPath(Attributes attributes) throws SAXException
+   {
+/**/Log.d(TAG, "<clipPath>");
+      if (currentElement == null)
+         throw new SAXException("Invalid document. Root element must be <svg>");
+      SVG.ClipPath  obj = new SVG.ClipPath();
+      obj.document = svgDocument;
+      obj.parent = currentElement;
+      parseAttributesCore(obj, attributes);
+      parseAttributesStyle(obj, attributes);
+      parseAttributesTransform(obj, attributes);
+      parseAttributesConditional(obj, attributes);
+      parseAttributesClipPath(obj, attributes);
+      currentElement.addChild(obj);
+      currentElement = obj;
+   }
+
+
+   private void  parseAttributesClipPath(SVG.ClipPath obj, Attributes attributes) throws SAXException
+   {
+      for (int i=0; i<attributes.getLength(); i++)
+      {
+         String val = attributes.getValue(i).trim();
+         switch (SVGAttr.fromString(attributes.getLocalName(i)))
+         {
+            case clipPathUnits:
+               if ("objectBoundingBox".equals(val)) {
+                  obj.clipPathUnitsAreUser = false;
+               } else if ("userSpaceOnUse".equals(val)) {
+                  obj.clipPathUnitsAreUser = true;
+               } else {
+                  throw new SAXException("Invalid value for attribute clipPathUnits");
+               }
+               break;
+            default:
+               break;
+         }
       }
    }
 
@@ -2468,6 +2523,24 @@ dumpNode(svgDocument.getRootElement(), "");
             }
             obj.style.clip = parseClip(val);
             obj.style.specifiedFlags |= SVG.SPECIFIED_CLIP;
+            break;
+
+         case clip_path:
+            if (inherit) {
+               //setInherit(obj, SVG.SPECIFIED_CLIP_PATH);
+               break;
+            }
+            obj.style.clipPath = parseFunctionalIRI(val, localName);
+            obj.style.specifiedFlags |= SVG.SPECIFIED_CLIP_PATH;
+            break;
+
+         case clip_rule:
+            if (inherit) {
+               //setInherit(obj, SVG.SPECIFIED_CLIP_RULE);
+               break;
+            }
+            obj.style.clipRule = parseFillRule(val);
+            obj.style.specifiedFlags |= SVG.SPECIFIED_CLIP_RULE;
             break;
 
          default:

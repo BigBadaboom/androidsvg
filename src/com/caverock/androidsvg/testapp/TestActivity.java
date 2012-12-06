@@ -22,7 +22,7 @@ public class TestActivity extends Activity
    GestureDetector  gesture;
    Toast            currentToast;
 
-   String[] fileList = {"chrome-logo.svg",
+   String[] fileList = {"test_clipPath01.svg",
                         "sample_5.6_Use01.svg",
                         "sample_5.6_Use02.svg",
                         "sample_5.6_Use03.svg",
@@ -96,6 +96,7 @@ public class TestActivity extends Activity
                         "test_paths1.svg",
                         "test_paths2.svg",
                         "test_paths3.svg",
+                        "test_clipPath01.svg",
                         "inkscape.svg",
                         "xara.svg",
                         "xara_bluecar.svg",

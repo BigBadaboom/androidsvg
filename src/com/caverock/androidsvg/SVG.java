@@ -168,6 +168,8 @@ public class SVG
    public static final long SPECIFIED_VISIBILITY        = (1<<25);
    public static final long SPECIFIED_STOP_COLOR        = (1<<26);
    public static final long SPECIFIED_STOP_OPACITY      = (1<<27);
+   public static final long SPECIFIED_CLIP_PATH         = (1<<28);
+   public static final long SPECIFIED_CLIP_RULE         = (1<<29);
 
    public static final long SPECIFIED_ALL = 0xffffffff;
 
@@ -217,7 +219,10 @@ public class SVG
       public SvgPaint   stopColor;
       public Float      stopOpacity;
 
-      
+      public String     clipPath;
+      public FillRule   clipRule;
+
+
       public enum FillRule
       {
          NonZero,
@@ -285,6 +290,8 @@ public class SVG
          def.visibility = Boolean.TRUE;
          def.stopColor = Colour.BLACK;
          def.stopOpacity = 1f;
+         def.clipPath = null;
+         def.clipRule = FillRule.NonZero;
          return def;
       }
 
@@ -294,6 +301,7 @@ public class SVG
       {
          this.overflow = false;
          this.clip = null;
+         this.clipPath = null;
       }
 
       @Override
@@ -818,6 +826,12 @@ public class SVG
    }
 
 
+   protected static class ClipPath extends Group
+   {
+      public Boolean  clipPathUnitsAreUser;
+   }
+
+
    //===============================================================================
    // Path definition
 
@@ -1030,6 +1044,9 @@ public class SVG
 
    public SvgObject  resolveIRI(String iri)
    {
+      if (iri == null)
+         return null;
+
       if (iri.length() > 1 && iri.startsWith("#"))
       {
          return getElementById(iri.substring(1));

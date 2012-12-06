@@ -13,12 +13,14 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RadialGradient;
 import android.graphics.RectF;
+import android.graphics.Region.Op;
 import android.graphics.Shader.TileMode;
 import android.graphics.Typeface;
 import android.util.Log;
 
 import com.caverock.androidsvg.SVG.AspectRatioAlignment;
 import com.caverock.androidsvg.SVG.Box;
+import com.caverock.androidsvg.SVG.ClipPath;
 import com.caverock.androidsvg.SVG.Colour;
 import com.caverock.androidsvg.SVG.CurrentColor;
 import com.caverock.androidsvg.SVG.GradientElement;
@@ -27,6 +29,7 @@ import com.caverock.androidsvg.SVG.Marker;
 import com.caverock.androidsvg.SVG.PaintReference;
 import com.caverock.androidsvg.SVG.PathDefinition;
 import com.caverock.androidsvg.SVG.PathInterface;
+import com.caverock.androidsvg.SVG.Rect;
 import com.caverock.androidsvg.SVG.Stop;
 import com.caverock.androidsvg.SVG.Style;
 import com.caverock.androidsvg.SVG.SvgElement;
@@ -50,6 +53,8 @@ public class SVGAndroidRenderer
    private Stack<RendererState> stateStack = new Stack<RendererState>();  // Keeps track of render state as we render
 
    private static final Box  UNIT_BBOX = new Box(0,0,1,1);
+   
+   private static final float  BEZIER_ARC_FACTOR = 0.5522847498f;
 
 
    private class RendererState implements Cloneable
@@ -287,7 +292,9 @@ public class SVGAndroidRenderer
          setClipRect(state.viewPort.minX, state.viewPort.minY, state.viewPort.width, state.viewPort.height);
       }
 
-      if (obj.viewBox != null) {
+      checkForClipPath(obj, state.viewPort);
+
+     if (obj.viewBox != null) {
          canvas.concat(calculateViewBoxTransform(state.viewPort, obj.viewBox, obj.preserveAspectRatioAlignment, obj.preserveAspectRatioSlice));
       }
 
@@ -305,6 +312,8 @@ public class SVGAndroidRenderer
       if (obj.transform != null) {
          canvas.concat(obj.transform);
       }
+
+      checkForClipPath(obj);
 
       for (SVG.SvgObject child: obj.children) {
          render((SvgElement) child);
@@ -333,6 +342,8 @@ public class SVGAndroidRenderer
       float _y = (obj.y != null) ? obj.y.floatValueY(this) : 0f;
       m.preTranslate(_x, _y);
       canvas.concat(m);
+
+      checkForClipPath(obj);
 
       if (ref instanceof SVG.Svg) {
          render((SVG.Svg) ref, obj.width, obj.height);
@@ -367,6 +378,7 @@ public class SVGAndroidRenderer
          obj.boundingBox = calculatePathBounds(path);
       }
       checkForGradiants(obj);      
+      checkForClipPath(obj);
       
       if (state.hasFill) {
          path.setFillType(getFillTypeFromState());
@@ -427,6 +439,7 @@ public class SVGAndroidRenderer
          obj.boundingBox = new Box(_x, _y, _w, _h);
       }
       checkForGradiants(obj);      
+      checkForClipPath(obj);
 
       if (state.hasFill)
       {
@@ -474,6 +487,7 @@ public class SVGAndroidRenderer
          obj.boundingBox = new Box(_cx-_r, _cy-_r, _r*2, _r*2);
       }
       checkForGradiants(obj);      
+      checkForClipPath(obj);
 
       if (state.hasFill) {
          canvas.drawCircle(_cx, _cy, _r, state.fillPaint);
@@ -513,6 +527,7 @@ public class SVGAndroidRenderer
          obj.boundingBox = new Box(oval.left, oval.bottom, oval.width(), oval.height());
       }
       checkForGradiants(obj);      
+      checkForClipPath(obj);
 
       if (state.hasFill) {
          canvas.drawOval(oval, state.fillPaint);
@@ -551,6 +566,7 @@ public class SVGAndroidRenderer
          obj.boundingBox = Box.fromLimits(Math.min(_x1, _x2), Math.min(_y1, _y2), Math.max(_x1, _x2), Math.max(_y1, _y2));
       }
       checkForGradiants(obj);      
+      checkForClipPath(obj);
 
       if ((_x1 != _x2) || (_y1 != _y2))
          canvas.drawLine(_x1, _y1, _x2, _y2, state.strokePaint);
@@ -607,6 +623,7 @@ public class SVGAndroidRenderer
          obj.boundingBox = calculatePathBounds(path);
       }
       checkForGradiants(obj);      
+      checkForClipPath(obj);
       
       if (state.hasFill)
          canvas.drawPath(path, state.fillPaint);
@@ -696,6 +713,7 @@ public class SVGAndroidRenderer
          obj.boundingBox = calculatePathBounds(path);
       }
       checkForGradiants(obj);      
+      checkForClipPath(obj);
       
       if (state.hasFill)
          canvas.drawPath(path, state.fillPaint);
@@ -755,6 +773,7 @@ public class SVGAndroidRenderer
          obj.boundingBox = new Box(bbox.left, bbox.bottom, bbox.width(), bbox.height());
       }
       checkForGradiants(obj);      
+      checkForClipPath(obj);
       
       for (SVG.SvgObject child: obj.children) {
          renderText(child, currentTextPosition);
@@ -1278,6 +1297,16 @@ public class SVGAndroidRenderer
       if (isSpecified(style, SVG.SPECIFIED_CLIP))
       {
          state.style.clip = style.clip;
+      }
+
+      if (isSpecified(style, SVG.SPECIFIED_CLIP_PATH))
+      {
+         state.style.clipPath = style.clipPath;
+      }
+
+      if (isSpecified(style, SVG.SPECIFIED_CLIP_RULE))
+      {
+         state.style.clipRule = style.clipRule;
       }
 
    }
@@ -2219,6 +2248,244 @@ public class SVGAndroidRenderer
          gradient.fx = grRef.fx;
       if (gradient.fy == null)
          gradient.fy = grRef.fy;
+   }
+
+
+   //==============================================================================
+   // Clip paths
+   //==============================================================================
+
+
+   private void  checkForClipPath(SvgElement obj)
+   {
+      checkForClipPath(obj, obj.boundingBox);
+   }
+
+
+   private void  checkForClipPath(SvgElement obj, Box boundingBox)
+   {
+      // Locate the referenced object
+/**/Log.w(TAG, "cFCP 0 "+state.style.clipPath);
+      SVG.SvgObject  ref = obj.document.resolveIRI(state.style.clipPath);
+      if (ref == null)
+         return;
+
+      ClipPath  clipPath = (ClipPath) ref;
+
+/**/Log.w(TAG, "cFCP 1");
+      // An empty clipping path will completely clip away the element (sect 14.3.5).
+      if (clipPath.children.isEmpty()) {
+         canvas.clipRect(0, 0, 0, 0);
+         return;
+      }
+
+/**/Log.w(TAG, "cFCP 2");
+      boolean  userUnits = (clipPath.clipPathUnitsAreUser == null || clipPath.clipPathUnitsAreUser);
+
+      if ((obj instanceof SVG.Group) && !userUnits) {
+         Log.w(TAG, "<clipPath clipPathUnits=\"objectBoundingBox\"> is not supported when referenced from container elements (like "+obj.getClass().getSimpleName()+")");
+         return;
+      }
+/**/Log.w(TAG, "cFCP 3");
+
+      clipStatePush();
+
+      if (!userUnits)
+      {
+/**/Log.w(TAG, "cFCP 4 NOT USER UNITS");
+         Matrix m = new Matrix();
+         m.preTranslate(boundingBox.minX, boundingBox.minY);
+         m.preScale(boundingBox.width, boundingBox.height);
+         canvas.concat(m);
+      }
+
+      // "Properties inherit into the <clipPath> element from its ancestors; properties do not
+      // inherit from the element referencing the <clipPath> element." (sect 14.3.5)
+      state = findInheritFromAncestorState(clipPath);
+
+      checkForClipPath(clipPath);
+
+      for (SvgObject child: clipPath.children)
+      {
+         addObjectToClip(child);
+      }
+
+      clipStatePop();
+   }
+
+
+   private void addObjectToClip(SvgObject obj)
+   {
+/**/Log.w(TAG, "aOTC 0");
+      if (!display(obj))
+         return;
+
+      // Save state
+      clipStatePush();
+
+      if (obj instanceof SVG.Use) {
+         //addObjectToClip((SVG.Use) obj);
+      } else if (obj instanceof SVG.Path) {
+         addObjectToClip((SVG.Path) obj);
+      } else if (obj instanceof SVG.Rect) {
+         addObjectToClip((SVG.Rect) obj);
+      } else if (obj instanceof SVG.Circle) {
+         //addObjectToClip((SVG.Circle) obj);
+      } else if (obj instanceof SVG.Ellipse) {
+         //addObjectToClip((SVG.Ellipse) obj);
+      } else if (obj instanceof SVG.Polygon) {
+         //addObjectToClip((SVG.Polygon) obj);
+      } else if (obj instanceof SVG.PolyLine) {
+         //addObjectToClip((SVG.PolyLine) obj);
+      } else if (obj instanceof SVG.Text) {
+         //addObjectToClip((SVG.Text) obj);
+      }
+
+      // Restore state
+      clipStatePop();
+   }
+
+
+   private void  clipStatePush()
+   {
+      // Save matrix and clip
+      canvas.save(Canvas.MATRIX_SAVE_FLAG);
+      // Save style state
+      stateStack.push(state);
+      state = (RendererState) state.clone();
+   }
+
+
+   private void  clipStatePop()
+   {
+      // Restore matrix and clip
+      canvas.restore();
+      // Restore style state
+      state = stateStack.pop();
+   }
+
+
+   private Path.FillType  getClipRuleFromState()
+   {
+      if (state.style.clipRule == null)
+         return Path.FillType.WINDING;
+      switch (state.style.clipRule)
+      {
+         case EvenOdd:
+            return Path.FillType.EVEN_ODD;
+         case NonZero:
+         default:
+            return Path.FillType.WINDING;
+      }
+   }
+
+
+   private void addObjectToClip(SVG.Path obj)
+   {
+Log.w(TAG, "addPath 0");
+
+      updateStyle(state, obj.style);
+
+      if (!visible())
+         return;
+
+Log.w(TAG, "addPath 1 transform="+(obj.transform != null));
+      if (obj.transform != null)
+         canvas.concat(obj.transform);
+
+      Path  path = (new PathConverter(obj.path)).getPath();
+
+      if (obj.boundingBox == null) {
+         obj.boundingBox = calculatePathBounds(path);
+      }
+      checkForClipPath(obj);
+      
+Log.w(TAG, "addPath 4 path="+path.isEmpty());
+      path.setFillType(getClipRuleFromState());
+      canvas.clipPath(path);//, Op.UNION);
+   }
+
+
+   private void addObjectToClip(SVG.Rect obj)
+   {
+Log.w(TAG, "addRect");
+
+      updateStyle(state, obj.style);
+
+      if (!visible())
+         return;
+
+      if (obj.transform != null)
+         canvas.concat(obj.transform);
+
+      Path  path = makePathAndBoundingBox(obj);
+
+      checkForClipPath(obj);
+      
+      path.setFillType(getClipRuleFromState());
+      canvas.clipPath(path);//, Op.UNION);
+   }
+
+
+   private Path  makePathAndBoundingBox(Rect obj)
+   {
+      float x, y, w, h, rx, ry;
+
+      if (obj.rx == null && obj.ry == null) {
+         rx = 0;
+         ry = 0;
+      } else if (obj.rx == null) {
+         rx = ry = obj.ry.floatValueY(this);
+      } else if (obj.ry == null) {
+         rx = ry = obj.rx.floatValueX(this);
+      } else {
+         rx = obj.rx.floatValueX(this);
+         ry = obj.ry.floatValueY(this);
+      }
+      rx = Math.min(rx, obj.width.floatValueX(this) / 2f);
+      ry = Math.min(ry, obj.height.floatValueY(this) / 2f);
+      x = (obj.x != null) ? obj.x.floatValueX(this) : 0f;
+      y = (obj.y != null) ? obj.y.floatValueY(this) : 0f;
+      w = obj.width.floatValueX(this);
+      h = obj.height.floatValueY(this);
+
+      if (obj.boundingBox == null) {
+         obj.boundingBox = new Box(x, y, w, h);
+      }
+
+      float  right = x + w;
+      float  bottom = y + h;
+
+         Path  p = new Path();
+      if (rx == 0 || ry == 0)
+      {
+         // Simple rect
+         p.moveTo(x, y);
+         p.lineTo(right, y);
+         p.lineTo(right, bottom);
+         p.lineTo(x, bottom);
+         p.lineTo(x, y);
+      }
+      else
+      {
+         // Rounded rect
+         
+         // Bexier control point lengths for a 90 degress arc
+         float  cx = rx * BEZIER_ARC_FACTOR;
+         float  cy = ry * BEZIER_ARC_FACTOR;
+
+         p.moveTo(x, y+ry);
+         p.cubicTo(x, y+ry-cy, x+rx-cx, y, x+rx, y);
+         p.lineTo(right-rx, y);
+         p.cubicTo(right-rx+cx, y, right, y+ry-cy, right, y+ry);
+         p.lineTo(right, bottom-ry);
+         p.cubicTo(right, bottom-ry+cy, right-rx+cx, bottom, right-rx, bottom);
+         p.lineTo(x+rx, bottom);
+         p.cubicTo(x+rx-cx, bottom, x, bottom-ry+cy, x, bottom-ry);
+         p.lineTo(x, y+ry);
+      }
+      p.close();
+      return p;
    }
 
 
