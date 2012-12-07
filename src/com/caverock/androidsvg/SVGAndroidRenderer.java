@@ -13,7 +13,6 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RadialGradient;
 import android.graphics.RectF;
-import android.graphics.Region.Op;
 import android.graphics.Shader.TileMode;
 import android.graphics.Typeface;
 import android.util.Log;
@@ -2265,38 +2264,37 @@ public class SVGAndroidRenderer
    private void  checkForClipPath(SvgElement obj, Box boundingBox)
    {
       // Locate the referenced object
-/**/Log.w(TAG, "cFCP 0 "+state.style.clipPath);
       SVG.SvgObject  ref = obj.document.resolveIRI(state.style.clipPath);
       if (ref == null)
          return;
 
       ClipPath  clipPath = (ClipPath) ref;
 
-/**/Log.w(TAG, "cFCP 1");
       // An empty clipping path will completely clip away the element (sect 14.3.5).
       if (clipPath.children.isEmpty()) {
          canvas.clipRect(0, 0, 0, 0);
          return;
       }
 
-/**/Log.w(TAG, "cFCP 2");
       boolean  userUnits = (clipPath.clipPathUnitsAreUser == null || clipPath.clipPathUnitsAreUser);
 
       if ((obj instanceof SVG.Group) && !userUnits) {
          Log.w(TAG, "<clipPath clipPathUnits=\"objectBoundingBox\"> is not supported when referenced from container elements (like "+obj.getClass().getSimpleName()+")");
          return;
       }
-/**/Log.w(TAG, "cFCP 3");
 
       clipStatePush();
 
       if (!userUnits)
       {
-/**/Log.w(TAG, "cFCP 4 NOT USER UNITS");
          Matrix m = new Matrix();
          m.preTranslate(boundingBox.minX, boundingBox.minY);
          m.preScale(boundingBox.width, boundingBox.height);
          canvas.concat(m);
+      }
+      if (clipPath.transform != null)
+      {
+         canvas.concat(clipPath.transform);
       }
 
       // "Properties inherit into the <clipPath> element from its ancestors; properties do not
@@ -2307,14 +2305,14 @@ public class SVGAndroidRenderer
 
       for (SvgObject child: clipPath.children)
       {
-         addObjectToClip(child);
+         addObjectToClip(child, true);
       }
 
       clipStatePop();
    }
 
 
-   private void addObjectToClip(SvgObject obj)
+   private void addObjectToClip(SvgObject obj, boolean allowUse)
    {
 /**/Log.w(TAG, "aOTC 0");
       if (!display(obj))
@@ -2324,21 +2322,19 @@ public class SVGAndroidRenderer
       clipStatePush();
 
       if (obj instanceof SVG.Use) {
-         //addObjectToClip((SVG.Use) obj);
+         if (allowUse) {
+            addObjectToClip((SVG.Use) obj);
+         } else {
+            Log.e(TAG, "<use> elements inside a <clipPath> cannot reference another <use>");
+         }
       } else if (obj instanceof SVG.Path) {
          addObjectToClip((SVG.Path) obj);
-      } else if (obj instanceof SVG.Rect) {
-         addObjectToClip((SVG.Rect) obj);
-      } else if (obj instanceof SVG.Circle) {
-         //addObjectToClip((SVG.Circle) obj);
-      } else if (obj instanceof SVG.Ellipse) {
-         //addObjectToClip((SVG.Ellipse) obj);
-      } else if (obj instanceof SVG.Polygon) {
-         //addObjectToClip((SVG.Polygon) obj);
-      } else if (obj instanceof SVG.PolyLine) {
-         //addObjectToClip((SVG.PolyLine) obj);
       } else if (obj instanceof SVG.Text) {
-         //addObjectToClip((SVG.Text) obj);
+         Log.w(TAG, "Text elements are not supported as a component for clipPaths");
+      } else if (obj instanceof SVG.GraphicsElement) {
+         addObjectToClip((SVG.GraphicsElement) obj);
+      } else {
+         Log.e(TAG, "Invalid element found in clipPath definition: "+obj.getClass().getSimpleName());
       }
 
       // Restore state
@@ -2382,14 +2378,13 @@ public class SVGAndroidRenderer
 
    private void addObjectToClip(SVG.Path obj)
    {
-Log.w(TAG, "addPath 0");
+Log.w(TAG, "addPath");
 
       updateStyle(state, obj.style);
 
       if (!visible())
          return;
 
-Log.w(TAG, "addPath 1 transform="+(obj.transform != null));
       if (obj.transform != null)
          canvas.concat(obj.transform);
 
@@ -2400,15 +2395,14 @@ Log.w(TAG, "addPath 1 transform="+(obj.transform != null));
       }
       checkForClipPath(obj);
       
-Log.w(TAG, "addPath 4 path="+path.isEmpty());
       path.setFillType(getClipRuleFromState());
       canvas.clipPath(path);//, Op.UNION);
    }
 
 
-   private void addObjectToClip(SVG.Rect obj)
+   private void addObjectToClip(SVG.Use obj)
    {
-Log.w(TAG, "addRect");
+Log.w(TAG, "addUse");
 
       updateStyle(state, obj.style);
 
@@ -2418,11 +2412,43 @@ Log.w(TAG, "addRect");
       if (obj.transform != null)
          canvas.concat(obj.transform);
 
-      Path  path = makePathAndBoundingBox(obj);
+      // Locate the referenced object
+      SVG.SvgObject  ref = obj.document.resolveIRI(obj.href);
+      if (ref == null)
+         return;
 
       checkForClipPath(obj);
       
-      path.setFillType(getClipRuleFromState());
+      addObjectToClip(ref, false);
+   }
+
+
+   private void addObjectToClip(SVG.GraphicsElement obj)
+   {
+Log.w(TAG, "addGE");
+
+      updateStyle(state, obj.style);
+
+      if (!visible())
+         return;
+
+      if (obj.transform != null)
+         canvas.concat(obj.transform);
+
+      Path  path;
+      if (obj instanceof SVG.Rect)
+         path = makePathAndBoundingBox((SVG.Rect) obj);
+      else if (obj instanceof SVG.Circle)
+         path = makePathAndBoundingBox((SVG.Circle) obj);
+      else if (obj instanceof SVG.Ellipse)
+         path = makePathAndBoundingBox((SVG.Ellipse) obj);
+      else if (obj instanceof SVG.PolyLine)
+         path = makePathAndBoundingBox((SVG.PolyLine) obj);
+      else
+         return;
+
+      checkForClipPath(obj);
+      
       canvas.clipPath(path);//, Op.UNION);
    }
 
@@ -2456,7 +2482,7 @@ Log.w(TAG, "addRect");
       float  right = x + w;
       float  bottom = y + h;
 
-         Path  p = new Path();
+      Path  p = new Path();
       if (rx == 0 || ry == 0)
       {
          // Simple rect
@@ -2471,21 +2497,99 @@ Log.w(TAG, "addRect");
          // Rounded rect
          
          // Bexier control point lengths for a 90 degress arc
-         float  cx = rx * BEZIER_ARC_FACTOR;
-         float  cy = ry * BEZIER_ARC_FACTOR;
+         float  cpx = rx * BEZIER_ARC_FACTOR;
+         float  cpy = ry * BEZIER_ARC_FACTOR;
 
          p.moveTo(x, y+ry);
-         p.cubicTo(x, y+ry-cy, x+rx-cx, y, x+rx, y);
+         p.cubicTo(x, y+ry-cpy, x+rx-cpx, y, x+rx, y);
          p.lineTo(right-rx, y);
-         p.cubicTo(right-rx+cx, y, right, y+ry-cy, right, y+ry);
+         p.cubicTo(right-rx+cpx, y, right, y+ry-cpy, right, y+ry);
          p.lineTo(right, bottom-ry);
-         p.cubicTo(right, bottom-ry+cy, right-rx+cx, bottom, right-rx, bottom);
+         p.cubicTo(right, bottom-ry+cpy, right-rx+cpx, bottom, right-rx, bottom);
          p.lineTo(x+rx, bottom);
-         p.cubicTo(x+rx-cx, bottom, x, bottom-ry+cy, x, bottom-ry);
+         p.cubicTo(x+rx-cpx, bottom, x, bottom-ry+cpy, x, bottom-ry);
          p.lineTo(x, y+ry);
       }
       p.close();
       return p;
+   }
+
+
+   private Path makePathAndBoundingBox(SVG.Circle obj)
+   {
+      float  cx = (obj.cx != null) ? obj.cx.floatValueX(this) : 0f;
+      float  cy = (obj.cy != null) ? obj.cy.floatValueY(this) : 0f;
+      float  r = obj.r.floatValue(this);
+
+      float  left = cx - r;
+      float  top = cy - r;
+      float  right = cx + r;
+      float  bottom = cy + r;
+
+      if (obj.boundingBox == null) {
+         obj.boundingBox = new Box(left, top, r*2, r*2);
+      }
+
+      float  cp = r * BEZIER_ARC_FACTOR;
+
+      Path  p = new Path();
+      p.moveTo(cx, top);
+      p.cubicTo(cx+cp, top, right, cy-cp, right, cy);
+      p.cubicTo(right, cy+cp, cx+cp, bottom, cx, bottom);
+      p.cubicTo(cx-cp, bottom, left, cy+cp, left, cy);
+      p.cubicTo(left, cy-cp, cx-cp, top, cx, top);
+      p.close();
+      return p;
+   }
+
+
+   private Path makePathAndBoundingBox(SVG.Ellipse obj)
+   {
+      float  cx = (obj.cx != null) ? obj.cx.floatValueX(this) : 0f;
+      float  cy = (obj.cy != null) ? obj.cy.floatValueY(this) : 0f;
+      float  rx = obj.rx.floatValueX(this);
+      float  ry = obj.ry.floatValueY(this);
+
+      float  left = cx - rx;
+      float  top = cy - ry;
+      float  right = cx + rx;
+      float  bottom = cy + ry;
+
+      if (obj.boundingBox == null) {
+         obj.boundingBox = new Box(left, top, rx*2, ry*2);
+      }
+
+      float  cpx = rx * BEZIER_ARC_FACTOR;
+      float  cpy = ry * BEZIER_ARC_FACTOR;
+
+      Path  p = new Path();
+      p.moveTo(cx, top);
+      p.cubicTo(cx+cpx, top, right, cy-cpy, right, cy);
+      p.cubicTo(right, cy+cpy, cx+cpx, bottom, cx, bottom);
+      p.cubicTo(cx-cpx, bottom, left, cy+cpy, left, cy);
+      p.cubicTo(left, cy-cpy, cx-cpx, top, cx, top);
+      p.close();
+      return p;
+   }
+
+
+   private Path makePathAndBoundingBox(SVG.PolyLine obj)
+   {
+      Path  path = new Path();
+
+      path.moveTo(obj.points[0], obj.points[1]);
+      for (int i=2; i<obj.points.length; i+=2) {
+         path.lineTo(obj.points[i], obj.points[i+1]);
+      }
+      if (obj instanceof SVG.Polygon)
+         path.close();
+
+      if (obj.boundingBox == null) {
+         obj.boundingBox = calculatePathBounds(path);
+      }
+
+      path.setFillType(getClipRuleFromState());
+      return path;
    }
 
 
