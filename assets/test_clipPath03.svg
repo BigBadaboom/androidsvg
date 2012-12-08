@@ -1,0 +1,22 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="3in" height="3in" viewBox="0 0 300 300" version="1.1"
+     xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+
+  <defs>
+    <clipPath id="Clip1">
+      <rect x="100" y="0" width="100" height="300"/>
+      <rect x="100" y="0" width="100" height="300"/>
+    </clipPath>
+  </defs>
+
+  <rect fill="none" stroke="blue" 
+        x="1" y="1" width="298" height="298"/>
+
+  <svg clip="rect(100,0,100,0)">
+    <rect fill="red" x="0" y="0" width="300" height="300" clip-path="url(#Clip1)"/>
+  </svg>
+
+  <text x="50%" y="250" text-anchor="middle" font-size="10pt">Should be a red square in the centre of the image</text>
+</svg>

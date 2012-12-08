@@ -15,6 +15,8 @@ import android.content.res.AssetManager;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Picture;
+import android.graphics.Region;
+import android.util.Log;
 
 public class SVG
 {
@@ -1025,6 +1027,15 @@ public class SVG
       Picture             picture = new Picture();
       Canvas              canvas = picture.beginRecording(widthInPixels, heightInPixels);
 
+/*
+Paint paint = new Paint();
+paint.setTextSize(36f);
+canvas.drawText("Wibble", 0, 100, paint);
+Matrix m = new Matrix();
+m.preScale(2f, 2f);
+canvas.concat(m);
+canvas.drawText("Wibble", 0, 200, paint);
+*/
       if (alignment == null)
          alignment = AspectRatioAlignment.xMidYMid;
 

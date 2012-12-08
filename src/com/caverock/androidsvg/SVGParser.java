@@ -401,8 +401,8 @@ public class SVGParser extends DefaultHandler
       fontSizeKeywords.put("large", new Length(14.4f, Unit.pt));
       fontSizeKeywords.put("x-large", new Length(17.3f, Unit.pt));
       fontSizeKeywords.put("xx-large", new Length(20.7f, Unit.pt));
-      fontSizeKeywords.put("smaller", new Length(0.833f, Unit.percent));
-      fontSizeKeywords.put("larger", new Length(1.2f, Unit.percent));
+      fontSizeKeywords.put("smaller", new Length(83.33f, Unit.percent));
+      fontSizeKeywords.put("larger", new Length(120f, Unit.percent));
 
       fontWeightKeywords.put("normal", "normal");
       fontWeightKeywords.put("bold", "bold");
