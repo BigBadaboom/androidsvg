@@ -203,6 +203,8 @@ public class SVGAndroidRenderer
          render((SVG.Svg) obj);
       } else if (obj instanceof SVG.Defs) { // A subclass of Group so it needs to come before that
          // do nothing
+      } else if (obj instanceof SVG.ClipPath) { // A subclass of Group so it needs to come before that
+         // do nothing
       } else if (obj instanceof SVG.Group) {
          render((SVG.Group) obj);
       } else if (obj instanceof SVG.Use) {
@@ -2246,18 +2248,18 @@ public class SVGAndroidRenderer
 
       checkForClipPath(clipPath);
 
-      Region  clipRegion = new Region();
+      Path  combinedPath = new Path();
       for (SvgObject child: clipPath.children)
       {
-         addObjectToClip(child, true, clipRegion);
+         addObjectToClip(child, true, combinedPath, new Matrix());
       }
-      canvas.clipPath(clipRegion.getBoundaryPath());
+      canvas.clipPath(combinedPath);
 
       clipStatePop();
    }
 
 
-   private void addObjectToClip(SvgObject obj, boolean allowUse, Region clipRegion)
+   private void addObjectToClip(SvgObject obj, boolean allowUse, Path combinedPath, Matrix combinedPathMatrix)
    {
       if (!display(obj))
          return;
@@ -2267,16 +2269,16 @@ public class SVGAndroidRenderer
 
       if (obj instanceof SVG.Use) {
          if (allowUse) {
-            addObjectToClip((SVG.Use) obj, clipRegion);
+            addObjectToClip((SVG.Use) obj, combinedPath, combinedPathMatrix);
          } else {
             Log.e(TAG, "<use> elements inside a <clipPath> cannot reference another <use>");
          }
       } else if (obj instanceof SVG.Path) {
-         addObjectToClip((SVG.Path) obj, clipRegion);
+         addObjectToClip((SVG.Path) obj, combinedPath, combinedPathMatrix);
       } else if (obj instanceof SVG.Text) {
          Log.w(TAG, "Text elements are not supported as a component for clipPaths");
       } else if (obj instanceof SVG.GraphicsElement) {
-         addObjectToClip((SVG.GraphicsElement) obj, clipRegion);
+         addObjectToClip((SVG.GraphicsElement) obj, combinedPath, combinedPathMatrix);
       } else {
          Log.e(TAG, "Invalid element found in clipPath definition: "+obj.getClass().getSimpleName());
       }
@@ -2286,6 +2288,9 @@ public class SVGAndroidRenderer
    }
 
 
+   // The clip state push and pop methods only save the matrix.
+   // The normal push/pop save the clip region also which would
+   // destroy the clip region we are trying to build.
    private void  clipStatePush()
    {
       // Save matrix and clip
@@ -2320,7 +2325,7 @@ public class SVGAndroidRenderer
    }
 
 
-   private void addObjectToClip(SVG.Path obj, Region clipRegion)
+   private void addObjectToClip(SVG.Path obj, Path combinedPath, Matrix combinedPathMatrix)
    {
       updateStyle(state, obj.style);
 
@@ -2328,7 +2333,7 @@ public class SVGAndroidRenderer
          return;
 
       if (obj.transform != null)
-         canvas.concat(obj.transform);
+         combinedPathMatrix.preConcat(obj.transform);
 
       Path  path = (new PathConverter(obj.path)).getPath();
 
@@ -2336,16 +2341,14 @@ public class SVGAndroidRenderer
          obj.boundingBox = calculatePathBounds(path);
       }
       checkForClipPath(obj);
-      
-      path.setFillType(getClipRuleFromState());
 
-      Region region = new Region();
-      region.setPath(path, obj.boundingBox.toRegion());
-      clipRegion.op(region, Op.UNION);
+      //path.setFillType(getClipRuleFromState());
+      combinedPath.setFillType(getClipRuleFromState());
+      combinedPath.addPath(path, combinedPathMatrix);
    }
 
 
-   private void addObjectToClip(SVG.Use obj, Region clipRegion)
+   private void addObjectToClip(SVG.GraphicsElement obj, Path combinedPath, Matrix combinedPathMatrix)
    {
       updateStyle(state, obj.style);
 
@@ -2353,28 +2356,7 @@ public class SVGAndroidRenderer
          return;
 
       if (obj.transform != null)
-         canvas.concat(obj.transform);
-
-      // Locate the referenced object
-      SVG.SvgObject  ref = obj.document.resolveIRI(obj.href);
-      if (ref == null)
-         return;
-
-      checkForClipPath(obj);
-      
-      addObjectToClip(ref, false, clipRegion);
-   }
-
-
-   private void addObjectToClip(SVG.GraphicsElement obj, Region clipRegion)
-   {
-      updateStyle(state, obj.style);
-
-      if (!visible())
-         return;
-
-      if (obj.transform != null)
-         canvas.concat(obj.transform);
+         combinedPathMatrix.preConcat(obj.transform);
 
       Path  path;
       if (obj instanceof SVG.Rect)
@@ -2390,9 +2372,29 @@ public class SVGAndroidRenderer
 
       checkForClipPath(obj);
 
-      Region region = new Region();
-      region.setPath(path, obj.boundingBox.toRegion());
-      clipRegion.op(region, Op.UNION);
+      combinedPath.setFillType(path.getFillType());
+      combinedPath.addPath(path, combinedPathMatrix);
+   }
+
+
+   private void addObjectToClip(SVG.Use obj, Path combinedPath, Matrix combinedPathMatrix)
+   {
+      updateStyle(state, obj.style);
+
+      if (!visible())
+         return;
+
+      if (obj.transform != null)
+         combinedPathMatrix.preConcat(obj.transform);
+
+      // Locate the referenced object
+      SVG.SvgObject  ref = obj.document.resolveIRI(obj.href);
+      if (ref == null)
+         return;
+
+      checkForClipPath(obj);
+      
+      addObjectToClip(ref, false, combinedPath, combinedPathMatrix);
    }
 
 
