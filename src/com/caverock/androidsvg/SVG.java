@@ -16,7 +16,6 @@ import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Picture;
 import android.graphics.Region;
-import android.util.Log;
 
 public class SVG
 {
@@ -659,7 +658,7 @@ public class SVG
    }
 
 
-   protected static class Use extends GraphicsElement // TODO: OverridesDisplayNone
+   protected static class Use extends Group
    {
       public String href;
       public Length x;
@@ -1032,19 +1031,6 @@ public class SVG
       Picture             picture = new Picture();
       Canvas              canvas = picture.beginRecording(widthInPixels, heightInPixels);
 
-/*
-Paint paint = new Paint();
-paint.setTextSize(36f);
-canvas.drawText("Wibble", 0, 100, paint);
-Matrix m = new Matrix();
-m.preScale(2f, 2f);
-canvas.concat(m);
-canvas.drawText("Wibble", 0, 200, paint);
-*/
-Region reg = new Region(0,0,99,99);
-Region reg2 = new Region(100,100,200,200);
-Log.w(TAG, "region2 = "+reg.op(reg2, Region.Op.INTERSECT));
-
       if (alignment == null)
          alignment = AspectRatioAlignment.xMidYMid;
 
@@ -1145,6 +1131,8 @@ Log.w(TAG, "region2 = "+reg.op(reg2, Region.Op.INTERSECT));
     */
    public void  ensureRootViewBox()
    {
+      if (rootElement == null)
+         return;
       if (rootElement.viewBox != null)
          return;
       if (rootElement.width != null && rootElement.height != null)

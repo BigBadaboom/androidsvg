@@ -539,7 +539,6 @@ public class SVGParser extends DefaultHandler
    public void startDocument() throws SAXException
    {
       super.startDocument();
-/**/Log.d(TAG, "startDocument");
       svgDocument = new SVG();
    }
 
@@ -554,7 +553,7 @@ public class SVGParser extends DefaultHandler
          ignoreDepth++;
          return;
       }
-      if (!SVG_NAMESPACE.equals(uri)) {
+      if (!SVG_NAMESPACE.equals(uri) && !"".equals(uri)) {
          return;
       }
 
@@ -608,7 +607,6 @@ public class SVGParser extends DefaultHandler
       } else {
          ignoring = true;
          ignoreDepth = 1;
-/**/Log.w(TAG, "ignore start");
       }
    }
 
@@ -655,9 +653,12 @@ public class SVGParser extends DefaultHandler
       if (ignoring) {
          if (--ignoreDepth == 0) {
             ignoring = false;
-/**/Log.w(TAG, "ignore end");
             return;
          }
+      }
+
+      if (!SVG_NAMESPACE.equals(uri) && !"".equals(uri)) {
+         return;
       }
 
       if (localName.equalsIgnoreCase(TAG_TITLE) || localName.equalsIgnoreCase(TAG_DESC)) {
@@ -675,6 +676,7 @@ public class SVGParser extends DefaultHandler
       if (localName.equalsIgnoreCase(TAG_SVG) ||
           localName.equalsIgnoreCase(TAG_DEFS) ||
           localName.equalsIgnoreCase(TAG_G) ||
+          localName.equalsIgnoreCase(TAG_USE) ||
           localName.equalsIgnoreCase(TAG_TEXT) ||
           localName.equalsIgnoreCase(TAG_TSPAN) ||
           localName.equalsIgnoreCase(TAG_SWITCH) ||
@@ -825,6 +827,8 @@ dumpNode(svgDocument.getRootElement(), "");
       parseAttributesConditional(obj, attributes);
       parseAttributesUse(obj, attributes);
       currentElement.addChild(obj);
+      currentElement = obj;
+/**/Log.w(TAG, "currentElement="+currentElement);
    }
 
 
@@ -2593,7 +2597,6 @@ dumpNode(svgDocument.getRootElement(), "");
    private Matrix  parseTransformList(String val) throws SAXException
    {
       Matrix  matrix = new Matrix();
-/**/Log.w(TAG, "transform: "+val);
 
       TextScanner  scan = new TextScanner(val);
       scan.skipWhitespace();

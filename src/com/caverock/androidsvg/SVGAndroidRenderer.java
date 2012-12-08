@@ -177,7 +177,12 @@ public class SVGAndroidRenderer
    {
       // Calculate the initial transform to position the document in our canvas
       SVG.Svg  obj = document.getRootElement();
-      
+
+      if (obj == null) {
+         Log.w(TAG, "Nothing to render. Document is empty.");
+         return;
+      }
+
       if (obj.viewBox != null) {
          canvas.concat(calculateViewBoxTransform(state.viewPort, obj.viewBox, alignment, !fitToCanvas));
          state.viewPort = obj.viewBox;
@@ -201,14 +206,14 @@ public class SVGAndroidRenderer
 
       if (obj instanceof SVG.Svg) {
          render((SVG.Svg) obj);
-      } else if (obj instanceof SVG.Defs) { // A subclass of Group so it needs to come before that
+      } else if (obj instanceof SVG.Defs) { // Defs, Use and ClipPath are all subclasses of Group and so needs to come before that
          // do nothing
-      } else if (obj instanceof SVG.ClipPath) { // A subclass of Group so it needs to come before that
+      } else if (obj instanceof SVG.Use) {
+         render((SVG.Use) obj);
+      } else if (obj instanceof SVG.ClipPath) {
          // do nothing
       } else if (obj instanceof SVG.Group) {
          render((SVG.Group) obj);
-      } else if (obj instanceof SVG.Use) {
-         render((SVG.Use) obj);
       } else if (obj instanceof SVG.Path) {
          render((SVG.Path) obj);
       } else if (obj instanceof SVG.Rect) {

@@ -1,0 +1,19 @@
+<svg viewBox="0 0 190 172" width="190" height="172" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <path id="line-long" d="m-15.5,0v85a15.5,15.5 0 0 0 31,0v-85a15.5,15.5 0 0 0 -31,0zm9,0a6.5,6.5 0 0,0 13,0a6.5,6.5 0 0,0 -13,0zm0,85a6.5,6.5 0 0,0 13,0a6.5,6.5 0 0,0 -13,0z" fill-rule="evenodd"></path>
+    <path id="line-short" d="m-15.5,0v60.81118318204309a15.5,15.5 0 0 0 31,0v-60.81118318204309a15.5,15.5 0 0 0 -31,0zm9,0a6.5,6.5 0 0,0 13,0a6.5,6.5 0 0,0 -13,0zm0,60.81118318204309a6.5,6.5 0 0,0 13,0a6.5,6.5 0 0,0 -13,0z" fill-rule="evenodd"></path>
+    <clipPath id="clip-orange-red"><use transform="translate(52,19)" xlink:href="#line-long"></use></clipPath>
+    <clipPath id="clip-red-purple"><use transform="translate(52,104)rotate(-135)" xlink:href="#line-short"></use></clipPath>
+    <clipPath id="clip-purple-cyan"><use transform="translate(138,19)" xlink:href="#line-long"></use></clipPath>
+  </defs>
+  <g transform="translate(-.5,-.5)">
+    <use transform="translate(52,19)" xlink:href="#line-long" style="fill: #f89c20"></use>
+    <use transform="translate(52,104)rotate(-135)" xlink:href="#line-short" style="fill: #e54e26"></use>
+    <use transform="translate(138,19)" xlink:href="#line-long" style="fill: #2eb3c4"></use>
+    <use transform="translate(138,104)rotate(135)" xlink:href="#line-short" style="fill: #694d9f"></use>
+    <g clip-path="url(#clip-orange-red)"><use transform="translate(52,104)rotate(-135)" xlink:href="#line-short" style="fill: #d02e27"></use></g>
+    <g clip-path="url(#clip-red-purple)"><use transform="translate(138,104)rotate(135)" xlink:href="#line-short" style="fill: #7f1333"></use></g>
+    <g clip-path="url(#clip-purple-cyan)"><use transform="translate(138,104)rotate(135)" xlink:href="#line-short" style="fill: #263c81"></use></g>
+    <text x="95" y="150" text-anchor="middle" font-family="Bitter" font-size="20" font-weight="bold" style="fill: #474747">WebPlatform<tspan style="fill: #a3a3a3">.org</tspan></text>
+  </g>
+</svg>
