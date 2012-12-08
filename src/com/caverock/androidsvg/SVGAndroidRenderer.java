@@ -13,6 +13,7 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RadialGradient;
 import android.graphics.RectF;
+import android.graphics.Region;
 import android.graphics.Region.Op;
 import android.graphics.Shader.TileMode;
 import android.graphics.Typeface;
@@ -2304,20 +2305,19 @@ public class SVGAndroidRenderer
 
       checkForClipPath(clipPath);
 
-      boolean  firstClip = true;
+      Region  clipRegion = new Region();
       for (SvgObject child: clipPath.children)
       {
-         addObjectToClip(child, true, firstClip);
-         firstClip = false;
+         addObjectToClip(child, true, clipRegion);
       }
+      canvas.clipPath(clipRegion.getBoundaryPath());
 
       clipStatePop();
    }
 
 
-   private void addObjectToClip(SvgObject obj, boolean allowUse, boolean firstClip)
+   private void addObjectToClip(SvgObject obj, boolean allowUse, Region clipRegion)
    {
-/**/Log.w(TAG, "aOTC 0");
       if (!display(obj))
          return;
 
@@ -2326,16 +2326,16 @@ public class SVGAndroidRenderer
 
       if (obj instanceof SVG.Use) {
          if (allowUse) {
-            addObjectToClip((SVG.Use) obj, firstClip);
+            addObjectToClip((SVG.Use) obj, clipRegion);
          } else {
             Log.e(TAG, "<use> elements inside a <clipPath> cannot reference another <use>");
          }
       } else if (obj instanceof SVG.Path) {
-         addObjectToClip((SVG.Path) obj, firstClip);
+         addObjectToClip((SVG.Path) obj, clipRegion);
       } else if (obj instanceof SVG.Text) {
          Log.w(TAG, "Text elements are not supported as a component for clipPaths");
       } else if (obj instanceof SVG.GraphicsElement) {
-         addObjectToClip((SVG.GraphicsElement) obj, firstClip);
+         addObjectToClip((SVG.GraphicsElement) obj, clipRegion);
       } else {
          Log.e(TAG, "Invalid element found in clipPath definition: "+obj.getClass().getSimpleName());
       }
@@ -2379,10 +2379,8 @@ public class SVGAndroidRenderer
    }
 
 
-   private void addObjectToClip(SVG.Path obj, boolean firstClip)
+   private void addObjectToClip(SVG.Path obj, Region clipRegion)
    {
-Log.w(TAG, "addPath");
-
       updateStyle(state, obj.style);
 
       if (!visible())
@@ -2399,14 +2397,15 @@ Log.w(TAG, "addPath");
       checkForClipPath(obj);
       
       path.setFillType(getClipRuleFromState());
-      canvas.clipPath(path, firstClip ? Op.INTERSECT : Op.UNION);
+
+      Region region = new Region();
+      region.setPath(path, obj.boundingBox.toRegion());
+      clipRegion.op(region, Op.UNION);
    }
 
 
-   private void addObjectToClip(SVG.Use obj, boolean firstClip)
+   private void addObjectToClip(SVG.Use obj, Region clipRegion)
    {
-Log.w(TAG, "addUse");
-
       updateStyle(state, obj.style);
 
       if (!visible())
@@ -2422,14 +2421,12 @@ Log.w(TAG, "addUse");
 
       checkForClipPath(obj);
       
-      addObjectToClip(ref, false, firstClip);
+      addObjectToClip(ref, false, clipRegion);
    }
 
 
-   private void addObjectToClip(SVG.GraphicsElement obj, boolean firstClip)
+   private void addObjectToClip(SVG.GraphicsElement obj, Region clipRegion)
    {
-Log.w(TAG, "addGE");
-
       updateStyle(state, obj.style);
 
       if (!visible())
@@ -2451,9 +2448,16 @@ Log.w(TAG, "addGE");
          return;
 
       checkForClipPath(obj);
-      
-      canvas.clipPath(path, firstClip ? Op.INTERSECT : Op.UNION);
+
+      Region region = new Region();
+      region.setPath(path, obj.boundingBox.toRegion());
+      clipRegion.op(region, Op.UNION);
    }
+
+
+   //==============================================================================
+   // Convert the different shapes to paths
+   //==============================================================================
 
 
    private Path  makePathAndBoundingBox(Rect obj)

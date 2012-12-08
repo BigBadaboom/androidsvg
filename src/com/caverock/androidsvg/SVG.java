@@ -139,6 +139,11 @@ public class SVG
       {
          return new Box(minX, minY, maxX-minX, maxY-minY);
       }
+
+      public Region  toRegion()
+      {
+         return new Region((int) Math.floor(minX), (int) Math.floor(minY), (int) Math.ceil(minX + width), (int) Math.ceil(minY + height));
+      }
    }
 
 
@@ -1036,6 +1041,10 @@ m.preScale(2f, 2f);
 canvas.concat(m);
 canvas.drawText("Wibble", 0, 200, paint);
 */
+Region reg = new Region(0,0,99,99);
+Region reg2 = new Region(100,100,200,200);
+Log.w(TAG, "region2 = "+reg.op(reg2, Region.Op.INTERSECT));
+
       if (alignment == null)
          alignment = AspectRatioAlignment.xMidYMid;
 

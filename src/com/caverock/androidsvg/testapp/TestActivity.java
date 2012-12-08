@@ -22,7 +22,7 @@ public class TestActivity extends Activity
    GestureDetector  gesture;
    Toast            currentToast;
 
-   String[] fileList = {"!test_clipPath03.svg",
+   String[] fileList = {"!test_clipPath05.svg",
                         "sample_5.6_Use01.svg",
                         "sample_5.6_Use02.svg",
                         "sample_5.6_Use03.svg",
@@ -98,7 +98,9 @@ public class TestActivity extends Activity
                         "test_paths3.svg",
                         "test_clipPath01.svg",
                         "test_clipPath02.svg",
-                        "test_clipPath03.svg",
+                        "!test_clipPath03.svg",
+                        "!test_clipPath04.svg",
+                        "!test_clipPath05.svg",
                         "inkscape.svg",
                         "xara.svg",
                         "xara_bluecar.svg",
