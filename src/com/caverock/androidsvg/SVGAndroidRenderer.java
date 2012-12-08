@@ -396,7 +396,7 @@ public class SVGAndroidRenderer
    {
       RectF  pathBounds = new RectF();
       path.computeBounds(pathBounds, true);
-      return new Box(pathBounds.left, pathBounds.bottom, pathBounds.width(), pathBounds.height());
+      return new Box(pathBounds.left, pathBounds.top, pathBounds.width(), pathBounds.height());
    }
 
 
@@ -417,47 +417,15 @@ public class SVGAndroidRenderer
       if (obj.transform != null)
          canvas.concat(obj.transform);
 
-      float _x, _y, _w, _h, _rx, _ry;
-      if (obj.rx == null && obj.ry == null) {
-         _rx = 0;
-         _ry = 0;
-      } else if (obj.rx == null) {
-         _rx = _ry = obj.ry.floatValueY(this);
-      } else if (obj.ry == null) {
-         _rx = _ry = obj.rx.floatValueX(this);
-      } else {
-         _rx = obj.rx.floatValueX(this);
-         _ry = obj.ry.floatValueY(this);
-      }
-      _rx = Math.min(_rx, obj.width.floatValueX(this) / 2f);
-      _ry = Math.min(_ry, obj.height.floatValueY(this) / 2f);
-      _x = (obj.x != null) ? obj.x.floatValueX(this) : 0f;
-      _y = (obj.y != null) ? obj.y.floatValueY(this) : 0f;
-      _w = obj.width.floatValueX(this);
-      _h = obj.height.floatValueY(this);
+      Path  path = makePathAndBoundingBox(obj);
 
-      if (obj.boundingBox == null) {
-         obj.boundingBox = new Box(_x, _y, _w, _h);
-      }
       checkForGradiants(obj);      
       checkForClipPath(obj);
 
       if (state.hasFill)
-      {
-         if (_rx == 0f || _ry == 0f) {
-            canvas.drawRect(_x, _y, _x + _w, _y + _h, state.fillPaint);
-         } else {
-            canvas.drawRoundRect(new RectF(_x, _y, _x + _w, _y + _h), _rx, _ry, state.fillPaint);
-         }
-      }
+         canvas.drawPath(path, state.fillPaint);
       if (state.hasStroke)
-      {
-         if (_rx == 0f || _ry == 0f) {
-            canvas.drawRect(_x, _y, _x + _w, _y + _h, state.strokePaint);
-         } else {
-            canvas.drawRoundRect(new RectF(_x, _y, _x + _w, _y + _h), _rx, _ry, state.strokePaint);
-         }
-      }
+         canvas.drawPath(path, state.strokePaint);
 
    }
 
@@ -479,23 +447,15 @@ public class SVGAndroidRenderer
       if (obj.transform != null)
          canvas.concat(obj.transform);
 
-      float _cx, _cy, _r;
-      _cx = (obj.cx != null) ? obj.cx.floatValueX(this) : 0f;
-      _cy = (obj.cy != null) ? obj.cy.floatValueY(this) : 0f;
-      _r = obj.r.floatValue(this);
+      Path  path = makePathAndBoundingBox(obj);
 
-      if (obj.boundingBox == null) {
-         obj.boundingBox = new Box(_cx-_r, _cy-_r, _r*2, _r*2);
-      }
       checkForGradiants(obj);      
       checkForClipPath(obj);
 
-      if (state.hasFill) {
-         canvas.drawCircle(_cx, _cy, _r, state.fillPaint);
-      }
-      if (state.hasStroke) {
-         canvas.drawCircle(_cx, _cy, _r, state.strokePaint);
-      }
+      if (state.hasFill)
+         canvas.drawPath(path, state.fillPaint);
+      if (state.hasStroke)
+         canvas.drawPath(path, state.strokePaint);
 
    }
 
@@ -517,25 +477,15 @@ public class SVGAndroidRenderer
       if (obj.transform != null)
          canvas.concat(obj.transform);
 
-      float _cx, _cy, _rx, _ry;
-      _cx = (obj.cx != null) ? obj.cx.floatValueX(this) : 0f;
-      _cy = (obj.cy != null) ? obj.cy.floatValueY(this) : 0f;
-      _rx = obj.rx.floatValueX(this);
-      _ry = obj.ry.floatValueY(this);
-      RectF oval = new RectF(_cx-_rx, _cy-_ry, _cx+_rx, _cy+_ry);
+      Path  path = makePathAndBoundingBox(obj);
 
-      if (obj.boundingBox == null) {
-         obj.boundingBox = new Box(oval.left, oval.bottom, oval.width(), oval.height());
-      }
       checkForGradiants(obj);      
       checkForClipPath(obj);
 
-      if (state.hasFill) {
-         canvas.drawOval(oval, state.fillPaint);
-      }
-      if (state.hasStroke) {
-         canvas.drawOval(oval, state.strokePaint);
-      }
+      if (state.hasFill)
+         canvas.drawPath(path, state.fillPaint);
+      if (state.hasStroke)
+         canvas.drawPath(path, state.strokePaint);
 
    }
 
@@ -614,15 +564,8 @@ public class SVGAndroidRenderer
       if (numPoints < 2)
          return;
 
-      Path  path = new Path();
-      path.moveTo(obj.points[0], obj.points[1]);
-      for (int i=2; i<numPoints; i+=2) {
-         path.lineTo(obj.points[i], obj.points[i+1]);
-      }
+      Path  path = makePathAndBoundingBox(obj);
 
-      if (obj.boundingBox == null) {
-         obj.boundingBox = calculatePathBounds(path);
-      }
       checkForGradiants(obj);      
       checkForClipPath(obj);
       
@@ -700,26 +643,24 @@ public class SVGAndroidRenderer
          canvas.concat(obj.transform);
 
       int  numPoints = obj.points.length;
-      if (numPoints < 4)
+      if (numPoints < 2)
          return;
 
-      Path  path = new Path();
-      path.moveTo(obj.points[0], obj.points[1]);
-      for (int i=2; i<numPoints; i+=2) {
-         path.lineTo(obj.points[i], obj.points[i+1]);
-      }
-      path.close();
+      Path  path = makePathAndBoundingBox(obj);
 
-      if (obj.boundingBox == null) {
-         obj.boundingBox = calculatePathBounds(path);
-      }
       checkForGradiants(obj);      
       checkForClipPath(obj);
       
       if (state.hasFill)
          canvas.drawPath(path, state.fillPaint);
-      if (state.hasStroke)
-         canvas.drawPath(path, state.strokePaint);
+      if (state.hasStroke) {
+         if (numPoints == 2) {
+            // Android path render doesn't draw degenerate lines, so we have to use drawPoint instead.
+            canvas.drawPoint(obj.points[0], obj.points[1], state.strokePaint);
+         } else {
+            canvas.drawPath(path, state.strokePaint);
+         }
+      }
 
       renderMarkers(obj);
    }
