@@ -241,7 +241,7 @@ public class SVGParser extends DefaultHandler
 
    private static HashMap<String, Integer> colourKeywords = new HashMap<String, Integer>();
    private static HashMap<String, Length> fontSizeKeywords = new HashMap<String, Length>();
-   private static HashMap<String, String> fontWeightKeywords = new HashMap<String, String>();
+   private static HashMap<String, Integer> fontWeightKeywords = new HashMap<String, Integer>();
    private static HashMap<String, SVG.AspectRatioAlignment> aspectRatioKeywords = new HashMap<String, SVG.AspectRatioAlignment>();
    private static HashSet<String> supportedFeatures = new HashSet<String>();
 
@@ -404,19 +404,19 @@ public class SVGParser extends DefaultHandler
       fontSizeKeywords.put("smaller", new Length(83.33f, Unit.percent));
       fontSizeKeywords.put("larger", new Length(120f, Unit.percent));
 
-      fontWeightKeywords.put("normal", "normal");
-      fontWeightKeywords.put("bold", "bold");
-      fontWeightKeywords.put("bolder", "bold");
-      fontWeightKeywords.put("lighter", "normal");
-      fontWeightKeywords.put("100", "normal");
-      fontWeightKeywords.put("200", "normal");
-      fontWeightKeywords.put("300", "normal");
-      fontWeightKeywords.put("400", "normal");
-      fontWeightKeywords.put("500", "normal");
-      fontWeightKeywords.put("600", "bold");
-      fontWeightKeywords.put("700", "bold");
-      fontWeightKeywords.put("800", "bold");
-      fontWeightKeywords.put("900", "bold");
+      fontWeightKeywords.put("normal", SVG.Style.FONT_WEIGHT_NORMAL);
+      fontWeightKeywords.put("bold", SVG.Style.FONT_WEIGHT_BOLD);
+      fontWeightKeywords.put("bolder", SVG.Style.FONT_WEIGHT_BOLDER);
+      fontWeightKeywords.put("lighter", SVG.Style.FONT_WEIGHT_LIGHTER);
+      fontWeightKeywords.put("100", 100);
+      fontWeightKeywords.put("200", 200);
+      fontWeightKeywords.put("300", 300);
+      fontWeightKeywords.put("400", 400);
+      fontWeightKeywords.put("500", 500);
+      fontWeightKeywords.put("600", 600);
+      fontWeightKeywords.put("700", 700);
+      fontWeightKeywords.put("800", 800);
+      fontWeightKeywords.put("900", 900);
 
       aspectRatioKeywords.put("none", SVG.AspectRatioAlignment.none);
       aspectRatioKeywords.put("xMinYMin", SVG.AspectRatioAlignment.xMinYMin);
@@ -2398,7 +2398,7 @@ dumpNode(svgDocument.getRootElement(), "");
                //setInherit(obj, SVG.SPECIFIED_FONT_WEIGHT);
                break;
             }
-            obj.style.fontWeight = val;
+            obj.style.fontWeight = parseFontWeight(val);
             obj.style.specifiedFlags |= SVG.SPECIFIED_FONT_WEIGHT;
             break;
 
@@ -2950,9 +2950,9 @@ dumpNode(svgDocument.getRootElement(), "");
 
 
    // Parse a font weight keyword or numerical value
-   private String  parseFontWeight(String val) throws SAXException
+   private Integer  parseFontWeight(String val) throws SAXException
    {
-      String  wt = fontWeightKeywords.get(val);
+      Integer  wt = fontWeightKeywords.get(val);
       if (wt == null) {
          throw new SAXException("Invalid font-weight property: "+val);
       }

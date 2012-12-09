@@ -16,6 +16,7 @@ import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Picture;
 import android.graphics.Region;
+import android.graphics.Typeface;
 
 public class SVG
 {
@@ -33,6 +34,9 @@ public class SVG
    // Metadata
    private String  title = "";
    private String  desc = "";
+
+   // Resolvers
+   ExternalFontResolver  fontResolver = null;
 
 
    public enum Unit
@@ -107,6 +111,12 @@ public class SVG
    }
 
 
+   public void  registerExternalFontResolver(ExternalFontResolver fontResolver)
+   {
+      this.fontResolver = fontResolver;
+   }
+
+
    public SVG.Svg  getRootElement()
    {
       return rootElement;
@@ -120,7 +130,18 @@ public class SVG
 
 
    //===============================================================================
+   // Resolver classes
+
+
+   public static interface  ExternalFontResolver
+   {
+      Typeface  resolveFont(String fontFamily, int fontWeight, Style.FontStyle fontStyle);
+   }
+
+
+   //===============================================================================
    // Object sub-types used in the SVG object tree
+
 
    public static class  Box implements Cloneable
    {
@@ -205,7 +226,7 @@ public class SVG
 
       public String     fontFamily;
       public Length     fontSize;
-      public String     fontWeight;
+      public Integer    fontWeight;
       public FontStyle  fontStyle;
       public String     textDecoration;
 
@@ -227,6 +248,12 @@ public class SVG
 
       public String     clipPath;
       public FillRule   clipRule;
+
+
+      public static final int  FONT_WEIGHT_NORMAL = 400;
+      public static final int  FONT_WEIGHT_BOLD = 700;
+      public static final int  FONT_WEIGHT_LIGHTER = -1;
+      public static final int  FONT_WEIGHT_BOLDER = +1;
 
 
       public enum FillRule
@@ -283,7 +310,7 @@ public class SVG
          def.color = Colour.BLACK; // currentColor defaults to black
          def.fontFamily = null;
          def.fontSize = new Length(12, Unit.pt);
-         def.fontWeight = "normal";
+         def.fontWeight = FONT_WEIGHT_NORMAL;
          def.fontStyle = FontStyle.Normal;
          def.textDecoration = "none";
          def.textAnchor = TextAnchor.Start;
@@ -767,7 +794,7 @@ public class SVG
 
 
    // An SVG element that can contain other elements.
-   protected static class Switch extends Group // TODO: OverridesDisplayNone
+   protected static class Switch extends Group
    {
    }
 
@@ -835,6 +862,28 @@ public class SVG
    protected static class ClipPath extends Group
    {
       public Boolean  clipPathUnitsAreUser;
+   }
+
+
+   //===============================================================================
+   // Protected getters for internal use
+
+
+   protected void setTitle(String title)
+   {
+      this.title = title;
+   }
+
+
+   protected void setDesc(String desc)
+   {
+      this.desc = desc;
+   }
+
+
+   protected ExternalFontResolver  getFontResolver()
+   {
+      return fontResolver;
    }
 
 
@@ -975,18 +1024,6 @@ public class SVG
    }
 
 
-   protected void setTitle(String title)
-   {
-      this.title = title;
-   }
-
-
-   protected void setDesc(String desc)
-   {
-      this.desc = desc;
-   }
-
-
    //===============================================================================
    // SVG document rendering API
 
@@ -1035,6 +1072,7 @@ public class SVG
          alignment = AspectRatioAlignment.xMidYMid;
 
       Box                 viewPort = new Box(0f, 0f, (float) widthInPixels, (float) heightInPixels);
+
       SVGAndroidRenderer  renderer= new SVGAndroidRenderer(canvas, viewPort, dpi);
 
       renderer.renderDocument(this, alignment, fitToCanvas);

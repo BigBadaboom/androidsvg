@@ -6,15 +6,17 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Picture;
 import android.graphics.RectF;
+import android.graphics.Typeface;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
 
 import com.caverock.androidsvg.SVG;
+import com.caverock.androidsvg.SVG.Style.FontStyle;
 import com.caverock.androidsvg.SVGParser;
 
 
-public class SVGImageView extends View
+public class SVGImageView extends View  implements SVG.ExternalFontResolver
 {
    private int      width;
    private int      height;
@@ -22,6 +24,8 @@ public class SVGImageView extends View
    private Bitmap   bm = null;
    private Paint    paint = new Paint();
    private Float    renderDPI = null;
+
+   private static final String  TAG = SVGImageView.class.getSimpleName();
 
 
    public SVGImageView(Context context, AttributeSet attrs)
@@ -87,6 +91,7 @@ public class SVGImageView extends View
       {
          this.svg = null;
          this.svg = SVG.getFromAsset(getContext().getAssets(), svgPath);
+         this.svg.registerExternalFontResolver(this);
          rebuildBitmap();
          invalidate();
       }
@@ -133,5 +138,18 @@ public class SVGImageView extends View
    public void  setRenderDPI(Float dpi)
    {
       this.renderDPI = dpi;
+   }
+
+
+   @Override
+   public Typeface resolveFont(String fontFamily, int fontWeight, FontStyle fontStyle)
+   {
+      Log.i(TAG, "resolveFont("+fontFamily+","+fontWeight+","+fontStyle+")");
+
+      if (fontFamily.equals("Bitter")) {
+         return Typeface.createFromAsset(getContext().getAssets(), "Bitter-Bold.ttf");
+      }
+
+      return null;
    }
 }

@@ -47,15 +47,18 @@ public class SVGAndroidRenderer
    private static final String  TAG = "SVGAndroidRenderer";
 
    private Canvas  canvas;
+   private Box canvasViewPort;
    private float   dpi = 160;    // dots per inch. Needed for accurate conversion of length values that have real world units, such as "cm".
 
    // Renderer state
+   private SVG            document;
    private RendererState  state = new RendererState();
    private Stack<RendererState> stateStack = new Stack<RendererState>();  // Keeps track of render state as we render
 
-   private static final Box  UNIT_BBOX = new Box(0,0,1,1);
-   
+
+   private static final Box    UNIT_BBOX = new Box(0,0,1,1);
    private static final float  BEZIER_ARC_FACTOR = 0.5522847498f;
+
 
 
    private class RendererState implements Cloneable
@@ -124,6 +127,18 @@ public class SVGAndroidRenderer
    }
 
 
+   private void  resetState()
+   {
+      state = new RendererState();
+      stateStack = new Stack<RendererState>();
+
+      state.viewPort = this.canvasViewPort;
+
+      // Push a copy of the state with 'default' style, so that inherit works for top level objects
+      stateStack.push((RendererState) state.clone());   // Manual push here - don't use statePush();
+   }
+
+
    /**
     * Create a new renderer instance.
     *
@@ -136,11 +151,7 @@ public class SVGAndroidRenderer
    {
       this.canvas = canvas;
       this.dpi = dpi;
-
-      state.viewPort = viewPort;
-
-      // Push a copy of the state with 'default' style, so that inherit works for top level objects
-      stateStack.push((RendererState) state.clone());   // Manual push here - don't use statePush();
+      this.canvasViewPort = viewPort;
    }
 
 
@@ -175,6 +186,10 @@ public class SVGAndroidRenderer
 
    public void  renderDocument(SVG document, AspectRatioAlignment alignment, boolean fitToCanvas)
    {
+      this.document = document;
+      
+      resetState();
+
       // Calculate the initial transform to position the document in our canvas
       SVG.Svg  obj = document.getRootElement();
 
@@ -1164,12 +1179,6 @@ public class SVGAndroidRenderer
          }
       }
 
-      if (isSpecified(style, SVG.SPECIFIED_FONT_FAMILY))
-      {
-         state.style.fontFamily = style.fontFamily;
-         // NYI
-      }
-
       if (isSpecified(style, SVG.SPECIFIED_FONT_SIZE))
       {
          state.style.fontSize = style.fontSize;
@@ -1177,9 +1186,20 @@ public class SVGAndroidRenderer
          state.strokePaint.setTextSize(style.fontSize.floatValue(this));
       }
 
+      if (isSpecified(style, SVG.SPECIFIED_FONT_FAMILY))
+      {
+         state.style.fontFamily = style.fontFamily;
+      }
+
       if (isSpecified(style, SVG.SPECIFIED_FONT_WEIGHT))
       {
-         state.style.fontWeight = style.fontWeight;
+         // Font weights are 100,200...900
+         if (style.fontWeight == Style.FONT_WEIGHT_LIGHTER && state.style.fontWeight > 100)
+            state.style.fontWeight -= 100;
+         else if (style.fontWeight == Style.FONT_WEIGHT_BOLDER && state.style.fontWeight < 900)
+            state.style.fontWeight += 100;
+         else
+            state.style.fontWeight = style.fontWeight;
       }
 
       if (isSpecified(style, SVG.SPECIFIED_FONT_STYLE))
@@ -1187,10 +1207,26 @@ public class SVGAndroidRenderer
          state.style.fontStyle = style.fontStyle;
       }
 
-      // If weight or style has changed, update the typeface
-      if (isSpecified(style, SVG.SPECIFIED_FONT_WEIGHT | SVG.SPECIFIED_FONT_STYLE))
+      // If typeface, weight or style has changed, update the paint typeface
+      if (isSpecified(style, SVG.SPECIFIED_FONT_FAMILY | SVG.SPECIFIED_FONT_WEIGHT | SVG.SPECIFIED_FONT_STYLE))
       {
-         Typeface  font = Typeface.create(Typeface.DEFAULT,  getTypefaceStyle(style));
+         SVG.ExternalFontResolver  fontResolver = null;
+         Typeface  font = null;
+
+         if (state.style.fontFamily != null && document != null) {
+            fontResolver = document.getFontResolver();
+
+            if (fontResolver != null) {
+               font = fontResolver.resolveFont(state.style.fontFamily, state.style.fontWeight, state.style.fontStyle);
+            }
+         }
+         if (font == null) {
+            // Fall back to default font
+            if (state.style.fontWeight <= 500)
+               font = Typeface.create(Typeface.DEFAULT,  getTypefaceStyle(style));
+            else
+               font = Typeface.create(Typeface.DEFAULT_BOLD,  getTypefaceStyle(style));
+         }
          state.fillPaint.setTypeface(font);
          state.strokePaint.setTypeface(font);
       }
