@@ -851,7 +851,7 @@ public class SVG
    }
 
 
-   protected static class Stop extends SvgElement
+   protected static class Stop extends SvgContainer
    {
       public Float  offset;
    }

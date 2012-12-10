@@ -9,7 +9,8 @@
       <linearGradient id="MyGradient" stop-color="#F60">
         <stop offset="0%" />
         <stop offset="50%" stop-color="#FF6" />
-        <stop offset="100%" />
+        <!-- check stop as container -->
+        <stop offset="100%"><set attributeName="offset" attributeType="XML" to="100%" begin="0s" dur="indefinite"/></stop>
       </linearGradient>
     </defs>
 

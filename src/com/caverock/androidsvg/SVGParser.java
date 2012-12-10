@@ -548,7 +548,6 @@ public class SVGParser extends DefaultHandler
    public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException
    {
       super.startElement(uri, localName, qName, attributes);
-/**/Log.d(TAG, "startElement: "+localName);
 
       if (ignoring) {
          ignoreDepth++;
@@ -685,6 +684,7 @@ public class SVGParser extends DefaultHandler
           localName.equalsIgnoreCase(TAG_MARKER) ||
           localName.equalsIgnoreCase(TAG_LINEARGRADIENT) ||
           localName.equalsIgnoreCase(TAG_RADIALGRADIENT) ||
+          localName.equalsIgnoreCase(TAG_STOP) ||
           localName.equalsIgnoreCase(TAG_CLIPPATH)) {
          currentElement = currentElement.parent;
       }
@@ -1707,7 +1707,7 @@ dumpNode(svgDocument.getRootElement(), "");
 
    private void  stop(Attributes attributes) throws SAXException
    {
-/**/Log.d(TAG, "<marker>");
+/**/Log.d(TAG, "<stop>");
       if (currentElement == null)
          throw new SAXException("Invalid document. Root element must be <svg>");
       if (!(currentElement instanceof SVG.GradientElement))
@@ -1719,6 +1719,7 @@ dumpNode(svgDocument.getRootElement(), "");
       parseAttributesStyle(obj, attributes);
       parseAttributesStop(obj, attributes);
       currentElement.addChild(obj);
+      currentElement = obj;
    }
 
 
