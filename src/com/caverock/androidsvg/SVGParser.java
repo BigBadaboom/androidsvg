@@ -32,6 +32,7 @@ import com.caverock.androidsvg.SVG.Length;
 import com.caverock.androidsvg.SVG.PaintReference;
 import com.caverock.androidsvg.SVG.Style;
 import com.caverock.androidsvg.SVG.SvgElement;
+import com.caverock.androidsvg.SVG.SvgPaint;
 import com.caverock.androidsvg.SVG.Unit;
 
 /**
@@ -418,7 +419,7 @@ public class SVGParser extends DefaultHandler
       fontWeightKeywords.put("800", 800);
       fontWeightKeywords.put("900", 900);
 
-      aspectRatioKeywords.put("none", SVG.AspectRatioAlignment.none);
+      aspectRatioKeywords.put(NONE, SVG.AspectRatioAlignment.none);
       aspectRatioKeywords.put("xMinYMin", SVG.AspectRatioAlignment.xMinYMin);
       aspectRatioKeywords.put("xMidYMin", SVG.AspectRatioAlignment.xMidYMin);
       aspectRatioKeywords.put("xMaxYMin", SVG.AspectRatioAlignment.xMaxYMin);
@@ -2242,17 +2243,7 @@ dumpNode(svgDocument.getRootElement(), "");
                //setInherit(obj, SVG.SPECIFIED_FILL);
                break;
             }
-            if (val.equals(NONE)) {
-               obj.style.fill = null;
-            } else if (val.equals(CURRENTCOLOR)) {
-               obj.style.fill = CurrentColor.getInstance();
-            } else  if (val.startsWith("url")) {
-               // Reference to gradient or pattern
-               String  href = parseFunctionalIRI(val, "fill");
-               obj.style.fill = new PaintReference(href);
-            } else {
-               obj.style.fill = parseColour(val);
-            }
+            obj.style.fill = parsePaintSpecifier(val, "fill");
             obj.style.specifiedFlags |= SVG.SPECIFIED_FILL;
             break;
 
@@ -2279,17 +2270,7 @@ dumpNode(svgDocument.getRootElement(), "");
                //setInherit(obj, SVG.SPECIFIED_STROKE);
                break;
             }
-            if (val.equals(NONE)) {
-               obj.style.stroke = null;
-            } else if (val.equals(CURRENTCOLOR)) {
-               obj.style.stroke = CurrentColor.getInstance();
-            } else  if (val.startsWith("url")) {
-               // Reference to gradient or pattern
-               String  href = parseFunctionalIRI(val, "stroke");
-               obj.style.stroke = new PaintReference(href);
-            } else {
-               obj.style.stroke = parseColour(val);
-            }
+            obj.style.stroke = parsePaintSpecifier(val, "stroke");
             obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE;
             break;
 
@@ -2343,7 +2324,7 @@ dumpNode(svgDocument.getRootElement(), "");
                //setInherit(obj, SVG.SPECIFIED_STROKE_DASHARRAY);
                break;
             }
-            if ("none".equals(val))
+            if (NONE.equals(val))
                obj.style.strokeDashArray = null;
             else
                obj.style.strokeDashArray = parseStrokeDashArray(val);
@@ -2485,7 +2466,7 @@ dumpNode(svgDocument.getRootElement(), "");
             }
             if (val.indexOf('|') >= 0 || (VALID_DISPLAY_VALUES.indexOf('|'+val+'|') == -1))
                throw new SAXException("Invalid value for \"display\" attribute: "+val);
-            obj.style.display = !val.equals("none");
+            obj.style.display = !val.equals(NONE);
             obj.style.specifiedFlags |= SVG.SPECIFIED_DISPLAY;
             break;
 
@@ -2866,7 +2847,43 @@ dumpNode(svgDocument.getRootElement(), "");
 
 
    /*
-    * Parse a colour specifier.
+    * Parse a paint specifier such as in the fill and stroke attributes.
+    */
+   private SvgPaint parsePaintSpecifier(String val, String attrName) throws SAXException
+   {
+      if (val.startsWith("url("))
+      {
+         int  closeBracket = val.indexOf(")"); 
+         if (closeBracket == -1)
+            throw new SAXException("Bad "+attrName+" attribute. Unterminated url() reference");
+
+         String    href = val.substring(4, closeBracket).trim();
+         SvgPaint  fallback = null;
+
+         val = val.substring(closeBracket+1).trim();
+         if (val.length() > 0)
+            fallback = parseColourSpecifer(val);
+         return new PaintReference(href, fallback);
+
+      }
+      return parseColourSpecifer(val);
+   }
+
+
+   private SvgPaint parseColourSpecifer(String val) throws SAXException
+   {
+      if (val.equals(NONE)) {
+         return null;
+      } else if (val.equals(CURRENTCOLOR)) {
+         return CurrentColor.getInstance();
+      } else {
+         return parseColour(val);
+      }
+   }
+
+
+   /*
+    * Parse a colour definition.
     */
    private Colour  parseColour(String val) throws SAXException
    {
@@ -2978,8 +2995,8 @@ dumpNode(svgDocument.getRootElement(), "");
    // Parse a text decoration keyword
    private String  parseTextDecoration(String val) throws SAXException
    {
-      if ("none".equals(val) || "overline".equals(val) || "blink".equals(val))
-         return "none";
+      if (NONE.equals(val) || "overline".equals(val) || "blink".equals(val))
+         return NONE;
       if ("underline".equals(val) || "line-through".equals(val))
          return val;
       throw new SAXException("Invalid text-decoration property: "+val);
@@ -3446,12 +3463,12 @@ dumpNode(svgDocument.getRootElement(), "");
 
    private String parseFunctionalIRI(String val, String attrName) throws SAXException
    {
-      if (val.equals("none"))
+      if (val.equals(NONE))
          return null;
       if (!val.startsWith("url(") || !val.endsWith(")"))
          throw new SAXException("Bad "+attrName+" attribute. Expected \"none\" or \"url()\" format");
 
-      return val.substring(4,  val.length()-1).trim();
+      return val.substring(4, val.length()-1).trim();
       // Unlike CSS, the SVG spec seems to indicate that quotes are not allowed in "url()" references
    }
 

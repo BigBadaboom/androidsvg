@@ -13,8 +13,6 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RadialGradient;
 import android.graphics.RectF;
-import android.graphics.Region;
-import android.graphics.Region.Op;
 import android.graphics.Shader.TileMode;
 import android.graphics.Typeface;
 import android.util.Log;
@@ -36,6 +34,7 @@ import com.caverock.androidsvg.SVG.Style;
 import com.caverock.androidsvg.SVG.SvgElement;
 import com.caverock.androidsvg.SVG.SvgLinearGradient;
 import com.caverock.androidsvg.SVG.SvgObject;
+import com.caverock.androidsvg.SVG.SvgPaint;
 import com.caverock.androidsvg.SVG.SvgRadialGradient;
 import com.caverock.androidsvg.SVG.Text;
 import com.caverock.androidsvg.SVG.TextContainer;
@@ -1039,18 +1038,7 @@ public class SVGAndroidRenderer
       // If either fill or its opacity has changed, update the fillPaint
       if (isSpecified(style, SVG.SPECIFIED_FILL | SVG.SPECIFIED_FILL_OPACITY | SVG.SPECIFIED_COLOR | SVG.SPECIFIED_OPACITY))
       {
-         if (state.style.fill instanceof SVG.Colour)
-         {
-            int col = ((SVG.Colour) state.style.fill).colour;
-            col = clamp255(state.style.fillOpacity * state.style.opacity) << 24 | col;
-            state.fillPaint.setColor(col);
-         }
-         else if (state.style.fill instanceof CurrentColor)
-         {
-            int col = state.style.color.colour;
-            col = clamp255(state.style.fillOpacity * state.style.opacity) << 24 | col;
-            state.fillPaint.setColor(col);
-         }
+         setPaintColour(state, true, state.style.fill);
       }
 
       if (isSpecified(style, SVG.SPECIFIED_FILL_RULE))
@@ -1072,18 +1060,7 @@ public class SVGAndroidRenderer
 
       if (isSpecified(style, SVG.SPECIFIED_STROKE | SVG.SPECIFIED_STROKE_OPACITY | SVG.SPECIFIED_COLOR | SVG.SPECIFIED_OPACITY))
       {
-         if (state.style.stroke instanceof SVG.Colour)
-         {
-            int col = ((SVG.Colour) state.style.stroke).colour;
-            col = clamp255(state.style.strokeOpacity * state.style.opacity) << 24 | col;
-            state.strokePaint.setColor(col);
-         }
-         else if (state.style.stroke instanceof CurrentColor)
-         {
-            int col = state.style.color.colour;
-            col = clamp255(state.style.strokeOpacity * state.style.opacity) << 24 | col;
-            state.strokePaint.setColor(col);
-         }
+         setPaintColour(state, false, state.style.stroke);
       }
 
       if (isSpecified(style, SVG.SPECIFIED_STROKE_WIDTH))
@@ -1294,6 +1271,30 @@ public class SVGAndroidRenderer
          state.style.clipRule = style.clipRule;
       }
 
+   }
+
+
+   private void  setPaintColour(RendererState state, boolean isFill, SvgPaint paint)
+   {
+      float  paintOpacity = (isFill) ? state.style.fillOpacity : state.style.strokeOpacity;
+      if (paint instanceof SVG.Colour)
+      {
+         int col = ((SVG.Colour) paint).colour;
+         col = clamp255(paintOpacity * state.style.opacity) << 24 | col;
+         if (isFill)
+            state.fillPaint.setColor(col);
+         else
+            state.strokePaint.setColor(col);
+      }
+      else if (paint instanceof CurrentColor)
+      {
+         int col = state.style.color.colour;
+         col = clamp255(paintOpacity * state.style.opacity) << 24 | col;
+         if (isFill)
+            state.fillPaint.setColor(col);
+         else
+            state.strokePaint.setColor(col);
+      }
    }
 
 
@@ -1988,7 +1989,17 @@ public class SVGAndroidRenderer
    {
       SVG.SvgObject  ref = obj.document.resolveIRI(paintref.href);
       if (ref == null)
+      {
+         if (paintref.fallback != null) {
+            setPaintColour(state, isFill, paintref.fallback);
+         } else {
+            if (isFill)
+               state.hasFill = false;
+            else
+               state.hasStroke = false;
+         }
          return;
+      }
       if (ref instanceof SvgLinearGradient)
          makeLinearGradiant(isFill, obj, (SvgLinearGradient) ref);
       if (ref instanceof SvgRadialGradient)

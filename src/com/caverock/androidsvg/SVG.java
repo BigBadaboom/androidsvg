@@ -397,16 +397,18 @@ public class SVG
 
    protected static class PaintReference extends SvgPaint
    {
-      public String  href;
+      public String    href;
+      public SvgPaint  fallback;
       
-      public PaintReference(String href)
+      public PaintReference(String href, SvgPaint fallback)
       {
          this.href = href;
+         this.fallback = fallback;
       }
       
       public String toString()
       {
-         return href;
+         return href + " " + fallback;
       }
    }
 

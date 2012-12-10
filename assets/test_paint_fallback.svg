@@ -1,0 +1,21 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="12cm" height="3cm" viewBox="0 0 1200 300" version="1.1"
+     xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <desc>paint fallback colours test</desc>
+
+  <rect x="1" y="1" width="1198" height="298" fill="none" stroke="blue" stroke-width="2" />
+
+  <g transform="translate(200,50)" stroke-width="2">
+    <rect x="0" y="0" width="200" height="100" fill="green" />
+    <rect x="0" y="0" width="200" height="100" fill="url(#foo) none" />
+  </g>
+  <g transform="translate(500,50)" stroke-width="2">
+    <rect x="0" y="0" width="200" height="100" fill="url(#foo) green" />
+  </g>
+  <g transform="translate(800,50)" stroke-width="2" color="green">
+    <rect x="0" y="0" width="200" height="100" fill="url(#foo) currentColor" />
+  </g>
+  <text x="600" y="250" text-anchor="middle">paint fallback colours - should be all green</text>
+</svg>
