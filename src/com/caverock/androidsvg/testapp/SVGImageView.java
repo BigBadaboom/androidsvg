@@ -146,6 +146,9 @@ public class SVGImageView extends View  implements SVG.ExternalFontResolver
    {
       Log.i(TAG, "resolveFont("+fontFamily+","+fontWeight+","+fontStyle+")");
 
+      if (fontFamily.equals("Arial")) {
+         return Typeface.createFromAsset(getContext().getAssets(), "Arial.ttf");
+      }
       if (fontFamily.equals("Bitter")) {
          return Typeface.createFromAsset(getContext().getAssets(), "Bitter-Bold.ttf");
       }
