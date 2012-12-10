@@ -586,9 +586,12 @@ public class SVG
    // Any element that can appear inside a <switch> element.
    protected interface SvgConditional
    {
-      public void  setRequiredFeatures(Set<String> features);
-      public void  setRequiredExtensions(String extensions);
-      public void  setSystemLanguage(Set<String> languages);
+      public void         setRequiredFeatures(Set<String> features);
+      public Set<String>  getRequiredFeatures();
+      public void         setRequiredExtensions(String extensions);
+      public String       getRequiredExtensions();
+      public void         setSystemLanguage(Set<String> languages);
+      public Set<String>  getSystemLanguage();
    }
 
 
@@ -602,9 +605,15 @@ public class SVG
       @Override
       public void setRequiredFeatures(Set<String> features) { this.requiredFeatures = features; }
       @Override
+      public Set<String> getRequiredFeatures() { return this.requiredFeatures; }
+      @Override
       public void setRequiredExtensions(String extensions) { this.requiredExtensions = extensions; }
       @Override
+      public String getRequiredExtensions() { return this.requiredExtensions; }
+      @Override
       public void setSystemLanguage(Set<String> languages) { this.systemLanguage = languages; }
+      @Override
+      public Set<String> getSystemLanguage() { return this.systemLanguage; }
    }
 
 
@@ -628,9 +637,15 @@ public class SVG
       @Override
       public void setRequiredFeatures(Set<String> features) { this.requiredFeatures = features; }
       @Override
+      public Set<String> getRequiredFeatures() { return this.requiredFeatures; }
+      @Override
       public void setRequiredExtensions(String extensions) { this.requiredExtensions = extensions; }
       @Override
+      public String getRequiredExtensions() { return this.requiredExtensions; }
+      @Override
       public void setSystemLanguage(Set<String> languages) { this.systemLanguage = languages; }
+      @Override
+      public Set<String> getSystemLanguage() { return null; }
    }
 
 

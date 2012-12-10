@@ -1442,23 +1442,25 @@ dumpNode(svgDocument.getRootElement(), "");
          }
 
          // Remove any objects that don't belong in a <switch>
-         if (!(childObj instanceof SVG.SvgConditionalElement)) {
+         if (!(childObj instanceof SVG.SvgConditional)) {
             iter.remove();
          }
-         SVG.SvgConditionalElement  condObj = (SVG.SvgConditionalElement) childObj;
+         SVG.SvgConditional  condObj = (SVG.SvgConditional) childObj;
 
          // We don't support extensions
-         if (condObj.requiredExtensions != null) {
+         if (condObj.getRequiredExtensions() != null) {
             iter.remove();
             continue;
          }
          // Check language
-         if (condObj.systemLanguage != null && (condObj.systemLanguage.isEmpty() || !condObj.systemLanguage.contains(deviceLanguage))) {
+         Set<String>  syslang = condObj.getSystemLanguage();
+         if (syslang != null && (syslang.isEmpty() || !syslang.contains(deviceLanguage))) {
             iter.remove();
             continue;
          }
          // Check features
-         if (condObj.requiredFeatures != null && (condObj.requiredFeatures.isEmpty() || !supportedFeatures.containsAll(condObj.requiredFeatures))) {
+         Set<String>  reqfeat = condObj.getRequiredFeatures();
+         if (reqfeat != null && (reqfeat.isEmpty() || !supportedFeatures.containsAll(reqfeat))) {
             iter.remove();
             continue;
          }
