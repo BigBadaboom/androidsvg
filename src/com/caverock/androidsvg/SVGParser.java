@@ -1850,22 +1850,15 @@ dumpNode(svgDocument.getRootElement(), "");
 
       public void  skipCommaWhitespace()
       {
-         while (position < input.length()) {
-            if (!isWhitespace(input.charAt(position)))
-               break;
-            position++;
-         }
+         skipWhitespace();
          if (position == input.length())
             return;
          if (!(input.charAt(position) == ','))
             return;
          position++;
-         while (position < input.length()) {
-            if (!isWhitespace(input.charAt(position)))
-               break;
-            position++;
-         }
+         skipWhitespace();
       }
+
 
       public Float  nextFloat()
       {
@@ -2209,7 +2202,7 @@ dumpNode(svgDocument.getRootElement(), "");
 
    private void  parseStyle(SvgElement obj, String style) throws SAXException
    {
-      TextScanner  scan = new TextScanner(style);
+      TextScanner  scan = new TextScanner(style.replaceAll("/\\*.*?\\*/", ""));  // regex strips block comments
 
       while (true)
       {
