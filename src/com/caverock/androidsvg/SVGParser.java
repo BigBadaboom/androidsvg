@@ -466,8 +466,8 @@ public class SVGParser extends DefaultHandler
       //supportedFeatures.add("ColorProfile");              // NO
       supportedFeatures.add("Gradient");                    // YES
       //supportedFeatures.add("Pattern");                   // NO?
-      //supportedFeatures.add("Clip");                      // NYI
-      //supportedFeatures.add("BasicClip");                 // NYI
+      supportedFeatures.add("Clip");                        // YES
+      supportedFeatures.add("BasicClip");                   // YES
       //supportedFeatures.add("Mask");                      // NO
       //supportedFeatures.add("Filter");                    // NO
       //supportedFeatures.add("BasicFilter");               // NO
@@ -478,11 +478,11 @@ public class SVGParser extends DefaultHandler
       //supportedFeatures.add("Hyperlinking");              // NO
       //supportedFeatures.add("XlinkAttribute");            // NO
       //supportedFeatures.add("ExternalResourcesRequired"); // NO
-      //supportedFeatures.add("View");                      // NO
+      //supportedFeatures.add("View");                      // NYI
       //supportedFeatures.add("Script");                    // NO
       //supportedFeatures.add("Animation");                 // NO
-      //supportedFeatures.add("Font");                      // NYI
-      //supportedFeatures.add("BasicFont");                 // NYI
+      //supportedFeatures.add("Font");                      // NO
+      //supportedFeatures.add("BasicFont");                 // NO
       //supportedFeatures.add("Extensibility");             // NO
 
       // SVG 1.0 features - all are too general and include things we are not likely to ever support.
