@@ -2143,6 +2143,26 @@ dumpNode(svgDocument.getRootElement(), "");
          char  ch = input.charAt(position);
          return ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z'));
       }
+
+      public String  nextQuotedString()
+      {
+         if (empty())
+            return null;
+         int  start = position;
+         int  ch = input.charAt(position);
+         int  endQuote = ch;
+         if (ch != '\'' && ch!='"')
+            return null;
+         ch = advanceChar();
+         while (ch != -1 && ch != endQuote)
+            ch = advanceChar();
+         if (ch == -1) {
+            position = start;
+            return null;
+         }
+         position++;
+         return input.substring(start+1, position-1);
+      }
    }
 
 
@@ -2357,7 +2377,7 @@ dumpNode(svgDocument.getRootElement(), "");
                //setInherit(obj, SVG.SPECIFIED_FONT_FAMILY);
                break;
             }
-            obj.style.fontFamily = val;
+            obj.style.fontFamily = parseFontFamily(val);
             obj.style.specifiedFlags |= SVG.SPECIFIED_FONT_FAMILY;
             break;
 
@@ -2948,6 +2968,29 @@ dumpNode(svgDocument.getRootElement(), "");
          throw new SAXException("Invalid colour keyword: "+name);
       }
       return new Colour(col.intValue());
+   }
+
+
+   // Parse a font family list
+   private List<String>  parseFontFamily(String val) throws SAXException
+   {
+      List<String> fonts = null;
+      TextScanner  scan = new TextScanner(val);
+      while (true)
+      {
+         String item = scan.nextQuotedString();
+         if (item == null)
+            item = scan.nextToken(',');
+         if (item == null)
+            break;
+         if (fonts == null)
+            fonts = new ArrayList<String>();
+         fonts.add(item);
+         scan.skipCommaWhitespace();
+         if (scan.empty())
+            break;
+      }
+      return fonts;
    }
 
 

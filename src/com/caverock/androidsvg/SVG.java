@@ -224,16 +224,15 @@ public class SVG
 
       public Colour     color;
 
-      public String     fontFamily;
-      public Length     fontSize;
-      public Integer    fontWeight;
-      public FontStyle  fontStyle;
-      public String     textDecoration;
+      public List<String>  fontFamily;
+      public Length        fontSize;
+      public Integer       fontWeight;
+      public FontStyle     fontStyle;
+      public String        textDecoration;
 
-      public TextAnchor textAnchor;
+      public TextAnchor   textAnchor;
 
-      public Boolean    overflow;  // true if overflow visible
-
+      public Boolean      overflow;  // true if overflow visible
       public CSSClipRect  clip;
 
       public String     markerStart;

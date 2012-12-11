@@ -1194,7 +1194,11 @@ public class SVGAndroidRenderer
             fontResolver = document.getFontResolver();
 
             if (fontResolver != null) {
-               font = fontResolver.resolveFont(state.style.fontFamily, state.style.fontWeight, state.style.fontStyle);
+               for (String fontName: state.style.fontFamily) {
+                  font = fontResolver.resolveFont(fontName, state.style.fontWeight, state.style.fontStyle);
+                  if (font != null)
+                     break;
+               }
             }
          }
          if (font == null) {
