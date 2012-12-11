@@ -193,6 +193,7 @@ public class SVGParser extends DefaultHandler
       requiredFeatures, requiredExtensions,
       rx, ry,
       spreadMethod,
+      startOffset,
       stop_color, stop_opacity,
       stroke,
       stroke_dasharray,
@@ -604,6 +605,8 @@ public class SVGParser extends DefaultHandler
          metadataTag = localName;
       } else if (localName.equalsIgnoreCase(TAG_CLIPPATH)) {
          clipPath(attributes);
+      } else if (localName.equalsIgnoreCase(TAG_TEXTPATH)) {
+         textPath(attributes);
       } else {
          ignoring = true;
          ignoreDepth = 1;
@@ -626,8 +629,8 @@ public class SVGParser extends DefaultHandler
             svgDocument.setDesc(new String(ch, start, length));
       }
 
-      if (currentElement instanceof SVG.Text || currentElement instanceof SVG.TSpan) {
-
+      if (currentElement instanceof SVG.TextContainer)
+      {
          // The SAX parser can pass us several text nodes in a row. If this happens, we
          // want to collapse them all into one SVG.TextSequence node
          SVG.SvgConditionalContainer  parent = (SVG.SvgConditionalContainer) currentElement;
@@ -685,7 +688,8 @@ public class SVGParser extends DefaultHandler
           localName.equalsIgnoreCase(TAG_LINEARGRADIENT) ||
           localName.equalsIgnoreCase(TAG_RADIALGRADIENT) ||
           localName.equalsIgnoreCase(TAG_STOP) ||
-          localName.equalsIgnoreCase(TAG_CLIPPATH)) {
+          localName.equalsIgnoreCase(TAG_CLIPPATH) ||
+          localName.equalsIgnoreCase(TAG_TEXTPATH)) {
          currentElement = currentElement.parent;
       }
 
@@ -897,7 +901,7 @@ dumpNode(svgDocument.getRootElement(), "");
          switch (SVGAttr.fromString(attributes.getLocalName(i)))
          {
             case d:
-               obj.path = parsePath(val);
+               obj.d = parsePath(val);
                break;
             case pathLength:
                obj.pathLength = parseFloat(val);
@@ -1802,6 +1806,49 @@ dumpNode(svgDocument.getRootElement(), "");
                } else {
                   throw new SAXException("Invalid value for attribute clipPathUnits");
                }
+               break;
+            default:
+               break;
+         }
+      }
+   }
+
+
+   //=========================================================================
+   // <textPath> element
+
+
+   private void textPath(Attributes attributes) throws SAXException
+   {
+/**/Log.d(TAG, "<textPath>");
+      if (currentElement == null)
+         throw new SAXException("Invalid document. Root element must be <svg>");
+      SVG.TextPath  obj = new SVG.TextPath();
+      obj.document = svgDocument;
+      obj.parent = currentElement;
+      parseAttributesCore(obj, attributes);
+      parseAttributesStyle(obj, attributes);
+      parseAttributesConditional(obj, attributes);
+      parseAttributesTextPath(obj, attributes);
+      currentElement.addChild(obj);
+      currentElement = obj;
+   }
+
+
+   private void  parseAttributesTextPath(SVG.TextPath obj, Attributes attributes) throws SAXException
+   {
+      for (int i=0; i<attributes.getLength(); i++)
+      {
+         String val = attributes.getValue(i).trim();
+         switch (SVGAttr.fromString(attributes.getLocalName(i)))
+         {
+            case href:
+               if (!XLINK_NAMESPACE.equals(attributes.getURI(i)))
+                  break;
+               obj.href = val;
+               break;
+            case startOffset:
+               obj.startOffset = parseLength(val);
                break;
             default:
                break;

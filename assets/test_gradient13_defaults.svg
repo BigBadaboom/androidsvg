@@ -1,0 +1,39 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="10cm" height="6cm" viewBox="0 0 1000 600" version="1.1"
+     xmlns="http://www.w3.org/2000/svg">
+  <g>
+    <defs>
+      <linearGradient id="MyGradient1" gradientUnits="objectBoundingBox">
+        <stop offset="0%" stop-color="#900" />
+        <stop offset="100%" stop-color="#FF6" />
+      </linearGradient>
+      <linearGradient id="MyGradient2" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stop-color="#900" />
+        <stop offset="100%" stop-color="#FF6" />
+      </linearGradient>
+      <radialGradient id="MyGradient3" gradientUnits="objectBoundingBox">
+        <stop offset="0%" stop-color="#900" />
+        <stop offset="100%" stop-color="#FF6" />
+      </radialGradient>
+      <radialGradient id="MyGradient4" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stop-color="#900" />
+        <stop offset="100%" stop-color="#FF6" />
+      </radialGradient>
+    </defs>
+
+    <!-- Outline the drawing area in blue -->
+    <rect fill="none" stroke="blue" 
+          x="1" y="1" width="998" height="598"/>
+
+    <rect fill="url(#MyGradient1)" stroke="black" stroke-width="5"  
+          x="50" y="50" width="400" height="200"/>
+    <rect fill="url(#MyGradient2)" stroke="black" stroke-width="5"  
+          x="50" y="300" width="900" height="125"/>
+    <rect fill="url(#MyGradient3)" stroke="black" stroke-width="5"  
+          x="550" y="50" width="400" height="200"/>
+    <rect fill="url(#MyGradient4)" stroke="black" stroke-width="5"  
+          x="50" y="425" width="900" height="125"/>
+  </g>
+</svg>

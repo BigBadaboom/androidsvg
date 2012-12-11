@@ -11,6 +11,7 @@ import android.graphics.LinearGradient;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.PathMeasure;
 import android.graphics.RadialGradient;
 import android.graphics.RectF;
 import android.graphics.Shader.TileMode;
@@ -36,9 +37,9 @@ import com.caverock.androidsvg.SVG.SvgLinearGradient;
 import com.caverock.androidsvg.SVG.SvgObject;
 import com.caverock.androidsvg.SVG.SvgPaint;
 import com.caverock.androidsvg.SVG.SvgRadialGradient;
-import com.caverock.androidsvg.SVG.Text;
 import com.caverock.androidsvg.SVG.TextContainer;
 import com.caverock.androidsvg.SVG.TextSequence;
+import com.caverock.androidsvg.SVG.Unit;
 
 
 public class SVGAndroidRenderer
@@ -177,7 +178,7 @@ public class SVGAndroidRenderer
     * Get the current view port in user units.
     * @return
     */
-   public SVG.Box getCurrentViewPortinUserUnits()
+   public SVG.Box getCurrentViewPortInUserUnits()
    {
       return state.viewBox;
    }
@@ -248,6 +249,8 @@ public class SVGAndroidRenderer
          // do nothing
       } else if (obj instanceof SVG.Marker) {
          // do nothing
+      } else if (obj instanceof SVG.TextPath) {
+         render((SVG.TextPath) obj);
       }
 
       // Restore state
@@ -394,7 +397,7 @@ public class SVGAndroidRenderer
       if (obj.transform != null)
          canvas.concat(obj.transform);
 
-      Path  path = (new PathConverter(obj.path)).getPath();
+      Path  path = (new PathConverter(obj.d)).getPath();
 
       if (obj.boundingBox == null) {
          obj.boundingBox = calculatePathBounds(path);
@@ -817,7 +820,7 @@ public class SVGAndroidRenderer
     * To simplify, we will ignore font changes and just assume that all the text
     * uses the current font.
     */
-   private float calculateTextWidth(Text parentTextObj)
+   private float calculateTextWidth(TextContainer parentTextObj)
    {
       return sumChildWidths(parentTextObj, 0f);
    }
@@ -884,6 +887,55 @@ public class SVGAndroidRenderer
       
       for (SVG.SvgObject child: obj.children) {
          render(child);
+      }
+   }
+
+
+   //==============================================================================
+
+
+   private void render(SVG.TextPath obj)
+   {
+/**/Log.d(TAG, "TextPath render");
+
+      updateStyle(state, obj.style);
+
+      SVG.SvgObject  ref = obj.document.resolveIRI(obj.href);
+      if (ref == null)
+      {
+         Log.e(TAG, "Path reference \"" + obj.href + "\" in <textPath> element could not be located");
+         return;
+      }
+
+      SVG.Path     pathObj = (SVG.Path) ref;
+      Path         path = (new PathConverter(pathObj.d)).getPath();
+      PathMeasure  measure = new PathMeasure(path, false);
+
+      // Get the first coordinate pair from the lists in the x and y properties.
+      float  startOffset = (obj.startOffset != null) ? obj.startOffset.floatValue(this, measure.getLength()) : 0f;
+
+      TextRenderContext currentTextPosition = new TextRenderContext(startOffset, 0);
+
+      // Handle text alignment
+      if (state.style.textAnchor != Style.TextAnchor.Start) {
+         float  textWidth = calculateTextWidth(obj);
+         if (state.style.textAnchor == Style.TextAnchor.Middle) {
+            currentTextPosition.x -= (textWidth / 2);
+         } else {
+            currentTextPosition.x -= textWidth;  // 'End' (right justify)
+         }
+      }
+
+      // The spec doesn't say how the bounding box of a <textPath> should be calculated.
+      // We are just going to use the bounding box of the path itself.
+      if (obj.boundingBox == null) {
+         obj.boundingBox = calculatePathBounds(path);
+      }
+      checkForGradiants(obj);      
+      checkForClipPath(obj);
+      
+      for (SVG.SvgObject child: obj.children) {
+//         renderTextOnPath(child, currentTextPosition, path);// FIXME
       }
    }
 
@@ -1789,7 +1841,7 @@ public class SVGAndroidRenderer
 
       List<MarkerVector>  markers = null;
       if (obj instanceof SVG.Path)
-         markers = (new MarkerPositionCalculator(((SVG.Path) obj).path)).getMarkers();
+         markers = (new MarkerPositionCalculator(((SVG.Path) obj).d)).getMarkers();
       else if (obj instanceof SVG.Line)
          markers = calculateMarkerPositions((SVG.Line) obj);
       else // PolyLine and Polygon
@@ -2019,13 +2071,22 @@ public class SVGAndroidRenderer
       boolean  userUnits = (gradient.gradientUnitsAreUser != null && gradient.gradientUnitsAreUser);
       Paint    paint = isFill ? state.fillPaint : state.strokePaint;
 
-      // Temporarily set viewBox to (0,0,1,1) for user units calculation (so percentages work)
-      if (!userUnits)
-         state.viewBox = UNIT_BBOX;
-      float  _x1 = (gradient.x1 != null) ? gradient.x1.floatValueX(this): 0f;
-      float  _y1 = (gradient.y1 != null) ? gradient.y1.floatValueY(this): 0f;
-      float  _x2 = (gradient.x2 != null) ? gradient.x2.floatValueX(this): 1f;
-      float  _y2 = (gradient.y2 != null) ? gradient.y2.floatValueY(this): 0f;
+      float  _x1,_y1,_x2,_y2;
+      if (userUnits)
+      {
+          Box  viewPortUser = getCurrentViewPortInUserUnits();
+         _x1 = (gradient.x1 != null) ? gradient.x1.floatValueX(this): 0f;
+         _y1 = (gradient.y1 != null) ? gradient.y1.floatValueY(this): 0f;
+         _x2 = (gradient.x2 != null) ? gradient.x2.floatValueX(this): viewPortUser.width; // 100%
+         _y2 = (gradient.y2 != null) ? gradient.y2.floatValueY(this): 0f;
+      }
+      else
+      {
+         _x1 = (gradient.x1 != null) ? gradient.x1.floatValue(this, 1f): 0f;
+         _y1 = (gradient.y1 != null) ? gradient.y1.floatValue(this, 1f): 0f;
+         _x2 = (gradient.x2 != null) ? gradient.x2.floatValue(this, 1f): 1f;
+         _y2 = (gradient.y2 != null) ? gradient.y2.floatValue(this, 1f): 0f;
+      }
 
       // Calculate the gradient transform matrix
       Matrix m = new Matrix();
@@ -2104,14 +2165,20 @@ public class SVGAndroidRenderer
       boolean  userUnits = (gradient.gradientUnitsAreUser != null && gradient.gradientUnitsAreUser);
       Paint    paint = isFill ? state.fillPaint : state.strokePaint;
 
-      statePush();
-      statePop();
-      // Temporarily set viewBox to (0,0,1,1) for user units calculation (so percentages work)
-      if (!userUnits)
-         state.viewBox = UNIT_BBOX;
-      float  _cx = (gradient.cx != null) ? gradient.cx.floatValueX(this): 0.5f;
-      float  _cy = (gradient.cy != null) ? gradient.cy.floatValueY(this): 0.5f;
-      float  _r = (gradient.r != null) ? gradient.r.floatValue(this): 0.5f;
+      float  _cx,_cy,_r;
+      if (userUnits)
+      {
+         SVG.Length  fiftyPercent = new SVG.Length(50f, Unit.percent);
+         _cx = (gradient.cx != null) ? gradient.cx.floatValueX(this): fiftyPercent.floatValueX(this);
+         _cy = (gradient.cy != null) ? gradient.cy.floatValueY(this): fiftyPercent.floatValueY(this);
+         _r = (gradient.r != null) ? gradient.r.floatValue(this): fiftyPercent.floatValue(this);
+      }
+      else
+      {
+         _cx = (gradient.cx != null) ? gradient.cx.floatValue(this, 1f): 0.5f;
+         _cy = (gradient.cy != null) ? gradient.cy.floatValue(this, 1f): 0.5f;
+         _r = (gradient.r != null) ? gradient.r.floatValue(this, 1f): 0.5f;
+      }
       // fx and fy are ignored because Android RadialGradient doesn't support a
       // 'focus' point that is different from cx,cy.
 
@@ -2391,7 +2458,7 @@ public class SVGAndroidRenderer
       if (obj.transform != null)
          combinedPathMatrix.preConcat(obj.transform);
 
-      Path  path = (new PathConverter(obj.path)).getPath();
+      Path  path = (new PathConverter(obj.d)).getPath();
 
       if (obj.boundingBox == null) {
          obj.boundingBox = calculatePathBounds(path);

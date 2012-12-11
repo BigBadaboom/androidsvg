@@ -456,7 +456,7 @@ public class SVG
             case pc: // 1 pica = 1/6 in
                return value * renderer.getDPI() / 6f;
             case percent:
-               Box  viewPortUser = renderer.getCurrentViewPortinUserUnits();
+               Box  viewPortUser = renderer.getCurrentViewPortInUserUnits();
                if (viewPortUser == null)
                   return value;  // Undefined in this situation - so just return value to avoid an NPE
                return value * viewPortUser.width / 100f;
@@ -469,7 +469,7 @@ public class SVG
       public float floatValueY(SVGAndroidRenderer renderer)
       {
          if (unit == Unit.percent) {
-            Box  viewPortUser = renderer.getCurrentViewPortinUserUnits();
+            Box  viewPortUser = renderer.getCurrentViewPortInUserUnits();
             if (viewPortUser == null)
                return value;  // Undefined in this situation - so just return value to avoid an NPE
             return value * viewPortUser.height / 100f;
@@ -483,7 +483,7 @@ public class SVG
       {
          if (unit == Unit.percent)
          {
-            Box  viewPortUser = renderer.getCurrentViewPortinUserUnits();
+            Box  viewPortUser = renderer.getCurrentViewPortInUserUnits();
             if (viewPortUser == null)
                return value;  // Undefined in this situation - so just return value to avoid an NPE
             float w = viewPortUser.width;
@@ -492,6 +492,17 @@ public class SVG
                return value * w / 100f;
             float n = (float) (Math.sqrt(w*w+h*h) / SQRT2);  // see spec section 7.10
             return value * n / 100f;
+         }
+         return floatValueX(renderer);
+      }
+
+      // Convert length to user units for a context that is not orientation specific.
+      // For percentage values, use the given 'max' parameter to represent the 100% value.
+      public float floatValue(SVGAndroidRenderer renderer, float max)
+      {
+         if (unit == Unit.percent)
+         {
+            return value * max / 100f;
          }
          return floatValueX(renderer);
       }
@@ -713,7 +724,7 @@ public class SVG
 
    protected static class Path extends GraphicsElement
    {
-      public PathDefinition  path;
+      public PathDefinition  d;
       public Float           pathLength;
    }
 
@@ -805,7 +816,7 @@ public class SVG
 
    protected static class TRef extends SvgConditionalElement
    {
-      public String href;
+      public String  href;
    }
 
 
@@ -878,6 +889,13 @@ public class SVG
    protected static class ClipPath extends Group
    {
       public Boolean  clipPathUnitsAreUser;
+   }
+
+
+   protected static class TextPath extends TextContainer
+   {
+      public String  href;
+      public Length  startOffset;
    }
 
 
