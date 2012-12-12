@@ -37,6 +37,7 @@ import com.caverock.androidsvg.SVG.SvgLinearGradient;
 import com.caverock.androidsvg.SVG.SvgObject;
 import com.caverock.androidsvg.SVG.SvgPaint;
 import com.caverock.androidsvg.SVG.SvgRadialGradient;
+import com.caverock.androidsvg.SVG.Text;
 import com.caverock.androidsvg.SVG.TextContainer;
 import com.caverock.androidsvg.SVG.TextSequence;
 import com.caverock.androidsvg.SVG.Unit;
@@ -249,8 +250,6 @@ public class SVGAndroidRenderer
          // do nothing
       } else if (obj instanceof SVG.Marker) {
          // do nothing
-      } else if (obj instanceof SVG.TextPath) {
-         render((SVG.TextPath) obj);
       }
 
       // Restore state
@@ -693,19 +692,6 @@ public class SVGAndroidRenderer
    //==============================================================================
 
 
-   private static class TextRenderContext
-   {
-      float x;
-      float y;
-
-      public TextRenderContext(float x, float y)
-      {
-         this.x = x;
-         this.y = y;
-      }
-   }
-
-
    private void render(SVG.Text obj)
    {
 /**/Log.d(TAG, "Text render");
@@ -718,15 +704,14 @@ public class SVGAndroidRenderer
       // Get the first coordinate pair from the lists in the x and y properties.
       float  x = (obj.x == null || obj.x.size() == 0) ? 0f : obj.x.get(0).floatValueX(this);
       float  y = (obj.y == null || obj.y.size() == 0) ? 0f : obj.y.get(0).floatValueY(this);
-      TextRenderContext currentTextPosition = new TextRenderContext(x, y);
 
       // Handle text alignment
       if (state.style.textAnchor != Style.TextAnchor.Start) {
          float  textWidth = calculateTextWidth(obj);
          if (state.style.textAnchor == Style.TextAnchor.Middle) {
-            currentTextPosition.x -= (textWidth / 2);
+            x -= (textWidth / 2);
          } else {
-            currentTextPosition.x -= textWidth;  // 'End' (right justify)
+            x -= textWidth;  // 'End' (right justify)
          }
       }
 
@@ -741,18 +726,75 @@ public class SVGAndroidRenderer
       checkForGradiants(obj);      
       checkForClipPath(obj);
       
-      for (SVG.SvgObject child: obj.children) {
-         renderText(child, currentTextPosition);
+//      for (SVG.SvgObject child: obj.children) {
+//         //renderText(child, currentTextPosition);
+//      }
+      
+      enumerateTextSpans(obj, new PlainTextDrawer(x, y));
+
+   }
+
+
+   private class  PlainTextDrawer implements TextDrawer
+   {
+      float x;
+      float y;
+
+      public PlainTextDrawer(float x, float y)
+      {
+         this.x = x;
+         this.y = y;
+      }
+
+      @Override
+      public void drawText(String text)
+      {
+         if (visible())
+         {
+            if (state.hasFill)
+               canvas.drawText(text, x, y, state.fillPaint);
+            if (state.hasStroke)
+               canvas.drawText(text, x, y, state.strokePaint);
+         }
+
+         // Update the current text position
+         x += state.fillPaint.measureText(text);
       }
    }
 
 
-   public void  renderText(SVG.SvgObject obj, TextRenderContext currentTextPosition)
+   //==============================================================================
+   // Text sequence enumeration
+
+
+   private interface  TextDrawer
+   {
+      public void  drawText(String text);
+   }
+
+
+   /*
+    * Given a text container, recursively visit its children invoking the TextDrawer
+    * handler for each segment of text found.
+    */
+   private void enumerateTextSpans(TextContainer obj, TextDrawer drawer)
+   {
+      for (SVG.SvgObject child: obj.children) {
+         processTextChild(child, drawer);
+      }
+   }
+
+
+   public void  processTextChild(SVG.SvgObject obj, TextDrawer drawer)
    {
       if (!display(obj))
          return;
 
-      if (obj instanceof SVG.TSpan)
+      if (obj instanceof SVG.TextPath)
+      {
+         render((SVG.TextPath) obj);
+      }
+      else if (obj instanceof SVG.TSpan)
       {
 /**/Log.d(TAG, "TSpan render");
          // Save state
@@ -762,9 +804,7 @@ public class SVGAndroidRenderer
 
          updateStyle(state, tspan.style);
 
-         for (SVG.SvgObject child: tspan.children) {
-            renderText(child, currentTextPosition);
-         }
+         enumerateTextSpans(tspan, drawer);
 
          // Restore state
          statePop();
@@ -785,7 +825,7 @@ public class SVGAndroidRenderer
             StringBuilder  str = new StringBuilder();
             extractRawText((TextContainer) ref, str);
             if (str.length() > 0)
-               drawText(str.toString(), currentTextPosition);
+               drawer.drawText(str.toString());
          }
 
          // Restore state
@@ -795,24 +835,13 @@ public class SVGAndroidRenderer
       {
 /**/Log.d(TAG, "TextSequence render");
          String  text = ((SVG.TextSequence) obj).text;
-         drawText(text, currentTextPosition);
+         drawer.drawText(text);
       }
    }
 
 
-   private void drawText(String text, TextRenderContext currentTextPosition)
-   {
-      if (visible())
-      {
-         if (state.hasFill)
-            canvas.drawText(text, currentTextPosition.x, currentTextPosition.y, state.fillPaint);
-         if (state.hasStroke)
-            canvas.drawText(text, currentTextPosition.x, currentTextPosition.y, state.strokePaint);
-      }
-
-      // Update the current text position
-      currentTextPosition.x += state.fillPaint.measureText(text);
-   }
+   //==============================================================================
+   // Text utility methods
 
 
    /*
@@ -914,15 +943,13 @@ public class SVGAndroidRenderer
       // Get the first coordinate pair from the lists in the x and y properties.
       float  startOffset = (obj.startOffset != null) ? obj.startOffset.floatValue(this, measure.getLength()) : 0f;
 
-      TextRenderContext currentTextPosition = new TextRenderContext(startOffset, 0);
-
       // Handle text alignment
       if (state.style.textAnchor != Style.TextAnchor.Start) {
          float  textWidth = calculateTextWidth(obj);
          if (state.style.textAnchor == Style.TextAnchor.Middle) {
-            currentTextPosition.x -= (textWidth / 2);
+            startOffset -= (textWidth / 2);
          } else {
-            currentTextPosition.x -= textWidth;  // 'End' (right justify)
+            startOffset -= textWidth;  // 'End' (right justify)
          }
       }
 
@@ -934,8 +961,41 @@ public class SVGAndroidRenderer
       checkForGradiants(obj);      
       checkForClipPath(obj);
       
-      for (SVG.SvgObject child: obj.children) {
+//      for (SVG.SvgObject child: obj.children) {
 //         renderTextOnPath(child, currentTextPosition, path);// FIXME
+//      }
+      enumerateTextSpans(obj, new PathTextDrawer(path, startOffset, 0f));
+
+   }
+
+
+   private class  PathTextDrawer implements TextDrawer
+   {
+      Path   path;
+      float  x;
+      float  y;
+
+      public PathTextDrawer(Path path, float x, float y)
+      {
+         this.path = path;
+         this.x = x;
+         this.y = y;
+      }
+
+      @Override
+      public void drawText(String text)
+      {
+/**/Log.w(TAG, "path/drawText: "+x+" "+y+" '"+text+"'");
+         if (visible())
+         {
+            if (state.hasFill)
+               canvas.drawTextOnPath(text, path, x, y, state.fillPaint);
+            if (state.hasStroke)
+               canvas.drawTextOnPath(text, path, x, y, state.strokePaint);
+         }
+
+         // Update the current text position
+         x += state.fillPaint.measureText(text);
       }
    }
 

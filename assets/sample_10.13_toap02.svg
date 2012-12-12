@@ -10,12 +10,19 @@
              C 500 200 600 300 700 200
              C 800 100 900 100 900 100" />
   </defs>
-  <desc>Example toap01 - simple text on a path</desc>
+  <desc>Example toap02 - tspan within textPath</desc>
 
   <use xlink:href="#MyPath" fill="none" stroke="red"  />
-  <text font-family="Verdana" font-size="42.5" fill="blue">
+  <text font-family="Verdana" font-size="42.5" fill="blue" >
     <textPath xlink:href="#MyPath">
-      We go up, then we go down, then up again
+      We go 
+      <tspan dy="-30" fill="red" >
+        up
+      </tspan>
+      <tspan dy="30">
+        ,
+      </tspan>
+      then we go down, then up again
     </textPath>
   </text>
 

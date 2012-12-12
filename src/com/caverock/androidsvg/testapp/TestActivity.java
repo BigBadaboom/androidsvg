@@ -23,7 +23,9 @@ public class TestActivity extends Activity
    Toast            currentToast;
 
    String[] fileList = {"sample_10.13_toap01.svg",
-                        "test_gradient13_defaults.svg",
+                        "sample_10.13_toap02.svg",
+                        "sample_10.13_toap03.svg",
+                        "test_toap_mix.svg",
                         "sample_5.6_Use01.svg",
                         "sample_5.6_Use02.svg",
                         "sample_5.6_Use03.svg",
@@ -94,6 +96,7 @@ public class TestActivity extends Activity
                         "test_gradient10_zerovector.svg",
                         "test_gradient11_onestop.svg",
                         "test_gradient12_zerostops.svg",
+                        "test_gradient13_defaults.svg",
                         "test_clip.svg",
                         "test_paths1.svg",
                         "test_paths2.svg",

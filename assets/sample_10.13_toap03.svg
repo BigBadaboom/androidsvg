@@ -10,11 +10,11 @@
              C 500 200 600 300 700 200
              C 800 100 900 100 900 100" />
   </defs>
-  <desc>Example toap01 - simple text on a path</desc>
+  <desc>Example toap03 - text on a path with startOffset attribute</desc>
 
   <use xlink:href="#MyPath" fill="none" stroke="red"  />
-  <text font-family="Verdana" font-size="42.5" fill="blue">
-    <textPath xlink:href="#MyPath">
+  <text font-family="Verdana" font-size="42.5" fill="blue" >
+    <textPath xlink:href="#MyPath" startOffset="80%">
       We go up, then we go down, then up again
     </textPath>
   </text>
