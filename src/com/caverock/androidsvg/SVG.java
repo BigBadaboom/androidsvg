@@ -28,6 +28,8 @@ public class SVG
 
    private static final double  SQRT2 = 1.414213562373095;
 
+   private static final List<SvgObject>  EMPTY_CHILD_LIST = new ArrayList<SvgObject>(0);
+
 
    private Svg     rootElement = null;
 
@@ -587,10 +589,16 @@ public class SVG
    }
 
    // Any object in the tree that corresponds to an SVG element
-   protected static abstract class SvgElement extends SvgObject
+   protected static class SvgElementBase extends SvgObject
    {
       public String  id = null;
       public Style   style = new Style();
+   }
+
+
+   // Any object in the tree that corresponds to an SVG element
+   protected static class SvgElement extends SvgElementBase
+   {
       public Box     boundingBox = null;
    }
 
@@ -629,22 +637,25 @@ public class SVG
    }
 
 
-   protected static class SvgContainer extends SvgElement
+   protected interface SvgContainer
    {
-      public List<SvgObject> children = new ArrayList<SvgObject>();
-
-      public void addChild(SvgObject elem) throws SAXException
-      {
-         children.add(elem);
-      }
+      public List<SvgObject>  getChildren();
+      public void             addChild(SvgObject elem) throws SAXException;
    }
 
 
-   protected static class SvgConditionalContainer extends SvgContainer implements SvgConditional
+   protected static class SvgConditionalContainer extends SvgElement implements SvgContainer, SvgConditional
    {
-      public Set<String>  requiredFeatures = null;
-      public String       requiredExtensions = null;
-      public Set<String>  systemLanguage = null;
+      public List<SvgObject> children = new ArrayList<SvgObject>();
+
+      public Set<String>     requiredFeatures = null;
+      public String          requiredExtensions = null;
+      public Set<String>     systemLanguage = null;
+
+      @Override
+      public List<SvgObject>  getChildren() { return children; }
+      @Override
+      public void addChild(SvgObject elem) throws SAXException  { children.add(elem); }
 
       @Override
       public void setRequiredFeatures(Set<String> features) { this.requiredFeatures = features; }
@@ -777,30 +788,58 @@ public class SVG
    }
 
 
-   protected static class TextContainer extends SvgConditionalContainer
+   protected interface  TextChild
+   {
+      public void  setTextRoot(Text obj);
+      public Text  getTextRoot();
+   }
+   
+
+   protected static class  TextContainer extends SvgConditionalContainer
+   {
+      @Override
+      public void  addChild(SvgObject elem) throws SAXException
+      {
+         if (elem instanceof TextChild)
+            children.add(elem);
+         else
+            throw new SAXException("Text content elements cannot contain "+elem+" elements.");
+      }
+   }
+
+
+   protected static class  TextPositionedContainer extends TextContainer
    {
       public List<Length> x;
       public List<Length> y;
    }
 
 
-   protected static class Text extends TextContainer implements HasTransform
+   protected static class Text extends TextPositionedContainer implements HasTransform
    {
-      public Matrix transform;
+      public Matrix  transform;
 
       @Override
       public void setTransform(Matrix transform) { this.transform = transform; }
    }
 
 
-   protected static class TSpan extends TextContainer
+   protected static class TSpan extends TextPositionedContainer implements TextChild
    {
+      private Text  textRoot;
+
+      @Override
+      public void  setTextRoot(Text obj) { this.textRoot = obj; }
+      @Override
+      public Text  getTextRoot() { return this.textRoot; }
    }
 
 
-   protected static class TextSequence extends SvgObject
+   protected static class TextSequence extends SvgObject implements TextChild
    {
       public String text;
+
+      private Text  textRoot;
       
       public TextSequence(String text)
       {
@@ -811,12 +850,38 @@ public class SVG
       {
          return this.getClass().getSimpleName() + " '"+text+"'";
       }
+
+      @Override
+      public void  setTextRoot(Text obj) { this.textRoot = obj; }
+      @Override
+      public Text  getTextRoot() { return this.textRoot; }
    }
 
 
-   protected static class TRef extends SvgConditionalElement
+   protected static class TRef extends TextContainer implements TextChild
    {
       public String  href;
+
+      private Text  textRoot;
+
+      @Override
+      public void  setTextRoot(Text obj) { this.textRoot = obj; }
+      @Override
+      public Text  getTextRoot() { return this.textRoot; }
+   }
+
+
+   protected static class TextPath extends TextContainer implements TextChild
+   {
+      public String  href;
+      public Length  startOffset;
+
+      private Text  textRoot;
+
+      @Override
+      public void  setTextRoot(Text obj) { this.textRoot = obj; }
+      @Override
+      public Text  getTextRoot() { return this.textRoot; }
    }
 
 
@@ -842,12 +907,20 @@ public class SVG
    }
 
 
-   protected static class GradientElement extends SvgContainer
+   protected static class GradientElement extends SvgElementBase implements SvgContainer
    {
+      public List<SvgObject> children = new ArrayList<SvgObject>();
+
       public Boolean         gradientUnitsAreUser;
       public Matrix          gradientTransform;
       public GradientSpread  spreadMethod;
       public String          href;
+
+      @Override
+      public List<SvgObject> getChildren()
+      {
+         return children;
+      }
 
       @Override
       public void addChild(SvgObject elem) throws SAXException
@@ -856,14 +929,20 @@ public class SVG
             children.add(elem);
          else
             throw new SAXException("Gradient elements cannot contain "+elem+" elements.");
-         
       }
    }
 
 
-   protected static class Stop extends SvgContainer
+   protected static class Stop extends SvgElementBase implements SvgContainer
    {
       public Float  offset;
+
+      // Dummy container methods. Stop is officially a container, but we 
+      // are not interested in any of its possible child elements.
+      @Override
+      public List<SvgObject> getChildren() { return EMPTY_CHILD_LIST; }
+      @Override
+      public void addChild(SvgObject elem) throws SAXException { /* do nothing */ }
    }
 
 
@@ -889,13 +968,6 @@ public class SVG
    protected static class ClipPath extends Group
    {
       public Boolean  clipPathUnitsAreUser;
-   }
-
-
-   protected static class TextPath extends TextContainer
-   {
-      public String  href;
-      public Length  startOffset;
    }
 
 
@@ -1163,20 +1235,21 @@ public class SVG
    }
 
 
-   private SvgElement  getElementById(SvgConditionalContainer obj, String id)
+   private SvgElementBase  getElementById(SvgContainer obj, String id)
    {
-      if (id.equals(obj.id))
-         return obj;
-      for (SvgObject child: obj.children)
+      SvgElementBase  elem = (SvgElementBase) obj;
+      if (id.equals(elem.id))
+         return elem;
+      for (SvgObject child: obj.getChildren())
       {
-         if (!(child instanceof SvgElement))
+         if (!(child instanceof SvgElementBase))
             continue;
-         SvgElement  childElem = (SvgElement) child;
+         SvgElementBase  childElem = (SvgElementBase) child;
          if (id.equals(childElem.id))
             return childElem;
-         if (child instanceof SvgConditionalContainer)
+         if (child instanceof SvgContainer)
          {
-            SvgElement  found = getElementById((SvgConditionalContainer) child, id);
+            SvgElementBase  found = getElementById((SvgContainer) child, id);
             if (found != null)
                return found;
          }

@@ -33,11 +33,11 @@ import com.caverock.androidsvg.SVG.Rect;
 import com.caverock.androidsvg.SVG.Stop;
 import com.caverock.androidsvg.SVG.Style;
 import com.caverock.androidsvg.SVG.SvgElement;
+import com.caverock.androidsvg.SVG.SvgElementBase;
 import com.caverock.androidsvg.SVG.SvgLinearGradient;
 import com.caverock.androidsvg.SVG.SvgObject;
 import com.caverock.androidsvg.SVG.SvgPaint;
 import com.caverock.androidsvg.SVG.SvgRadialGradient;
-import com.caverock.androidsvg.SVG.Text;
 import com.caverock.androidsvg.SVG.TextContainer;
 import com.caverock.androidsvg.SVG.TextSequence;
 import com.caverock.androidsvg.SVG.Unit;
@@ -323,7 +323,7 @@ public class SVGAndroidRenderer
       }
 
       for (SVG.SvgObject child: obj.children) {
-         render((SvgElement) child);
+         render(child);
       }
    }
 
@@ -340,7 +340,7 @@ public class SVGAndroidRenderer
       checkForClipPath(obj);
 
       for (SVG.SvgObject child: obj.children) {
-         render((SvgElement) child);
+         render(child);
       }
    }
 
@@ -716,26 +716,19 @@ public class SVGAndroidRenderer
       }
 
       if (obj.boundingBox == null) {
-         StringBuilder  sb = new StringBuilder();
-         extractRawText((TextContainer) obj, sb);
-         String  str = sb.toString();
-         android.graphics.Rect  bbox = new android.graphics.Rect();
-         state.fillPaint.getTextBounds(str, 0, str.length(), bbox);
-         obj.boundingBox = new Box(bbox.left, bbox.bottom, bbox.width(), bbox.height());
+         TextBoundsCalculator  proc = new TextBoundsCalculator(x, y);
+         enumerateTextSpans(obj, proc);
+         obj.boundingBox = new Box(proc.bbox.left, proc.bbox.top, proc.bbox.width(), proc.bbox.height());
       }
       checkForGradiants(obj);      
       checkForClipPath(obj);
-      
-//      for (SVG.SvgObject child: obj.children) {
-//         //renderText(child, currentTextPosition);
-//      }
       
       enumerateTextSpans(obj, new PlainTextDrawer(x, y));
 
    }
 
 
-   private class  PlainTextDrawer implements TextDrawer
+   private class  PlainTextDrawer extends TextProcessor
    {
       float x;
       float y;
@@ -747,7 +740,7 @@ public class SVGAndroidRenderer
       }
 
       @Override
-      public void drawText(String text)
+      public void processText(String text)
       {
          if (visible())
          {
@@ -767,9 +760,14 @@ public class SVGAndroidRenderer
    // Text sequence enumeration
 
 
-   private interface  TextDrawer
+   private abstract class  TextProcessor
    {
-      public void  drawText(String text);
+      public boolean  doTextContainer(TextContainer obj)
+      {
+         return true;
+      }
+
+      public abstract void  processText(String text);
    }
 
 
@@ -777,22 +775,42 @@ public class SVGAndroidRenderer
     * Given a text container, recursively visit its children invoking the TextDrawer
     * handler for each segment of text found.
     */
-   private void enumerateTextSpans(TextContainer obj, TextDrawer drawer)
+   private void enumerateTextSpans(TextContainer obj, TextProcessor textprocessor)
    {
       for (SVG.SvgObject child: obj.children) {
-         processTextChild(child, drawer);
+         processTextChild(child, textprocessor);
       }
    }
 
 
-   public void  processTextChild(SVG.SvgObject obj, TextDrawer drawer)
+   public void  processTextChild(SVG.SvgObject obj, TextProcessor textprocessor)
    {
       if (!display(obj))
          return;
 
+      if (obj instanceof SVG.TextSequence)
+      {
+/**/Log.d(TAG, "TextSequence render");
+         String  text = ((SVG.TextSequence) obj).text;
+         textprocessor.processText(text);
+         return;
+      }
+
+
+      // Ask the processor implementation if it wants to process this object
+      if (!textprocessor.doTextContainer((SVG.TextContainer) obj))
+         return;
+
+
       if (obj instanceof SVG.TextPath)
       {
-         render((SVG.TextPath) obj);
+         // Save state
+         statePush();
+
+         renderTextPath((SVG.TextPath) obj);
+
+         // Restore state
+         statePop();
       }
       else if (obj instanceof SVG.TSpan)
       {
@@ -804,7 +822,9 @@ public class SVGAndroidRenderer
 
          updateStyle(state, tspan.style);
 
-         enumerateTextSpans(tspan, drawer);
+         checkForGradiants(tspan.getTextRoot());      
+
+         enumerateTextSpans(tspan, textprocessor);
 
          // Restore state
          statePop();
@@ -818,6 +838,8 @@ public class SVGAndroidRenderer
 
          updateStyle(state, tref.style);
 
+         checkForGradiants(tref.getTextRoot());      
+
          // Locate the referenced object
          SVG.SvgObject  ref = obj.document.resolveIRI(tref.href);
          if (ref != null && (ref instanceof TextContainer))
@@ -825,23 +847,96 @@ public class SVGAndroidRenderer
             StringBuilder  str = new StringBuilder();
             extractRawText((TextContainer) ref, str);
             if (str.length() > 0)
-               drawer.drawText(str.toString());
+               textprocessor.processText(str.toString());
          }
 
          // Restore state
          statePop();
       }
-      else if  (obj instanceof SVG.TextSequence)
+   }
+
+
+   //==============================================================================
+
+
+   private void renderTextPath(SVG.TextPath obj)
+   {
+/**/Log.d(TAG, "TextPath render");
+
+      updateStyle(state, obj.style);
+
+      SVG.SvgObject  ref = obj.document.resolveIRI(obj.href);
+      if (ref == null)
       {
-/**/Log.d(TAG, "TextSequence render");
-         String  text = ((SVG.TextSequence) obj).text;
-         drawer.drawText(text);
+         Log.e(TAG, "Path reference \"" + obj.href + "\" in <textPath> element could not be located");
+         return;
+      }
+
+      SVG.Path     pathObj = (SVG.Path) ref;
+      Path         path = (new PathConverter(pathObj.d)).getPath();
+
+      if (pathObj.transform != null)
+         path.transform(pathObj.transform);
+
+      PathMeasure  measure = new PathMeasure(path, false);
+
+      // Get the first coordinate pair from the lists in the x and y properties.
+      float  startOffset = (obj.startOffset != null) ? obj.startOffset.floatValue(this, measure.getLength()) : 0f;
+
+      // Handle text alignment
+      if (state.style.textAnchor != Style.TextAnchor.Start) {
+         float  textWidth = calculateTextWidth(obj);
+         if (state.style.textAnchor == Style.TextAnchor.Middle) {
+            startOffset -= (textWidth / 2);
+         } else {
+            startOffset -= textWidth;  // 'End' (right justify)
+         }
+      }
+
+      // The spec doesn't say how the bounding box of a <textPath> should be calculated.
+      // We are just going to use the bounding box of the path itself.
+//      if (obj.boundingBox == null) {
+//         obj.boundingBox = calculatePathBounds(path); TODO
+//      }
+      checkForGradiants(obj.getTextRoot());      
+//      checkForClipPath(obj);
+      
+      enumerateTextSpans(obj, new PathTextDrawer(path, startOffset, 0f));
+
+   }
+
+
+   private class  PathTextDrawer extends TextProcessor
+   {
+      Path   path;
+      float  x;
+      float  y;
+
+      public PathTextDrawer(Path path, float x, float y)
+      {
+         this.path = path;
+         this.x = x;
+         this.y = y;
+      }
+
+      @Override
+      public void processText(String text)
+      {
+         if (visible())
+         {
+            if (state.hasFill)
+               canvas.drawTextOnPath(text, path, x, y, state.fillPaint);
+            if (state.hasStroke)
+               canvas.drawTextOnPath(text, path, x, y, state.strokePaint);
+         }
+
+         // Update the current text position
+         x += state.fillPaint.measureText(text);
       }
    }
 
 
    //==============================================================================
-   // Text utility methods
 
 
    /*
@@ -849,27 +944,86 @@ public class SVGAndroidRenderer
     * To simplify, we will ignore font changes and just assume that all the text
     * uses the current font.
     */
-   private float calculateTextWidth(TextContainer parentTextObj)
+   private float  calculateTextWidth(TextContainer parentTextObj)
    {
-      return sumChildWidths(parentTextObj, 0f);
+      TextWidthCalculator  proc = new TextWidthCalculator();
+      enumerateTextSpans(parentTextObj, proc);
+      return proc.x;
    }
 
-   private float  sumChildWidths(TextContainer parent, float runningTotal)
+   private class  TextWidthCalculator extends TextProcessor
    {
-      for (SVG.SvgObject child: parent.children)
+      public float x = 0;
+
+      @Override
+      public void processText(String text)
       {
-         if (!display(child))
-            continue;
-
-         if (child instanceof TextContainer) {
-            runningTotal = sumChildWidths((TextContainer) child, runningTotal);
-         } else if (child instanceof TextSequence) {
-            runningTotal += state.fillPaint.measureText(((TextSequence) child).text);
-         }
+         x += state.fillPaint.measureText(text);
       }
-      return runningTotal;
    }
- 
+
+
+   //==============================================================================
+
+
+   /*
+    * Use the TextDrawer process to determine the bounds of a <text> element
+    */
+   private class  TextBoundsCalculator extends TextProcessor
+   {
+      float  x;
+      float  y;
+      RectF  bbox = new RectF();
+
+      public TextBoundsCalculator(float x, float y)
+      {
+         this.x = x;
+         this.y = y;
+      }
+
+      @Override
+      public boolean doTextContainer(TextContainer obj)
+      {
+         if (obj instanceof SVG.TextPath)
+         {
+            // Since we cheat a bit with our textPath rendering, we need
+            // to cheat a bit with our bbox calculation.
+            SVG.TextPath  tpath = (SVG.TextPath) obj;
+            SVG.SvgObject  ref = obj.document.resolveIRI(tpath.href);
+            if (ref == null)
+               return false;
+            SVG.Path  pathObj = (SVG.Path) ref;
+            Path      path = (new PathConverter(pathObj.d)).getPath(); //FIXME
+            if (pathObj.transform != null)
+               path.transform(pathObj.transform);
+            RectF     pathBounds = new RectF();
+            path.computeBounds(pathBounds, true);
+            bbox.union(pathBounds);
+            return false;
+         }
+         return true;
+      }
+
+      @Override
+      public void processText(String text)
+      {
+         if (visible())
+         {
+            android.graphics.Rect  rect = new android.graphics.Rect();
+            // Get text bounding box (for offset 0)
+            state.fillPaint.getTextBounds(text, 0, text.length(), rect);
+            RectF  textbounds = new RectF(rect);
+            // Adjust bounds to offset at text position
+            textbounds.offset(x, y);
+            // Merge with accumulated bounding box
+            bbox.union(textbounds);
+         }
+
+         // Update the current text position
+         x += state.fillPaint.measureText(text);
+      }
+   }
+
 
    /*
     * Extract the raw text from a TextContainer. Used by <tref> handler code.
@@ -916,86 +1070,6 @@ public class SVGAndroidRenderer
       
       for (SVG.SvgObject child: obj.children) {
          render(child);
-      }
-   }
-
-
-   //==============================================================================
-
-
-   private void render(SVG.TextPath obj)
-   {
-/**/Log.d(TAG, "TextPath render");
-
-      updateStyle(state, obj.style);
-
-      SVG.SvgObject  ref = obj.document.resolveIRI(obj.href);
-      if (ref == null)
-      {
-         Log.e(TAG, "Path reference \"" + obj.href + "\" in <textPath> element could not be located");
-         return;
-      }
-
-      SVG.Path     pathObj = (SVG.Path) ref;
-      Path         path = (new PathConverter(pathObj.d)).getPath();
-      PathMeasure  measure = new PathMeasure(path, false);
-
-      // Get the first coordinate pair from the lists in the x and y properties.
-      float  startOffset = (obj.startOffset != null) ? obj.startOffset.floatValue(this, measure.getLength()) : 0f;
-
-      // Handle text alignment
-      if (state.style.textAnchor != Style.TextAnchor.Start) {
-         float  textWidth = calculateTextWidth(obj);
-         if (state.style.textAnchor == Style.TextAnchor.Middle) {
-            startOffset -= (textWidth / 2);
-         } else {
-            startOffset -= textWidth;  // 'End' (right justify)
-         }
-      }
-
-      // The spec doesn't say how the bounding box of a <textPath> should be calculated.
-      // We are just going to use the bounding box of the path itself.
-      if (obj.boundingBox == null) {
-         obj.boundingBox = calculatePathBounds(path);
-      }
-      checkForGradiants(obj);      
-      checkForClipPath(obj);
-      
-//      for (SVG.SvgObject child: obj.children) {
-//         renderTextOnPath(child, currentTextPosition, path);// FIXME
-//      }
-      enumerateTextSpans(obj, new PathTextDrawer(path, startOffset, 0f));
-
-   }
-
-
-   private class  PathTextDrawer implements TextDrawer
-   {
-      Path   path;
-      float  x;
-      float  y;
-
-      public PathTextDrawer(Path path, float x, float y)
-      {
-         this.path = path;
-         this.x = x;
-         this.y = y;
-      }
-
-      @Override
-      public void drawText(String text)
-      {
-/**/Log.w(TAG, "path/drawText: "+x+" "+y+" '"+text+"'");
-         if (visible())
-         {
-            if (state.hasFill)
-               canvas.drawTextOnPath(text, path, x, y, state.fillPaint);
-            if (state.hasStroke)
-               canvas.drawTextOnPath(text, path, x, y, state.strokePaint);
-         }
-
-         // Update the current text position
-         x += state.fillPaint.measureText(text);
       }
    }
 
@@ -2060,12 +2134,12 @@ public class SVGAndroidRenderer
 
       // Traverse up the document tree adding element styles to a list.
       while (true) {
-         if (obj instanceof SvgElement) {
-            styles.add(0, ((SvgElement) obj).style);
+         if (obj instanceof SvgElementBase) {
+            styles.add(0, ((SvgElementBase) obj).style);
          }
          if (obj.parent == null)
             break;
-         obj = obj.parent;
+         obj = (SvgObject) obj.parent;
       }
       
       // Now apply the ancestor styles in reverse order to a fresh RendererState object
@@ -2089,6 +2163,7 @@ public class SVGAndroidRenderer
     */
    private void  checkForGradiants(SvgElement obj)
    {
+/**/Log.w(TAG,"cFG a");
       if (state.style.fill instanceof PaintReference) {
          decodePaintReference(true, obj, (PaintReference) state.style.fill);
       }
@@ -2103,7 +2178,9 @@ public class SVGAndroidRenderer
     */
    private void  decodePaintReference(boolean isFill, SvgElement obj, PaintReference paintref)
    {
+/**/Log.w(TAG,"dPR a");
       SVG.SvgObject  ref = obj.document.resolveIRI(paintref.href);
+/**/Log.w(TAG,"dPR ref="+ref);
       if (ref == null)
       {
          if (paintref.fallback != null) {
@@ -2116,6 +2193,7 @@ public class SVGAndroidRenderer
          }
          return;
       }
+/**/Log.w(TAG,"dPR b");
       if (ref instanceof SvgLinearGradient)
          makeLinearGradiant(isFill, obj, (SvgLinearGradient) ref);
       if (ref instanceof SvgRadialGradient)

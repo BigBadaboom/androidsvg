@@ -31,8 +31,12 @@ import com.caverock.androidsvg.SVG.GradientSpread;
 import com.caverock.androidsvg.SVG.Length;
 import com.caverock.androidsvg.SVG.PaintReference;
 import com.caverock.androidsvg.SVG.Style;
-import com.caverock.androidsvg.SVG.SvgElement;
+import com.caverock.androidsvg.SVG.SvgElementBase;
+import com.caverock.androidsvg.SVG.SvgObject;
 import com.caverock.androidsvg.SVG.SvgPaint;
+import com.caverock.androidsvg.SVG.Text;
+import com.caverock.androidsvg.SVG.TextChild;
+import com.caverock.androidsvg.SVG.TextPositionedContainer;
 import com.caverock.androidsvg.SVG.Unit;
 
 /**
@@ -690,7 +694,7 @@ public class SVGParser extends DefaultHandler
           localName.equalsIgnoreCase(TAG_STOP) ||
           localName.equalsIgnoreCase(TAG_CLIPPATH) ||
           localName.equalsIgnoreCase(TAG_TEXTPATH)) {
-         currentElement = currentElement.parent;
+         currentElement = ((SvgObject) currentElement).parent;
       }
 
    }
@@ -1213,13 +1217,13 @@ dumpNode(svgDocument.getRootElement(), "");
       parseAttributesStyle(obj, attributes);
       parseAttributesTransform(obj, attributes);
       parseAttributesConditional(obj, attributes);
-      parseAttributesText(obj, attributes);
+      parseAttributesTextPosition(obj, attributes);
       currentElement.addChild(obj);
       currentElement = obj;
    }
 
 
-   private void  parseAttributesText(SVG.TextContainer obj, Attributes attributes) throws SAXException
+   private void  parseAttributesTextPosition(TextPositionedContainer obj, Attributes attributes) throws SAXException
    {
       for (int i=0; i<attributes.getLength(); i++)
       {
@@ -1336,9 +1340,13 @@ dumpNode(svgDocument.getRootElement(), "");
       parseAttributesCore(obj, attributes);
       parseAttributesStyle(obj, attributes);
       parseAttributesConditional(obj, attributes);
-      parseAttributesText(obj, attributes);
+      parseAttributesTextPosition(obj, attributes);
       currentElement.addChild(obj);
       currentElement = obj;
+      if (obj.parent instanceof Text)
+         obj.setTextRoot((Text) obj.parent);
+      else
+         obj.setTextRoot(((TextChild) obj.parent).getTextRoot());
    }
 
 
@@ -1361,6 +1369,10 @@ dumpNode(svgDocument.getRootElement(), "");
       parseAttributesConditional(obj, attributes);
       parseAttributesTRef(obj, attributes);
       currentElement.addChild(obj);
+      if (obj.parent instanceof Text)
+         obj.setTextRoot((Text) obj.parent);
+      else
+         obj.setTextRoot(((TextChild) obj.parent).getTextRoot());
    }
 
 
@@ -1832,6 +1844,10 @@ dumpNode(svgDocument.getRootElement(), "");
       parseAttributesTextPath(obj, attributes);
       currentElement.addChild(obj);
       currentElement = obj;
+      if (obj.parent instanceof Text)
+         obj.setTextRoot((Text) obj.parent);
+      else
+         obj.setTextRoot(((TextChild) obj.parent).getTextRoot());
    }
 
 
@@ -2218,7 +2234,7 @@ dumpNode(svgDocument.getRootElement(), "");
    //=========================================================================
 
 
-   private void  parseAttributesCore(SvgElement obj, Attributes attributes)
+   private void  parseAttributesCore(SvgElementBase obj, Attributes attributes)
    {
       for (int i=0; i<attributes.getLength(); i++)
       {
@@ -2234,7 +2250,7 @@ dumpNode(svgDocument.getRootElement(), "");
    /*
     * Parse the style attributes for an element.
     */
-   private void  parseAttributesStyle(SvgElement obj, Attributes attributes) throws SAXException
+   private void  parseAttributesStyle(SvgElementBase obj, Attributes attributes) throws SAXException
    {
 //Log.d(TAG, "parseAttributesStyle");
       String  cssStyle = null;
@@ -2267,7 +2283,7 @@ dumpNode(svgDocument.getRootElement(), "");
    }
 
 
-   private void  parseStyle(SvgElement obj, String style) throws SAXException
+   private void  parseStyle(SvgElementBase obj, String style) throws SAXException
    {
       TextScanner  scan = new TextScanner(style.replaceAll("/\\*.*?\\*/", ""));  // regex strips block comments
 
@@ -2290,7 +2306,7 @@ dumpNode(svgDocument.getRootElement(), "");
    }
 
 
-   private void  processStyleProperty(SvgElement obj, String localName, String val) throws SAXException
+   private void  processStyleProperty(SvgElementBase obj, String localName, String val) throws SAXException
    {
       if (val.length() == 0) { // The spec doesn't say how to handle empty style attributes.
          return;               // Our strategy is just to ignore them.

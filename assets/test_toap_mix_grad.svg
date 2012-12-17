@@ -1,0 +1,53 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="12cm" height="3.6cm" viewBox="0 0 1000 300" version="1.1"
+     xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <path id="MyPath"
+          d="M 100 200 
+             C 200 100 300   0 400 100
+             C 500 200 600 300 700 200
+             C 800 100 900 100 900 100" />
+    <path id="MyPath2" transform="translate(0,50)"
+          d="M 100 200 
+             C 200 100 300   0 400 100
+             C 500 200 600 300 700 200
+             C 800 100 900 100 900 100" />
+
+    <linearGradient id="MyGradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="white" />
+      <stop offset="100%" stop-color="black" />
+    </linearGradient>
+    <linearGradient id="MyGradient2" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="white" />
+      <stop offset="100%" stop-color="black" />
+    </linearGradient>
+    <linearGradient id="MyGradient3" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="red" />
+      <stop offset="100%" stop-color="green" />
+    </linearGradient>
+  </defs>
+
+  <use xlink:href="#MyPath" fill="none" stroke="red"  />
+  <text font-family="Verdana" font-size="42.5" fill="url(#MyGradient)" y="100">
+  Wibble
+    <textPath xlink:href="#MyPath">
+      We go up, then we go down, then up again
+    </textPath>
+  Foobar
+  </text>
+
+  <use xlink:href="#MyPath2" fill="none" stroke="red"  />
+  <text font-family="Verdana" font-size="42.5" fill="url(#MyGradient2)" y="150">
+  Wibble
+    <textPath xlink:href="#MyPath2">
+      We go up, then we <tspan fill="url(#MyGradient3)">go down, then</tspan> up again
+    </textPath>
+  Foobar
+  </text>
+
+  <!-- Show outline of canvas using 'rect' element -->
+  <rect x="1" y="1" width="998" height="298"
+        fill="none" stroke="blue" stroke-width="2" />
+</svg>
