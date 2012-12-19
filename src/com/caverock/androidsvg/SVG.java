@@ -812,6 +812,8 @@ public class SVG
    {
       public List<Length> x;
       public List<Length> y;
+      public List<Length> dx;
+      public List<Length> dy;
    }
 
 

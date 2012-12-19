@@ -57,7 +57,6 @@ public class SVGAndroidRenderer
    private Stack<RendererState> stateStack = new Stack<RendererState>();  // Keeps track of render state as we render
 
 
-   private static final Box    UNIT_BBOX = new Box(0,0,1,1);
    private static final float  BEZIER_ARC_FACTOR = 0.5522847498f;
 
 
@@ -610,7 +609,7 @@ public class SVGAndroidRenderer
    private List<MarkerVector>  calculateMarkerPositions(SVG.PolyLine obj)
    {
       int  numPoints = obj.points.length; 
-/**/Log.w(TAG, "calculateMarkerPositions "+numPoints);
+
       if (numPoints < 2)
          return null;
 
@@ -704,6 +703,8 @@ public class SVGAndroidRenderer
       // Get the first coordinate pair from the lists in the x and y properties.
       float  x = (obj.x == null || obj.x.size() == 0) ? 0f : obj.x.get(0).floatValueX(this);
       float  y = (obj.y == null || obj.y.size() == 0) ? 0f : obj.y.get(0).floatValueY(this);
+      float  dx = (obj.dx == null || obj.dx.size() == 0) ? 0f : obj.dx.get(0).floatValueX(this);
+      float  dy = (obj.dy == null || obj.dy.size() == 0) ? 0f : obj.dy.get(0).floatValueY(this);
 
       // Handle text alignment
       if (state.style.textAnchor != Style.TextAnchor.Start) {
@@ -723,15 +724,15 @@ public class SVGAndroidRenderer
       checkForGradiants(obj);      
       checkForClipPath(obj);
       
-      enumerateTextSpans(obj, new PlainTextDrawer(x, y));
+      enumerateTextSpans(obj, new PlainTextDrawer(x + dx, y + dy));
 
    }
 
 
    private class  PlainTextDrawer extends TextProcessor
    {
-      float x;
-      float y;
+      public float x;
+      public float y;
 
       public PlainTextDrawer(float x, float y)
       {
@@ -822,7 +823,21 @@ public class SVGAndroidRenderer
 
          updateStyle(state, tspan.style);
 
+         // Get the first coordinate pair from the lists in the x and y properties.
+         float x=0, y=0, dx=0, dy=0;
+         if (textprocessor instanceof PlainTextDrawer) {
+            x = (tspan.x == null || tspan.x.size() == 0) ? ((PlainTextDrawer) textprocessor).x : tspan.x.get(0).floatValueX(this);
+            y = (tspan.y == null || tspan.y.size() == 0) ? ((PlainTextDrawer) textprocessor).y : tspan.y.get(0).floatValueY(this);
+            dx = (tspan.dx == null || tspan.dx.size() == 0) ? 0f : tspan.dx.get(0).floatValueX(this);
+            dy = (tspan.dy == null || tspan.dy.size() == 0) ? 0f : tspan.dy.get(0).floatValueY(this);
+         }
+
          checkForGradiants(tspan.getTextRoot());      
+
+         if (textprocessor instanceof PlainTextDrawer) {
+            ((PlainTextDrawer) textprocessor).x = x + dx;
+            ((PlainTextDrawer) textprocessor).y = y + dy;
+         }
 
          enumerateTextSpans(tspan, textprocessor);
 
@@ -893,30 +908,21 @@ public class SVGAndroidRenderer
          }
       }
 
-      // The spec doesn't say how the bounding box of a <textPath> should be calculated.
-      // We are just going to use the bounding box of the path itself.
-//      if (obj.boundingBox == null) {
-//         obj.boundingBox = calculatePathBounds(path); TODO
-//      }
       checkForGradiants(obj.getTextRoot());      
-//      checkForClipPath(obj);
       
       enumerateTextSpans(obj, new PathTextDrawer(path, startOffset, 0f));
 
    }
 
 
-   private class  PathTextDrawer extends TextProcessor
+   private class  PathTextDrawer extends PlainTextDrawer
    {
-      Path   path;
-      float  x;
-      float  y;
+      private Path   path;
 
       public PathTextDrawer(Path path, float x, float y)
       {
+         super(x, y);
          this.path = path;
-         this.x = x;
-         this.y = y;
       }
 
       @Override
@@ -2163,7 +2169,6 @@ public class SVGAndroidRenderer
     */
    private void  checkForGradiants(SvgElement obj)
    {
-/**/Log.w(TAG,"cFG a");
       if (state.style.fill instanceof PaintReference) {
          decodePaintReference(true, obj, (PaintReference) state.style.fill);
       }
@@ -2178,9 +2183,7 @@ public class SVGAndroidRenderer
     */
    private void  decodePaintReference(boolean isFill, SvgElement obj, PaintReference paintref)
    {
-/**/Log.w(TAG,"dPR a");
       SVG.SvgObject  ref = obj.document.resolveIRI(paintref.href);
-/**/Log.w(TAG,"dPR ref="+ref);
       if (ref == null)
       {
          if (paintref.fallback != null) {
@@ -2193,7 +2196,6 @@ public class SVGAndroidRenderer
          }
          return;
       }
-/**/Log.w(TAG,"dPR b");
       if (ref instanceof SvgLinearGradient)
          makeLinearGradiant(isFill, obj, (SvgLinearGradient) ref);
       if (ref instanceof SvgRadialGradient)

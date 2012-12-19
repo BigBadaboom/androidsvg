@@ -161,6 +161,7 @@ public class SVGParser extends DefaultHandler
       clip_rule,
       color,
       cx, cy,
+      dx, dy,
       fx, fy,
       d,
       display,
@@ -837,7 +838,6 @@ dumpNode(svgDocument.getRootElement(), "");
       parseAttributesUse(obj, attributes);
       currentElement.addChild(obj);
       currentElement = obj;
-/**/Log.w(TAG, "currentElement="+currentElement);
    }
 
 
@@ -1235,6 +1235,12 @@ dumpNode(svgDocument.getRootElement(), "");
                break;
             case y:
                obj.y = parseLengthList(val);
+               break;
+            case dx:
+               obj.dx = parseLengthList(val);
+               break;
+            case dy:
+               obj.dy = parseLengthList(val);
                break;
             default:
                break;
@@ -2190,7 +2196,9 @@ dumpNode(svgDocument.getRootElement(), "");
          if (position > (input.length() - 2))
             return null;
          try {
-            return Unit.valueOf(input.substring(position, position + 2));
+            Unit  result = Unit.valueOf(input.substring(position, position + 2));
+            position +=2;
+            return result;
          } catch (IllegalArgumentException e) {
             return null;
          }
@@ -2838,7 +2846,7 @@ dumpNode(svgDocument.getRootElement(), "");
          if (unit == null)
             unit = Unit.px;
          coords.add(new Length(scalar, unit));
-         scan.skipWhitespace();
+         scan.skipCommaWhitespace();
       }
       return coords;
    }
