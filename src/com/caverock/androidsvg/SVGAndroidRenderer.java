@@ -48,7 +48,7 @@ public class SVGAndroidRenderer
    private static final String  TAG = "SVGAndroidRenderer";
 
    private Canvas  canvas;
-   private Box canvasViewPort;
+   private Box     canvasViewPort;
    private float   dpi = 160;    // dots per inch. Needed for accurate conversion of length values that have real world units, such as "cm".
 
    // Renderer state
@@ -895,7 +895,6 @@ public class SVGAndroidRenderer
 
       PathMeasure  measure = new PathMeasure(path, false);
 
-      // Get the first coordinate pair from the lists in the x and y properties.
       float  startOffset = (obj.startOffset != null) ? obj.startOffset.floatValue(this, measure.getLength()) : 0f;
 
       // Handle text alignment
@@ -2152,7 +2151,10 @@ public class SVGAndroidRenderer
       RendererState  newState = new RendererState();
       for (Style style: styles)
          updateStyle(newState, style);
-      
+
+      // Caller may also need a valid viewBox in order to calculate percentages
+      newState.viewBox = document.getRootElement().viewBox;
+
       return newState;
    }
 
@@ -2539,7 +2541,7 @@ public class SVGAndroidRenderer
       } else if (obj instanceof SVG.Path) {
          addObjectToClip((SVG.Path) obj, combinedPath, combinedPathMatrix);
       } else if (obj instanceof SVG.Text) {
-         Log.w(TAG, "Text elements are not supported as a component for clipPaths");
+         addObjectToClip((SVG.Text) obj, combinedPath, combinedPathMatrix);
       } else if (obj instanceof SVG.GraphicsElement) {
          addObjectToClip((SVG.GraphicsElement) obj, combinedPath, combinedPathMatrix);
       } else {
@@ -2658,6 +2660,85 @@ public class SVGAndroidRenderer
       checkForClipPath(obj);
       
       addObjectToClip(ref, false, combinedPath, combinedPathMatrix);
+   }
+
+
+   private void addObjectToClip(SVG.Text obj, Path combinedPath, Matrix combinedPathMatrix)
+   {
+      updateStyle(state, obj.style);
+
+      if (obj.transform != null)
+         combinedPathMatrix.preConcat(obj.transform);
+
+      // Get the first coordinate pair from the lists in the x and y properties.
+      float  x = (obj.x == null || obj.x.size() == 0) ? 0f : obj.x.get(0).floatValueX(this);
+      float  y = (obj.y == null || obj.y.size() == 0) ? 0f : obj.y.get(0).floatValueY(this);
+      float  dx = (obj.dx == null || obj.dx.size() == 0) ? 0f : obj.dx.get(0).floatValueX(this);
+      float  dy = (obj.dy == null || obj.dy.size() == 0) ? 0f : obj.dy.get(0).floatValueY(this);
+
+      // Handle text alignment
+      if (state.style.textAnchor != Style.TextAnchor.Start) {
+         float  textWidth = calculateTextWidth(obj);
+         if (state.style.textAnchor == Style.TextAnchor.Middle) {
+            x -= (textWidth / 2);
+         } else {
+            x -= textWidth;  // 'End' (right justify)
+         }
+      }
+
+      if (obj.boundingBox == null) {
+         TextBoundsCalculator  proc = new TextBoundsCalculator(x, y);
+         enumerateTextSpans(obj, proc);
+         obj.boundingBox = new Box(proc.bbox.left, proc.bbox.top, proc.bbox.width(), proc.bbox.height());
+      }
+      checkForClipPath(obj);
+
+      Path  textAsPath = new Path();
+      enumerateTextSpans(obj, new PlainTextToPath(x + dx, y + dy, textAsPath));
+
+      combinedPath.setFillType(getClipRuleFromState());
+      combinedPath.addPath(textAsPath, combinedPathMatrix);
+   }
+
+
+   private class  PlainTextToPath extends TextProcessor
+   {
+      public float   x;
+      public float   y;
+      public Path    textAsPath;
+
+      public PlainTextToPath(float x, float y, Path textAsPath)
+      {
+         this.x = x;
+         this.y = y;
+         this.textAsPath = textAsPath;
+      }
+
+      @Override
+      public boolean doTextContainer(TextContainer obj)
+      {
+         if (obj instanceof SVG.TextPath)
+         {
+            Log.w(TAG, "Using <textPath> elements in a clip path is not supported.");
+            return false;
+         }
+         return true;
+      }
+
+      @Override
+      public void processText(String text)
+      {
+         if (visible())
+         {
+            //state.fillPaint.getTextPath(text, 0, text.length(), x, y, textAsPath);
+            Path spanPath = new Path();
+            state.fillPaint.getTextPath(text, 0, text.length(), x, y, spanPath);
+            textAsPath.addPath(spanPath);
+         }
+
+         // Update the current text position
+         x += state.fillPaint.measureText(text);
+      }
    }
 
 

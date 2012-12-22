@@ -1,0 +1,28 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="3in" height="3in" viewBox="0 0 300 300" version="1.1"
+     xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+
+  <defs>
+    <clipPath id="Clip1">
+      <text x="50" y="70" font-size="40">Default font</text>
+      <text x="50%" y="120" font-size="40" text-anchor="middle"><tspan font-family="Arial">Arial</tspan> font</text>
+      <text>
+        <textPath startOffset="50%" font-size="36" text-anchor="middle" xlink:href="#MyPath"><tspan font-family="Arial">Have a happy day!</tspan></textPath>
+      </text>
+    </clipPath>
+
+    <path id="MyPath" transform="translate(50 140)"
+          d="M 0 0 
+             C   0  55  45 100 100 100
+             C 155 100 200  55 200 0" />
+  </defs>
+
+  <rect fill="none" stroke="blue" 
+        x="1" y="1" width="298" height="298"/>
+
+  <rect fill="red" x="0" y="0" width="300" height="300" clip-path="url(#Clip1)"/>
+
+  <text x="50%" y="270" text-anchor="middle" font-size="14">Clip path made from text objects</text>
+</svg>
