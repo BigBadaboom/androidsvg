@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!-- georg held -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/SVG/DTD/svg10.dtd">
+<!-- http://www.carto.net/svg/samples/patterns.shtml -->
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve">
+	<title>pattern</title>
+	<defs>
+		<pattern id="hatch00" patternUnits="userSpaceOnUse" x="0" y="0" width="10" height="10">
+			<g style="fill:none; stroke:black; stroke-width:1">
+				<path d="M0,0 l10,10"/>
+				<path d="M10,0 l-10,10"/>
+			</g>
+		</pattern>
+		<pattern id="hatch01" patternUnits="userSpaceOnUse" x="0" y="0" width="15" height="15">
+			<g style="fill:none; stroke:black; stroke-width:1">
+				<path d="M0,0 l15,15"/>
+				<path d="M15,0 l-15,15"/>
+			</g>
+		</pattern>
+		<pattern id="hatch02" patternUnits="userSpaceOnUse" x="0" y="0" width="25" height="25">
+			<g style="fill:none; stroke:black; stroke-width:1">
+				<path d="M0,0 l25,25"/>
+				<path d="M25,0 l-25,25"/>
+			</g>
+		</pattern>
+		<pattern id="hatch03" patternUnits="userSpaceOnUse" x="0" y="0" width="50" height="50">
+			<g style="fill:none; stroke:black; stroke-width:1">
+				<path d="M0,0 l50,50"/>
+				<path d="M50,0 l-50,50"/>
+			</g>
+		</pattern>		
+		<path id="geometry" style="fill-rule:nonzero;stroke:#B42D25;stroke-width:2;" d="M0 50 l100 -50 100 20 -50 50 -100 20z"/>
+	</defs>
+	<g transform="translate(10,10)">
+		<text x="0" y="20">hatch00</text>
+		<use xlink:href="#geometry" style="fill:url(#hatch00)"/>
+	</g>
+	<g transform="translate(10,110)">
+		<text x="0" y="20">hatch01</text>
+		<use xlink:href="#geometry" style="fill:url(#hatch01)"/>
+	</g>
+	<g transform="translate(222,10)">
+		<text x="0" y="20">hatch02</text>
+		<use xlink:href="#geometry" style="fill:url(#hatch02)"/>
+	</g>	
+	<g transform="translate(222,110)">
+		<text x="0" y="20">hatch03</text>
+		<use xlink:href="#geometry" style="fill:url(#hatch03)"/>
+	</g>	
+</svg>

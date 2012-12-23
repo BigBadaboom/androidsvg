@@ -190,6 +190,7 @@ public class SVGParser extends DefaultHandler
       orient,
       overflow,
       pathLength,
+      patternContentUnits, patternTransform, patternUnits,
       points,
       preserveAspectRatio,
       r,
@@ -612,6 +613,8 @@ public class SVGParser extends DefaultHandler
          clipPath(attributes);
       } else if (localName.equalsIgnoreCase(TAG_TEXTPATH)) {
          textPath(attributes);
+      } else if (localName.equalsIgnoreCase(TAG_PATTERN)) {
+         pattern(attributes);
       } else {
          ignoring = true;
          ignoreDepth = 1;
@@ -694,7 +697,8 @@ public class SVGParser extends DefaultHandler
           localName.equalsIgnoreCase(TAG_RADIALGRADIENT) ||
           localName.equalsIgnoreCase(TAG_STOP) ||
           localName.equalsIgnoreCase(TAG_CLIPPATH) ||
-          localName.equalsIgnoreCase(TAG_TEXTPATH)) {
+          localName.equalsIgnoreCase(TAG_TEXTPATH) ||
+          localName.equalsIgnoreCase(TAG_PATTERN)) {
          currentElement = ((SvgObject) currentElement).parent;
       }
 
@@ -1871,6 +1875,84 @@ dumpNode(svgDocument.getRootElement(), "");
                break;
             case startOffset:
                obj.startOffset = parseLength(val);
+               break;
+            default:
+               break;
+         }
+      }
+   }
+
+
+   //=========================================================================
+   // <pattern> element
+
+
+   private void pattern(Attributes attributes) throws SAXException
+   {
+/**/Log.d(TAG, "<textPath>");
+      if (currentElement == null)
+         throw new SAXException("Invalid document. Root element must be <svg>");
+      SVG.Pattern  obj = new SVG.Pattern();
+      obj.document = svgDocument;
+      obj.parent = currentElement;
+      parseAttributesCore(obj, attributes);
+      parseAttributesStyle(obj, attributes);
+      parseAttributesConditional(obj, attributes);
+      parseAttributesViewBox(obj, attributes);
+      parseAttributesPattern(obj, attributes);
+      currentElement.addChild(obj);
+      currentElement = obj;
+   }
+
+
+   private void  parseAttributesPattern(SVG.Pattern obj, Attributes attributes) throws SAXException
+   {
+      for (int i=0; i<attributes.getLength(); i++)
+      {
+         String val = attributes.getValue(i).trim();
+         switch (SVGAttr.fromString(attributes.getLocalName(i)))
+         {
+            case patternUnits:
+               if ("objectBoundingBox".equals(val)) {
+                  obj.patternUnitsAreUser = false;
+               } else if ("userSpaceOnUse".equals(val)) {
+                  obj.patternUnitsAreUser = true;
+               } else {
+                  throw new SAXException("Invalid value for attribute gradientUnits");
+               } 
+               break;
+            case patternContentUnits:
+               if ("objectBoundingBox".equals(val)) {
+                  obj.patternContentUnitsAreUser = false;
+               } else if ("userSpaceOnUse".equals(val)) {
+                  obj.patternContentUnitsAreUser = true;
+               } else {
+                  throw new SAXException("Invalid value for attribute gradientUnits");
+               } 
+               break;
+            case patternTransform:
+               obj.patternTransform = parseTransformList(val);
+               break;
+            case x:
+               obj.x = parseLength(val);
+               break;
+            case y:
+               obj.y = parseLength(val);
+               break;
+            case width:
+               obj.width = parseLength(val);
+               if (obj.width.isNegative())
+                  throw new SAXException("Invalid <rect> element. width cannot be negative");
+               break;
+            case height:
+               obj.height = parseLength(val);
+               if (obj.height.isNegative())
+                  throw new SAXException("Invalid <rect> element. height cannot be negative");
+               break;
+            case href:
+               if (!XLINK_NAMESPACE.equals(attributes.getURI(i)))
+                  break;
+               obj.href = val;
                break;
             default:
                break;

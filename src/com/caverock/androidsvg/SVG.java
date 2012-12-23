@@ -973,6 +973,19 @@ public class SVG
    }
 
 
+   protected static class Pattern extends SvgViewBoxContainer
+   {
+      public Boolean  patternUnitsAreUser;
+      public Boolean  patternContentUnitsAreUser;
+      public Matrix   patternTransform;
+      public Length   x;
+      public Length   y;
+      public Length   width;
+      public Length   height;
+      public String   href;
+   }
+
+
    //===============================================================================
    // Protected getters for internal use
 
