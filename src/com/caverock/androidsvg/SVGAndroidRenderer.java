@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Stack;
 
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.DashPathEffect;
 import android.graphics.LinearGradient;
 import android.graphics.Matrix;
@@ -29,6 +30,7 @@ import com.caverock.androidsvg.SVG.Marker;
 import com.caverock.androidsvg.SVG.PaintReference;
 import com.caverock.androidsvg.SVG.PathDefinition;
 import com.caverock.androidsvg.SVG.PathInterface;
+import com.caverock.androidsvg.SVG.Pattern;
 import com.caverock.androidsvg.SVG.Rect;
 import com.caverock.androidsvg.SVG.Stop;
 import com.caverock.androidsvg.SVG.Style;
@@ -58,6 +60,8 @@ public class SVGAndroidRenderer
 
 
    private static final float  BEZIER_ARC_FACTOR = 0.5522847498f;
+
+   private static final Box UNIT_BOUNDING_BOX = new Box(0, 0, 1, 1);
 
 
 
@@ -279,6 +283,107 @@ public class SVGAndroidRenderer
 
 
    //==============================================================================
+
+
+   /*
+    * Fill a path with either the given paint, or if a pattern is set, with the pattern.
+    */
+   private void doFilledPath(SvgElement obj, Path path, Paint fillPaint)
+   {
+      if (state.style.fill instanceof SVG.PaintReference)
+      {
+         SVG.SvgObject  ref = document.resolveIRI(((SVG.PaintReference) state.style.fill).href);
+         if (ref instanceof SVG.Pattern) {
+            SVG.Pattern  pattern = (SVG.Pattern)ref;
+            fillWithPattern(obj, path, pattern);
+            return;
+         }
+      }
+      else
+         canvas.drawPath(path, fillPaint);
+   }
+
+
+   /*
+    * Fill a path with a pattern by setting the path as a clip path and
+    * drawing the pattern element as a repeating tile inside it.
+    */
+   private void fillWithPattern(SvgElement obj, Path path, Pattern pattern)
+   {
+      boolean      userUnits = (pattern.patternUnitsAreUser == null || pattern.patternUnitsAreUser);
+      float        x, y, w, h;
+      float        originX, originY;
+
+      if (userUnits)
+      {
+         x = (pattern.x != null) ? pattern.x.floatValueX(this): 0f;
+         y = (pattern.y != null) ? pattern.y.floatValueY(this): 0f;
+         w = (pattern.width != null) ? pattern.width.floatValueX(this): 0f;
+         h = (pattern.height != null) ? pattern.height.floatValueY(this): 0f;
+      }
+      else
+      {
+         x = (pattern.x != null) ? pattern.x.floatValue(this, 1f): 0f;
+         y = (pattern.y != null) ? pattern.y.floatValue(this, 1f): 0f;
+         w = (pattern.width != null) ? pattern.width.floatValue(this, 1f): 0f;
+         h = (pattern.height != null) ? pattern.height.floatValue(this, 1f): 0f;
+      }
+      if (w == 0 || h == 0)
+         return;
+
+      // Push the state
+      statePush();
+      // Set path as the clip region
+      // TODO
+      // Adjust the transform to account for the unit scale
+      if (!userUnits)
+      {
+         Matrix m = new Matrix();
+         m.preTranslate(obj.boundingBox.minX, obj.boundingBox.minY);
+         m.preScale(obj.boundingBox.width, obj.boundingBox.height);
+         canvas.concat(m);
+      }
+      // Set the style for the pattern (inherits from its own ancestors, not from callee's state)
+      state = findInheritFromAncestorState(pattern);
+      // Calculate the pattern origin
+      Box  patternBounds = userUnits ? obj.boundingBox : UNIT_BOUNDING_BOX;
+      originX = x + (float) Math.floor((patternBounds.minX - x) / w) * w;
+      originY = y + (float) Math.floor((patternBounds.minY - y) / h) * h;
+      // For each Y step, then each X step
+      float  right = patternBounds.minX + patternBounds.width;
+      float  bottom = patternBounds.minY + patternBounds.height;
+      Box    stepViewBox = new Box(0,0,w,h);
+      for (float stepY = originY; stepY < bottom; stepY += h)
+      {
+         for (float stepX = originX; stepX < right; stepX += w)
+         {
+            // Push the state
+            statePush();
+            // Calculate and set the viewport for each instance of the pattern
+            if (pattern.viewBox != null) {
+               stepViewBox.minX = stepX;
+               stepViewBox.minY = stepY;
+               canvas.concat(calculateViewBoxTransform(stepViewBox, pattern.viewBox, pattern.preserveAspectRatioAlignment, pattern.preserveAspectRatioSlice));
+            } else {
+               // Simple translate of pattern to step position
+               // TODO
+            }
+            // Set pattern clip rectangle if appropriate
+            // TODO
+            // Render the pattern
+            for (SVG.SvgObject child: pattern.children) {
+               render(child);
+            }
+            // Pop the state
+            statePop();
+         }
+      }
+      // Pop the state
+      statePop();
+   }
+
+
+   //==============================================================================
    // Renderers for each element type
 
 
@@ -400,12 +505,12 @@ public class SVGAndroidRenderer
       if (obj.boundingBox == null) {
          obj.boundingBox = calculatePathBounds(path);
       }
-      checkForGradiants(obj);      
+      checkForGradiantsAndPatterns(obj);      
       checkForClipPath(obj);
       
       if (state.hasFill) {
          path.setFillType(getFillTypeFromState());
-         canvas.drawPath(path, state.fillPaint);
+         doFilledPath(obj, path, state.fillPaint);
       }
       if (state.hasStroke)
          canvas.drawPath(path, state.strokePaint);
@@ -441,11 +546,11 @@ public class SVGAndroidRenderer
 
       Path  path = makePathAndBoundingBox(obj);
 
-      checkForGradiants(obj);      
+      checkForGradiantsAndPatterns(obj);      
       checkForClipPath(obj);
 
       if (state.hasFill)
-         canvas.drawPath(path, state.fillPaint);
+         doFilledPath(obj, path, state.fillPaint);
       if (state.hasStroke)
          canvas.drawPath(path, state.strokePaint);
 
@@ -471,11 +576,11 @@ public class SVGAndroidRenderer
 
       Path  path = makePathAndBoundingBox(obj);
 
-      checkForGradiants(obj);      
+      checkForGradiantsAndPatterns(obj);      
       checkForClipPath(obj);
 
       if (state.hasFill)
-         canvas.drawPath(path, state.fillPaint);
+         doFilledPath(obj, path, state.fillPaint);
       if (state.hasStroke)
          canvas.drawPath(path, state.strokePaint);
 
@@ -501,11 +606,11 @@ public class SVGAndroidRenderer
 
       Path  path = makePathAndBoundingBox(obj);
 
-      checkForGradiants(obj);      
+      checkForGradiantsAndPatterns(obj);      
       checkForClipPath(obj);
 
       if (state.hasFill)
-         canvas.drawPath(path, state.fillPaint);
+         doFilledPath(obj, path, state.fillPaint);
       if (state.hasStroke)
          canvas.drawPath(path, state.strokePaint);
 
@@ -538,7 +643,7 @@ public class SVGAndroidRenderer
       if (obj.boundingBox == null) {
          obj.boundingBox = Box.fromLimits(Math.min(_x1, _x2), Math.min(_y1, _y2), Math.max(_x1, _x2), Math.max(_y1, _y2));
       }
-      checkForGradiants(obj);      
+      checkForGradiantsAndPatterns(obj);      
       checkForClipPath(obj);
 
       if ((_x1 != _x2) || (_y1 != _y2))
@@ -588,11 +693,11 @@ public class SVGAndroidRenderer
 
       Path  path = makePathAndBoundingBox(obj);
 
-      checkForGradiants(obj);      
+      checkForGradiantsAndPatterns(obj);      
       checkForClipPath(obj);
       
       if (state.hasFill)
-         canvas.drawPath(path, state.fillPaint);
+         doFilledPath(obj, path, state.fillPaint);
       if (state.hasStroke) {
          if (numPoints == 2) {
             // Android path render doesn't draw degenerate lines, so we have to use drawPoint instead.
@@ -670,11 +775,11 @@ public class SVGAndroidRenderer
 
       Path  path = makePathAndBoundingBox(obj);
 
-      checkForGradiants(obj);      
+      checkForGradiantsAndPatterns(obj);      
       checkForClipPath(obj);
       
       if (state.hasFill)
-         canvas.drawPath(path, state.fillPaint);
+         doFilledPath(obj, path, state.fillPaint);
       if (state.hasStroke) {
          if (numPoints == 2) {
             // Android path render doesn't draw degenerate lines, so we have to use drawPoint instead.
@@ -721,7 +826,7 @@ public class SVGAndroidRenderer
          enumerateTextSpans(obj, proc);
          obj.boundingBox = new Box(proc.bbox.left, proc.bbox.top, proc.bbox.width(), proc.bbox.height());
       }
-      checkForGradiants(obj);      
+      checkForGradiantsAndPatterns(obj);      
       checkForClipPath(obj);
       
       enumerateTextSpans(obj, new PlainTextDrawer(x + dx, y + dy));
@@ -832,7 +937,7 @@ public class SVGAndroidRenderer
             dy = (tspan.dy == null || tspan.dy.size() == 0) ? 0f : tspan.dy.get(0).floatValueY(this);
          }
 
-         checkForGradiants(tspan.getTextRoot());      
+         checkForGradiantsAndPatterns(tspan.getTextRoot());      
 
          if (textprocessor instanceof PlainTextDrawer) {
             ((PlainTextDrawer) textprocessor).x = x + dx;
@@ -853,7 +958,7 @@ public class SVGAndroidRenderer
 
          updateStyle(state, tref.style);
 
-         checkForGradiants(tref.getTextRoot());      
+         checkForGradiantsAndPatterns(tref.getTextRoot());      
 
          // Locate the referenced object
          SVG.SvgObject  ref = obj.document.resolveIRI(tref.href);
@@ -907,7 +1012,7 @@ public class SVGAndroidRenderer
          }
       }
 
-      checkForGradiants(obj.getTextRoot());      
+      checkForGradiantsAndPatterns(obj.getTextRoot());      
       
       enumerateTextSpans(obj, new PathTextDrawer(path, startOffset, 0f));
 
@@ -1137,8 +1242,8 @@ public class SVGAndroidRenderer
       // What scale are we going to use?
       float  aspectScale = (slice) ? Math.max(xScale,  yScale) : Math.min(xScale,  yScale);
       // What size will the image end up being? 
-      float  imageW = state.viewPort.width / aspectScale;
-      float  imageH = state.viewPort.height / aspectScale;
+      float  imageW = viewPort.width / aspectScale;
+      float  imageH = viewPort.height / aspectScale;
       // Determine final X position
       switch (aspectRule)
       {
@@ -2169,7 +2274,7 @@ public class SVGAndroidRenderer
     * to the object, so can't be preconfigured. They have to be initialised at the
     * time each object is rendered.
     */
-   private void  checkForGradiants(SvgElement obj)
+   private void  checkForGradiantsAndPatterns(SvgElement obj)
    {
       if (state.style.fill instanceof PaintReference) {
          decodePaintReference(true, obj, (PaintReference) state.style.fill);
@@ -2202,6 +2307,7 @@ public class SVGAndroidRenderer
          makeLinearGradiant(isFill, obj, (SvgLinearGradient) ref);
       if (ref instanceof SvgRadialGradient)
          makeRadialGradiant(isFill, obj, (SvgRadialGradient) ref);
+      //if (ref instanceof SVG.Pattern) {}  // May be needed later if/when we do direct rendering
    }
 
 
