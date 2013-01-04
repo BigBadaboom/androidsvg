@@ -166,6 +166,9 @@ public class SVG
       {
          return new Region((int) Math.floor(minX), (int) Math.floor(minY), (int) Math.ceil(minX + width), (int) Math.ceil(minY + height));
       }
+
+      public float  maxX() { return minX + width; }
+      public float  maxY() { return minY + height; }
    }
 
 

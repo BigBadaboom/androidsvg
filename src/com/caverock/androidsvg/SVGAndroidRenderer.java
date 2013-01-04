@@ -310,11 +310,11 @@ public class SVGAndroidRenderer
     */
    private void fillWithPattern(SvgElement obj, Path path, Pattern pattern)
    {
-      boolean      userUnits = (pattern.patternUnitsAreUser == null || pattern.patternUnitsAreUser);
+      boolean      patternUnitsAreUser = (pattern.patternUnitsAreUser != null && pattern.patternUnitsAreUser);
       float        x, y, w, h;
       float        originX, originY;
 
-      if (userUnits)
+      if (patternUnitsAreUser)
       {
          x = (pattern.x != null) ? pattern.x.floatValueX(this): 0f;
          y = (pattern.y != null) ? pattern.y.floatValueY(this): 0f;
@@ -323,10 +323,15 @@ public class SVGAndroidRenderer
       }
       else
       {
+         // Convert objectBoundingBox space to user space
          x = (pattern.x != null) ? pattern.x.floatValue(this, 1f): 0f;
          y = (pattern.y != null) ? pattern.y.floatValue(this, 1f): 0f;
          w = (pattern.width != null) ? pattern.width.floatValue(this, 1f): 0f;
          h = (pattern.height != null) ? pattern.height.floatValue(this, 1f): 0f;
+         x = obj.boundingBox.minX + x * obj.boundingBox.width;
+         y = obj.boundingBox.minY + y * obj.boundingBox.height;
+         w *= obj.boundingBox.width;
+         h *= obj.boundingBox.height;
       }
       if (w == 0 || h == 0)
          return;
@@ -336,22 +341,26 @@ public class SVGAndroidRenderer
       // Set path as the clip region
       // TODO
       // Adjust the transform to account for the unit scale
-      if (!userUnits)
-      {
-         Matrix m = new Matrix();
-         m.preTranslate(obj.boundingBox.minX, obj.boundingBox.minY);
-         m.preScale(obj.boundingBox.width, obj.boundingBox.height);
-         canvas.concat(m);
-      }
+//      if (!patternUnitsAreUser)
+//      {
+//         Matrix m = new Matrix();
+//         m.preTranslate(obj.boundingBox.minX, obj.boundingBox.minY);
+//         m.preScale(obj.boundingBox.width, obj.boundingBox.height);
+//         canvas.concat(m);
+//      }
       // Set the style for the pattern (inherits from its own ancestors, not from callee's state)
       state = findInheritFromAncestorState(pattern);
+      // Apply the patternTransform
+      if (pattern.patternTransform != null) {
+         canvas.concat(pattern.patternTransform);
+      }
       // Calculate the pattern origin
-      Box  patternBounds = userUnits ? obj.boundingBox : UNIT_BOUNDING_BOX;
-      originX = x + (float) Math.floor((patternBounds.minX - x) / w) * w;
-      originY = y + (float) Math.floor((patternBounds.minY - y) / h) * h;
+      originX = x + (float) Math.floor((obj.boundingBox.minX - x) / w) * w;
+      originY = y + (float) Math.floor((obj.boundingBox.minY - y) / h) * h;
+/**/Log.w(TAG, "origin = "+originX+" "+originY);
       // For each Y step, then each X step
-      float  right = patternBounds.minX + patternBounds.width;
-      float  bottom = patternBounds.minY + patternBounds.height;
+      float  right = obj.boundingBox.maxX();
+      float  bottom = obj.boundingBox.maxY();
       Box    stepViewBox = new Box(0,0,w,h);
       for (float stepY = originY; stepY < bottom; stepY += h)
       {
@@ -364,12 +373,21 @@ public class SVGAndroidRenderer
                stepViewBox.minX = stepX;
                stepViewBox.minY = stepY;
                canvas.concat(calculateViewBoxTransform(stepViewBox, pattern.viewBox, pattern.preserveAspectRatioAlignment, pattern.preserveAspectRatioSlice));
-            } else {
-               // Simple translate of pattern to step position
-               // TODO
-            }
             // Set pattern clip rectangle if appropriate
             // TODO
+            } else {
+               boolean  patternContentUnitsAreUser = (pattern.patternContentUnitsAreUser == null || pattern.patternContentUnitsAreUser);
+               // Simple translate of pattern to step position
+               canvas.translate(stepX, stepY);
+               if (!patternContentUnitsAreUser)
+               {
+                  //Matrix m = new Matrix();
+                  //m.preTranslate(obj.boundingBox.minX, obj.boundingBox.minY);
+                  //m.preScale(obj.boundingBox.width, obj.boundingBox.height);
+                  //canvas.concat(m);
+                  canvas.scale(obj.boundingBox.width, obj.boundingBox.height);
+               }
+            }
             // Render the pattern
             for (SVG.SvgObject child: pattern.children) {
                render(child);
@@ -1215,7 +1233,10 @@ public class SVGAndroidRenderer
     * aspectRatioRule determines where the graphic is placed in the viewPort when aspect ration
     *    is kept.  xMin means left justified, xMid is centred, xMax is right justified etc.
     * slice determines whether we see the whole image or not. True fill the whole viewport.
-    *    If slice is false, the image will be "letter-boxed". 
+    *    If slice is false, the image will be "letter-boxed".
+    * 
+    * Note values in the two Box parameters whould be in user units. If you pass values
+    * that are in "objectBoundingBox" space, you will get incorrect results.
     */
    private Matrix calculateViewBoxTransform(Box viewPort, Box viewBox, AspectRatioAlignment aspectRule, boolean slice)
    {
