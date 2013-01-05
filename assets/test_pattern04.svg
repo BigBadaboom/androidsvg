@@ -6,7 +6,7 @@
   <defs>
     <pattern id="Pattern" patternUnits="objectBoundingBox"
              x="0" y="0" width=".25" height=".25"
-             patternContentUnits="objectBoundingBox" patternTransform="rotate(45)">
+             patternContentUnits="objectBoundingBox" patternTransform="rotate(225)">
       <rect x="0.025" y="0.025" width="0.20" height="0.20" fill="red" stroke="green" stroke-width="0.02" />
     </pattern> 
     <pattern id="Pattern2" patternUnits="objectBoundingBox"

@@ -61,8 +61,6 @@ public class SVGAndroidRenderer
 
    private static final float  BEZIER_ARC_FACTOR = 0.5522847498f;
 
-   private static final Box UNIT_BOUNDING_BOX = new Box(0, 0, 1, 1);
-
 
 
    private class RendererState implements Cloneable
@@ -308,12 +306,14 @@ public class SVGAndroidRenderer
     * Fill a path with a pattern by setting the path as a clip path and
     * drawing the pattern element as a repeating tile inside it.
     */
-   private void fillWithPattern(SvgElement obj, Path path, Pattern pattern)
+   private void  fillWithPattern(SvgElement obj, Path path, Pattern pattern)
    {
       boolean      patternUnitsAreUser = (pattern.patternUnitsAreUser != null && pattern.patternUnitsAreUser);
       float        x, y, w, h;
       float        originX, originY;
 
+      //TODO
+      // inheriting patterns
       if (patternUnitsAreUser)
       {
          x = (pattern.x != null) ? pattern.x.floatValueX(this): 0f;
@@ -339,52 +339,71 @@ public class SVGAndroidRenderer
       // Push the state
       statePush();
       // Set path as the clip region
-      // TODO
-      // Adjust the transform to account for the unit scale
-//      if (!patternUnitsAreUser)
-//      {
-//         Matrix m = new Matrix();
-//         m.preTranslate(obj.boundingBox.minX, obj.boundingBox.minY);
-//         m.preScale(obj.boundingBox.width, obj.boundingBox.height);
-//         canvas.concat(m);
-//      }
+      canvas.clipPath(path);
+
       // Set the style for the pattern (inherits from its own ancestors, not from callee's state)
-      state = findInheritFromAncestorState(pattern);
+      RendererState  baseState = new RendererState();
+      baseState.style.overflow = false;    // By default patterns do not overflow
+      state = findInheritFromAncestorState(pattern, baseState);
+
+      // The bounds of the area we need to cover with pattern to ensure that our shape is filled
+      Box  patternArea = obj.boundingBox;
       // Apply the patternTransform
-      if (pattern.patternTransform != null) {
+      if (pattern.patternTransform != null)
+      {
          canvas.concat(pattern.patternTransform);
+         
+         // A pattern transform will affect the area we need to cover with the pattern.
+         // So we need to alter the area bounding rectangle.
+         Matrix inverse = new Matrix();
+         if (pattern.patternTransform.invert(inverse)) {
+            Paint  p = new Paint();p.setColor(Color.BLUE);
+            float[] pts = {obj.boundingBox.minX, obj.boundingBox.minY,
+                           obj.boundingBox.minX+obj.boundingBox.width, obj.boundingBox.minY,
+                           obj.boundingBox.minX+obj.boundingBox.width, obj.boundingBox.minY+obj.boundingBox.height,
+                           obj.boundingBox.minX, obj.boundingBox.minY+obj.boundingBox.height};
+            inverse.mapPoints(pts);
+            // Find the bounding box of the shape created by the inverse transform 
+            RectF  rect = new RectF(pts[0], pts[1], pts[0], pts[1]);
+            for (int i=2; i<=6; i+=2) {
+               if (pts[i] < rect.left) rect.left = pts[i]; 
+               if (pts[i] > rect.right) rect.right = pts[i]; 
+               if (pts[i+1] < rect.top) rect.top = pts[i+1]; 
+               if (pts[i+1] > rect.bottom) rect.bottom = pts[i+1]; 
+            }
+            patternArea = new Box(rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top);
+         }
       }
       // Calculate the pattern origin
-      originX = x + (float) Math.floor((obj.boundingBox.minX - x) / w) * w;
-      originY = y + (float) Math.floor((obj.boundingBox.minY - y) / h) * h;
-/**/Log.w(TAG, "origin = "+originX+" "+originY);
+      originX = x + (float) Math.floor((patternArea.minX - x) / w) * w;
+      originY = y + (float) Math.floor((patternArea.minY - y) / h) * h;
       // For each Y step, then each X step
-      float  right = obj.boundingBox.maxX();
-      float  bottom = obj.boundingBox.maxY();
+      float  right = patternArea.maxX();
+      float  bottom = patternArea.maxY();
       Box    stepViewBox = new Box(0,0,w,h);
       for (float stepY = originY; stepY < bottom; stepY += h)
       {
          for (float stepX = originX; stepX < right; stepX += w)
          {
+            stepViewBox.minX = stepX;
+            stepViewBox.minY = stepY;
             // Push the state
             statePush();
-            // Calculate and set the viewport for each instance of the pattern
-            if (pattern.viewBox != null) {
-               stepViewBox.minX = stepX;
-               stepViewBox.minY = stepY;
-               canvas.concat(calculateViewBoxTransform(stepViewBox, pattern.viewBox, pattern.preserveAspectRatioAlignment, pattern.preserveAspectRatioSlice));
             // Set pattern clip rectangle if appropriate
-            // TODO
-            } else {
+            if (!state.style.overflow) {
+               setClipRect(stepViewBox.minX, stepViewBox.minY, stepViewBox.width, stepViewBox.height);
+            }
+            // Calculate and set the viewport for each instance of the pattern
+            if (pattern.viewBox != null)
+            {
+               canvas.concat(calculateViewBoxTransform(stepViewBox, pattern.viewBox, pattern.preserveAspectRatioAlignment, pattern.preserveAspectRatioSlice));
+            }
+            else
+            {
                boolean  patternContentUnitsAreUser = (pattern.patternContentUnitsAreUser == null || pattern.patternContentUnitsAreUser);
                // Simple translate of pattern to step position
                canvas.translate(stepX, stepY);
-               if (!patternContentUnitsAreUser)
-               {
-                  //Matrix m = new Matrix();
-                  //m.preTranslate(obj.boundingBox.minX, obj.boundingBox.minY);
-                  //m.preScale(obj.boundingBox.width, obj.boundingBox.height);
-                  //canvas.concat(m);
+               if (!patternContentUnitsAreUser) {
                   canvas.scale(obj.boundingBox.width, obj.boundingBox.height);
                }
             }
@@ -440,7 +459,7 @@ public class SVGAndroidRenderer
 
       checkForClipPath(obj, state.viewPort);
 
-     if (obj.viewBox != null) {
+      if (obj.viewBox != null) {
          canvas.concat(calculateViewBoxTransform(state.viewPort, obj.viewBox, obj.preserveAspectRatioAlignment, obj.preserveAspectRatioSlice));
       }
 
@@ -2261,6 +2280,12 @@ public class SVGAndroidRenderer
     */
    private RendererState  findInheritFromAncestorState(SvgObject obj)
    {
+      return findInheritFromAncestorState(obj, new RendererState());
+   }
+
+
+   private RendererState  findInheritFromAncestorState(SvgObject obj, RendererState newState)
+   {
       List<Style>    styles = new ArrayList<Style>();
 
       // Traverse up the document tree adding element styles to a list.
@@ -2274,12 +2299,18 @@ public class SVGAndroidRenderer
       }
       
       // Now apply the ancestor styles in reverse order to a fresh RendererState object
-      RendererState  newState = new RendererState();
       for (Style style: styles)
          updateStyle(newState, style);
 
       // Caller may also need a valid viewBox in order to calculate percentages
       newState.viewBox = document.getRootElement().viewBox;
+      if (newState.viewBox == null) {
+         try {
+            float  w = document.getRootElement().width.floatValueX(this);
+            float  h = document.getRootElement().height.floatValueY(this);
+            newState.viewBox = new Box(0, 0, w, h);
+         } catch (NullPointerException e) { /* ignored */ }
+      }
 
       return newState;
    }

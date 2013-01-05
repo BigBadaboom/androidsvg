@@ -9,11 +9,6 @@
              viewBox="0 0 10 10" >
       <path d="M 0 0 L 7 0 L 3.5 7 z" fill="red" stroke="blue" />
     </pattern> 
-    <pattern id="TrianglePattern2" patternUnits="objectBoundingBox"
-             x="0" y="0" width=".1428" height=".3333"
-             viewBox="0 0 10 10" >
-      <path d="M 0 0 L 7 0 L 3.5 7 z" fill="red" stroke="blue" />
-    </pattern> 
   </defs>
 
   <!-- Outline the drawing area in blue -->
