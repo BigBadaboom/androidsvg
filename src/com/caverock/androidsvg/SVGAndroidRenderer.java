@@ -26,6 +26,7 @@ import com.caverock.androidsvg.SVG.Colour;
 import com.caverock.androidsvg.SVG.CurrentColor;
 import com.caverock.androidsvg.SVG.GradientElement;
 import com.caverock.androidsvg.SVG.GradientSpread;
+import com.caverock.androidsvg.SVG.Length;
 import com.caverock.androidsvg.SVG.Marker;
 import com.caverock.androidsvg.SVG.PaintReference;
 import com.caverock.androidsvg.SVG.PathDefinition;
@@ -508,12 +509,15 @@ public class SVGAndroidRenderer
       m.preTranslate(_x, _y);
       canvas.concat(m);
 
+      Length _w = (obj.width != null) ? obj.width : new Length(100, Unit.percent);
+      Length _h = (obj.height != null) ? obj.height : new Length(100, Unit.percent);
+
       checkForClipPath(obj);
 
       if (ref instanceof SVG.Svg) {
-         render((SVG.Svg) ref, obj.width, obj.height);
+         render((SVG.Svg) ref, _w, _h);
       } else if (ref instanceof SVG.Symbol) {
-         render((SVG.Symbol) ref, obj.width, obj.height);
+         render((SVG.Symbol) ref, _w, _h);
       } else {
          render(ref);
       }
