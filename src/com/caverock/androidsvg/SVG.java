@@ -38,7 +38,7 @@ public class SVG
    private String  desc = "";
 
    // Resolvers
-   ExternalFontResolver  fontResolver = null;
+   SVGExternalFileResolver  fileResolver = null;
 
 
    public enum Unit
@@ -113,9 +113,9 @@ public class SVG
    }
 
 
-   public void  registerExternalFontResolver(ExternalFontResolver fontResolver)
+   public void  registerExternalFileResolver(SVGExternalFileResolver fileResolver)
    {
-      this.fontResolver = fontResolver;
+      this.fileResolver = fileResolver;
    }
 
 
@@ -128,16 +128,6 @@ public class SVG
    public void setRootElement(SVG.Svg rootElement)
    {
       this.rootElement = rootElement;
-   }
-
-
-   //===============================================================================
-   // Resolver classes
-
-
-   public static interface  ExternalFontResolver
-   {
-      Typeface  resolveFont(String fontFamily, int fontWeight, Style.FontStyle fontStyle);
    }
 
 
@@ -681,27 +671,32 @@ public class SVG
    }
 
 
-   protected static class SvgViewBoxContainer extends SvgConditionalContainer
+   protected static class SvgPreserveAspectRatioContainer extends SvgConditionalContainer
    {
-      public Box                  viewBox;
       public AspectRatioAlignment preserveAspectRatioAlignment = null;
       public boolean              preserveAspectRatioSlice;
    }
 
 
+   protected static class SvgViewBoxContainer extends SvgPreserveAspectRatioContainer
+   {
+      public Box  viewBox;
+   }
+
+
    protected static class Svg extends SvgViewBoxContainer
    {
-      public Length               x;
-      public Length               y;
-      public Length               width;
-      public Length               height;
+      public Length  x;
+      public Length  y;
+      public Length  width;
+      public Length  height;
    }
 
 
    // An SVG element that can contain other elements.
    protected static class Group extends SvgConditionalContainer implements HasTransform
    {
-      public Matrix transform;
+      public Matrix  transform;
 
       @Override
       public void setTransform(Matrix transform) { this.transform = transform; }
@@ -719,7 +714,7 @@ public class SVG
    // Specifically: ‘circle’, ‘ellipse’, ‘image’, ‘line’, ‘path’, ‘polygon’, ‘polyline’, ‘rect’, ‘text’ and ‘use’.
    protected static abstract class GraphicsElement extends SvgConditionalElement implements HasTransform
    {
-      public Matrix transform;
+      public Matrix  transform;
 
       @Override
       public void setTransform(Matrix transform) { this.transform = transform; }
@@ -728,11 +723,11 @@ public class SVG
 
    protected static class Use extends Group
    {
-      public String href;
-      public Length x;
-      public Length y;
-      public Length width;
-      public Length height;
+      public String  href;
+      public Length  x;
+      public Length  y;
+      public Length  width;
+      public Length  height;
    }
 
 
@@ -745,44 +740,44 @@ public class SVG
 
    protected static class Rect extends GraphicsElement
    {
-      public Length x;
-      public Length y;
-      public Length width;
-      public Length height;
-      public Length rx;
-      public Length ry;
+      public Length  x;
+      public Length  y;
+      public Length  width;
+      public Length  height;
+      public Length  rx;
+      public Length  ry;
    }
 
 
    protected static class Circle extends GraphicsElement
    {
-      public Length cx;
-      public Length cy;
-      public Length r;
+      public Length  cx;
+      public Length  cy;
+      public Length  r;
    }
 
 
    protected static class Ellipse extends GraphicsElement
    {
-      public Length cx;
-      public Length cy;
-      public Length rx;
-      public Length ry;
+      public Length  cx;
+      public Length  cy;
+      public Length  rx;
+      public Length  ry;
    }
 
 
    protected static class Line extends GraphicsElement
    {
-      public Length x1;
-      public Length y1;
-      public Length x2;
-      public Length y2;
+      public Length  x1;
+      public Length  y1;
+      public Length  x2;
+      public Length  y2;
    }
 
 
    protected static class PolyLine extends GraphicsElement
    {
-      public float[] points;
+      public float[]  points;
    }
 
 
@@ -813,10 +808,10 @@ public class SVG
 
    protected static class  TextPositionedContainer extends TextContainer
    {
-      public List<Length> x;
-      public List<Length> y;
-      public List<Length> dx;
-      public List<Length> dy;
+      public List<Length>  x;
+      public List<Length>  y;
+      public List<Length>  dx;
+      public List<Length>  dy;
    }
 
 
@@ -842,9 +837,9 @@ public class SVG
 
    protected static class TextSequence extends SvgObject implements TextChild
    {
-      public String text;
+      public String  text;
 
-      private Text  textRoot;
+      private Text   textRoot;
       
       public TextSequence(String text)
       {
@@ -867,7 +862,7 @@ public class SVG
    {
       public String  href;
 
-      private Text  textRoot;
+      private Text   textRoot;
 
       @Override
       public void  setTextRoot(Text obj) { this.textRoot = obj; }
@@ -989,6 +984,20 @@ public class SVG
    }
 
 
+   protected static class Image extends SvgPreserveAspectRatioContainer implements HasTransform
+   {
+      public String  href;
+      public Length  x;
+      public Length  y;
+      public Length  width;
+      public Length  height;
+      public Matrix  transform;
+
+      @Override
+      public void setTransform(Matrix transform) { this.transform = transform; }
+   }
+
+
    //===============================================================================
    // Protected getters for internal use
 
@@ -1005,9 +1014,9 @@ public class SVG
    }
 
 
-   protected ExternalFontResolver  getFontResolver()
+   protected SVGExternalFileResolver  getFileResolver()
    {
-      return fontResolver;
+      return fileResolver;
    }
 
 

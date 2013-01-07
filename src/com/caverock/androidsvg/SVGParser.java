@@ -458,7 +458,7 @@ public class SVGParser extends DefaultHandler
       supportedFeatures.add("BasicStructure");              // YES (although desc title and metadata are ignored)
       //supportedFeatures.add("ContainerAttribute");        // NO (filter related. NYI)
       supportedFeatures.add("ConditionalProcessing");       // YES
-      //supportedFeatures.add("Image");                     // NO?
+      supportedFeatures.add("Image");                       // YES
       supportedFeatures.add("Style");                       // YES
       supportedFeatures.add("ViewportAttribute");           // YES
       supportedFeatures.add("Shape");                       // YES
@@ -615,6 +615,8 @@ public class SVGParser extends DefaultHandler
          textPath(attributes);
       } else if (localName.equalsIgnoreCase(TAG_PATTERN)) {
          pattern(attributes);
+      } else if (localName.equalsIgnoreCase(TAG_IMAGE)) {
+         image(attributes);
       } else {
          ignoring = true;
          ignoreDepth = 1;
@@ -688,6 +690,7 @@ public class SVGParser extends DefaultHandler
           localName.equalsIgnoreCase(TAG_DEFS) ||
           localName.equalsIgnoreCase(TAG_G) ||
           localName.equalsIgnoreCase(TAG_USE) ||
+          localName.equalsIgnoreCase(TAG_IMAGE) ||
           localName.equalsIgnoreCase(TAG_TEXT) ||
           localName.equalsIgnoreCase(TAG_TSPAN) ||
           localName.equalsIgnoreCase(TAG_SWITCH) ||
@@ -872,6 +875,66 @@ dumpNode(svgDocument.getRootElement(), "");
                if (!XLINK_NAMESPACE.equals(attributes.getURI(i)))
                   break;
                obj.href = val;
+               break;
+            default:
+               break;
+         }
+      }
+   }
+
+
+   //=========================================================================
+   // <image> element
+
+
+   private void  image(Attributes attributes) throws SAXException
+   {
+/**/Log.d(TAG, "<image>");
+      if (currentElement == null)
+         throw new SAXException("Invalid document. Root element must be <svg>");
+      SVG.Image  obj = new SVG.Image();
+      obj.document = svgDocument;
+      obj.parent = currentElement;
+      parseAttributesCore(obj, attributes);
+      parseAttributesStyle(obj, attributes);
+      parseAttributesTransform(obj, attributes);
+      parseAttributesConditional(obj, attributes);
+      parseAttributesImage(obj, attributes);
+      currentElement.addChild(obj);
+      currentElement = obj;
+   }
+
+
+   private void  parseAttributesImage(SVG.Image obj, Attributes attributes) throws SAXException
+   {
+      for (int i=0; i<attributes.getLength(); i++)
+      {
+         String val = attributes.getValue(i).trim();
+         switch (SVGAttr.fromString(attributes.getLocalName(i)))
+         {
+            case x:
+               obj.x = parseLength(val);
+               break;
+            case y:
+               obj.y = parseLength(val);
+               break;
+            case width:
+               obj.width = parseLength(val);
+               if (obj.width.isNegative())
+                  throw new SAXException("Invalid <use> element. width cannot be negative");
+               break;
+            case height:
+               obj.height = parseLength(val);
+               if (obj.height.isNegative())
+                  throw new SAXException("Invalid <use> element. height cannot be negative");
+               break;
+            case href:
+               if (!XLINK_NAMESPACE.equals(attributes.getURI(i)))
+                  break;
+               obj.href = val;
+               break;
+            case preserveAspectRatio:
+               parsePreserveAspectRatio(obj, val);
                break;
             default:
                break;
@@ -2982,7 +3045,7 @@ dumpNode(svgDocument.getRootElement(), "");
    /*
     * 
     */
-   private void  parsePreserveAspectRatio(SVG.SvgViewBoxContainer obj, String val) throws SAXException
+   private void  parsePreserveAspectRatio(SVG.SvgPreserveAspectRatioContainer obj, String val) throws SAXException
    {
       TextScanner scan = new TextScanner(val);
       scan.skipWhitespace();

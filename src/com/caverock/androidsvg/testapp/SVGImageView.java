@@ -1,11 +1,13 @@
 package com.caverock.androidsvg.testapp;
 
+import java.io.IOException;
+import java.io.InputStream;
+
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.graphics.Picture;
-import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -13,10 +15,10 @@ import android.view.View;
 
 import com.caverock.androidsvg.SVG;
 import com.caverock.androidsvg.SVG.Style.FontStyle;
-import com.caverock.androidsvg.SVGParser;
+import com.caverock.androidsvg.SVGExternalFileResolver;
 
 
-public class SVGImageView extends View  implements SVG.ExternalFontResolver
+public class SVGImageView extends View
 {
    private int      width;
    private int      height;
@@ -26,6 +28,40 @@ public class SVGImageView extends View  implements SVG.ExternalFontResolver
    private Float    renderDPI = null;
 
    private static final String  TAG = SVGImageView.class.getSimpleName();
+
+
+   private SVGExternalFileResolver  myResolver = new SVGExternalFileResolver() {
+      
+      @Override
+      public Typeface resolveFont(String fontFamily, int fontWeight, FontStyle fontStyle)
+      {
+         Log.i(TAG, "resolveFont("+fontFamily+","+fontWeight+","+fontStyle+")");
+
+         if (fontFamily.equals("Arial")) {
+            return Typeface.createFromAsset(SVGImageView.this.getContext().getAssets(), "Arial.ttf");
+         }
+         if (fontFamily.equals("Bitter")) {
+            return Typeface.createFromAsset(SVGImageView.this.getContext().getAssets(), "Bitter-Bold.ttf");
+         }
+
+         return null;
+      }
+
+      @Override
+      public Bitmap resolveImage(String filename)
+      {
+         try
+         {
+            InputStream  istream = SVGImageView.this.getContext().getAssets().open(filename);
+            return BitmapFactory.decodeStream(istream);
+         }
+         catch (IOException e1)
+         {
+            return null;
+         }
+      }
+
+   };
 
 
    public SVGImageView(Context context, AttributeSet attrs)
@@ -91,7 +127,7 @@ public class SVGImageView extends View  implements SVG.ExternalFontResolver
       {
          this.svg = null;
          this.svg = SVG.getFromAsset(getContext().getAssets(), svgPath);
-         this.svg.registerExternalFontResolver(this);
+         this.svg.registerExternalFileResolver(myResolver);
          rebuildBitmap();
          invalidate();
       }
@@ -141,18 +177,4 @@ public class SVGImageView extends View  implements SVG.ExternalFontResolver
    }
 
 
-   @Override
-   public Typeface resolveFont(String fontFamily, int fontWeight, FontStyle fontStyle)
-   {
-      Log.i(TAG, "resolveFont("+fontFamily+","+fontWeight+","+fontStyle+")");
-
-      if (fontFamily.equals("Arial")) {
-         return Typeface.createFromAsset(getContext().getAssets(), "Arial.ttf");
-      }
-      if (fontFamily.equals("Bitter")) {
-         return Typeface.createFromAsset(getContext().getAssets(), "Bitter-Bold.ttf");
-      }
-
-      return null;
-   }
 }

@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
 
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.DashPathEffect;
@@ -232,6 +233,8 @@ public class SVGAndroidRenderer
          // do nothing
       } else if (obj instanceof SVG.Group) {
          render((SVG.Group) obj);
+      } else if (obj instanceof SVG.Image) {
+         render((SVG.Image) obj);
       } else if (obj instanceof SVG.Path) {
          render((SVG.Path) obj);
       } else if (obj instanceof SVG.Rect) {
@@ -352,6 +355,9 @@ public class SVGAndroidRenderer
    }
 
 
+   //==============================================================================
+
+
    private void render(SVG.Group obj)
    {
 /**/Log.d(TAG, "Group render");
@@ -367,6 +373,9 @@ public class SVGAndroidRenderer
          render(child);
       }
    }
+
+
+   //==============================================================================
 
 
    private void render(SVG.Use obj)
@@ -1110,6 +1119,54 @@ public class SVGAndroidRenderer
    //==============================================================================
 
 
+   private void render(SVG.Image obj)
+   {
+/**/Log.d(TAG, "Image render");
+
+      if (obj.width == null || obj.width.isZero() ||
+          obj.height == null || obj.height.isZero())
+         return;
+      
+      if (obj.href == null)
+         return;
+
+      // Locate the referenced image
+      SVGExternalFileResolver  fileResolver = document.getFileResolver();
+      if (fileResolver == null)
+         return;
+
+      Bitmap  image = fileResolver.resolveImage(obj.href);
+      if (image == null)
+         return;
+
+      updateStyle(state, obj.style);
+
+      if (obj.transform != null) {
+         canvas.concat(obj.transform);
+      }
+
+      float  _x = (obj.x != null) ? obj.x.floatValueX(this) : 0f;
+      float  _y = (obj.y != null) ? obj.y.floatValueY(this) : 0f;
+      float  _w = obj.width.floatValueX(this);
+      float  _h = obj.height.floatValueX(this);
+      state.viewPort = new SVG.Box(_x, _y, _w, _h);
+
+      if (!state.style.overflow) {
+         setClipRect(state.viewPort.minX, state.viewPort.minY, state.viewPort.width, state.viewPort.height);
+      }
+
+      Box  imageBox = new SVG.Box(0,  0,  image.getWidth(), image.getHeight());
+      canvas.concat(calculateViewBoxTransform(state.viewPort, imageBox, obj.preserveAspectRatioAlignment, obj.preserveAspectRatioSlice));
+      
+      checkForClipPath(obj);
+
+      canvas.drawBitmap(image, 0, 0, state.fillPaint);
+   }
+
+
+   //==============================================================================
+
+
    private boolean  display(SvgObject obj)
    {
       if (!(obj instanceof SvgElement))
@@ -1409,15 +1466,15 @@ public class SVGAndroidRenderer
       // If typeface, weight or style has changed, update the paint typeface
       if (isSpecified(style, SVG.SPECIFIED_FONT_FAMILY | SVG.SPECIFIED_FONT_WEIGHT | SVG.SPECIFIED_FONT_STYLE))
       {
-         SVG.ExternalFontResolver  fontResolver = null;
+         SVGExternalFileResolver  fileResolver = null;
          Typeface  font = null;
 
          if (state.style.fontFamily != null && document != null) {
-            fontResolver = document.getFontResolver();
+            fileResolver = document.getFileResolver();
 
-            if (fontResolver != null) {
+            if (fileResolver != null) {
                for (String fontName: state.style.fontFamily) {
-                  font = fontResolver.resolveFont(fontName, state.style.fontWeight, state.style.fontStyle);
+                  font = fileResolver.resolveFont(fontName, state.style.fontWeight, state.style.fontStyle);
                   if (font != null)
                      break;
                }
