@@ -26,6 +26,7 @@ public class SVGImageView extends View
    private Bitmap   bm = null;
    private Paint    paint = new Paint();
    private Float    renderDPI = null;
+   private String   viewId = null;
 
    private static final String  TAG = SVGImageView.class.getSimpleName();
 
@@ -108,21 +109,44 @@ public class SVGImageView extends View
       Bitmap  newBM = Bitmap.createBitmap(this.width, this.height, Bitmap.Config.ARGB_8888);
       Canvas  bmcanvas = new Canvas(newBM);
       bmcanvas.drawRGB(255, 255, 255);  // Clear bg to white
-      if (this.svg != null) {
-         svg.ensureRootViewBox();
-         if (this.renderDPI == null) {
-            bmcanvas.drawPicture(this.svg.getPicture(width, height, getResources().getDisplayMetrics().xdpi, SVG.AspectRatioAlignment.xMidYMid, true));
-         } else {
-            bmcanvas.drawPicture(this.svg.getPicture(width, height, this.renderDPI, SVG.AspectRatioAlignment.xMidYMid, true));
+      if (this.svg != null)
+      {
+         if (this.viewId != null)
+         {
+            if (this.renderDPI == null) {
+               bmcanvas.drawPicture(this.svg.getPictureForView(this.viewId, width, height, getResources().getDisplayMetrics().xdpi));
+            } else {
+               bmcanvas.drawPicture(this.svg.getPictureForView(this.viewId, width, height, this.renderDPI));
+            }
+         }
+         else
+         {
+            svg.ensureRootViewBox();
+            if (this.renderDPI == null) {
+               bmcanvas.drawPicture(this.svg.getPicture(width, height, getResources().getDisplayMetrics().xdpi, SVG.AspectRatioAlignment.xMidYMid, true));
+            } else {
+               bmcanvas.drawPicture(this.svg.getPicture(width, height, this.renderDPI, SVG.AspectRatioAlignment.xMidYMid, true));
+            }
          }
       }
       this.bm = newBM;
    }
 
 
-   public void  setSVGAsset(String svgPath)
+   public void  setSVGAsset(String svgRef)
    {
-/**/Log.d("setSVGAsset", svgPath);
+/**/Log.d("setSVGAsset", svgRef);
+      String svgPath = null;
+      
+      int hash = svgRef.indexOf('#');
+      if (hash == -1) {
+         svgPath = svgRef;
+         this.viewId = null;
+      } else {
+         svgPath = svgRef.substring(0, hash);
+         this.viewId = svgRef.substring(hash+1);
+      }
+
       try
       {
          this.svg = null;
@@ -137,7 +161,7 @@ public class SVGImageView extends View
          Log.e("SVGImageView", e.toString());
          e.printStackTrace();
 
-         // Some of the document (up till th error) may have been created.
+         // Some of the document (up till the error) may have been created.
          rebuildBitmap();
          invalidate();
       }
@@ -148,6 +172,8 @@ public class SVGImageView extends View
       try
       {
          this.svg = SVG.getFromResource(this.getContext(), resId);
+         this.svg.registerExternalFileResolver(myResolver);
+         rebuildBitmap();
          invalidate();
       }
       catch (Exception e)
@@ -155,7 +181,7 @@ public class SVGImageView extends View
          Log.e("SVGImageView", e.getMessage());
          e.printStackTrace();
 
-         this.svg = null;
+         rebuildBitmap();
          invalidate();
       }
    }

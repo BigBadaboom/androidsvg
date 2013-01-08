@@ -458,7 +458,7 @@ public class SVGParser extends DefaultHandler
       supportedFeatures.add("BasicStructure");              // YES (although desc title and metadata are ignored)
       //supportedFeatures.add("ContainerAttribute");        // NO (filter related. NYI)
       supportedFeatures.add("ConditionalProcessing");       // YES
-      supportedFeatures.add("Image");                       // YES
+      supportedFeatures.add("Image");                       // YES (bitmaps only - not SVG files)
       supportedFeatures.add("Style");                       // YES
       supportedFeatures.add("ViewportAttribute");           // YES
       supportedFeatures.add("Shape");                       // YES
@@ -485,7 +485,7 @@ public class SVGParser extends DefaultHandler
       //supportedFeatures.add("Hyperlinking");              // NO
       //supportedFeatures.add("XlinkAttribute");            // NO
       //supportedFeatures.add("ExternalResourcesRequired"); // NO
-      //supportedFeatures.add("View");                      // NYI
+      supportedFeatures.add("View");                        // YES
       //supportedFeatures.add("Script");                    // NO
       //supportedFeatures.add("Animation");                 // NO
       //supportedFeatures.add("Font");                      // NO
@@ -617,6 +617,8 @@ public class SVGParser extends DefaultHandler
          pattern(attributes);
       } else if (localName.equalsIgnoreCase(TAG_IMAGE)) {
          image(attributes);
+      } else if (localName.equalsIgnoreCase(TAG_VIEW)) {
+         view(attributes);
       } else {
          ignoring = true;
          ignoreDepth = 1;
@@ -701,7 +703,8 @@ public class SVGParser extends DefaultHandler
           localName.equalsIgnoreCase(TAG_STOP) ||
           localName.equalsIgnoreCase(TAG_CLIPPATH) ||
           localName.equalsIgnoreCase(TAG_TEXTPATH) ||
-          localName.equalsIgnoreCase(TAG_PATTERN)) {
+          localName.equalsIgnoreCase(TAG_PATTERN) ||
+          localName.equalsIgnoreCase(TAG_VIEW)) {
          currentElement = ((SvgObject) currentElement).parent;
       }
 
@@ -1583,7 +1586,7 @@ dumpNode(svgDocument.getRootElement(), "");
 
    
    //=========================================================================
-   // <symbol> element
+   // <marker> element
 
 
    private void  marker(Attributes attributes) throws SAXException
@@ -2024,6 +2027,26 @@ dumpNode(svgDocument.getRootElement(), "");
    }
 
 
+   //=========================================================================
+   // <view> element
+
+
+   private void  view(Attributes attributes) throws SAXException
+   {
+/**/Log.d(TAG, "<view>");
+      if (currentElement == null)
+         throw new SAXException("Invalid document. Root element must be <svg>");
+      SVG.View  obj = new SVG.View();
+      obj.document = svgDocument;
+      obj.parent = currentElement;
+      parseAttributesCore(obj, attributes);
+      parseAttributesConditional(obj, attributes);
+      parseAttributesViewBox(obj, attributes);
+      currentElement.addChild(obj);
+      currentElement = obj;
+   }
+
+   
    //=========================================================================
    // String tokeniser
    //=========================================================================

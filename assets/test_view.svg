@@ -1,0 +1,46 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- 400 pixels per 100 user units, or 4 pixels per 1 user unit. -->
+<svg width="400px" height="400px"
+     version="1.1" 
+     xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink">  <!-- Required for 'xlink' usage. -->
+     
+  <title>The SVG &lt;view&gt; Element</title>
+  <desc>
+                The key concept is that the 'viewBox' attribute values of the 
+                associated 'view' element are essentially applied to the 'viewBox' 
+                attributes of its parent 'svg' element.
+  </desc>
+        
+  <defs>
+    <radialGradient id="myRadialGradient">
+      <stop offset="0%" stop-color="yellow" />
+      <stop offset="50%" stop-color="white" />
+      <stop offset="100%" stop-color="blue" />
+    </radialGradient>    
+  </defs>
+        
+  <view id="normalView" viewBox="0 0 100 100"/>  <!-- Same 'viewBox' values as on the 'svg' element (that is, 4 pixels per user unit). -->
+  <view id="halfView"   viewBox="0 0 200 200"/>  <!-- 400 pixels per 200 user units, or 2 pixels per 1 user unit - shrinking things. -->
+  <view id="doubleView" viewBox="0 0  50  50"/>  <!-- 400 pixels per 50 user units, or 8 pixels per 1 user unit - expanding things. -->
+        
+  <!-- Outline the initial viewport. -->
+  <rect x="0" y="0" width="100%" height="100%" style="stroke: green; fill: none;"/>
+        
+  <!-- Fill the viewport with something interesting. -->
+  <circle fill="url(#myRadialGradient)" stroke="black" stroke-width="1" cx="50" cy="50" r="40"/>
+        
+  <!-- Provide the user with a way, by clicking the links, to essentially change the 'svg' element's 'viewBox' values. -->
+  <a xlink:href="#doubleView">
+    <text x="2" y="6" font-size="5">[double size]</text>
+  </a>
+  <a xlink:href="#normalView">
+    <text x="39" y="6" font-size="5">[normal size]</text>
+  </a>
+  <a xlink:href="#halfView">
+    <text x="77" y="6" font-size="5">[half size]</text>
+  </a>
+                                
+</svg>

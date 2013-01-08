@@ -189,26 +189,33 @@ public class SVGAndroidRenderer
    }
 
 
-   public void  renderDocument(SVG document, AspectRatioAlignment alignment, boolean fitToCanvas)
+   public void  renderDocument(SVG document, Box viewBox, AspectRatioAlignment alignment, boolean fitToCanvas)
    {
       this.document = document;
       
       resetState();
 
       // Calculate the initial transform to position the document in our canvas
-      SVG.Svg  obj = document.getRootElement();
+      SVG.Svg  rootObj = document.getRootElement();
 
-      if (obj == null) {
+      if (rootObj == null) {
          Log.w(TAG, "Nothing to render. Document is empty.");
          return;
       }
 
-      if (obj.viewBox != null) {
-         canvas.concat(calculateViewBoxTransform(state.viewPort, obj.viewBox, alignment, !fitToCanvas));
-         state.viewPort = obj.viewBox;
+      if (viewBox != null)
+      {
+         canvas.concat(calculateViewBoxTransform(state.viewPort, viewBox, alignment, !fitToCanvas));
+         if (rootObj.viewBox != null)
+            state.viewPort = rootObj.viewBox;
+      }
+      else if (rootObj.viewBox != null)
+      {
+         canvas.concat(calculateViewBoxTransform(state.viewPort, rootObj.viewBox, alignment, !fitToCanvas));
+         state.viewPort = rootObj.viewBox;
       }
 
-      render(obj);
+      render(rootObj);
    }
 
 
@@ -255,6 +262,10 @@ public class SVGAndroidRenderer
       } else if (obj instanceof SVG.Symbol) {
          // do nothing
       } else if (obj instanceof SVG.Marker) {
+         // do nothing
+      }else if (obj instanceof SVG.Pattern) {
+         // do nothing
+      }else if (obj instanceof SVG.View) {
          // do nothing
       }
 

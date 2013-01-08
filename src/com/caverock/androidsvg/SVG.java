@@ -16,7 +16,7 @@ import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Picture;
 import android.graphics.Region;
-import android.graphics.Typeface;
+import android.util.Log;
 
 public class SVG
 {
@@ -998,6 +998,11 @@ public class SVG
    }
 
 
+   protected static class View extends SvgViewBoxContainer
+   {
+   }
+
+
    //===============================================================================
    // Protected getters for internal use
 
@@ -1198,17 +1203,54 @@ public class SVG
 
    public Picture  getPicture(int widthInPixels, int heightInPixels, float dpi, AspectRatioAlignment alignment, boolean fitToCanvas)
    {
-      Picture             picture = new Picture();
-      Canvas              canvas = picture.beginRecording(widthInPixels, heightInPixels);
+      Picture  picture = new Picture();
+      Canvas   canvas = picture.beginRecording(widthInPixels, heightInPixels);
+      Box      viewPort = new Box(0f, 0f, (float) widthInPixels, (float) heightInPixels);
 
       if (alignment == null)
          alignment = AspectRatioAlignment.xMidYMid;
 
-      Box                 viewPort = new Box(0f, 0f, (float) widthInPixels, (float) heightInPixels);
+      SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, viewPort, dpi);
 
-      SVGAndroidRenderer  renderer= new SVGAndroidRenderer(canvas, viewPort, dpi);
+      renderer.renderDocument(this, null, alignment, fitToCanvas);
 
-      renderer.renderDocument(this, alignment, fitToCanvas);
+      picture.endRecording();
+      return picture;
+   }
+
+
+   public Picture  getPictureForView(String viewId, int widthInPixels, int heightInPixels)
+   {
+      return getPictureForView(viewId, widthInPixels, heightInPixels, DEFAULT_DPI);
+   }
+
+
+   public Picture  getPictureForView(String viewId, int widthInPixels, int heightInPixels, float dpi)
+   {
+      SvgObject  obj = this.getElementById(viewId);
+      if (obj == null)
+         return null;
+      if (!(obj instanceof SVG.View))
+         return null;
+
+      SVG.View  view = (SVG.View) obj;
+      
+      if (view.viewBox == null) {
+         Log.w(TAG, "View element is missing a viewBox attribute.");
+         return null;
+      }
+
+      Picture  picture = new Picture();
+      Canvas   canvas = picture.beginRecording(widthInPixels, heightInPixels);
+      Box      viewPort = new Box(0f, 0f, (float) widthInPixels, (float) heightInPixels);
+
+      AspectRatioAlignment  alignment = view.preserveAspectRatioAlignment;
+      if (alignment == null)
+         alignment = AspectRatioAlignment.xMidYMid;
+
+      SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, viewPort, dpi);
+
+      renderer.renderDocument(this, view.viewBox, alignment, !view.preserveAspectRatioSlice);
 
       picture.endRecording();
       return picture;
