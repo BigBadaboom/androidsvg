@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Stack;
 
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.DashPathEffect;
@@ -18,6 +19,7 @@ import android.graphics.RadialGradient;
 import android.graphics.RectF;
 import android.graphics.Shader.TileMode;
 import android.graphics.Typeface;
+import android.util.Base64;
 import android.util.Log;
 
 import com.caverock.androidsvg.SVG.AspectRatioAlignment;
@@ -62,7 +64,6 @@ public class SVGAndroidRenderer
 
 
    private static final float  BEZIER_ARC_FACTOR = 0.5522847498f;
-
 
 
    private class RendererState implements Cloneable
@@ -1133,13 +1134,19 @@ public class SVGAndroidRenderer
          return;
 
       // Locate the referenced image
-      SVGExternalFileResolver  fileResolver = document.getFileResolver();
-      if (fileResolver == null)
-         return;
-
-      Bitmap  image = fileResolver.resolveImage(obj.href);
+      Bitmap  image = checkForImageDataURL(obj.href);
       if (image == null)
+      {
+         SVGExternalFileResolver  fileResolver = document.getFileResolver();
+         if (fileResolver == null)
+            return;
+
+         image = fileResolver.resolveImage(obj.href);
+      }
+      if (image == null) {
+         Log.w(TAG, "Could not locate image \""+obj.href+"\"");
          return;
+      }
 
       updateStyle(state, obj.style);
 
@@ -1167,6 +1174,27 @@ public class SVGAndroidRenderer
 
 
    //==============================================================================
+
+
+   /*
+    * Check for an decode an image encoded in a data URL.
+    * We don't handle all permutations of data URLs. Only base64 ones.
+    */
+   private Bitmap  checkForImageDataURL(String url)
+   {
+      if (!url.startsWith("data:"))
+         return null;
+      if (url.length() < 14)
+         return null;
+
+      int  comma = url.indexOf(',');
+      if (comma == -1 || comma < 12)
+         return null;
+      if (!";base64".equals(url.substring(comma-7, comma)))
+         return null;
+      byte[]  imageData = Base64.decode(url.substring(comma+1), Base64.DEFAULT);
+      return BitmapFactory.decodeByteArray(imageData, 0,  imageData.length);
+   }
 
 
    private boolean  display(SvgObject obj)
