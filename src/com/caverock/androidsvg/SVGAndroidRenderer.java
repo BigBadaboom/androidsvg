@@ -292,6 +292,7 @@ public class SVGAndroidRenderer
     */
    private void doFilledPath(SvgElement obj, Path path, Paint fillPaint)
    {
+      // First check for pattern fill. It requires special handling.
       if (state.style.fill instanceof SVG.PaintReference)
       {
          SVG.SvgObject  ref = document.resolveIRI(((SVG.PaintReference) state.style.fill).href);
@@ -301,8 +302,9 @@ public class SVGAndroidRenderer
             return;
          }
       }
-      else
-         canvas.drawPath(path, fillPaint);
+
+      // Otherwise do a normal fill
+      canvas.drawPath(path, fillPaint);
    }
 
 
@@ -3150,7 +3152,7 @@ public class SVGAndroidRenderer
       if (pattern.height == null)
          pattern.height = pRef.height;
       // attributes from superclasses
-      if (pattern.children.size() == 0)
+      if (pattern.children.isEmpty())
          pattern.children = pRef.children;
       if (pattern.viewBox == null)
          pattern.viewBox = pRef.viewBox;
