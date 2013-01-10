@@ -15,6 +15,7 @@ import android.content.res.AssetManager;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Picture;
+import android.graphics.RectF;
 import android.graphics.Region;
 import android.util.Log;
 
@@ -152,13 +153,15 @@ public class SVG
          return new Box(minX, minY, maxX-minX, maxY-minY);
       }
 
-      public Region  toRegion()
+      public RectF  toRectF()
       {
-         return new Region((int) Math.floor(minX), (int) Math.floor(minY), (int) Math.ceil(minX + width), (int) Math.ceil(minY + height));
+         return new RectF(minX, minY, maxX(), maxY());
       }
 
       public float  maxX() { return minX + width; }
       public float  maxY() { return minY + height; }
+
+      public String toString() { return "["+minX+" "+minY+" "+width+" "+height+"]"; }
    }
 
 
@@ -195,12 +198,14 @@ public class SVG
 
    public static final long SPECIFIED_ALL = 0xffffffff;
 
+   public static final long SPECIFIED_NON_INHERITING = SPECIFIED_DISPLAY | SPECIFIED_OVERFLOW | SPECIFIED_CLIP
+                                                       | SPECIFIED_CLIP_PATH | SPECIFIED_OPACITY | SPECIFIED_STOP_COLOR
+                                                       | SPECIFIED_STOP_OPACITY;
 
    public static class  Style implements Cloneable
    {
       // Which properties have been explicitly specified by this element
       public long       specifiedFlags = 0;
-      //public long       inheritFlags = 0;
 
       public SvgPaint   fill;
       public FillRule   fillRule;
@@ -322,14 +327,6 @@ public class SVG
          return def;
       }
 
-      // Called just before we update the current style state with the current objects style.
-      // These are the properties that don't inherit.
-      public void  resetNonInheritingProperties()
-      {
-         this.overflow = false;
-         this.clip = null;
-         this.clipPath = null;
-      }
 
       @Override
       protected Object  clone()
@@ -1163,7 +1160,7 @@ public class SVG
 
 
    //===============================================================================
-   // SVG document rendering API
+   // SVG document rendering to a Picture object (indirect rendering)
 
 
    public Picture  getPicture()
@@ -1212,7 +1209,7 @@ public class SVG
 
       SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, viewPort, dpi);
 
-      renderer.renderDocument(this, null, alignment, fitToCanvas);
+      renderer.renderDocument(this, null, alignment, fitToCanvas, false);
 
       picture.endRecording();
       return picture;
@@ -1250,10 +1247,39 @@ public class SVG
 
       SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, viewPort, dpi);
 
-      renderer.renderDocument(this, view.viewBox, alignment, !view.preserveAspectRatioSlice);
+      renderer.renderDocument(this, view.viewBox, alignment, !view.preserveAspectRatioSlice, false);
 
       picture.endRecording();
       return picture;
+   }
+
+
+   //===============================================================================
+   // SVG document rendering to a canvas object (direct rendering)
+
+
+   public void  renderToCanvas(Canvas canvas, RectF dst)
+   {
+      renderToCanvas(canvas, dst, DEFAULT_DPI, null, true);
+   }
+
+
+   public void  renderToCanvas(Canvas canvas, RectF dst, float dpi, AspectRatioAlignment alignment, boolean fitToCanvas)
+   {
+      Box  viewPort;
+
+      if (dst != null) {
+         viewPort = new Box(dst.left, dst.top, (dst.right - dst.left), (dst.bottom - dst.top));
+      } else {
+         viewPort = new Box(0f, 0f, (float) canvas.getWidth(), (float) canvas.getHeight());
+      }
+
+      if (alignment == null)
+         alignment = AspectRatioAlignment.xMidYMid;
+
+      SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, viewPort, dpi);
+
+      renderer.renderDocument(this, null, alignment, fitToCanvas, true);
    }
 
 

@@ -1,0 +1,43 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="8cm" height="16cm" viewBox="0 0 800 1600"
+     xmlns="http://www.w3.org/2000/svg" version="1.1">
+
+  <rect x="1" y="1" width="798" height="1598" fill="none" stroke="blue" />
+
+  <circle cx="200" cy="200" r="150" fill="red" opacity="0.5" />
+  <circle cx="400" cy="200" r="150" fill="green" opacity="0.5" />
+  <circle cx="600" cy="200" r="150" fill="blue" opacity="0.5" />
+
+  <g opacity="0.5">
+    <circle cx="200" cy="600" r="150" fill="red" />
+    <g opacity="0.5">
+      <circle cx="400" cy="600" r="150" fill="green" />
+      <g opacity="0.5">
+        <circle cx="600" cy="600" r="150" fill="blue" />
+      </g>
+    </g>
+  </g>
+
+  <g opacity="0.5">
+    <circle cx="200" cy="1000" r="150" fill="red" opacity="1" />
+    <g opacity="0.5">
+      <circle cx="400" cy="1000" r="150" fill="green" opacity="1" />
+      <g opacity="0.5">
+        <circle cx="600" cy="1000" r="150" fill="blue" opacity="1" />
+      </g>
+    </g>
+  </g>
+
+  <g opacity="0.5">
+    <circle cx="200" cy="1400" r="150" fill="red" />
+    <g>
+      <circle cx="400" cy="1400" r="150" fill="green" />
+      <g>
+        <circle cx="600" cy="1400" r="150" fill="blue" />
+      </g>
+    </g>
+  </g>
+
+</svg>

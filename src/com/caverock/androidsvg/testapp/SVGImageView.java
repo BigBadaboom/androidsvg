@@ -15,6 +15,7 @@ import android.view.View;
 
 import com.caverock.androidsvg.SVG;
 import com.caverock.androidsvg.SVG.Style.FontStyle;
+import com.caverock.androidsvg.SVGCanvas;
 import com.caverock.androidsvg.SVGExternalFileResolver;
 
 
@@ -27,6 +28,7 @@ public class SVGImageView extends View
    private Paint    paint = new Paint();
    private Float    renderDPI = null;
    private String   viewId = null;
+   private boolean  directRender = false;
 
    private static final String  TAG = SVGImageView.class.getSimpleName();
 
@@ -107,20 +109,37 @@ public class SVGImageView extends View
       if (this.width == 0)
          return;
       Bitmap  newBM = Bitmap.createBitmap(this.width, this.height, Bitmap.Config.ARGB_8888);
-      Canvas  bmcanvas = new Canvas(newBM);
-      bmcanvas.drawRGB(255, 255, 255);  // Clear bg to white
+/**/Log.w(TAG, "base bitmap: "+this.width+" "+this.height);
+
       if (this.svg != null)
       {
          if (this.viewId != null)
          {
+            Canvas  bmcanvas = new Canvas(newBM);
+            bmcanvas.drawRGB(255, 255, 255);  // Clear bg to white
+
             if (this.renderDPI == null) {
                bmcanvas.drawPicture(this.svg.getPictureForView(this.viewId, width, height, getResources().getDisplayMetrics().xdpi));
             } else {
                bmcanvas.drawPicture(this.svg.getPictureForView(this.viewId, width, height, this.renderDPI));
             }
          }
+         else if (this.directRender)
+         {
+            Canvas  dcanvas = new Canvas(newBM);
+            dcanvas.drawRGB(255, 255, 255);  // Clear bg to white
+
+            if (this.renderDPI == null) {
+               this.svg.renderToCanvas(dcanvas, null, getResources().getDisplayMetrics().xdpi, SVG.AspectRatioAlignment.xMidYMid, true);
+            } else {
+               this.svg.renderToCanvas(dcanvas, null, this.renderDPI, SVG.AspectRatioAlignment.xMidYMid, true);
+            }
+         }
          else
          {
+            Canvas  bmcanvas = new Canvas(newBM);
+            bmcanvas.drawRGB(255, 255, 255);  // Clear bg to white
+
             svg.ensureRootViewBox();
             if (this.renderDPI == null) {
                bmcanvas.drawPicture(this.svg.getPicture(width, height, getResources().getDisplayMetrics().xdpi, SVG.AspectRatioAlignment.xMidYMid, true));
@@ -137,6 +156,14 @@ public class SVGImageView extends View
    {
 /**/Log.d("setSVGAsset", svgRef);
       String svgPath = null;
+
+      // Flag to indicate direct render mode
+      if (svgRef.startsWith("@")) {
+         svgRef = svgRef.substring(1);
+         this.directRender = true;
+      } else {
+         this.directRender = false;
+      }
       
       int hash = svgRef.indexOf('#');
       if (hash == -1) {

@@ -53,14 +53,15 @@ public class SVGAndroidRenderer
 {
    private static final String  TAG = "SVGAndroidRenderer";
 
-   private Canvas  canvas;
-   private Box     canvasViewPort;
-   private float   dpi = 160;    // dots per inch. Needed for accurate conversion of length values that have real world units, such as "cm".
+   private Canvas   canvas;
+   private Box      canvasViewPort;
+   private float    dpi = 160;    // dots per inch. Needed for accurate conversion of length values that have real world units, such as "cm".
+   private boolean  directRenderingMode;
 
    // Renderer state
-   private SVG            document;
-   private RendererState  state = new RendererState();
-   private Stack<RendererState> stateStack = new Stack<RendererState>();  // Keeps track of render state as we render
+   private SVG                  document;
+   private RendererState        state;
+   private Stack<RendererState> stateStack;  // Keeps track of render state as we render
 
 
    private static final float  BEZIER_ARC_FACTOR = 0.5522847498f;
@@ -79,6 +80,9 @@ public class SVGAndroidRenderer
       // Set when we are about to render an object by reference rather than directly. Eg. via <use>.
       public boolean  overrideDisplay;
 
+      // Set when we doing direct rendering.
+      public boolean  directRendering;
+
 
       public RendererState()
       {
@@ -92,9 +96,9 @@ public class SVGAndroidRenderer
          strokePaint.setStyle(Paint.Style.STROKE);
          strokePaint.setTypeface(Typeface.DEFAULT);
 
-         style = new Style();
+         style = Style.getDefaultStyle();
          // Initialise the style state
-         updateStyle(this, Style.getDefaultStyle());
+ //        updateStyle(this, Style.getDefaultStyle());
       }
 
       @Override
@@ -115,6 +119,7 @@ public class SVGAndroidRenderer
          }
       }
 
+      /*
       @Override
       public String toString()
       {
@@ -128,6 +133,7 @@ public class SVGAndroidRenderer
          sb.append(viewBox); sb.append("\n");
          return sb.toString();
       }
+      */
 
    }
 
@@ -137,7 +143,12 @@ public class SVGAndroidRenderer
       state = new RendererState();
       stateStack = new Stack<RendererState>();
 
+      // Initialise the style state properties like Paints etc
+      updateStyle(state, Style.getDefaultStyle());
+
       state.viewPort = this.canvasViewPort;
+      
+      state.directRendering = this.directRenderingMode;
 
       // Push a copy of the state with 'default' style, so that inherit works for top level objects
       stateStack.push((RendererState) state.clone());   // Manual push here - don't use statePush();
@@ -189,9 +200,10 @@ public class SVGAndroidRenderer
    }
 
 
-   public void  renderDocument(SVG document, Box viewBox, AspectRatioAlignment alignment, boolean fitToCanvas)
+   public void  renderDocument(SVG document, Box viewBox, AspectRatioAlignment alignment, boolean fitToCanvas, boolean directRenderingMode)
    {
       this.document = document;
+      this.directRenderingMode = directRenderingMode;
       
       resetState();
 
@@ -383,9 +395,51 @@ public class SVGAndroidRenderer
 
       checkForClipPath(obj);
 
+      boolean  compositing = pushLayer();
+
       for (SVG.SvgObject child: obj.children) {
          render(child);
       }
+
+      if (compositing)
+         popLayer();
+   }
+
+
+   //==============================================================================
+
+
+   private boolean  pushLayer()
+   {
+      if (!state.directRendering)
+         return false;
+      if (!requiresCompositing())
+         return false;
+
+      // Custom version of statePush() that also saves the layer
+      canvas.saveLayerAlpha(state.viewPort.toRectF(), clamp255(state.style.opacity), Canvas.HAS_ALPHA_LAYER_SAVE_FLAG);
+      // Save style state
+      stateStack.push(state);
+      state = (RendererState) state.clone();
+
+      return true;
+   }
+
+
+   private void  popLayer()
+   {
+      if (!state.directRendering)
+         return;
+      if (!requiresCompositing())
+         return;
+
+      statePop();
+   }
+
+
+   private boolean requiresCompositing()
+   {
+      return state.style.opacity < 1.0f;
    }
 
 
@@ -1049,7 +1103,7 @@ public class SVGAndroidRenderer
             if (ref == null)
                return false;
             SVG.Path  pathObj = (SVG.Path) ref;
-            Path      path = (new PathConverter(pathObj.d)).getPath(); //FIXME
+            Path      path = (new PathConverter(pathObj.d)).getPath();
             if (pathObj.transform != null)
                path.transform(pathObj.transform);
             RectF     pathBounds = new RectF();
@@ -1316,12 +1370,31 @@ public class SVGAndroidRenderer
    }
 
 
-   /*
-   private boolean  isInherited(Style style, long flag)
+   // Update the Applied to the current object's style just before we update the current style state.
+   // These are the properties that don't inherit.
+   public void  resetNonInheritingProperties(Style newStyle)
    {
-      return (style.inheritFlags & flag) != 0;
+      // If the incoming style doesn't specify one of the non-inheriting properties,
+      // make sure we supply a default value instead.
+      if (newStyle.display == null)
+         newStyle.display = Boolean.TRUE;
+      if (newStyle.overflow == null)
+         newStyle.overflow = false;
+      if (newStyle.clip == null)
+         newStyle.clip = null;
+      if (newStyle.clipPath == null)
+         newStyle.clipPath = null;
+      if (newStyle.opacity == null)
+         newStyle.opacity = 1f;
+      if (newStyle.stopColor == null)
+         newStyle.stopColor = Colour.BLACK;
+      if (newStyle.stopOpacity == null)
+         newStyle.stopOpacity = 1f;
+      //this.mask  TODO
+      
+      // Set the new styles flags to make sure the state (Paints etc) are correctly updated
+      newStyle.specifiedFlags |= SVG.SPECIFIED_NON_INHERITING; 
    }
-   */
 
 
    /*
@@ -1331,7 +1404,7 @@ public class SVGAndroidRenderer
    private void updateStyle(RendererState state, Style style)
    {
       // Some style attributes don't inherit, so first, lets reset those
-      state.style.resetNonInheritingProperties();
+      resetNonInheritingProperties(style);
 
       // Now update each style property we know about
       if (isSpecified(style, SVG.SPECIFIED_COLOR))
@@ -1601,24 +1674,19 @@ public class SVGAndroidRenderer
    private void  setPaintColour(RendererState state, boolean isFill, SvgPaint paint)
    {
       float  paintOpacity = (isFill) ? state.style.fillOpacity : state.style.strokeOpacity;
-      if (paint instanceof SVG.Colour)
-      {
-         int col = ((SVG.Colour) paint).colour;
-         col = clamp255(paintOpacity * state.style.opacity) << 24 | col;
-         if (isFill)
-            state.fillPaint.setColor(col);
-         else
-            state.strokePaint.setColor(col);
+      int    col;
+      if (paint instanceof SVG.Colour) {
+         col = ((SVG.Colour) paint).colour;
+      } else if (paint instanceof CurrentColor) {
+         col = state.style.color.colour;
+      } else {
+         return;
       }
-      else if (paint instanceof CurrentColor)
-      {
-         int col = state.style.color.colour;
-         col = clamp255(paintOpacity * state.style.opacity) << 24 | col;
-         if (isFill)
-            state.fillPaint.setColor(col);
-         else
-            state.strokePaint.setColor(col);
-      }
+      col = clamp255(paintOpacity * state.style.opacity) << 24 | col;
+      if (isFill)
+         state.fillPaint.setColor(col);
+      else
+         state.strokePaint.setColor(col);
    }
 
 
