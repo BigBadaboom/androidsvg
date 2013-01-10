@@ -17,7 +17,7 @@
        fill="none" stroke="blue" stroke-width="10" />
   <desc>Placing an arrowhead at the end of a path.
   </desc>
-  <path d="M 1000 750 L 2000 750 L 2000 750 L 2500 1250"
+  <path d="M 1000 750 L 2000 750 L 2500 1250"
         fill="none" stroke="black" stroke-width="100" 
         marker-end="url(#Triangle)" />
 </svg>

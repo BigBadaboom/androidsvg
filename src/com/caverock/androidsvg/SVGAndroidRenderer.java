@@ -2200,6 +2200,10 @@ public class SVGAndroidRenderer
       // Calculate units scale
       unitsScale = marker.markerUnitsAreUser ? 1f : state.style.strokeWidth.floatValue(dpi);
 
+      // "Properties inherit into the <marker> element from its ancestors; properties do not
+      // inherit from the element referencing the <marker> element." (sect 11.6.2)
+      state = findInheritFromAncestorState(marker);
+
       Matrix m = new Matrix();
       m.preTranslate(pos.x, pos.y);
       m.preRotate(angle);
@@ -2209,7 +2213,7 @@ public class SVGAndroidRenderer
       float _refY = (marker.refY != null) ? marker.refY.floatValueY(this) : 0f;
       float _markerWidth = (marker.markerWidth != null) ? marker.markerWidth.floatValueX(this) : 3f;
       float _markerHeight = (marker.markerHeight != null) ? marker.markerHeight.floatValueY(this) : 3f;
-      
+
       // We now do a simplified version of calculateViewBoxTransform().  For now we will
       // ignore the alignment setting because refX and refY have to be aligned with the
       // marker position, and alignment would complicate the calculations.
@@ -2278,10 +2282,6 @@ public class SVGAndroidRenderer
       m.preScale(xScale, yScale);
       canvas.concat(m);
 
-      // "Properties inherit into the <marker> element from its ancestors; properties do not
-      // inherit from the element referencing the <marker> element." (sect 11.6.2)
-      state = findInheritFromAncestorState(marker);
-
       boolean  compositing = pushLayer();
 
       for (SVG.SvgObject child: marker.children) {
@@ -2301,7 +2301,9 @@ public class SVGAndroidRenderer
     */
    private RendererState  findInheritFromAncestorState(SvgObject obj)
    {
-      return findInheritFromAncestorState(obj, new RendererState());
+      RendererState newState = new RendererState();
+      updateStyle(newState, Style.getDefaultStyle());
+      return findInheritFromAncestorState(obj, newState);
    }
 
 
@@ -3116,6 +3118,7 @@ public class SVGAndroidRenderer
 
       // Set the style for the pattern (inherits from its own ancestors, not from callee's state)
       RendererState  baseState = new RendererState();
+      updateStyle(baseState, Style.getDefaultStyle());
       baseState.style.overflow = false;    // By default patterns do not overflow
       state = findInheritFromAncestorState(pattern, baseState);
 
