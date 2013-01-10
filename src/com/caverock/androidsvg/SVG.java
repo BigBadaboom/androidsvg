@@ -328,6 +328,33 @@ public class SVG
       }
 
 
+      // Update the Applied to the current object's style just before we update the current style state.
+      // These are the properties that don't inherit.
+      public void  resetNonInheritingProperties()
+      {
+         // If the incoming style doesn't specify one of the non-inheriting properties,
+         // make sure we supply a default value instead.
+         if (this.display == null)
+            this.display = Boolean.TRUE;
+         if (this.overflow == null)
+            this.overflow = false;
+         //if (this.clip == null)
+         //   this.clip = null;
+         //if (this.clipPath == null)
+         //   this.clipPath = null;
+         if (this.opacity == null)
+            this.opacity = 1f;
+         if (this.stopColor == null)
+            this.stopColor = Colour.BLACK;
+         if (this.stopOpacity == null)
+            this.stopOpacity = 1f;
+         //this.mask  TODO
+
+         // Set the new styles flags to make sure the state (Paints etc) are correctly updated
+         this.specifiedFlags |= SVG.SPECIFIED_NON_INHERITING; 
+      }
+
+
       @Override
       protected Object  clone()
       {

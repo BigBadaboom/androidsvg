@@ -97,8 +97,6 @@ public class SVGAndroidRenderer
          strokePaint.setTypeface(Typeface.DEFAULT);
 
          style = Style.getDefaultStyle();
-         // Initialise the style state
- //        updateStyle(this, Style.getDefaultStyle());
       }
 
       @Override
@@ -119,22 +117,6 @@ public class SVGAndroidRenderer
          }
       }
 
-      /*
-      @Override
-      public String toString()
-      {
-         StringBuilder sb = new StringBuilder();
-         sb.append(style); sb.append("\n");
-         sb.append(hasFill); sb.append("\n");
-         sb.append(hasStroke); sb.append("\n");
-         sb.append(fillPaint); sb.append("\n");
-         sb.append(strokePaint); sb.append("\n");
-         sb.append(viewPort); sb.append("\n");
-         sb.append(viewBox); sb.append("\n");
-         return sb.toString();
-      }
-      */
-
    }
 
 
@@ -143,7 +125,7 @@ public class SVGAndroidRenderer
       state = new RendererState();
       stateStack = new Stack<RendererState>();
 
-      // Initialise the style state properties like Paints etc
+      // Initialise the style state properties like Paints etc using a fresh instance of Style
       updateStyle(state, Style.getDefaultStyle());
 
       state.viewPort = this.canvasViewPort;
@@ -375,9 +357,14 @@ public class SVGAndroidRenderer
          canvas.concat(calculateViewBoxTransform(state.viewPort, obj.viewBox, obj.preserveAspectRatioAlignment, obj.preserveAspectRatioSlice));
       }
 
+      boolean  compositing = pushLayer();
+
       for (SVG.SvgObject child: obj.children) {
          render(child);
       }
+
+      if (compositing)
+         popLayer();
    }
 
 
@@ -411,13 +398,12 @@ public class SVGAndroidRenderer
 
    private boolean  pushLayer()
    {
-      if (!state.directRendering)
-         return false;
       if (!requiresCompositing())
          return false;
 
       // Custom version of statePush() that also saves the layer
-      canvas.saveLayerAlpha(state.viewPort.toRectF(), clamp255(state.style.opacity), Canvas.HAS_ALPHA_LAYER_SAVE_FLAG);
+      //canvas.saveLayerAlpha(state.viewPort.toRectF(), clamp255(state.style.opacity), Canvas.HAS_ALPHA_LAYER_SAVE_FLAG); - Doesn't work due to bug in Canvas
+      canvas.saveLayerAlpha(null, clamp255(state.style.opacity), Canvas.HAS_ALPHA_LAYER_SAVE_FLAG);
       // Save style state
       stateStack.push(state);
       state = (RendererState) state.clone();
@@ -428,11 +414,6 @@ public class SVGAndroidRenderer
 
    private void  popLayer()
    {
-      if (!state.directRendering)
-         return;
-      if (!requiresCompositing())
-         return;
-
       statePop();
    }
 
@@ -883,9 +864,14 @@ public class SVGAndroidRenderer
     */
    private void enumerateTextSpans(TextContainer obj, TextProcessor textprocessor)
    {
+      boolean  compositing = pushLayer();
+
       for (SVG.SvgObject child: obj.children) {
          processTextChild(child, textprocessor);
       }
+
+      if (compositing)
+         popLayer();
    }
 
 
@@ -1178,9 +1164,14 @@ public class SVGAndroidRenderer
          canvas.concat(calculateViewBoxTransform(state.viewPort, obj.viewBox, obj.preserveAspectRatioAlignment, obj.preserveAspectRatioSlice));
       }
       
+      boolean  compositing = pushLayer();
+
       for (SVG.SvgObject child: obj.children) {
          render(child);
       }
+
+      if (compositing)
+         popLayer();
    }
 
 
@@ -1370,33 +1361,6 @@ public class SVGAndroidRenderer
    }
 
 
-   // Update the Applied to the current object's style just before we update the current style state.
-   // These are the properties that don't inherit.
-   public void  resetNonInheritingProperties(Style newStyle)
-   {
-      // If the incoming style doesn't specify one of the non-inheriting properties,
-      // make sure we supply a default value instead.
-      if (newStyle.display == null)
-         newStyle.display = Boolean.TRUE;
-      if (newStyle.overflow == null)
-         newStyle.overflow = false;
-      if (newStyle.clip == null)
-         newStyle.clip = null;
-      if (newStyle.clipPath == null)
-         newStyle.clipPath = null;
-      if (newStyle.opacity == null)
-         newStyle.opacity = 1f;
-      if (newStyle.stopColor == null)
-         newStyle.stopColor = Colour.BLACK;
-      if (newStyle.stopOpacity == null)
-         newStyle.stopOpacity = 1f;
-      //this.mask  TODO
-      
-      // Set the new styles flags to make sure the state (Paints etc) are correctly updated
-      newStyle.specifiedFlags |= SVG.SPECIFIED_NON_INHERITING; 
-   }
-
-
    /*
     * Updates the global style state with the style defined by the current object.
     * Will also update the current paints etc where appropriate.
@@ -1404,7 +1368,7 @@ public class SVGAndroidRenderer
    private void updateStyle(RendererState state, Style style)
    {
       // Some style attributes don't inherit, so first, lets reset those
-      resetNonInheritingProperties(style);
+      style.resetNonInheritingProperties();
 
       // Now update each style property we know about
       if (isSpecified(style, SVG.SPECIFIED_COLOR))
@@ -2318,9 +2282,14 @@ public class SVGAndroidRenderer
       // inherit from the element referencing the <marker> element." (sect 11.6.2)
       state = findInheritFromAncestorState(marker);
 
+      boolean  compositing = pushLayer();
+
       for (SVG.SvgObject child: marker.children) {
          render(child);
       }
+
+      if (compositing)
+         popLayer();
 
       statePop();
    }
@@ -2363,6 +2332,9 @@ public class SVGAndroidRenderer
             newState.viewBox = new Box(0, 0, w, h);
          } catch (NullPointerException e) { /* ignored */ }
       }
+
+      // May also need a base viewport
+      newState.viewPort = this.canvasViewPort;
 
       return newState;
    }
@@ -3208,10 +3180,17 @@ public class SVGAndroidRenderer
                   canvas.scale(obj.boundingBox.width, obj.boundingBox.height);
                }
             }
+
+            boolean  compositing = pushLayer();
+
             // Render the pattern
             for (SVG.SvgObject child: pattern.children) {
                render(child);
             }
+
+            if (compositing)
+               popLayer();
+
             // Pop the state
             statePop();
          }

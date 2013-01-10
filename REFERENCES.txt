@@ -11,3 +11,11 @@ https://github.com/TrevorPage/TPSVG_Android_SVG_Library (May 2012 - May 2012 - T
 
 Official SVG Test Suite
 http://www.w3.org/Graphics/SVG/WG/wiki/Test_Suite_Overview
+
+
+
+
+
+
+http://code.google.com/p/androidsvg/
+
