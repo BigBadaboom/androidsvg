@@ -335,8 +335,6 @@ public class SVGAndroidRenderer
 
       updateStyle(state, obj.style);
 
-      state.viewBox = obj.viewBox;
-
       // <svg> elements establish a new viewport.
       // But in the case of the root element, it has already been done for us.
       if (obj.parent != null)
@@ -355,6 +353,7 @@ public class SVGAndroidRenderer
 
       if (obj.viewBox != null) {
          canvas.concat(calculateViewBoxTransform(state.viewPort, obj.viewBox, obj.preserveAspectRatioAlignment, obj.preserveAspectRatioSlice));
+         state.viewBox = obj.viewBox;
       }
 
       boolean  compositing = pushLayer();
@@ -402,8 +401,13 @@ public class SVGAndroidRenderer
          return false;
 
       // Custom version of statePush() that also saves the layer
-      //canvas.saveLayerAlpha(state.viewPort.toRectF(), clamp255(state.style.opacity), Canvas.HAS_ALPHA_LAYER_SAVE_FLAG); - Doesn't work due to bug in Canvas
-      canvas.saveLayerAlpha(null, clamp255(state.style.opacity), Canvas.HAS_ALPHA_LAYER_SAVE_FLAG);
+      if (state.style.overflow) {
+         // If overflow allowed, then save the whole layer
+         canvas.saveLayerAlpha(null, clamp255(state.style.opacity), Canvas.HAS_ALPHA_LAYER_SAVE_FLAG);
+      } else {
+         // Just save the current viewport to save memory
+         canvas.saveLayerAlpha(getCurrentViewPortInUserUnits().toRectF(), clamp255(state.style.opacity), Canvas.HAS_ALPHA_LAYER_SAVE_FLAG);
+      }
       // Save style state
       stateStack.push(state);
       state = (RendererState) state.clone();
@@ -1150,8 +1154,6 @@ public class SVGAndroidRenderer
 
       updateStyle(state, obj.style);
 
-      state.viewBox = obj.viewBox;
-
       float  _w = (width != null) ? width.floatValueX(this) : state.viewPort.width;
       float  _h = (height != null) ? height.floatValueX(this) : state.viewPort.height;
       state.viewPort = new SVG.Box(0, 0, _w, _h);
@@ -1162,6 +1164,7 @@ public class SVGAndroidRenderer
 
       if (obj.viewBox != null) {
          canvas.concat(calculateViewBoxTransform(state.viewPort, obj.viewBox, obj.preserveAspectRatioAlignment, obj.preserveAspectRatioSlice));
+         state.viewBox = obj.viewBox;
       }
       
       boolean  compositing = pushLayer();
