@@ -195,12 +195,13 @@ public class SVG
    public static final long SPECIFIED_STOP_OPACITY      = (1<<27);
    public static final long SPECIFIED_CLIP_PATH         = (1<<28);
    public static final long SPECIFIED_CLIP_RULE         = (1<<29);
+   public static final long SPECIFIED_MASK              = (1<<30);
 
    public static final long SPECIFIED_ALL = 0xffffffff;
 
    public static final long SPECIFIED_NON_INHERITING = SPECIFIED_DISPLAY | SPECIFIED_OVERFLOW | SPECIFIED_CLIP
                                                        | SPECIFIED_CLIP_PATH | SPECIFIED_OPACITY | SPECIFIED_STOP_COLOR
-                                                       | SPECIFIED_STOP_OPACITY;
+                                                       | SPECIFIED_STOP_OPACITY | SPECIFIED_MASK;
 
    public static class  Style implements Cloneable
    {
@@ -247,6 +248,8 @@ public class SVG
 
       public String     clipPath;
       public FillRule   clipRule;
+
+      public String     mask;
 
 
       public static final int  FONT_WEIGHT_NORMAL = 400;
@@ -324,6 +327,7 @@ public class SVG
          def.stopOpacity = 1f;
          def.clipPath = null;
          def.clipRule = FillRule.NonZero;
+         def.mask = null;
          return def;
       }
 
@@ -348,7 +352,8 @@ public class SVG
             this.stopColor = Colour.BLACK;
          if (this.stopOpacity == null)
             this.stopOpacity = 1f;
-         //this.mask  TODO
+         //if (this.mask == null)
+         //   this.mask = null;
 
          // Set the new styles flags to make sure the state (Paints etc) are correctly updated
          this.specifiedFlags |= SVG.SPECIFIED_NON_INHERITING; 
@@ -1024,6 +1029,17 @@ public class SVG
 
    protected static class View extends SvgViewBoxContainer
    {
+   }
+
+
+   protected static class Mask extends SvgConditionalContainer
+   {
+      public Boolean  maskUnitsAreUser;
+      public Boolean  maskContentUnitsAreUser;
+      public Length   x;
+      public Length   y;
+      public Length   width;
+      public Length   height;
    }
 
 

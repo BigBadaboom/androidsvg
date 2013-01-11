@@ -79,6 +79,7 @@ public class SVGParser extends DefaultHandler
    private static final String  TAG_LINE           = "line";
    private static final String  TAG_LINEARGRADIENT = "linearGradient";
    private static final String  TAG_MARKER         = "marker";
+   private static final String  TAG_MASK           = "mask";
    private static final String  TAG_PATH           = "path";
    private static final String  TAG_PATTERN        = "pattern";
    private static final String  TAG_POLYGON        = "polygon";
@@ -179,12 +180,10 @@ public class SVGParser extends DefaultHandler
       href,
       id,
       marker,
-      marker_start,
-      marker_mid,
-      marker_end,
-      markerHeight,
-      markerUnits,
-      markerWidth,
+      marker_start, marker_mid, marker_end,
+      markerHeight, markerUnits, markerWidth,
+      mask,
+      maskContentUnits, maskUnits,
       offset,
       opacity,
       orient,
@@ -475,7 +474,7 @@ public class SVGParser extends DefaultHandler
       supportedFeatures.add("Pattern");                     // YES
       supportedFeatures.add("Clip");                        // YES
       supportedFeatures.add("BasicClip");                   // YES
-      //supportedFeatures.add("Mask");                      // NO?
+      //supportedFeatures.add("Mask");                      // NYI FIXME
       //supportedFeatures.add("Filter");                    // NO
       //supportedFeatures.add("BasicFilter");               // NO
       //supportedFeatures.add("DocumentEventsAttribute");   // NO
@@ -619,6 +618,8 @@ public class SVGParser extends DefaultHandler
          image(attributes);
       } else if (localName.equalsIgnoreCase(TAG_VIEW)) {
          view(attributes);
+      } else if (localName.equalsIgnoreCase(TAG_MASK)) {
+         mask(attributes);
       } else {
          ignoring = true;
          ignoreDepth = 1;
@@ -704,7 +705,8 @@ public class SVGParser extends DefaultHandler
           localName.equalsIgnoreCase(TAG_CLIPPATH) ||
           localName.equalsIgnoreCase(TAG_TEXTPATH) ||
           localName.equalsIgnoreCase(TAG_PATTERN) ||
-          localName.equalsIgnoreCase(TAG_VIEW)) {
+          localName.equalsIgnoreCase(TAG_VIEW) ||
+          localName.equalsIgnoreCase(TAG_MASK)) {
          currentElement = ((SvgObject) currentElement).parent;
       }
 
@@ -1955,7 +1957,7 @@ dumpNode(svgDocument.getRootElement(), "");
 
    private void pattern(Attributes attributes) throws SAXException
    {
-/**/Log.d(TAG, "<textPath>");
+/**/Log.d(TAG, "<pattern>");
       if (currentElement == null)
          throw new SAXException("Invalid document. Root element must be <svg>");
       SVG.Pattern  obj = new SVG.Pattern();
@@ -1984,7 +1986,7 @@ dumpNode(svgDocument.getRootElement(), "");
                } else if ("userSpaceOnUse".equals(val)) {
                   obj.patternUnitsAreUser = true;
                } else {
-                  throw new SAXException("Invalid value for attribute gradientUnits");
+                  throw new SAXException("Invalid value for attribute patternUnits");
                } 
                break;
             case patternContentUnits:
@@ -1993,7 +1995,7 @@ dumpNode(svgDocument.getRootElement(), "");
                } else if ("userSpaceOnUse".equals(val)) {
                   obj.patternContentUnitsAreUser = true;
                } else {
-                  throw new SAXException("Invalid value for attribute gradientUnits");
+                  throw new SAXException("Invalid value for attribute patternContentUnits");
                } 
                break;
             case patternTransform:
@@ -2008,12 +2010,12 @@ dumpNode(svgDocument.getRootElement(), "");
             case width:
                obj.width = parseLength(val);
                if (obj.width.isNegative())
-                  throw new SAXException("Invalid <rect> element. width cannot be negative");
+                  throw new SAXException("Invalid <pattern> element. width cannot be negative");
                break;
             case height:
                obj.height = parseLength(val);
                if (obj.height.isNegative())
-                  throw new SAXException("Invalid <rect> element. height cannot be negative");
+                  throw new SAXException("Invalid <pattern> element. height cannot be negative");
                break;
             case href:
                if (!XLINK_NAMESPACE.equals(attributes.getURI(i)))
@@ -2047,6 +2049,75 @@ dumpNode(svgDocument.getRootElement(), "");
    }
 
    
+   //=========================================================================
+   // <pattern> element
+
+
+   private void mask(Attributes attributes) throws SAXException
+   {
+/**/Log.d(TAG, "<mask>");
+      if (currentElement == null)
+         throw new SAXException("Invalid document. Root element must be <svg>");
+      SVG.Mask  obj = new SVG.Mask();
+      obj.document = svgDocument;
+      obj.parent = currentElement;
+      parseAttributesCore(obj, attributes);
+      parseAttributesStyle(obj, attributes);
+      parseAttributesConditional(obj, attributes);
+      parseAttributesMask(obj, attributes);
+      currentElement.addChild(obj);
+      currentElement = obj;
+   }
+
+
+   private void  parseAttributesMask(SVG.Mask obj, Attributes attributes) throws SAXException
+   {
+      for (int i=0; i<attributes.getLength(); i++)
+      {
+         String val = attributes.getValue(i).trim();
+         switch (SVGAttr.fromString(attributes.getLocalName(i)))
+         {
+            case maskUnits:
+               if ("objectBoundingBox".equals(val)) {
+                  obj.maskUnitsAreUser = false;
+               } else if ("userSpaceOnUse".equals(val)) {
+                  obj.maskUnitsAreUser = true;
+               } else {
+                  throw new SAXException("Invalid value for attribute maskUnits");
+               } 
+               break;
+            case maskContentUnits:
+               if ("objectBoundingBox".equals(val)) {
+                  obj.maskContentUnitsAreUser = false;
+               } else if ("userSpaceOnUse".equals(val)) {
+                  obj.maskContentUnitsAreUser = true;
+               } else {
+                  throw new SAXException("Invalid value for attribute maskContentUnits");
+               } 
+               break;
+            case x:
+               obj.x = parseLength(val);
+               break;
+            case y:
+               obj.y = parseLength(val);
+               break;
+            case width:
+               obj.width = parseLength(val);
+               if (obj.width.isNegative())
+                  throw new SAXException("Invalid <mask> element. width cannot be negative");
+               break;
+            case height:
+               obj.height = parseLength(val);
+               if (obj.height.isNegative())
+                  throw new SAXException("Invalid <mask> element. height cannot be negative");
+               break;
+            default:
+               break;
+         }
+      }
+   }
+
+
    //=========================================================================
    // String tokeniser
    //=========================================================================
@@ -2487,96 +2558,57 @@ dumpNode(svgDocument.getRootElement(), "");
       if (val.length() == 0) { // The spec doesn't say how to handle empty style attributes.
          return;               // Our strategy is just to ignore them.
       }
-      boolean  inherit = val.equals("inherit");
+      if (val.equals("inherit"))
+         return;
 
       switch (SVGAttr.fromString(localName))
       {
          case fill:
-            if (inherit) {
-               //setInherit(obj, SVG.SPECIFIED_FILL);
-               break;
-            }
             obj.style.fill = parsePaintSpecifier(val, "fill");
             obj.style.specifiedFlags |= SVG.SPECIFIED_FILL;
             break;
 
          case fill_rule:
-            if (inherit) {
-               //setInherit(obj, SVG.SPECIFIED_FILL_RULE);
-               break;
-            }
             obj.style.fillRule = parseFillRule(val);
             obj.style.specifiedFlags |= SVG.SPECIFIED_FILL_RULE;
             break;
 
          case fill_opacity:
-            if (inherit) {
-               //setInherit(obj, SVG.SPECIFIED_FILL_OPACITY);
-               break;
-            }
             obj.style.fillOpacity = parseFloat(val);
             obj.style.specifiedFlags |= SVG.SPECIFIED_FILL_OPACITY;
             break;
 
          case stroke:
-            if (inherit) {
-               //setInherit(obj, SVG.SPECIFIED_STROKE);
-               break;
-            }
             obj.style.stroke = parsePaintSpecifier(val, "stroke");
             obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE;
             break;
 
          case stroke_opacity:
-            if (inherit) {
-               //setInherit(obj, SVG.SPECIFIED_STROKE_OPACITY);
-               break;
-            }
             obj.style.strokeOpacity = parseFloat(val);
             obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE_OPACITY;
             break;
 
          case stroke_width:
-            if (inherit) {
-               //setInherit(obj, SVG.SPECIFIED_STROKE_WIDTH);
-               break;
-            }
             obj.style.strokeWidth = parseLength(val);
             obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE_WIDTH;
             break;
 
          case stroke_linecap:
-            if (inherit) {
-               //setInherit(obj, SVG.SPECIFIED_STROKE_LINECAP);
-               break;
-            }
             obj.style.strokeLineCap = parseStrokeLineCap(val);
             obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE_LINECAP;
             break;
 
          case stroke_linejoin:
-            if (inherit) {
-               //setInherit(obj, SVG.SPECIFIED_STROKE_LINEJOIN);
-               break;
-            }
             obj.style.strokeLineJoin = parseStrokeLineJoin(val);
             obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE_LINEJOIN;
             break;
 
          case stroke_miterlimit:
-            if (inherit) {
-               //setInherit(obj, SVG.SPECIFIED_STROKE_MITERLIMIT);
-               break;
-            }
             obj.style.strokeMiterLimit = parseFloat(val);
             obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE_MITERLIMIT;
             break;
 
          case stroke_dasharray:
-            if (inherit) {
-               //setInherit(obj, SVG.SPECIFIED_STROKE_DASHARRAY);
-               break;
-            }
             if (NONE.equals(val))
                obj.style.strokeDashArray = null;
             else
@@ -2585,100 +2617,56 @@ dumpNode(svgDocument.getRootElement(), "");
             break;
 
          case stroke_dashoffset:
-            if (inherit) {
-               //setInherit(obj, SVG.SPECIFIED_STROKE_DASHOFFSET);
-               break;
-            }
             obj.style.strokeDashOffset = parseLength(val);
             obj.style.specifiedFlags |= SVG.SPECIFIED_STROKE_DASHOFFSET;
             break;
 
          case opacity:
-            if (inherit) {
-               //setInherit(obj, SVG.SPECIFIED_OPACITY);
-               break;
-            }
             obj.style.opacity = parseFloat(val);
             obj.style.specifiedFlags |= SVG.SPECIFIED_OPACITY;
             break;
 
          case color:
-            if (inherit) {
-               //setInherit(obj, SVG.SPECIFIED_COLOR);
-               break;
-            }
             obj.style.color = parseColour(val);
             obj.style.specifiedFlags |= SVG.SPECIFIED_COLOR;
             break;
 
          case font_family:
-            if (inherit) {
-               //setInherit(obj, SVG.SPECIFIED_FONT_FAMILY);
-               break;
-            }
             obj.style.fontFamily = parseFontFamily(val);
             obj.style.specifiedFlags |= SVG.SPECIFIED_FONT_FAMILY;
             break;
 
          case font_size:
-            if (inherit) {
-               //setInherit(obj, SVG.SPECIFIED_FONT_SIZE);
-               break;
-            }
             obj.style.fontSize = parseFontSize(val);
             obj.style.specifiedFlags |= SVG.SPECIFIED_FONT_SIZE;
             break;
 
          case font_weight:
-            if (inherit) {
-               //setInherit(obj, SVG.SPECIFIED_FONT_WEIGHT);
-               break;
-            }
             obj.style.fontWeight = parseFontWeight(val);
             obj.style.specifiedFlags |= SVG.SPECIFIED_FONT_WEIGHT;
             break;
 
          case font_style:
-            if (inherit) {
-               //setInherit(obj, SVG.SPECIFIED_FONT_obj.style);
-               break;
-            }
             obj.style.fontStyle = parseFontStyle(val);
             obj.style.specifiedFlags |= SVG.SPECIFIED_FONT_STYLE;
             break;
 
          case text_decoration:
-            if (inherit) {
-               //setInherit(obj, SVG.SPECIFIED_TEXT_DECORATION);
-               break;
-            }
             obj.style.textDecoration = parseTextDecoration(val);
             obj.style.specifiedFlags |= SVG.SPECIFIED_TEXT_DECORATION;
             break;
 
          case text_anchor:
-            if (inherit) {
-               //setInherit(obj, SVG.SPECIFIED_TEXT_ANCHOR);
-               break;
-            }
             obj.style.textAnchor = parseTextAnchor(val);
             obj.style.specifiedFlags |= SVG.SPECIFIED_TEXT_ANCHOR;
             break;
 
          case overflow:
-            if (inherit) {
-               //setInherit(obj, SVG.SPECIFIED_OVERFLOW);
-               break;
-            }
             obj.style.overflow = parseOverflow(val);
             obj.style.specifiedFlags |= SVG.SPECIFIED_OVERFLOW;
             break;
 
          case marker:
-            if (inherit) {
-               //setInherit(obj, SVG.SPECIFIED_MARKER_START | SVG.SPECIFIED_MARKER_MID | SVG.SPECIFIED_MARKER_END);
-               break;
-            }
             obj.style.markerStart = parseFunctionalIRI(val, localName);
             obj.style.markerMid = obj.style.markerStart;
             obj.style.markerEnd = obj.style.markerStart;
@@ -2686,37 +2674,21 @@ dumpNode(svgDocument.getRootElement(), "");
             break;
 
          case marker_start:
-            if (inherit) {
-               //setInherit(obj, SVG.SPECIFIED_MARKER_START);
-               break;
-            }
             obj.style.markerStart = parseFunctionalIRI(val, localName);
             obj.style.specifiedFlags |= SVG.SPECIFIED_MARKER_START;
             break;
 
          case marker_mid:
-            if (inherit) {
-               //setInherit(obj, SVG.SPECIFIED_MARKER_MID);
-               break;
-            }
             obj.style.markerMid = parseFunctionalIRI(val, localName);
             obj.style.specifiedFlags |= SVG.SPECIFIED_MARKER_MID;
             break;
 
          case marker_end:
-            if (inherit) {
-               //setInherit(obj, SVG.SPECIFIED_MARKER_END);
-               break;
-            }
             obj.style.markerEnd = parseFunctionalIRI(val, localName);
             obj.style.specifiedFlags |= SVG.SPECIFIED_MARKER_END;
             break;
 
          case display:
-            if (inherit) {
-               //setInherit(obj, SVG.SPECIFIED_DISPLAY);
-               break;
-            }
             if (val.indexOf('|') >= 0 || (VALID_DISPLAY_VALUES.indexOf('|'+val+'|') == -1))
                throw new SAXException("Invalid value for \"display\" attribute: "+val);
             obj.style.display = !val.equals(NONE);
@@ -2724,10 +2696,6 @@ dumpNode(svgDocument.getRootElement(), "");
             break;
 
          case visibility:
-            if (inherit) {
-               //setInherit(obj, SVG.SPECIFIED_VISIBILITY);
-               break;
-            }
             if (val.indexOf('|') >= 0 || (VALID_VISIBILITY_VALUES.indexOf('|'+val+'|') == -1))
                throw new SAXException("Invalid value for \"visibility\" attribute: "+val);
             obj.style.visibility = val.equals("visible");
@@ -2735,10 +2703,6 @@ dumpNode(svgDocument.getRootElement(), "");
             break;
 
          case stop_color:
-            if (inherit) {
-               //setInherit(obj, SVG.SPECIFIED_STOP_COLOR);
-               break;
-            }
             if (val.equals(CURRENTCOLOR)) {
                obj.style.stopColor = CurrentColor.getInstance();
             } else {
@@ -2748,39 +2712,28 @@ dumpNode(svgDocument.getRootElement(), "");
             break;
 
          case stop_opacity:
-            if (inherit) {
-               //setInherit(obj, SVG.SPECIFIED_STOP_OPACITY);
-               break;
-            }
             obj.style.stopOpacity = parseFloat(val);
             obj.style.specifiedFlags |= SVG.SPECIFIED_STOP_OPACITY;
             break;
 
          case clip:
-            if (inherit) {
-               //setInherit(obj, SVG.SPECIFIED_CLIP);
-               break;
-            }
             obj.style.clip = parseClip(val);
             obj.style.specifiedFlags |= SVG.SPECIFIED_CLIP;
             break;
 
          case clip_path:
-            if (inherit) {
-               //setInherit(obj, SVG.SPECIFIED_CLIP_PATH);
-               break;
-            }
             obj.style.clipPath = parseFunctionalIRI(val, localName);
             obj.style.specifiedFlags |= SVG.SPECIFIED_CLIP_PATH;
             break;
 
          case clip_rule:
-            if (inherit) {
-               //setInherit(obj, SVG.SPECIFIED_CLIP_RULE);
-               break;
-            }
             obj.style.clipRule = parseFillRule(val);
             obj.style.specifiedFlags |= SVG.SPECIFIED_CLIP_RULE;
+            break;
+
+         case mask:
+            obj.style.mask = parseFunctionalIRI(val, localName);
+            obj.style.specifiedFlags |= SVG.SPECIFIED_MASK;
             break;
 
          default:

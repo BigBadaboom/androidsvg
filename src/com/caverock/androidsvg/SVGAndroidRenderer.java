@@ -55,7 +55,7 @@ public class SVGAndroidRenderer
 
    private Canvas   canvas;
    private Box      canvasViewPort;
-   private float    dpi = 160;    // dots per inch. Needed for accurate conversion of length values that have real world units, such as "cm".
+   private float    dpi;    // dots per inch. Needed for accurate conversion of length values that have real world units, such as "cm".
    private boolean  directRenderingMode;
 
    // Renderer state
