@@ -19,6 +19,7 @@ import android.graphics.RadialGradient;
 import android.graphics.RectF;
 import android.graphics.Shader.TileMode;
 import android.graphics.Typeface;
+import android.os.SystemClock;
 import android.util.Base64;
 import android.util.Log;
 
@@ -63,8 +64,17 @@ public class SVGAndroidRenderer
    private RendererState        state;
    private Stack<RendererState> stateStack;  // Keeps track of render state as we render
 
+   // Canvas stack for when we are processing mask elements
+   private Stack<Canvas>  canvasStack;
+   private Stack<Bitmap>  bitmapStack;
+
 
    private static final float  BEZIER_ARC_FACTOR = 0.5522847498f;
+
+   // The feColorMatrix liminance-to-alpha corefficient. Used for <mask>s.
+   private static final float  LUMINANCE_TO_ALPHA_RED = 0.2125f;
+   private static final float  LUMINANCE_TO_ALPHA_GREEN = 0.7154f;
+   private static final float  LUMINANCE_TO_ALPHA_BLUE = 0.0721f;
 
 
    private class RendererState implements Cloneable
@@ -134,6 +144,10 @@ public class SVGAndroidRenderer
 
       // Push a copy of the state with 'default' style, so that inherit works for top level objects
       stateStack.push((RendererState) state.clone());   // Manual push here - don't use statePush();
+
+      // Initialise the stacks used for mask handling
+      canvasStack = new Stack<Canvas>();
+      bitmapStack = new Stack<Bitmap>();
    }
 
 
@@ -257,9 +271,11 @@ public class SVGAndroidRenderer
          // do nothing
       } else if (obj instanceof SVG.Marker) {
          // do nothing
-      }else if (obj instanceof SVG.Pattern) {
+      } else if (obj instanceof SVG.Pattern) {
          // do nothing
-      }else if (obj instanceof SVG.View) {
+      } else if (obj instanceof SVG.View) {
+         // do nothing
+      } else if (obj instanceof SVG.Mask) {
          // do nothing
       }
 
@@ -363,7 +379,7 @@ public class SVGAndroidRenderer
       }
 
       if (compositing)
-         popLayer();
+         popLayer(obj);
    }
 
 
@@ -388,7 +404,7 @@ public class SVGAndroidRenderer
       }
 
       if (compositing)
-         popLayer();
+         popLayer(obj);
    }
 
 
@@ -412,19 +428,105 @@ public class SVGAndroidRenderer
       stateStack.push(state);
       state = (RendererState) state.clone();
 
+      if (state.style.mask != null && state.directRendering) {
+/**/Log.w(TAG,"Mask");
+         SVG.SvgObject  ref = document.resolveIRI(state.style.mask);
+         // Check the we are refernecing a mask element
+         if (ref == null || !(ref instanceof SVG.Mask)) {
+            // This is an invalid mask reference - disable this object's mask
+            state.style.mask = null;
+            return true;
+         }
+         // We now need to replace the canvas with one onto which we draw the content that is getting masked
+         canvasStack.push(canvas);
+         duplicateCanvas();
+         // FIXME canvas.save()?
+      }
+
       return true;
    }
 
 
-   private void  popLayer()
+   private void  popLayer(SvgElement obj)
    {
+      // If this is masked content, apply the mask now
+      if (state.style.mask != null && state.directRendering) {
+         // FIXME canvas.restore()?
+         // The masked content has been drawn, now we have to render the mask to a separate canvas
+         SVG.SvgObject  ref = document.resolveIRI(state.style.mask);
+         duplicateCanvas();
+         render((SVG.Mask) ref, obj);
+         
+         Bitmap  maskedContent = processMaskBitmaps();
+         
+         // Retrieve the real canvas
+         canvas = canvasStack.pop();
+         canvas.save();
+         // Reset the canvas matrix so that we can draw the maskedContent exactly over the top of the root bitmap
+         canvas.setMatrix(new Matrix());
+         canvas.drawBitmap(maskedContent, 0, 0, state.fillPaint);
+         maskedContent.recycle();
+         canvas.restore();
+      }
+
       statePop();
    }
 
 
    private boolean requiresCompositing()
    {
-      return state.style.opacity < 1.0f;
+      return (state.style.opacity < 1.0f) ||
+             (state.style.mask != null && state.directRendering);
+   }
+
+
+   private void duplicateCanvas()
+   {
+      Bitmap  newBM = Bitmap.createBitmap(canvas.getWidth(), canvas.getHeight(), Bitmap.Config.ARGB_8888);
+      bitmapStack.push(newBM);
+      Canvas  newCanvas = new Canvas(newBM);
+      newCanvas.setMatrix(canvas.getMatrix());
+      canvas = newCanvas;
+   }
+
+
+   private Bitmap  processMaskBitmaps()
+   {
+/**/Log.w(TAG,"processing alpha");  long time = SystemClock.elapsedRealtime();
+      // Retrieve the rendered mask
+      Bitmap  mask = bitmapStack.pop();
+      // Retrieve the rendered content to which the mask is to be applied
+      Bitmap  maskedContent = bitmapStack.pop();
+      // Convert the mask bitmap to an alpha channel and multiply it to the content
+      int    w = mask.getWidth();
+      int    h = mask.getHeight();
+      int[]  maskBuf = new int[w];
+      int[]  maskedContentBuf = new int[w];
+      for (int y=0; y<h; y++)
+      {
+         mask.getPixels(maskBuf, 0, w, 0, y, w, 1);
+         maskedContent.getPixels(maskedContentBuf, 0, w, 0, y, w, 1);
+         for (int x=0; x<w; x++)
+         {
+            int  px = maskBuf[x];
+//if (px != 0) Log.w(TAG,String.format("px = %x",  px));
+            int  b = px & 0xff; px >>= 8;
+            int  g = px & 0xff; px >>= 8;
+            int  r = px & 0xff; px >>= 8;
+            int  a = px & 0xff;
+//if (x == 20) Log.w(TAG,String.format("rgba = %d %d %d %d",  r,g,b,a));
+            int  maskAlpha = (int)((r * LUMINANCE_TO_ALPHA_RED + g * LUMINANCE_TO_ALPHA_GREEN + b * LUMINANCE_TO_ALPHA_BLUE) * a / 255);
+//if (x == 20) Log.w(TAG,String.format("alpha = %d",  maskAlpha));
+            int  content = maskedContentBuf[x];
+            int  contentAlpha = (content >> 24) & 0xff;
+            contentAlpha = (contentAlpha * maskAlpha) / 255;
+            maskedContentBuf[x] = (content & 0x00ffffff) | (contentAlpha << 24);
+         }
+         maskedContent.setPixels(maskedContentBuf, 0, w, 0, y, w, 1);
+      }
+      mask.recycle();
+/**/Log.w(TAG,"processing alpha time = "+(SystemClock.elapsedRealtime()-time));
+      return maskedContent;
    }
 
 
@@ -534,11 +636,15 @@ public class SVGAndroidRenderer
       checkForGradiantsAndPatterns(obj);      
       checkForClipPath(obj);
 
+      boolean  compositing = pushLayer();
+
       if (state.hasFill)
          doFilledPath(obj, path, state.fillPaint);
       if (state.hasStroke)
          canvas.drawPath(path, state.strokePaint);
 
+      if (compositing)
+         popLayer(obj);
    }
 
 
@@ -875,7 +981,7 @@ public class SVGAndroidRenderer
       }
 
       if (compositing)
-         popLayer();
+         popLayer(obj);
    }
 
 
@@ -1174,7 +1280,7 @@ public class SVGAndroidRenderer
       }
 
       if (compositing)
-         popLayer();
+         popLayer(obj);
    }
 
 
@@ -1633,6 +1739,11 @@ public class SVGAndroidRenderer
       if (isSpecified(style, SVG.SPECIFIED_CLIP_RULE))
       {
          state.style.clipRule = style.clipRule;
+      }
+
+      if (isSpecified(style, SVG.SPECIFIED_MASK))
+      {
+         state.style.mask = style.mask;
       }
 
    }
@@ -2292,7 +2403,7 @@ public class SVGAndroidRenderer
       }
 
       if (compositing)
-         popLayer();
+         popLayer(marker);
 
       statePop();
    }
@@ -3195,7 +3306,7 @@ public class SVGAndroidRenderer
             }
 
             if (compositing)
-               popLayer();
+               popLayer(pattern);
 
             // Pop the state
             statePop();
@@ -3255,6 +3366,73 @@ public class SVGAndroidRenderer
 
       if (pRef.href != null)
          fillInChainedPatternFields(pattern, pRef.href);
+   }
+
+
+   //==============================================================================
+   // Masks
+   //==============================================================================
+
+
+   /*
+    * Render the contents of a mask element.
+    */
+   private void  render(SVG.Mask mask, SvgElement obj)
+   {
+/**/Log.w(TAG,"Mask render");
+      boolean      maskUnitsAreUser = (mask.maskUnitsAreUser != null && mask.maskUnitsAreUser);
+      float        x, y, w, h;
+
+      if (maskUnitsAreUser)
+      {
+         w = (mask.width != null) ? mask.width.floatValueX(this): obj.boundingBox.width;
+         h = (mask.height != null) ? mask.height.floatValueY(this): obj.boundingBox.height;
+         x = (mask.x != null) ? mask.x.floatValueX(this): (float)(obj.boundingBox.minX - 0.1 * obj.boundingBox.width);
+         y = (mask.y != null) ? mask.y.floatValueY(this): (float)(obj.boundingBox.minY - 0.1 * obj.boundingBox.height);
+      }
+      else
+      {
+         // Convert objectBoundingBox space to user space
+         x = (mask.x != null) ? mask.x.floatValue(this, 1f): -0.1f;
+         y = (mask.y != null) ? mask.y.floatValue(this, 1f): -0.1f;
+         w = (mask.width != null) ? mask.width.floatValue(this, 1f): 1.2f;
+         h = (mask.height != null) ? mask.height.floatValue(this, 1f): 1.2f;
+         x = obj.boundingBox.minX + x * obj.boundingBox.width;
+         y = obj.boundingBox.minY + y * obj.boundingBox.height;
+         w *= obj.boundingBox.width;
+         h *= obj.boundingBox.height;
+      }
+      if (w == 0 || h == 0)
+         return;
+
+      // Push the state
+      statePush();
+
+      // Set the style for the pattern (inherits from its own ancestors, not from callee's state)
+      state = findInheritFromAncestorState(mask);
+      // The 'opacity', 'filter' and 'display' properties do not apply to the 'mask' element" (sect 14.4)
+      state.style.opacity = 1f;
+      //state.style.filter = null;
+
+      boolean  maskContentUnitsAreUser = (mask.maskContentUnitsAreUser == null || mask.maskContentUnitsAreUser);
+      // Simple translate of pattern to step position
+      canvas.translate(x, y);
+      if (!maskContentUnitsAreUser) {
+         canvas.scale(w, h);
+      }
+
+      //boolean  compositing = pushLayer();
+
+      // Render the pattern
+      for (SVG.SvgObject child: mask.children) {
+         render(child);
+      }
+
+      //if (compositing)
+      //   popLayer();
+
+      // Pop the state
+      statePop();
    }
 
 
