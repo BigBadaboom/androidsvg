@@ -72,9 +72,11 @@ public class SVGAndroidRenderer
    private static final float  BEZIER_ARC_FACTOR = 0.5522847498f;
 
    // The feColorMatrix liminance-to-alpha corefficient. Used for <mask>s.
-   private static final float  LUMINANCE_TO_ALPHA_RED = 0.2125f;
-   private static final float  LUMINANCE_TO_ALPHA_GREEN = 0.7154f;
-   private static final float  LUMINANCE_TO_ALPHA_BLUE = 0.0721f;
+   // Using integer arithmetic for a little extra speed.
+   private static final int  LUMINANCE_FACTOR_SHIFT = 15;
+   private static final int  LUMINANCE_TO_ALPHA_RED = (int)(0.2125f * (1 << LUMINANCE_FACTOR_SHIFT));
+   private static final int  LUMINANCE_TO_ALPHA_GREEN = (int)(0.7154f * (1 << LUMINANCE_FACTOR_SHIFT));
+   private static final int  LUMINANCE_TO_ALPHA_BLUE = (int)(0.0721f * (1 << LUMINANCE_FACTOR_SHIFT));
 
 
    private class RendererState implements Cloneable
@@ -498,10 +500,13 @@ public class SVGAndroidRenderer
       // Retrieve the rendered content to which the mask is to be applied
       Bitmap  maskedContent = bitmapStack.pop();
       // Convert the mask bitmap to an alpha channel and multiply it to the content
+      // We will process the bitmaps in a row-wise fashion to save memory.
+      // It doesn't seem to be be significantly slower than doing it all at once.
       int    w = mask.getWidth();
       int    h = mask.getHeight();
       int[]  maskBuf = new int[w];
       int[]  maskedContentBuf = new int[w];
+boolean foo = true;
       for (int y=0; y<h; y++)
       {
          mask.getPixels(maskBuf, 0, w, 0, y, w, 1);
@@ -509,18 +514,33 @@ public class SVGAndroidRenderer
          for (int x=0; x<w; x++)
          {
             int  px = maskBuf[x];
-//if (px != 0) Log.w(TAG,String.format("px = %x",  px));
+//if (foo && px!=0) {Log.w(TAG, "pixpos="+x+","+y); foo=false;}
+//if (x==0 && px != 0) Log.w(TAG,String.format("px = %x",  px));
             int  b = px & 0xff; px >>= 8;
             int  g = px & 0xff; px >>= 8;
             int  r = px & 0xff; px >>= 8;
             int  a = px & 0xff;
+//a=255;
 //if (x == 20) Log.w(TAG,String.format("rgba = %d %d %d %d",  r,g,b,a));
-            int  maskAlpha = (int)((r * LUMINANCE_TO_ALPHA_RED + g * LUMINANCE_TO_ALPHA_GREEN + b * LUMINANCE_TO_ALPHA_BLUE) * a / 255);
+            int  maskAlpha = (r * LUMINANCE_TO_ALPHA_RED + g * LUMINANCE_TO_ALPHA_GREEN + b * LUMINANCE_TO_ALPHA_BLUE) * a / (255 << LUMINANCE_FACTOR_SHIFT);
 //if (x == 20) Log.w(TAG,String.format("alpha = %d",  maskAlpha));
             int  content = maskedContentBuf[x];
             int  contentAlpha = (content >> 24) & 0xff;
+if (foo && px != 0 && x>=92 && y>=630) {
+   Log.w(TAG,String.format("pos=%d,%d px=%x a=%d comp=%x maskAlpha=%d content=%x contentAlpha=%d finalAlpha=%d",
+         x,y,
+         maskBuf[x],
+         a,
+         (r * LUMINANCE_TO_ALPHA_RED + g * LUMINANCE_TO_ALPHA_GREEN + b * LUMINANCE_TO_ALPHA_BLUE),
+         maskAlpha,
+         content,
+         contentAlpha,
+         ((contentAlpha * maskAlpha) / 255)));
+   foo=false;
+}
             contentAlpha = (contentAlpha * maskAlpha) / 255;
             maskedContentBuf[x] = (content & 0x00ffffff) | (contentAlpha << 24);
+//maskedContentBuf[x] = maskBuf[x];
          }
          maskedContent.setPixels(maskedContentBuf, 0, w, 0, y, w, 1);
       }
@@ -2528,6 +2548,12 @@ public class SVGAndroidRenderer
          _y2 = (gradient.y2 != null) ? gradient.y2.floatValue(this, 1f): 0f;
       }
 
+      // Push the state
+      statePush();
+
+      // Set the style for the gradient (inherits from its own ancestors, not from callee's state)
+      state = findInheritFromAncestorState(gradient);
+
       // Calculate the gradient transform matrix
       Matrix m = new Matrix();
       if (!userUnits)
@@ -2589,6 +2615,8 @@ public class SVGAndroidRenderer
          else if (gradient.spreadMethod == GradientSpread.repeat)
             tileMode = TileMode.REPEAT;
       }
+      
+      statePop();
 
       // Create shader instance
       LinearGradient  gr = new LinearGradient(_x1, _y1, _x2, _y2, colours, positions, tileMode); 
@@ -2621,6 +2649,12 @@ public class SVGAndroidRenderer
       }
       // fx and fy are ignored because Android RadialGradient doesn't support a
       // 'focus' point that is different from cx,cy.
+
+      // Push the state
+      statePush();
+
+      // Set the style for the gradient (inherits from its own ancestors, not from callee's state)
+      state = findInheritFromAncestorState(gradient);
 
       // Calculate the gradient transform matrix
       Matrix m = new Matrix();
@@ -2675,6 +2709,8 @@ public class SVGAndroidRenderer
          else if (gradient.spreadMethod == GradientSpread.repeat)
             tileMode = TileMode.REPEAT;
       }
+
+      statePop();
 
       // Create shader instance
       RadialGradient  gr = new RadialGradient(_cx, _cy, _r, colours, positions, tileMode); 
@@ -3409,16 +3445,15 @@ public class SVGAndroidRenderer
       statePush();
 
       // Set the style for the pattern (inherits from its own ancestors, not from callee's state)
-      state = findInheritFromAncestorState(mask);
       // The 'opacity', 'filter' and 'display' properties do not apply to the 'mask' element" (sect 14.4)
-      state.style.opacity = 1f;
+      mask.style.opacity = 1f;
       //state.style.filter = null;
+      state = findInheritFromAncestorState(mask);
 
       boolean  maskContentUnitsAreUser = (mask.maskContentUnitsAreUser == null || mask.maskContentUnitsAreUser);
-      // Simple translate of pattern to step position
-      canvas.translate(x, y);
       if (!maskContentUnitsAreUser) {
-         canvas.scale(w, h);
+         canvas.translate(obj.boundingBox.minX, obj.boundingBox.minY);
+         canvas.scale(obj.boundingBox.width, obj.boundingBox.height);
       }
 
       //boolean  compositing = pushLayer();
