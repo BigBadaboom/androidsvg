@@ -22,7 +22,7 @@
     <text text-anchor="middle" font-size="50" y="230">mitre 1.414</text>
   </g>
   <g transform="translate(1000,75)">
-    <use stroke="black" stroke-width="70" class="thick" xlink:href="#path1" stroke-linejoin="miter"/>
+    <use stroke="black" stroke-width="70" class="thick" xlink:href="#path1"/>
     <use stroke="#ffcccc" stroke-width="5" class="thin" xlink:href="#path1"/>
     <use stroke="#ffcccc" stroke-width="5" xlink:href="#circle1"/>
     <text text-anchor="middle" font-size="50" y="230">mitre 4 (def)</text>
