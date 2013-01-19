@@ -516,10 +516,12 @@ boolean foo = true;
             int  px = maskBuf[x];
 //if (foo && px!=0) {Log.w(TAG, "pixpos="+x+","+y); foo=false;}
 //if (x==0 && px != 0) Log.w(TAG,String.format("px = %x",  px));
-            int  b = px & 0xff; px >>= 8;
-            int  g = px & 0xff; px >>= 8;
-            int  r = px & 0xff; px >>= 8;
-            int  a = px & 0xff;
+            int  b = px & 0xff;
+            int  g = (px >> 8) & 0xff;
+            int  r = (px >> 16) & 0xff;
+            int  a = (px >> 24) & 0xff;
+            if (a == 0)
+               continue;
 //a=255;
 //if (x == 20) Log.w(TAG,String.format("rgba = %d %d %d %d",  r,g,b,a));
             int  maskAlpha = (r * LUMINANCE_TO_ALPHA_RED + g * LUMINANCE_TO_ALPHA_GREEN + b * LUMINANCE_TO_ALPHA_BLUE) * a / (255 << LUMINANCE_FACTOR_SHIFT);
@@ -2553,6 +2555,10 @@ if (foo && px != 0 && x>=92 && y>=630) {
 
       // Set the style for the gradient (inherits from its own ancestors, not from callee's state)
       state = findInheritFromAncestorState(gradient);
+      // Opacity isn't inherited by the gradient's children (ie. the <stop> elements).
+      // We could push/pop and updateStyle for each stop, but since opacity is
+      // the only property the stops use, it's simpler just to reset it here.
+      state.style.opacity = 1f;
 
       // Calculate the gradient transform matrix
       Matrix m = new Matrix();
