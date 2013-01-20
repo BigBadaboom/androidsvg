@@ -43,9 +43,7 @@
   <polygon fill="black" stroke="red" stroke-width="10" transform="translate(0,200) rotate(0)"
         points="0,0,80,20,100,40,80,80,60,100,40,70,20,90" mask="url(#fadermask)"/>
 
-<!-- 
   <text fill="black" stroke="red" stroke-width="10" transform="translate(100,200) rotate(0)"
          x="50" y="100" font-size="120" text-anchor="middle" mask="url(#fadermask)">X</text>
- -->
  
 </svg>

@@ -457,7 +457,7 @@ public class SVGAndroidRenderer
          // The masked content has been drawn, now we have to render the mask to a separate canvas
          SVG.SvgObject  ref = document.resolveIRI(state.style.mask);
          duplicateCanvas();
-         render((SVG.Mask) ref, obj);
+         renderMask((SVG.Mask) ref, obj);
          
          Bitmap  maskedContent = processMaskBitmaps();
          
@@ -1031,14 +1031,9 @@ if (foo && x>=125 && y>=125) {
     */
    private void enumerateTextSpans(TextContainer obj, TextProcessor textprocessor)
    {
-      boolean  compositing = pushLayer();
-
       for (SVG.SvgObject child: obj.children) {
          processTextChild(child, textprocessor);
       }
-
-      if (compositing)
-         popLayer(obj);
    }
 
 
@@ -3454,7 +3449,7 @@ if (foo && x>=125 && y>=125) {
    /*
     * Render the contents of a mask element.
     */
-   private void  render(SVG.Mask mask, SvgElement obj)
+   private void  renderMask(SVG.Mask mask, SvgElement obj)
    {
 /**/Log.w(TAG,"Mask render");
       boolean      maskUnitsAreUser = (mask.maskUnitsAreUser != null && mask.maskUnitsAreUser);
