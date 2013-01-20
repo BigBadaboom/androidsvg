@@ -520,15 +520,18 @@ boolean foo = true;
             int  g = (px >> 8) & 0xff;
             int  r = (px >> 16) & 0xff;
             int  a = (px >> 24) & 0xff;
-            if (a == 0)
+            if (a == 0) {
+               // Shortcut for transparent mask pixels
+               maskedContentBuf[x] = 0;
                continue;
+            }
 //a=255;
 //if (x == 20) Log.w(TAG,String.format("rgba = %d %d %d %d",  r,g,b,a));
             int  maskAlpha = (r * LUMINANCE_TO_ALPHA_RED + g * LUMINANCE_TO_ALPHA_GREEN + b * LUMINANCE_TO_ALPHA_BLUE) * a / (255 << LUMINANCE_FACTOR_SHIFT);
 //if (x == 20) Log.w(TAG,String.format("alpha = %d",  maskAlpha));
             int  content = maskedContentBuf[x];
             int  contentAlpha = (content >> 24) & 0xff;
-if (foo && px != 0 && x>=92 && y>=630) {
+if (foo && x>=125 && y>=125) {
    Log.w(TAG,String.format("pos=%d,%d px=%x a=%d comp=%x maskAlpha=%d content=%x contentAlpha=%d finalAlpha=%d",
          x,y,
          maskBuf[x],
@@ -617,6 +620,8 @@ if (foo && px != 0 && x>=92 && y>=630) {
       checkForGradiantsAndPatterns(obj);      
       checkForClipPath(obj);
       
+      boolean  compositing = pushLayer();
+
       if (state.hasFill) {
          path.setFillType(getFillTypeFromState());
          doFilledPath(obj, path, state.fillPaint);
@@ -625,6 +630,9 @@ if (foo && px != 0 && x>=92 && y>=630) {
          canvas.drawPath(path, state.strokePaint);
 
       renderMarkers(obj);
+
+      if (compositing)
+         popLayer(obj);
    }
 
 
@@ -692,11 +700,15 @@ if (foo && px != 0 && x>=92 && y>=630) {
       checkForGradiantsAndPatterns(obj);      
       checkForClipPath(obj);
 
+      boolean  compositing = pushLayer();
+
       if (state.hasFill)
          doFilledPath(obj, path, state.fillPaint);
       if (state.hasStroke)
          canvas.drawPath(path, state.strokePaint);
 
+      if (compositing)
+         popLayer(obj);
    }
 
 
@@ -722,11 +734,15 @@ if (foo && px != 0 && x>=92 && y>=630) {
       checkForGradiantsAndPatterns(obj);      
       checkForClipPath(obj);
 
+      boolean  compositing = pushLayer();
+
       if (state.hasFill)
          doFilledPath(obj, path, state.fillPaint);
       if (state.hasStroke)
          canvas.drawPath(path, state.strokePaint);
 
+      if (compositing)
+         popLayer(obj);
    }
 
 
@@ -759,12 +775,17 @@ if (foo && px != 0 && x>=92 && y>=630) {
       checkForGradiantsAndPatterns(obj);      
       checkForClipPath(obj);
 
+      boolean  compositing = pushLayer();
+
       if ((_x1 != _x2) || (_y1 != _y2))
          canvas.drawLine(_x1, _y1, _x2, _y2, state.strokePaint);
       else
          canvas.drawPoint(_x1, _y1, state.strokePaint);  // Workaround for Android bug 40780
 
       renderMarkers(obj);
+
+      if (compositing)
+         popLayer(obj);
    }
 
 
@@ -809,6 +830,8 @@ if (foo && px != 0 && x>=92 && y>=630) {
       checkForGradiantsAndPatterns(obj);      
       checkForClipPath(obj);
       
+      boolean  compositing = pushLayer();
+
       if (state.hasFill)
          doFilledPath(obj, path, state.fillPaint);
       if (state.hasStroke) {
@@ -821,6 +844,9 @@ if (foo && px != 0 && x>=92 && y>=630) {
       }
 
       renderMarkers(obj);
+
+      if (compositing)
+         popLayer(obj);
    }
 
 
@@ -891,6 +917,8 @@ if (foo && px != 0 && x>=92 && y>=630) {
       checkForGradiantsAndPatterns(obj);      
       checkForClipPath(obj);
       
+      boolean  compositing = pushLayer();
+
       if (state.hasFill)
          doFilledPath(obj, path, state.fillPaint);
       if (state.hasStroke) {
@@ -903,6 +931,9 @@ if (foo && px != 0 && x>=92 && y>=630) {
       }
 
       renderMarkers(obj);
+
+      if (compositing)
+         popLayer(obj);
    }
 
 
@@ -942,8 +973,12 @@ if (foo && px != 0 && x>=92 && y>=630) {
       checkForGradiantsAndPatterns(obj);      
       checkForClipPath(obj);
       
+      boolean  compositing = pushLayer();
+
       enumerateTextSpans(obj, new PlainTextDrawer(x + dx, y + dy));
 
+      if (compositing)
+         popLayer(obj);
    }
 
 
