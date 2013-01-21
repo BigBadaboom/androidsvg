@@ -585,6 +585,8 @@ if (foo && x>=125 && y>=125) {
 
       checkForClipPath(obj);
 
+      boolean  compositing = pushLayer();
+
       if (ref instanceof SVG.Svg) {
          render((SVG.Svg) ref, _w, _h);
       } else if (ref instanceof SVG.Symbol) {
@@ -592,6 +594,9 @@ if (foo && x>=125 && y>=125) {
       } else {
          render(ref);
       }
+
+      if (compositing)
+         popLayer(obj);
    }
 
 
@@ -1386,7 +1391,12 @@ if (foo && x>=125 && y>=125) {
       
       checkForClipPath(obj);
 
+      boolean  compositing = pushLayer();
+
       canvas.drawBitmap(image, 0, 0, state.fillPaint);
+
+      if (compositing)
+         popLayer(obj);
    }
 
 
