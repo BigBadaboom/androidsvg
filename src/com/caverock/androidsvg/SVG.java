@@ -161,6 +161,14 @@ public class SVG
       public float  maxX() { return minX + width; }
       public float  maxY() { return minY + height; }
 
+      public void  union(Box other)
+      {
+         if (other.minX < minX) minX = other.minX;
+         if (other.minY < minY) minY = other.minY;
+         if (other.maxX() > maxX()) width = other.maxX() - minX;
+         if (other.maxY() > maxY()) height = other.maxY() - minY;
+      }
+
       public String toString() { return "["+minX+" "+minY+" "+width+" "+height+"]"; }
    }
 

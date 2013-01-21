@@ -22,7 +22,8 @@ public class TestActivity extends Activity
    GestureDetector  gesture;
    Toast            currentToast;
 
-   String[] fileList = {"@test_mask05_allshapes.svg",
+   String[] fileList = {"@test_mask08_use.svg",
+                        "@test_mask07_group.svg",
                         "@test_mask01.svg",
                         "@test_mask02_opacity.svg",
                         "@test_mask03_transform.svg",
@@ -150,6 +151,8 @@ public class TestActivity extends Activity
                         "@test_mask04_stroke.svg",
                         "@test_mask05_allshapes.svg",
                         "@test_mask06_colormatrix.svg",
+                        "@test_mask07_group.svg",
+                        "@test_mask08_use.svg",
                         "inkscape.svg",
                         "xara.svg",
                         "xara_bluecar.svg",

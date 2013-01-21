@@ -30,6 +30,7 @@ import com.caverock.androidsvg.SVG.Colour;
 import com.caverock.androidsvg.SVG.CurrentColor;
 import com.caverock.androidsvg.SVG.GradientElement;
 import com.caverock.androidsvg.SVG.GradientSpread;
+import com.caverock.androidsvg.SVG.Group;
 import com.caverock.androidsvg.SVG.Length;
 import com.caverock.androidsvg.SVG.Marker;
 import com.caverock.androidsvg.SVG.PaintReference;
@@ -403,10 +404,25 @@ public class SVGAndroidRenderer
 
       for (SVG.SvgObject child: obj.children) {
          render(child);
+         updateBoundingBox(obj, child);
       }
 
       if (compositing)
          popLayer(obj);
+   }
+
+
+   //==============================================================================
+
+
+   // Update parent bounding box by doing a 'union' operation with child box
+   private void updateBoundingBox(SvgElement parent, SvgObject child)
+   {
+      SvgElement  elem = (SvgElement) child;
+      if (parent.boundingBox == null)
+         parent.boundingBox = new Box(elem.boundingBox.minX, elem.boundingBox.minY, elem.boundingBox.width, elem.boundingBox.height);
+      else
+         parent.boundingBox.union(elem.boundingBox);
    }
 
 
@@ -585,8 +601,6 @@ if (foo && x>=125 && y>=125) {
 
       checkForClipPath(obj);
 
-      boolean  compositing = pushLayer();
-
       if (ref instanceof SVG.Svg) {
          render((SVG.Svg) ref, _w, _h);
       } else if (ref instanceof SVG.Symbol) {
@@ -594,9 +608,6 @@ if (foo && x>=125 && y>=125) {
       } else {
          render(ref);
       }
-
-      if (compositing)
-         popLayer(obj);
    }
 
 
