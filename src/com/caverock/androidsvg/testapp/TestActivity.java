@@ -3,6 +3,11 @@ package com.caverock.androidsvg.testapp;
 
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.AlertDialog.Builder;
+import android.app.Dialog;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnClickListener;
 import android.os.Bundle;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
@@ -22,7 +27,13 @@ public class TestActivity extends Activity
    GestureDetector  gesture;
    Toast            currentToast;
 
-   String[] fileList = {"@test_mask08_use.svg",
+   private static final int DIALOG_SELECT_TEST = 1;
+
+   String[] fileList = {"test_gradient10_zerovector.svg",
+                        "@test_mask11_group3.svg",
+                        "@test_mask10_group2.svg",
+                        "@test_mask09_svg.svg",
+                        "@test_mask08_use.svg",
                         "@test_mask07_group.svg",
                         "@test_mask01.svg",
                         "@test_mask02_opacity.svg",
@@ -153,6 +164,9 @@ public class TestActivity extends Activity
                         "@test_mask06_colormatrix.svg",
                         "@test_mask07_group.svg",
                         "@test_mask08_use.svg",
+                        "@test_mask09_svg.svg",
+                        "@test_mask10_group2.svg",
+                        "@test_mask11_group3.svg",
                         "inkscape.svg",
                         "xara.svg",
                         "xara_bluecar.svg",
@@ -196,34 +210,39 @@ public class TestActivity extends Activity
             if (velocityX > 1000f) {
                // Decrement file index
                whichFile = (--whichFile + fileList.length) % fileList.length;
-
-               // Update the view
-               setAsset(fileList[whichFile]);
-
-               // Show the filename as a Toast
-               if (currentToast != null)
-                  currentToast.cancel();
-               currentToast = Toast.makeText(getApplicationContext(), fileList[whichFile], Toast.LENGTH_SHORT);
-               currentToast.show();
+               showFile();
                return true;
             } else if (velocityX < -1000f) {
                // Increment file index
                whichFile = ++whichFile % fileList.length;
-               
-               // Update the view
-               setAsset(fileList[whichFile]);
-
-               // Show the filename as a Toast
-               if (currentToast != null)
-                  currentToast.cancel();
-               currentToast = Toast.makeText(getApplicationContext(), fileList[whichFile], Toast.LENGTH_SHORT);
-               currentToast.show();
+               showFile();
                return true;
             }
             return false;
          }
+
+         @SuppressWarnings("deprecation")
+         @Override
+         public boolean onDoubleTap(MotionEvent e)
+         {
+            showDialog(DIALOG_SELECT_TEST);
+            return true;
+         }
       };
       this.gesture = new GestureDetector(this, gListener);
+   }
+
+
+   private void showFile()
+   {
+      // Update the view
+      setAsset(fileList[whichFile]);
+
+      // Show the filename as a Toast
+      if (currentToast != null)
+         currentToast.cancel();
+      currentToast = Toast.makeText(getApplicationContext(), "["+whichFile+"] "+fileList[whichFile], Toast.LENGTH_SHORT);
+      currentToast.show();
    }
 
 
@@ -267,6 +286,34 @@ public class TestActivity extends Activity
    {
       super.onSaveInstanceState(outState);
       outState.putInt("whichFile",  whichFile);
+   }
+
+
+
+   @Override
+   @Deprecated
+   protected Dialog onCreateDialog(int id)
+   {
+      switch (id) {
+         case DIALOG_SELECT_TEST:
+            // Create out AlterDialog
+            Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Select a test file:");
+            builder.setItems(fileList, new OnClickListener()
+            {
+               @Override
+               public void onClick(DialogInterface dialog, int which)
+               {
+                  whichFile = which;
+                  showFile();
+                  dialog.dismiss();
+               }
+            });
+            builder.setCancelable(true);
+            AlertDialog dialog = builder.create();
+            dialog.show();
+      }
+      return super.onCreateDialog(id);
    }
 
 

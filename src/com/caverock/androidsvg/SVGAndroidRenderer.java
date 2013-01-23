@@ -8,7 +8,6 @@ import java.util.Stack;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.DashPathEffect;
 import android.graphics.LinearGradient;
 import android.graphics.Matrix;
@@ -30,9 +29,9 @@ import com.caverock.androidsvg.SVG.Colour;
 import com.caverock.androidsvg.SVG.CurrentColor;
 import com.caverock.androidsvg.SVG.GradientElement;
 import com.caverock.androidsvg.SVG.GradientSpread;
-import com.caverock.androidsvg.SVG.Group;
 import com.caverock.androidsvg.SVG.Length;
 import com.caverock.androidsvg.SVG.Marker;
+import com.caverock.androidsvg.SVG.NotDirectlyRendered;
 import com.caverock.androidsvg.SVG.PaintReference;
 import com.caverock.androidsvg.SVG.PathDefinition;
 import com.caverock.androidsvg.SVG.PathInterface;
@@ -40,6 +39,7 @@ import com.caverock.androidsvg.SVG.Pattern;
 import com.caverock.androidsvg.SVG.Rect;
 import com.caverock.androidsvg.SVG.Stop;
 import com.caverock.androidsvg.SVG.Style;
+import com.caverock.androidsvg.SVG.SvgContainer;
 import com.caverock.androidsvg.SVG.SvgElement;
 import com.caverock.androidsvg.SVG.SvgElementBase;
 import com.caverock.androidsvg.SVG.SvgLinearGradient;
@@ -64,6 +64,10 @@ public class SVGAndroidRenderer
    private SVG                  document;
    private RendererState        state;
    private Stack<RendererState> stateStack;  // Keeps track of render state as we render
+   
+   // Keep track of element stack while rendering.
+   private Stack<SvgContainer>  parentStack; // The 'render parent' for elements like Symbol cf. file parent
+   private Stack<Matrix>        matrixStack; // Keeps track of current transform as we descend into element tree
 
    // Canvas stack for when we are processing mask elements
    private Stack<Canvas>  canvasStack;
@@ -151,6 +155,11 @@ public class SVGAndroidRenderer
       // Initialise the stacks used for mask handling
       canvasStack = new Stack<Canvas>();
       bitmapStack = new Stack<Bitmap>();
+
+      // Keep track of element stack while rendering.
+      // The 'render parent' for some elements (eg <use> references) is different from its DOM parent.
+      matrixStack = new Stack<Matrix>();
+      parentStack = new Stack<SvgContainer>();
    }
 
 
@@ -226,6 +235,14 @@ public class SVGAndroidRenderer
          state.viewPort = rootObj.viewBox;
       }
 
+      // If we are direct rendering (ie. to a bitmap rather to a Picture recording, we need to
+      // check the width and height attributes of the root element and adjust the used DPI so
+      // that the document can be rendered accurately.  For indirect/Picture renderings we never
+      // no exactly what the final rendered size will be. OR MAYBE NOT? - USE WIDTH AND HEIGHT PASSED TO PICTURE?
+      if (rootObj.width != null) {
+         // FIXME
+      }
+
       render(rootObj);
    }
 
@@ -236,6 +253,8 @@ public class SVGAndroidRenderer
 
    public void  render(SVG.SvgObject obj)
    {
+      if (obj instanceof NotDirectlyRendered)
+         return;
       if (!display(obj))
          return;
 
@@ -244,12 +263,8 @@ public class SVGAndroidRenderer
 
       if (obj instanceof SVG.Svg) {
          render((SVG.Svg) obj);
-      } else if (obj instanceof SVG.Defs) { // Defs, Use and ClipPath are all subclasses of Group and so needs to come before that
-         // do nothing
       } else if (obj instanceof SVG.Use) {
          render((SVG.Use) obj);
-      } else if (obj instanceof SVG.ClipPath) {
-         // do nothing
       } else if (obj instanceof SVG.Group) {
          render((SVG.Group) obj);
       } else if (obj instanceof SVG.Image) {
@@ -270,20 +285,29 @@ public class SVGAndroidRenderer
          render((SVG.PolyLine) obj);
       } else if (obj instanceof SVG.Text) {
          render((SVG.Text) obj);
-      } else if (obj instanceof SVG.Symbol) {
-         // do nothing
-      } else if (obj instanceof SVG.Marker) {
-         // do nothing
-      } else if (obj instanceof SVG.Pattern) {
-         // do nothing
-      } else if (obj instanceof SVG.View) {
-         // do nothing
-      } else if (obj instanceof SVG.Mask) {
-         // do nothing
       }
 
       // Restore state
       statePop();
+   }
+
+
+   //==============================================================================
+
+
+   private void  renderChildren(SvgContainer obj, boolean isContainer)
+   {
+      if (isContainer) {
+         parentPush(obj);
+      }
+
+      for (SVG.SvgObject child: obj.getChildren()) {
+         render(child);
+      }
+
+      if (isContainer) {
+         parentPop();
+      }
    }
 
 
@@ -306,6 +330,24 @@ public class SVGAndroidRenderer
       canvas.restore();
       // Restore style state
       state = stateStack.pop();
+   }
+
+
+   //==============================================================================
+
+
+   @SuppressWarnings("deprecation")
+   private void  parentPush(SvgContainer obj)
+   {
+      parentStack.push(obj);
+      matrixStack.push(canvas.getMatrix());
+   }
+
+
+   private void  parentPop()
+   {
+      parentStack.pop();
+      matrixStack.pop();
    }
 
 
@@ -377,12 +419,12 @@ public class SVGAndroidRenderer
 
       boolean  compositing = pushLayer();
 
-      for (SVG.SvgObject child: obj.children) {
-         render(child);
-      }
+      renderChildren(obj, true);
 
       if (compositing)
          popLayer(obj);
+
+      updateParentBoundingBox(obj);
    }
 
 
@@ -402,27 +444,59 @@ public class SVGAndroidRenderer
 
       boolean  compositing = pushLayer();
 
-      for (SVG.SvgObject child: obj.children) {
-         render(child);
-         updateBoundingBox(obj, child);
-      }
+      renderChildren(obj, true);
 
       if (compositing)
          popLayer(obj);
+
+      updateParentBoundingBox(obj);
    }
 
 
    //==============================================================================
 
 
-   // Update parent bounding box by doing a 'union' operation with child box
-   private void updateBoundingBox(SvgElement parent, SvgObject child)
+   /*
+    * Called by an object to update it's parent's bounding box.
+    *
+    * This operation is made more tricky because the childs bbox is in the child's coordinate space,
+    * but the parent needs it in the parent's coordinate space.
+    */
+   @SuppressWarnings("deprecation")
+   private void updateParentBoundingBox(SvgElement obj)
    {
-      SvgElement  elem = (SvgElement) child;
-      if (parent.boundingBox == null)
-         parent.boundingBox = new Box(elem.boundingBox.minX, elem.boundingBox.minY, elem.boundingBox.width, elem.boundingBox.height);
-      else
-         parent.boundingBox.union(elem.boundingBox);
+      if (obj.parent == null)       // skip this if obj is root element
+         return;
+      if (obj.boundingBox == null)  // empty bbox, possibly as a result of a badly defined element (eg bad use reference etc)
+         return;
+
+/**/Log.w(TAG, "obj="+obj+" obj.bbox="+obj.boundingBox);
+      // Convert the corners of the child bbox to world space
+      Matrix  m = new Matrix();
+      // Get the inverse of the child transform
+      if (canvas.getMatrix().invert(m)) {
+         float[] pts = {obj.boundingBox.minX, obj.boundingBox.minY,
+                        obj.boundingBox.maxX(), obj.boundingBox.minY,
+                        obj.boundingBox.maxX(), obj.boundingBox.maxY(),
+                        obj.boundingBox.minX, obj.boundingBox.maxY()};
+         // Now concatenate the parent's matrix to create a child-to-parent transform
+         m.preConcat(matrixStack.peek());
+         m.mapPoints(pts);
+         // Finally, find the bounding box of the transformed points
+         RectF  rect = new RectF(pts[0], pts[1], pts[0], pts[1]);
+         for (int i=2; i<=6; i+=2) {
+            if (pts[i] < rect.left) rect.left = pts[i]; 
+            if (pts[i] > rect.right) rect.right = pts[i]; 
+            if (pts[i+1] < rect.top) rect.top = pts[i+1]; 
+            if (pts[i+1] > rect.bottom) rect.bottom = pts[i+1]; 
+         }
+         // Update the parent bounding box with the transformed bbox
+         SvgElement  parent = (SvgElement) parentStack.peek();
+         if (parent.boundingBox == null)
+            parent.boundingBox = Box.fromLimits(rect.left, rect.top, rect.right, rect.bottom);
+         else
+            parent.boundingBox.union(Box.fromLimits(rect.left, rect.top, rect.right, rect.bottom));
+      }
    }
 
 
@@ -498,6 +572,7 @@ public class SVGAndroidRenderer
    }
 
 
+   @SuppressWarnings("deprecation")
    private void duplicateCanvas()
    {
       Bitmap  newBM = Bitmap.createBitmap(canvas.getWidth(), canvas.getHeight(), Bitmap.Config.ARGB_8888);
@@ -601,6 +676,8 @@ if (foo && x>=125 && y>=125) {
 
       checkForClipPath(obj);
 
+      parentPush(obj);
+
       if (ref instanceof SVG.Svg) {
          render((SVG.Svg) ref, _w, _h);
       } else if (ref instanceof SVG.Symbol) {
@@ -608,6 +685,10 @@ if (foo && x>=125 && y>=125) {
       } else {
          render(ref);
       }
+
+      parentPop();
+
+      updateParentBoundingBox(obj);
    }
 
 
@@ -633,6 +714,8 @@ if (foo && x>=125 && y>=125) {
       if (obj.boundingBox == null) {
          obj.boundingBox = calculatePathBounds(path);
       }
+      updateParentBoundingBox(obj);
+
       checkForGradiantsAndPatterns(obj);      
       checkForClipPath(obj);
       
@@ -678,6 +761,7 @@ if (foo && x>=125 && y>=125) {
          canvas.concat(obj.transform);
 
       Path  path = makePathAndBoundingBox(obj);
+      updateParentBoundingBox(obj);
 
       checkForGradiantsAndPatterns(obj);      
       checkForClipPath(obj);
@@ -712,6 +796,7 @@ if (foo && x>=125 && y>=125) {
          canvas.concat(obj.transform);
 
       Path  path = makePathAndBoundingBox(obj);
+      updateParentBoundingBox(obj);
 
       checkForGradiantsAndPatterns(obj);      
       checkForClipPath(obj);
@@ -746,6 +831,7 @@ if (foo && x>=125 && y>=125) {
          canvas.concat(obj.transform);
 
       Path  path = makePathAndBoundingBox(obj);
+      updateParentBoundingBox(obj);
 
       checkForGradiantsAndPatterns(obj);      
       checkForClipPath(obj);
@@ -788,6 +874,8 @@ if (foo && x>=125 && y>=125) {
       if (obj.boundingBox == null) {
          obj.boundingBox = Box.fromLimits(Math.min(_x1, _x2), Math.min(_y1, _y2), Math.max(_x1, _x2), Math.max(_y1, _y2));
       }
+      updateParentBoundingBox(obj);
+
       checkForGradiantsAndPatterns(obj);      
       checkForClipPath(obj);
 
@@ -842,6 +930,7 @@ if (foo && x>=125 && y>=125) {
          return;
 
       Path  path = makePathAndBoundingBox(obj);
+      updateParentBoundingBox(obj);
 
       checkForGradiantsAndPatterns(obj);      
       checkForClipPath(obj);
@@ -929,6 +1018,7 @@ if (foo && x>=125 && y>=125) {
          return;
 
       Path  path = makePathAndBoundingBox(obj);
+      updateParentBoundingBox(obj);
 
       checkForGradiantsAndPatterns(obj);      
       checkForClipPath(obj);
@@ -986,6 +1076,8 @@ if (foo && x>=125 && y>=125) {
          enumerateTextSpans(obj, proc);
          obj.boundingBox = new Box(proc.bbox.left, proc.bbox.top, proc.bbox.width(), proc.bbox.height());
       }
+      updateParentBoundingBox(obj);
+
       checkForGradiantsAndPatterns(obj);      
       checkForClipPath(obj);
       
@@ -1343,12 +1435,12 @@ if (foo && x>=125 && y>=125) {
       
       boolean  compositing = pushLayer();
 
-      for (SVG.SvgObject child: obj.children) {
-         render(child);
-      }
+      renderChildren(obj, true);
 
       if (compositing)
          popLayer(obj);
+
+      updateParentBoundingBox(obj);
    }
 
 
@@ -1397,9 +1489,11 @@ if (foo && x>=125 && y>=125) {
          setClipRect(state.viewPort.minX, state.viewPort.minY, state.viewPort.width, state.viewPort.height);
       }
 
-      Box  imageBox = new SVG.Box(0,  0,  image.getWidth(), image.getHeight());
-      canvas.concat(calculateViewBoxTransform(state.viewPort, imageBox, obj.preserveAspectRatioAlignment, obj.preserveAspectRatioSlice));
-      
+      obj.boundingBox = new SVG.Box(0,  0,  image.getWidth(), image.getHeight());
+      canvas.concat(calculateViewBoxTransform(state.viewPort, obj.boundingBox, obj.preserveAspectRatioAlignment, obj.preserveAspectRatioSlice));
+
+      updateParentBoundingBox(obj);
+
       checkForClipPath(obj);
 
       boolean  compositing = pushLayer();
@@ -2471,9 +2565,7 @@ if (foo && x>=125 && y>=125) {
 
       boolean  compositing = pushLayer();
 
-      for (SVG.SvgObject child: marker.children) {
-         render(child);
-      }
+      renderChildren(marker, false);
 
       if (compositing)
          popLayer(marker);
@@ -2627,6 +2719,7 @@ if (foo && x>=125 && y>=125) {
       int    numStops = gradient.children.size();
       if (numStops == 0) {
          // If there are no stops defined, we are to treat it as paint = 'none' (see spec 13.2.4)
+         statePop();
          if (isFill)
             state.hasFill = false;
          else
@@ -2658,7 +2751,10 @@ if (foo && x>=125 && y>=125) {
       }
 
       // If gradient vector is zero length, we instead fill with last stop colour
+/**/Log.w(TAG, "foo ");
       if ((_x1 == _x2 && _y1 == _y2) || numStops == 1) {
+/**/Log.w(TAG, "foo2 ");
+         statePop();
          paint.setColor(colours[numStops - 1]);
          return;
       }
@@ -2729,6 +2825,7 @@ if (foo && x>=125 && y>=125) {
       int    numStops = gradient.children.size();
       if (numStops == 0) {
          // If there are no stops defined, we are to treat it as paint = 'none' (see spec 13.2.4)
+         statePop();
          if (isFill)
             state.hasFill = false;
          else
@@ -2753,6 +2850,7 @@ if (foo && x>=125 && y>=125) {
 
       // If gradient radius is zero, we instead fill with last stop colour
       if (_r == 0 || numStops == 1) {
+         statePop();
          paint.setColor(colours[numStops - 1]);
          return;
       }
@@ -3340,11 +3438,10 @@ if (foo && x>=125 && y>=125) {
          // So we need to alter the area bounding rectangle.
          Matrix inverse = new Matrix();
          if (pattern.patternTransform.invert(inverse)) {
-            Paint  p = new Paint();p.setColor(Color.BLUE);
             float[] pts = {obj.boundingBox.minX, obj.boundingBox.minY,
-                           obj.boundingBox.minX+obj.boundingBox.width, obj.boundingBox.minY,
-                           obj.boundingBox.minX+obj.boundingBox.width, obj.boundingBox.minY+obj.boundingBox.height,
-                           obj.boundingBox.minX, obj.boundingBox.minY+obj.boundingBox.height};
+                           obj.boundingBox.maxX(), obj.boundingBox.minY,
+                           obj.boundingBox.maxX(), obj.boundingBox.maxY(),
+                           obj.boundingBox.minX, obj.boundingBox.maxY()};
             inverse.mapPoints(pts);
             // Find the bounding box of the shape created by the inverse transform 
             RectF  rect = new RectF(pts[0], pts[1], pts[0], pts[1]);
@@ -3515,13 +3612,11 @@ if (foo && x>=125 && y>=125) {
 
       //boolean  compositing = pushLayer();
 
-      // Render the pattern
-      for (SVG.SvgObject child: mask.children) {
-         render(child);
-      }
+      // Render the mask
+      renderChildren(mask, false);
 
       //if (compositing)
-      //   popLayer();
+      //   popLayer(); FIXME
 
       // Pop the state
       statePop();

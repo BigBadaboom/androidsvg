@@ -17,7 +17,7 @@
   <!-- Outline the drawing area in blue -->
   <rect fill="none" stroke="blue" x="1" y="1" width="298" height="298"/>
 
-  <g mask="url(#fadermask)">
+  <svg x="0" y="0" width="300" height="300" mask="url(#fadermask)">
 
     <rect fill="yellow"
           x="33" y="33" width="100" height="100"/>
@@ -30,6 +30,6 @@
 
     <rect fill="red"
           x="167" y="167" width="100" height="100"/>
-  </g>
+  </svg>
  
 </svg>

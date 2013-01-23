@@ -618,6 +618,7 @@ public class SVG
       }
    }
 
+
    // Any object in the tree that corresponds to an SVG element
    protected static class SvgElementBase extends SvgObject
    {
@@ -740,9 +741,14 @@ public class SVG
    }
 
 
+   protected interface NotDirectlyRendered
+   {
+   }
+
+
    // A <defs> object contains objects that are not rendered directly, but are instead
    // referenced from other parts of the file.
-   protected static class Defs extends Group
+   protected static class Defs extends Group implements NotDirectlyRendered
    {
    }
 
@@ -928,12 +934,12 @@ public class SVG
    }
 
 
-   protected static class Symbol extends SvgViewBoxContainer
+   protected static class Symbol extends SvgViewBoxContainer implements NotDirectlyRendered
    {
    }
 
 
-   protected static class Marker extends SvgViewBoxContainer
+   protected static class Marker extends SvgViewBoxContainer implements NotDirectlyRendered
    {
       public boolean  markerUnitsAreUser;
       public Length   refX;
@@ -1002,13 +1008,13 @@ public class SVG
    }
 
 
-   protected static class ClipPath extends Group
+   protected static class ClipPath extends Group implements NotDirectlyRendered
    {
       public Boolean  clipPathUnitsAreUser;
    }
 
 
-   protected static class Pattern extends SvgViewBoxContainer
+   protected static class Pattern extends SvgViewBoxContainer implements NotDirectlyRendered
    {
       public Boolean  patternUnitsAreUser;
       public Boolean  patternContentUnitsAreUser;
@@ -1035,12 +1041,12 @@ public class SVG
    }
 
 
-   protected static class View extends SvgViewBoxContainer
+   protected static class View extends SvgViewBoxContainer implements NotDirectlyRendered
    {
    }
 
 
-   protected static class Mask extends SvgConditionalContainer
+   protected static class Mask extends SvgConditionalContainer implements NotDirectlyRendered
    {
       public Boolean  maskUnitsAreUser;
       public Boolean  maskContentUnitsAreUser;
