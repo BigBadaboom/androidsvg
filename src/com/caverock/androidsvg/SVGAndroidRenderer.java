@@ -694,6 +694,8 @@ if (foo && x>=125 && y>=125) {
 
       checkForClipPath(obj);
 
+      boolean  compositing = pushLayer();
+
       parentPush(obj);
 
       if (ref instanceof SVG.Svg) {
@@ -705,6 +707,9 @@ if (foo && x>=125 && y>=125) {
       }
 
       parentPop();
+
+      if (compositing)
+         popLayer(obj);
 
       updateParentBoundingBox(obj);
    }
@@ -1122,6 +1127,7 @@ if (foo && x>=125 && y>=125) {
       @Override
       public void processText(String text)
       {
+/**/Log.d(TAG, "TextSequence render");
          if (visible())
          {
             if (state.hasFill)
@@ -1170,7 +1176,6 @@ if (foo && x>=125 && y>=125) {
 
       if (obj instanceof SVG.TextSequence)
       {
-/**/Log.d(TAG, "TextSequence render");
          String  text = ((SVG.TextSequence) obj).text;
          textprocessor.processText(text);
          return;

@@ -29,7 +29,8 @@ public class TestActivity extends Activity
 
    private static final int DIALOG_SELECT_TEST = 1;
 
-   String[] fileList = {"@test_mask13_markers.svg",
+   String[] fileList = {"@sample_14.4_mask01.svg",
+                        "@test_mask13_markers.svg",
                         "@test_mask12_image.svg",
                         "@test_mask11_group3.svg",
                         "@test_mask10_group2.svg",
