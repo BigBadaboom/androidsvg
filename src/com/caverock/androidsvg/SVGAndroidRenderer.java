@@ -219,7 +219,7 @@ public class SVGAndroidRenderer
       SVG.Svg  rootObj = document.getRootElement();
 
       if (rootObj == null) {
-         Log.w(TAG, "Nothing to render. Document is empty.");
+         warn("Nothing to render. Document is empty.");
          return;
       }
 
@@ -251,7 +251,7 @@ public class SVGAndroidRenderer
    // Render dispatcher
 
 
-   public void  render(SVG.SvgObject obj)
+   private void  render(SVG.SvgObject obj)
    {
       if (obj instanceof NotDirectlyRendered)
          return;
@@ -367,11 +367,28 @@ public class SVGAndroidRenderer
             SVG.Pattern  pattern = (SVG.Pattern)ref;
             fillWithPattern(obj, path, pattern);
             return;
+         } else {
+            warn("Pattern reference '%s' not found", ((SVG.PaintReference) state.style.fill).href);
          }
       }
 
       // Otherwise do a normal fill
       canvas.drawPath(path, fillPaint);
+   }
+
+
+   //==============================================================================
+
+
+   private void  warn(String format, Object... args)
+   {
+      Log.w(TAG, String.format(format, args));
+   }
+
+
+   private void  error(String format, Object... args)
+   {
+      Log.e(TAG, String.format(format, args));
    }
 
 
@@ -526,6 +543,7 @@ public class SVGAndroidRenderer
          // Check the we are refernecing a mask element
          if (ref == null || !(ref instanceof SVG.Mask)) {
             // This is an invalid mask reference - disable this object's mask
+            warn("Mask reference '%s' not found", state.style.mask);
             state.style.mask = null;
             return true;
          }
@@ -657,8 +675,10 @@ if (foo && x>=125 && y>=125) {
 
       // Locate the referenced object
       SVG.SvgObject  ref = obj.document.resolveIRI(obj.href);
-      if (ref == null)
+      if (ref == null) {
+         warn("Use reference '%s' not found", obj.href);
          return;
+      }
 
       if (obj.transform != null) {
          canvas.concat(obj.transform);
@@ -1225,6 +1245,10 @@ if (foo && x>=125 && y>=125) {
             if (str.length() > 0)
                textprocessor.processText(str.toString());
          }
+         else
+         {
+            warn("Tref reference '%s' not found", tref.href);
+         }
 
          // Restore state
          statePop();
@@ -1244,7 +1268,7 @@ if (foo && x>=125 && y>=125) {
       SVG.SvgObject  ref = obj.document.resolveIRI(obj.href);
       if (ref == null)
       {
-         Log.e(TAG, "Path reference \"" + obj.href + "\" in <textPath> element could not be located");
+         error("TextPath reference '%s' not found", obj.href);
          return;
       }
 
@@ -1356,8 +1380,10 @@ if (foo && x>=125 && y>=125) {
             // to cheat a bit with our bbox calculation.
             SVG.TextPath  tpath = (SVG.TextPath) obj;
             SVG.SvgObject  ref = obj.document.resolveIRI(tpath.href);
-            if (ref == null)
+            if (ref == null) {
+               warn("TextPath path reference '%s' not found", tpath.href);
                return false;
+            }
             SVG.Path  pathObj = (SVG.Path) ref;
             Path      path = (new PathConverter(pathObj.d)).getPath();
             if (pathObj.transform != null)
@@ -1469,7 +1495,7 @@ if (foo && x>=125 && y>=125) {
          image = fileResolver.resolveImage(obj.href);
       }
       if (image == null) {
-         Log.w(TAG, "Could not locate image \""+obj.href+"\"");
+         warn("Could not locate image '%s'", obj.href);
          return;
       }
 
@@ -2415,18 +2441,24 @@ if (foo && x>=125 && y>=125) {
          SVG.SvgObject  ref = obj.document.resolveIRI(state.style.markerStart);
          if (ref != null)
             _markerStart = (SVG.Marker) ref;
+         else
+            warn("marker-start reference '%s' not found", state.style.markerStart);
       }
 
       if (state.style.markerMid != null) {
          SVG.SvgObject  ref = obj.document.resolveIRI(state.style.markerMid);
          if (ref != null)
             _markerMid = (SVG.Marker) ref;
+         else
+            warn("marker-mid reference '%s' not found", state.style.markerMid);
       }
 
       if (state.style.markerEnd != null) {
          SVG.SvgObject  ref = obj.document.resolveIRI(state.style.markerEnd);
          if (ref != null)
             _markerEnd = (SVG.Marker) ref;
+         else
+            warn("marker-end reference '%s' not found", state.style.markerEnd);
       }
 
       List<MarkerVector>  markers = null;
@@ -2659,6 +2691,7 @@ if (foo && x>=125 && y>=125) {
       SVG.SvgObject  ref = obj.document.resolveIRI(paintref.href);
       if (ref == null)
       {
+         warn("%s reference '%s' not found", (isFill ? "Fill":"Stroke"), paintref.href);
          if (paintref.fallback != null) {
             setPaintColour(state, isFill, paintref.fallback);
          } else {
@@ -2892,15 +2925,16 @@ if (foo && x>=125 && y>=125) {
       // Locate the referenced object
       SVG.SvgObject  ref = gradient.document.resolveIRI(href);
       if (ref == null) {
-         // Non-existent - return silently and hope we have enough info to render the gradient
+         // Non-existent
+         warn("Gradient reference '%s' not found", href);
          return;
       }
       if (!(ref instanceof GradientElement)) {
-         Log.e(TAG, "Gradient href attributes must point to other gradient elements");
+         error("Gradient href attributes must point to other gradient elements");
          return;
       }
       if (ref == gradient) {
-         Log.e(TAG, "Circular reference in gradient href attribute: "+href);
+         error("Circular reference in gradient href attribute '%s'", href);
          return;
       }
 
@@ -2973,8 +3007,10 @@ if (foo && x>=125 && y>=125) {
    {
       // Locate the referenced object
       SVG.SvgObject  ref = obj.document.resolveIRI(state.style.clipPath);
-      if (ref == null)
+      if (ref == null) {
+         warn("ClipPath reference '%s' not found", state.style.clipPath);
          return;
+      }
 
       ClipPath  clipPath = (ClipPath) ref;
 
@@ -2987,7 +3023,7 @@ if (foo && x>=125 && y>=125) {
       boolean  userUnits = (clipPath.clipPathUnitsAreUser == null || clipPath.clipPathUnitsAreUser);
 
       if ((obj instanceof SVG.Group) && !userUnits) {
-         Log.w(TAG, "<clipPath clipPathUnits=\"objectBoundingBox\"> is not supported when referenced from container elements (like "+obj.getClass().getSimpleName()+")");
+         warn("<clipPath clipPathUnits=\"objectBoundingBox\"> is not supported when referenced from container elements (like %s)", obj.getClass().getSimpleName());
          return;
       }
 
@@ -3034,7 +3070,7 @@ if (foo && x>=125 && y>=125) {
          if (allowUse) {
             addObjectToClip((SVG.Use) obj, combinedPath, combinedPathMatrix);
          } else {
-            Log.e(TAG, "<use> elements inside a <clipPath> cannot reference another <use>");
+            error("<use> elements inside a <clipPath> cannot reference another <use>");
          }
       } else if (obj instanceof SVG.Path) {
          addObjectToClip((SVG.Path) obj, combinedPath, combinedPathMatrix);
@@ -3043,7 +3079,7 @@ if (foo && x>=125 && y>=125) {
       } else if (obj instanceof SVG.GraphicsElement) {
          addObjectToClip((SVG.GraphicsElement) obj, combinedPath, combinedPathMatrix);
       } else {
-         Log.e(TAG, "Invalid element found in clipPath definition: "+obj.getClass().getSimpleName());
+         error("Invalid %s element found in clipPath definition", obj.getClass().getSimpleName());
       }
 
       // Restore state
@@ -3152,8 +3188,10 @@ if (foo && x>=125 && y>=125) {
 
       // Locate the referenced object
       SVG.SvgObject  ref = obj.document.resolveIRI(obj.href);
-      if (ref == null)
+      if (ref == null) {
+         warn("Use reference '%s' not found", obj.href);
          return;
+      }
 
       checkForClipPath(obj);
       
@@ -3217,7 +3255,7 @@ if (foo && x>=125 && y>=125) {
       {
          if (obj instanceof SVG.TextPath)
          {
-            Log.w(TAG, "Using <textPath> elements in a clip path is not supported.");
+            warn("Using <textPath> elements in a clip path is not supported.");
             return false;
          }
          return true;
@@ -3525,15 +3563,16 @@ if (foo && x>=125 && y>=125) {
       // Locate the referenced object
       SVG.SvgObject  ref = pattern.document.resolveIRI(href);
       if (ref == null) {
-         // Non-existent - return silently and hope we have enough info to render the gradient
+         // Non-existent
+         warn("Pattern reference '%s' not found", href);
          return;
       }
       if (!(ref instanceof Pattern)) {
-         Log.e(TAG, "Pattern href attributes must point to other pattern elements");
+         error("Pattern href attributes must point to other pattern elements");
          return;
       }
       if (ref == pattern) {
-         Log.e(TAG, "Circular reference in pattern href attribute: "+href);
+         error("Circular reference in pattern href attribute '%s'", href);
          return;
       }
 
