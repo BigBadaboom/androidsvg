@@ -2656,6 +2656,9 @@ if (foo && x>=125 && y>=125) {
       // May also need a base viewport
       newState.viewPort = this.canvasViewPort;
 
+      // Set the directRendering mode based on what the current state has set
+      newState.directRendering = state.directRendering;
+
       return newState;
    }
 
@@ -2791,9 +2794,7 @@ if (foo && x>=125 && y>=125) {
       }
 
       // If gradient vector is zero length, we instead fill with last stop colour
-/**/Log.w(TAG, "foo ");
       if ((_x1 == _x2 && _y1 == _y2) || numStops == 1) {
-/**/Log.w(TAG, "foo2 ");
          statePop();
          paint.setColor(colours[numStops - 1]);
          return;
