@@ -1,0 +1,30 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="8cm" height="4cm" viewBox="0 0 800 400" version="1.1"
+     xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <desc>Test behaviour when x1=x2 and y1=y2</desc>
+  <defs>
+    <linearGradient id="fader">
+      <stop offset="0%" stop-color="white" />
+      <stop offset="100%" stop-color="black" />
+    </linearGradient>
+    <mask id="fadermask" maskUnits="objectBoundingBox" maskContentUnits="objectBoundingBox">
+      <rect x="0" y="0" width="1" height="1" fill="url(#fader)" />
+    </mask>
+    <mask id="imagemask" maskUnits="objectBoundingBox" maskContentUnits="objectBoundingBox">
+      <image x="0" y="0" width="1" height="1" xlink:href="image.jpg" />
+    </mask>
+  </defs>
+
+  <!-- Outline the drawing area in blue -->
+  <rect fill="none" stroke="blue" 
+        x="1" y="1" width="798" height="398"/>
+
+  <image x="100" y="100" width="300" height="200" xlink:href="image.jpg"
+         mask="url(#fadermask)" />
+
+  <rect fill="green" x="400" y="100" width="300" height="200"
+         mask="url(#imagemask)" />
+
+</svg>

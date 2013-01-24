@@ -29,7 +29,7 @@ public class TestActivity extends Activity
 
    private static final int DIALOG_SELECT_TEST = 1;
 
-   String[] fileList = {"test_gradient10_zerovector.svg",
+   String[] fileList = {"@test_mask12_image.svg",
                         "@test_mask11_group3.svg",
                         "@test_mask10_group2.svg",
                         "@test_mask09_svg.svg",
@@ -167,6 +167,7 @@ public class TestActivity extends Activity
                         "@test_mask09_svg.svg",
                         "@test_mask10_group2.svg",
                         "@test_mask11_group3.svg",
+                        "@test_mask12_image.svg",
                         "inkscape.svg",
                         "xara.svg",
                         "xara_bluecar.svg",
