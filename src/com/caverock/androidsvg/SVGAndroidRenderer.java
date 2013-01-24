@@ -367,8 +367,6 @@ public class SVGAndroidRenderer
             SVG.Pattern  pattern = (SVG.Pattern)ref;
             fillWithPattern(obj, path, pattern);
             return;
-         } else {
-            error("Pattern reference '%s' not found", ((SVG.PaintReference) state.style.fill).href);
          }
       }
 
@@ -3005,6 +3003,9 @@ if (foo && x>=125 && y>=125) {
 
    private void  checkForClipPath(SvgElement obj, Box boundingBox)
    {
+      if (state.style.clipPath == null)
+         return;
+
       // Locate the referenced object
       SVG.SvgObject  ref = obj.document.resolveIRI(state.style.clipPath);
       if (ref == null) {
