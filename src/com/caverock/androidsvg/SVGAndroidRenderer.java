@@ -368,7 +368,7 @@ public class SVGAndroidRenderer
             fillWithPattern(obj, path, pattern);
             return;
          } else {
-            warn("Pattern reference '%s' not found", ((SVG.PaintReference) state.style.fill).href);
+            error("Pattern reference '%s' not found", ((SVG.PaintReference) state.style.fill).href);
          }
       }
 
@@ -543,7 +543,7 @@ public class SVGAndroidRenderer
          // Check the we are refernecing a mask element
          if (ref == null || !(ref instanceof SVG.Mask)) {
             // This is an invalid mask reference - disable this object's mask
-            warn("Mask reference '%s' not found", state.style.mask);
+            error("Mask reference '%s' not found", state.style.mask);
             state.style.mask = null;
             return true;
          }
@@ -676,7 +676,7 @@ if (foo && x>=125 && y>=125) {
       // Locate the referenced object
       SVG.SvgObject  ref = obj.document.resolveIRI(obj.href);
       if (ref == null) {
-         warn("Use reference '%s' not found", obj.href);
+         error("Use reference '%s' not found", obj.href);
          return;
       }
 
@@ -1247,7 +1247,7 @@ if (foo && x>=125 && y>=125) {
          }
          else
          {
-            warn("Tref reference '%s' not found", tref.href);
+            error("Tref reference '%s' not found", tref.href);
          }
 
          // Restore state
@@ -1381,7 +1381,7 @@ if (foo && x>=125 && y>=125) {
             SVG.TextPath  tpath = (SVG.TextPath) obj;
             SVG.SvgObject  ref = obj.document.resolveIRI(tpath.href);
             if (ref == null) {
-               warn("TextPath path reference '%s' not found", tpath.href);
+               error("TextPath path reference '%s' not found", tpath.href);
                return false;
             }
             SVG.Path  pathObj = (SVG.Path) ref;
@@ -1495,7 +1495,7 @@ if (foo && x>=125 && y>=125) {
          image = fileResolver.resolveImage(obj.href);
       }
       if (image == null) {
-         warn("Could not locate image '%s'", obj.href);
+         error("Could not locate image '%s'", obj.href);
          return;
       }
 
@@ -2442,7 +2442,7 @@ if (foo && x>=125 && y>=125) {
          if (ref != null)
             _markerStart = (SVG.Marker) ref;
          else
-            warn("marker-start reference '%s' not found", state.style.markerStart);
+            error("Marker reference '%s' not found", state.style.markerStart);
       }
 
       if (state.style.markerMid != null) {
@@ -2450,7 +2450,7 @@ if (foo && x>=125 && y>=125) {
          if (ref != null)
             _markerMid = (SVG.Marker) ref;
          else
-            warn("marker-mid reference '%s' not found", state.style.markerMid);
+            error("Marker reference '%s' not found", state.style.markerMid);
       }
 
       if (state.style.markerEnd != null) {
@@ -2458,7 +2458,7 @@ if (foo && x>=125 && y>=125) {
          if (ref != null)
             _markerEnd = (SVG.Marker) ref;
          else
-            warn("marker-end reference '%s' not found", state.style.markerEnd);
+            error("Marker reference '%s' not found", state.style.markerEnd);
       }
 
       List<MarkerVector>  markers = null;
@@ -2691,7 +2691,7 @@ if (foo && x>=125 && y>=125) {
       SVG.SvgObject  ref = obj.document.resolveIRI(paintref.href);
       if (ref == null)
       {
-         warn("%s reference '%s' not found", (isFill ? "Fill":"Stroke"), paintref.href);
+         error("%s reference '%s' not found", (isFill ? "Fill":"Stroke"), paintref.href);
          if (paintref.fallback != null) {
             setPaintColour(state, isFill, paintref.fallback);
          } else {
@@ -3008,7 +3008,7 @@ if (foo && x>=125 && y>=125) {
       // Locate the referenced object
       SVG.SvgObject  ref = obj.document.resolveIRI(state.style.clipPath);
       if (ref == null) {
-         warn("ClipPath reference '%s' not found", state.style.clipPath);
+         error("ClipPath reference '%s' not found", state.style.clipPath);
          return;
       }
 
@@ -3189,7 +3189,7 @@ if (foo && x>=125 && y>=125) {
       // Locate the referenced object
       SVG.SvgObject  ref = obj.document.resolveIRI(obj.href);
       if (ref == null) {
-         warn("Use reference '%s' not found", obj.href);
+         error("Use reference '%s' not found", obj.href);
          return;
       }
 
