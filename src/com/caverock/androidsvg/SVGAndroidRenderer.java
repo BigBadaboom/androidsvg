@@ -2303,6 +2303,15 @@ if (foo && x>=125 && y>=125) {
       {
          // Generate and add markers for the first N-1 points
          pathDef.enumeratePath(this);
+
+         if (closepathReAdjustPending) {
+            // Now correct the start and end marker points of the subpath.
+            // They should both be oriented as if this was a midpoint (ie sum the vectors).
+            lastPos.add(markers.get(subpathStartIndex));
+            // Overwrite start marker. Other (end) marker will be written on exit or at start of next subpath.
+            markers.set(subpathStartIndex,  lastPos);
+            closepathReAdjustPending = false;
+         }
          // Add the marker for the pending last point
          if (lastPos != null) {
             markers.add(lastPos);
