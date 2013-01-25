@@ -213,6 +213,7 @@ public class SVGParser extends DefaultHandler
       text_anchor,
       text_decoration,
       transform,
+      version,
       viewBox,
       width,
       x, y,
@@ -474,7 +475,7 @@ public class SVGParser extends DefaultHandler
       supportedFeatures.add("Pattern");                     // YES
       supportedFeatures.add("Clip");                        // YES
       supportedFeatures.add("BasicClip");                   // YES
-      //supportedFeatures.add("Mask");                      // NYI FIXME
+      supportedFeatures.add("Mask");                        // YES
       //supportedFeatures.add("Filter");                    // NO
       //supportedFeatures.add("BasicFilter");               // NO
       //supportedFeatures.add("DocumentEventsAttribute");   // NO
@@ -782,6 +783,10 @@ dumpNode(svgDocument.getRootElement(), "");
                obj.height = parseLength(val);
                if (obj.height.isNegative())
                   throw new SAXException("Invalid <svg> element. height cannot be negative");
+               break;
+            case version:
+               if (currentElement == null)
+                  svgDocument.setVersion(val);
                break;
             default:
                break;

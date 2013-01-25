@@ -35,6 +35,7 @@ public class SVG
    private Svg     rootElement = null;
 
    // Metadata
+   private String  svgVersion = "";
    private String  title = "";
    private String  desc = "";
 
@@ -1073,6 +1074,12 @@ public class SVG
    }
 
 
+   protected void setVersion(String version)
+   {
+      this.svgVersion = version;
+   }
+
+
    protected SVGExternalFileResolver  getFileResolver()
    {
       return fileResolver;
@@ -1374,6 +1381,16 @@ public class SVG
    public String getDocumentDescription()
    {
       return desc;
+   }
+
+
+   /**
+    * Return the SVG version number as provided in the root <svg> tag of the document.
+    * @return version string if declared, otherwise an empty string.
+    */
+   public String getDocumentSVGVersion()
+   {
+      return svgVersion;
    }
 
 
