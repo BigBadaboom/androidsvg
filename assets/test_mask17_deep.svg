@@ -1,0 +1,98 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="8cm" height="8cm" viewBox="0 0 800 800" version="1.1"
+     xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+
+  <defs>
+    <mask id="fadermask" maskUnits="objectBoundingBox" maskContentUnits="objectBoundingBox">
+      <rect x="0" y="0" width="1" height="1" fill="#eee" />
+    </mask>
+    <rect id="Rect" fill="black" stroke="red" stroke-width="5"
+          x="0" y="0" width="100" height="100" />
+  </defs>
+
+  <!-- Outline the drawing area in blue -->
+  <rect fill="none" stroke="blue" 
+        x="1" y="1" width="798" height="798"/>
+
+  <g mask="url(#fadermask)">
+     <use xlink:href="#Rect" transform="translate(100, 100)" />
+  <g mask="url(#fadermask)">
+     <use xlink:href="#Rect" transform="translate(120, 120)" />
+  <g mask="url(#fadermask)">
+     <use xlink:href="#Rect" transform="translate(140, 140)" />
+  <g mask="url(#fadermask)">
+     <use xlink:href="#Rect" transform="translate(160, 160)" />
+  <g mask="url(#fadermask)">
+     <use xlink:href="#Rect" transform="translate(180, 180)" />
+  <g mask="url(#fadermask)">
+     <use xlink:href="#Rect" transform="translate(200, 200)" />
+  <g mask="url(#fadermask)">
+     <use xlink:href="#Rect" transform="translate(220, 220)" />
+  <g mask="url(#fadermask)">
+     <use xlink:href="#Rect" transform="translate(240, 240)" />
+  <g mask="url(#fadermask)">
+     <use xlink:href="#Rect" transform="translate(260, 260)" />
+  <g mask="url(#fadermask)">
+     <use xlink:href="#Rect" transform="translate(280, 280)" />
+  <g mask="url(#fadermask)">
+     <use xlink:href="#Rect" transform="translate(300, 300)" />
+  <g mask="url(#fadermask)">
+     <use xlink:href="#Rect" transform="translate(320, 320)" />
+  <g mask="url(#fadermask)">
+     <use xlink:href="#Rect" transform="translate(340, 340)" />
+  <g mask="url(#fadermask)">
+     <use xlink:href="#Rect" transform="translate(360, 360)" />
+  <g mask="url(#fadermask)">
+     <use xlink:href="#Rect" transform="translate(380, 380)" />
+  <g mask="url(#fadermask)">
+     <use xlink:href="#Rect" transform="translate(400, 400)" />
+  <g mask="url(#fadermask)">
+     <use xlink:href="#Rect" transform="translate(420, 420)" />
+  <g mask="url(#fadermask)">
+     <use xlink:href="#Rect" transform="translate(440, 440)" />
+  <g mask="url(#fadermask)">
+     <use xlink:href="#Rect" transform="translate(460, 460)" />
+  <g mask="url(#fadermask)">
+     <use xlink:href="#Rect" transform="translate(480, 480)" />
+  <g mask="url(#fadermask)">
+     <use xlink:href="#Rect" transform="translate(500, 500)" />
+  <g mask="url(#fadermask)">
+     <use xlink:href="#Rect" transform="translate(520, 520)" />
+  <g mask="url(#fadermask)">
+     <use xlink:href="#Rect" transform="translate(540, 540)" />
+  <g mask="url(#fadermask)">
+     <use xlink:href="#Rect" transform="translate(560, 560)" />
+  <g mask="url(#fadermask)">
+     <use xlink:href="#Rect" transform="translate(580, 580)" />
+  <g mask="url(#fadermask)">
+     <use xlink:href="#Rect" transform="translate(600, 600)" />
+  </g>
+  </g>
+  </g>
+  </g>
+  </g>
+  </g>
+  </g>
+  </g>
+  </g>
+  </g>
+  </g>
+  </g>
+  </g>
+  </g>
+  </g>
+  </g>
+  </g>
+  </g>
+  </g>
+  </g>
+  </g>
+  </g>
+  </g>
+  </g>
+  </g>
+  </g>
+
+</svg>

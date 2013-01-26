@@ -461,6 +461,7 @@ public class SVGAndroidRenderer
 
       renderChildren(obj, true);
 
+/**/Log.w(TAG, "grp bbox = "+obj.boundingBox);
       if (compositing)
          popLayer(obj);
 
@@ -489,13 +490,13 @@ public class SVGAndroidRenderer
       // Convert the corners of the child bbox to world space
       Matrix  m = new Matrix();
       // Get the inverse of the child transform
-      if (canvas.getMatrix().invert(m)) {
+      if (matrixStack.peek().invert(m)) {
          float[] pts = {obj.boundingBox.minX, obj.boundingBox.minY,
                         obj.boundingBox.maxX(), obj.boundingBox.minY,
                         obj.boundingBox.maxX(), obj.boundingBox.maxY(),
                         obj.boundingBox.minX, obj.boundingBox.maxY()};
          // Now concatenate the parent's matrix to create a child-to-parent transform
-         m.preConcat(matrixStack.peek());
+         m.preConcat(canvas.getMatrix());
          m.mapPoints(pts);
          // Finally, find the bounding box of the transformed points
          RectF  rect = new RectF(pts[0], pts[1], pts[0], pts[1]);
@@ -583,6 +584,9 @@ public class SVGAndroidRenderer
 
    private boolean requiresCompositing()
    {
+      if (state.style.mask != null && !state.directRendering)
+         warn("Masks are not supported when using getPicture()");
+
       return (state.style.opacity < 1.0f) ||
              (state.style.mask != null && state.directRendering);
    }
@@ -699,15 +703,20 @@ if (foo && x>=125 && y>=125) {
       parentPush(obj);
 
       if (ref instanceof SVG.Svg) {
+         statePush();
          render((SVG.Svg) ref, _w, _h);
+         statePop();
       } else if (ref instanceof SVG.Symbol) {
+         statePush();
          render((SVG.Symbol) ref, _w, _h);
+         statePop();
       } else {
          render(ref);
       }
 
       parentPop();
 
+/**/Log.w(TAG, "use bbox = "+obj.boundingBox);
       if (compositing)
          popLayer(obj);
 
@@ -785,6 +794,9 @@ if (foo && x>=125 && y>=125) {
 
       Path  path = makePathAndBoundingBox(obj);
       updateParentBoundingBox(obj);
+float[] pts = {obj.boundingBox.minX, obj.boundingBox.minY};
+canvas.getMatrix().mapPoints(pts);
+/**/warn("Drawing rect at %g,%g",pts[0],pts[1]);
 
       checkForGradiantsAndPatterns(obj);      
       checkForClipPath(obj);

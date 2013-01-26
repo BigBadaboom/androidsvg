@@ -29,7 +29,7 @@ public class TestActivity extends Activity
 
    private static final int DIALOG_SELECT_TEST = 1;
 
-   String[] fileList = {"sample_10.5_tspan02.svg",
+   String[] fileList = {"@test_mask17_deep.svg",
                         "sample_5.6_Use01.svg",
                         "sample_5.6_Use02.svg",
                         "sample_5.6_Use03.svg",
@@ -168,6 +168,7 @@ public class TestActivity extends Activity
                         "lion.svg",
                         "tiger.svg",
                         "eleven_below_single.svg",
+                        "web-platform-org-logo.svg",
                         "Firefox-logo.svg",
                         "chrome-logo.svg",
                         "!acid1_noerrors_nocss.svg",
