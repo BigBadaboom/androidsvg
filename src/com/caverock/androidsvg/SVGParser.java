@@ -21,6 +21,7 @@ import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
 
 import android.graphics.Matrix;
+import android.renderscript.Font;
 import android.util.Log;
 
 import com.caverock.androidsvg.SVG.Box;
@@ -31,6 +32,7 @@ import com.caverock.androidsvg.SVG.GradientSpread;
 import com.caverock.androidsvg.SVG.Length;
 import com.caverock.androidsvg.SVG.PaintReference;
 import com.caverock.androidsvg.SVG.Style;
+import com.caverock.androidsvg.SVG.Style.FontStyle;
 import com.caverock.androidsvg.SVG.Style.TextDecoration;
 import com.caverock.androidsvg.SVG.SvgElementBase;
 import com.caverock.androidsvg.SVG.SvgObject;
@@ -170,11 +172,12 @@ public class SVGParser extends DefaultHandler
       fill,
       fill_rule,
       fill_opacity,
+      font,
       font_family,
       font_size,
       font_weight,
       font_style,
-      // font, font_size_adjust, font_stretch, font_variant,  
+      // font_size_adjust, font_stretch, font_variant,  
       gradientTransform,
       gradientUnits,
       height,
@@ -249,8 +252,9 @@ public class SVGParser extends DefaultHandler
 
 
    private static HashMap<String, Integer> colourKeywords = new HashMap<String, Integer>();
-   private static HashMap<String, Length> fontSizeKeywords = new HashMap<String, Length>();
-   private static HashMap<String, Integer> fontWeightKeywords = new HashMap<String, Integer>();
+   private static HashMap<String, Length> fontSizeKeywords = new HashMap<String, Length>(9);
+   private static HashMap<String, Integer> fontWeightKeywords = new HashMap<String, Integer>(13);
+   private static HashMap<String, Style.FontStyle>fontStyleKeywords = new HashMap<String, Style.FontStyle>(3); 
    private static HashMap<String, SVG.AspectRatioAlignment> aspectRatioKeywords = new HashMap<String, SVG.AspectRatioAlignment>();
    private static HashSet<String> supportedFeatures = new HashSet<String>();
 
@@ -426,6 +430,10 @@ public class SVGParser extends DefaultHandler
       fontWeightKeywords.put("700", 700);
       fontWeightKeywords.put("800", 800);
       fontWeightKeywords.put("900", 900);
+
+      fontStyleKeywords.put("normal", Style.FontStyle.Normal);
+      fontStyleKeywords.put("italic", Style.FontStyle.Italic);
+      fontStyleKeywords.put("oblique", Style.FontStyle.Oblique);
 
       aspectRatioKeywords.put(NONE, SVG.AspectRatioAlignment.none);
       aspectRatioKeywords.put("xMinYMin", SVG.AspectRatioAlignment.xMinYMin);
@@ -2460,6 +2468,9 @@ dumpNode(svgDocument.getRootElement(), "");
          return ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z'));
       }
 
+      /*
+       * Extract a quoted string from the input.
+       */
       public String  nextQuotedString()
       {
          if (empty())
@@ -2479,6 +2490,20 @@ dumpNode(svgDocument.getRootElement(), "");
          position++;
          return input.substring(start+1, position-1);
       }
+
+      /*
+       * Return the remaining input as a string.
+       */
+      public String  restOfText()
+      {
+         if (empty())
+            return null;
+
+         int  start = position;
+         position = input.length();
+         return input.substring(start);
+      }
+
    }
 
 
@@ -2635,6 +2660,10 @@ dumpNode(svgDocument.getRootElement(), "");
          case color:
             obj.style.color = parseColour(val);
             obj.style.specifiedFlags |= SVG.SPECIFIED_COLOR;
+            break;
+
+         case font:
+            parseFont(obj.style, val);
             break;
 
          case font_family:
@@ -3169,6 +3198,77 @@ dumpNode(svgDocument.getRootElement(), "");
    }
 
 
+   // Parse a font attribute
+   // [ [ <'font-style'> || <'font-variant'> || <'font-weight'> ]? <'font-size'> [ / <'line-height'> ]? <'font-family'> ] | caption | icon | menu | message-box | small-caption | status-bar | inherit
+   private void  parseFont(Style style, String val) throws SAXException
+   {
+      List<String>     fontFamily = null;
+      Length           fontSize = null;
+      Integer          fontWeight = null;
+      Style.FontStyle  fontStyle = null;
+      String           fontVariant = null;
+
+      // Start by checking for the fixed size standard system font names (which we don't support)
+      if ("|caption|icon|menu|message-box|small-caption|status-bar|".indexOf('|'+val+'|') != -1)
+         return;
+         
+      // Fist part: style/variant/weight (opt - one or more)
+      TextScanner  scan = new TextScanner(val);
+      String item = null;
+      while (true)
+      {
+         item = scan.nextToken('/');
+         scan.skipWhitespace();
+         if (item == null)
+            throw new SAXException("Invalid font style attribute: missing font size and family");
+         if (fontWeight != null && fontStyle != null)
+            break;
+         if (item.equals("normal"))  // indeterminate which of these this refers to
+            continue;
+         if (fontWeight == null) {
+            fontWeight = fontWeightKeywords.get(item);
+            if (fontWeight != null)
+               continue;
+         }
+         if (fontStyle == null) {
+            fontStyle = fontStyleKeywords.get(item);
+            if (fontStyle != null)
+               continue;
+         }
+         // Must be a font-variant keyword?
+         if (fontVariant == null && item.equals("small-caps")) {
+            fontVariant = item;
+            continue;
+         }
+         // Not any of these. Break and try next section
+         break;
+      }
+      
+      // Second part: font size (reqd) and line-height (opt)
+      fontSize = parseFontSize(item);
+
+      // Check for line-height (which we don't support)
+      if (scan.consume('/'))
+      {
+         scan.skipWhitespace();
+         item = scan.nextToken();
+         if (item == null)
+            throw new SAXException("Invalid font style attribute: missing line-height");
+         parseLength(item);
+         scan.skipWhitespace();
+      }
+      
+      // Third part: font family
+      fontFamily = parseFontFamily(scan.restOfText());
+
+      style.fontFamily = fontFamily;
+      style.fontSize = fontSize;
+      style.fontWeight = (fontWeight == null) ? Style.FONT_WEIGHT_NORMAL : fontWeight;
+      style.fontStyle = (fontStyle == null) ? Style.FontStyle.Normal : fontStyle;
+      style.specifiedFlags |= (SVG.SPECIFIED_FONT_FAMILY | SVG.SPECIFIED_FONT_SIZE | SVG.SPECIFIED_FONT_WEIGHT | SVG.SPECIFIED_FONT_STYLE);
+   }
+
+
    // Parse a font family list
    private List<String>  parseFontFamily(String val) throws SAXException
    {
@@ -3217,13 +3317,11 @@ dumpNode(svgDocument.getRootElement(), "");
    // Parse a font style keyword
    private Style.FontStyle  parseFontStyle(String val) throws SAXException
    {
-      if ("normal".equals(val))
-         return Style.FontStyle.Normal;
-      if ("italic".equals(val))
-         return Style.FontStyle.Italic;
-      if ("oblique".equals(val))
-         return Style.FontStyle.Oblique;
-      throw new SAXException("Invalid font-style property: "+val);
+      Style.FontStyle  fs = fontStyleKeywords.get(val);
+      if (fs == null) {
+         throw new SAXException("Invalid font-style property: "+val);
+      }
+      return fs;
    }
 
 

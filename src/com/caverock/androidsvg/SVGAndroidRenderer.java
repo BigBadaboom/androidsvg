@@ -1833,9 +1833,10 @@ canvas.getMatrix().mapPoints(pts);
 
       if (isSpecified(style, SVG.SPECIFIED_FONT_SIZE))
       {
+         float  currentFontSize = getCurrentFontSize();
          state.style.fontSize = style.fontSize;
-         state.fillPaint.setTextSize(style.fontSize.floatValue(this));
-         state.strokePaint.setTextSize(style.fontSize.floatValue(this));
+         state.fillPaint.setTextSize(style.fontSize.floatValue(this, currentFontSize));
+         state.strokePaint.setTextSize(style.fontSize.floatValue(this, currentFontSize));
       }
 
       if (isSpecified(style, SVG.SPECIFIED_FONT_FAMILY))
