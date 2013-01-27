@@ -1271,7 +1271,7 @@ public class SVG
    }
 
 
-   public Picture  getPicture(int widthInPixels, int heightInPixels, float dpi, AspectRatioAlignment alignment, boolean fitToCanvas)
+   public Picture  getPicture(int widthInPixels, int heightInPixels, float defaultDPI, AspectRatioAlignment alignment, boolean fitToCanvas)
    {
       Picture  picture = new Picture();
       Canvas   canvas = picture.beginRecording(widthInPixels, heightInPixels);
@@ -1280,7 +1280,7 @@ public class SVG
       if (alignment == null)
          alignment = AspectRatioAlignment.xMidYMid;
 
-      SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, viewPort, dpi);
+      SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, viewPort, defaultDPI);
 
       renderer.renderDocument(this, null, alignment, fitToCanvas, false);
 
@@ -1295,7 +1295,7 @@ public class SVG
    }
 
 
-   public Picture  getPictureForView(String viewId, int widthInPixels, int heightInPixels, float dpi)
+   public Picture  getPictureForView(String viewId, int widthInPixels, int heightInPixels, float defaultDPI)
    {
       SvgObject  obj = this.getElementById(viewId);
       if (obj == null)
@@ -1318,7 +1318,7 @@ public class SVG
       if (alignment == null)
          alignment = AspectRatioAlignment.xMidYMid;
 
-      SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, viewPort, dpi);
+      SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, viewPort, defaultDPI);
 
       renderer.renderDocument(this, view.viewBox, alignment, !view.preserveAspectRatioSlice, false);
 
@@ -1337,7 +1337,7 @@ public class SVG
    }
 
 
-   public void  renderToCanvas(Canvas canvas, RectF dst, float dpi, AspectRatioAlignment alignment, boolean fitToCanvas)
+   public void  renderToCanvas(Canvas canvas, RectF dst, float defaultDPI, AspectRatioAlignment alignment, boolean fitToCanvas)
    {
       Box  viewPort;
 
@@ -1350,7 +1350,7 @@ public class SVG
       if (alignment == null)
          alignment = AspectRatioAlignment.xMidYMid;
 
-      SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, viewPort, dpi);
+      SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, viewPort, defaultDPI);
 
       renderer.renderDocument(this, null, alignment, fitToCanvas, true);
    }
@@ -1447,10 +1447,6 @@ public class SVG
     * When called, this method will attempt to generate a suitable viewBox if one
     * is missing.  It does this by using the width and height attributes in the
     * root <svg> element.
-    * 
-    * If those are also missing, then nothing is done and the image will not be
-    * scaled when rendered.  In the future, we may add code to go through the
-    * image and attempt to work out the bounds. But thats a job for another day.
     */
    public void  ensureRootViewBox()
    {

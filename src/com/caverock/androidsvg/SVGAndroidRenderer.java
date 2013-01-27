@@ -172,10 +172,10 @@ public class SVGAndroidRenderer
     * @param dpi The DPI setting to use when converting real-world units such as centimetres.
     */
 
-   public SVGAndroidRenderer(Canvas canvas, SVG.Box viewPort, float dpi)
+   public SVGAndroidRenderer(Canvas canvas, SVG.Box viewPort, float defaultDPI)
    {
       this.canvas = canvas;
-      this.dpi = dpi;
+      this.dpi = defaultDPI;
       this.canvasViewPort = viewPort;
    }
 
@@ -209,7 +209,7 @@ public class SVGAndroidRenderer
    }
 
 
-   public void  renderDocument(SVG document, Box viewBox, AspectRatioAlignment alignment, boolean fitToCanvas, boolean directRenderingMode)
+   protected void  renderDocument(SVG document, Box viewBox, AspectRatioAlignment alignment, boolean fitToCanvas, boolean directRenderingMode)
    {
       this.document = document;
       this.directRenderingMode = directRenderingMode;
@@ -236,12 +236,20 @@ public class SVGAndroidRenderer
          state.viewPort = rootObj.viewBox;
       }
 
-      // If we are direct rendering (ie. to a bitmap rather to a Picture recording, we need to
-      // check the width and height attributes of the root element and adjust the used DPI so
-      // that the document can be rendered accurately.  For indirect/Picture renderings we never
-      // no exactly what the final rendered size will be. OR MAYBE NOT? - USE WIDTH AND HEIGHT PASSED TO PICTURE?
-      if (rootObj.width != null) {
-         // FIXME
+      // If the root svg element has a width expressed in physical units, then we can calculate
+      // the document author's intended scale from that, rather than relying on defaultDPI.
+      if (rootObj.width != null && rootObj.viewBox != null) {
+         float  perUnit = rootObj.viewBox.width / rootObj.width.value;
+         switch (rootObj.width.unit)
+         {
+            case in: this.dpi = perUnit; break;
+            case cm: this.dpi = 2.54f * perUnit; break;
+            case mm: this.dpi = 25.4f * perUnit; break;
+            case pt: this.dpi = 72 * perUnit; break;
+            case pc: this.dpi = 6 * perUnit; break;
+            default: // Do nothing for non-physical units
+         }
+/**/Log.w(TAG, "set dpi to "+this.dpi);
       }
 
       render(rootObj);
@@ -538,9 +546,8 @@ public class SVGAndroidRenderer
       state = (RendererState) state.clone();
 
       if (state.style.mask != null && state.directRendering) {
-/**/Log.w(TAG,"Mask");
          SVG.SvgObject  ref = document.resolveIRI(state.style.mask);
-         // Check the we are refernecing a mask element
+         // Check the we are referencing a mask element
          if (ref == null || !(ref instanceof SVG.Mask)) {
             // This is an invalid mask reference - disable this object's mask
             error("Mask reference '%s' not found", state.style.mask);
@@ -550,7 +557,6 @@ public class SVGAndroidRenderer
          // We now need to replace the canvas with one onto which we draw the content that is getting masked
          canvasStack.push(canvas);
          duplicateCanvas();
-         // FIXME canvas.save()?
       }
 
       return true;
@@ -561,7 +567,6 @@ public class SVGAndroidRenderer
    {
       // If this is masked content, apply the mask now
       if (state.style.mask != null && state.directRendering) {
-         // FIXME canvas.restore()?
          // The masked content has been drawn, now we have to render the mask to a separate canvas
          SVG.SvgObject  ref = document.resolveIRI(state.style.mask);
          duplicateCanvas();
@@ -795,9 +800,6 @@ if (foo && x>=125 && y>=125) {
 
       Path  path = makePathAndBoundingBox(obj);
       updateParentBoundingBox(obj);
-float[] pts = {obj.boundingBox.minX, obj.boundingBox.minY};
-canvas.getMatrix().mapPoints(pts);
-/**/warn("Drawing rect at %g,%g",pts[0],pts[1]);
 
       checkForGradiantsAndPatterns(obj);      
       checkForClipPath(obj);
