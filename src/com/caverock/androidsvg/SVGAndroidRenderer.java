@@ -249,7 +249,7 @@ public class SVGAndroidRenderer
             case pc: this.dpi = 6 * perUnit; break;
             default: // Do nothing for non-physical units
          }
-/**/Log.w(TAG, "set dpi to "+this.dpi);
+         debug("Setting DPI to "+this.dpi);
       }
 
       render(rootObj);
@@ -399,6 +399,13 @@ public class SVGAndroidRenderer
    }
 
 
+   private void  debug(String format, Object... args)
+   {
+      if (SVG.DEBUG)
+         Log.d(TAG, String.format(format, args));
+   }
+
+
    //==============================================================================
    // Renderers for each element type
 
@@ -412,7 +419,7 @@ public class SVGAndroidRenderer
    // When referenced by a <use> element, it's width and height take precedence over the ones in the <svg> object.
    private void render(SVG.Svg obj, SVG.Length width, SVG.Length height)
    {
-/**/Log.d(TAG, "Svg render");
+      debug("Svg render");
 
       if ((width != null && width.isZero()) ||
           (height != null && height.isZero()))
@@ -457,7 +464,8 @@ public class SVGAndroidRenderer
 
    private void render(SVG.Group obj)
    {
-/**/Log.d(TAG, "Group render");
+      debug("Group render");
+
       updateStyle(state, obj.style);
 
       if (obj.transform != null) {
@@ -470,7 +478,6 @@ public class SVGAndroidRenderer
 
       renderChildren(obj, true);
 
-/**/Log.w(TAG, "grp bbox = "+obj.boundingBox);
       if (compositing)
          popLayer(obj);
 
@@ -610,7 +617,6 @@ public class SVGAndroidRenderer
 
    private Bitmap  processMaskBitmaps()
    {
-/**/Log.w(TAG,"processing alpha");  long time = SystemClock.elapsedRealtime();
       // Retrieve the rendered mask
       Bitmap  mask = bitmapStack.pop();
       // Retrieve the rendered content to which the mask is to be applied
@@ -622,7 +628,6 @@ public class SVGAndroidRenderer
       int    h = mask.getHeight();
       int[]  maskBuf = new int[w];
       int[]  maskedContentBuf = new int[w];
-boolean foo = true;
       for (int y=0; y<h; y++)
       {
          mask.getPixels(maskBuf, 0, w, 0, y, w, 1);
@@ -630,8 +635,6 @@ boolean foo = true;
          for (int x=0; x<w; x++)
          {
             int  px = maskBuf[x];
-//if (foo && px!=0) {Log.w(TAG, "pixpos="+x+","+y); foo=false;}
-//if (x==0 && px != 0) Log.w(TAG,String.format("px = %x",  px));
             int  b = px & 0xff;
             int  g = (px >> 8) & 0xff;
             int  r = (px >> 16) & 0xff;
@@ -641,32 +644,15 @@ boolean foo = true;
                maskedContentBuf[x] = 0;
                continue;
             }
-//a=255;
-//if (x == 20) Log.w(TAG,String.format("rgba = %d %d %d %d",  r,g,b,a));
             int  maskAlpha = (r * LUMINANCE_TO_ALPHA_RED + g * LUMINANCE_TO_ALPHA_GREEN + b * LUMINANCE_TO_ALPHA_BLUE) * a / (255 << LUMINANCE_FACTOR_SHIFT);
-//if (x == 20) Log.w(TAG,String.format("alpha = %d",  maskAlpha));
             int  content = maskedContentBuf[x];
             int  contentAlpha = (content >> 24) & 0xff;
-if (foo && x>=125 && y>=125) {
-   Log.w(TAG,String.format("pos=%d,%d px=%x a=%d comp=%x maskAlpha=%d content=%x contentAlpha=%d finalAlpha=%d",
-         x,y,
-         maskBuf[x],
-         a,
-         (r * LUMINANCE_TO_ALPHA_RED + g * LUMINANCE_TO_ALPHA_GREEN + b * LUMINANCE_TO_ALPHA_BLUE),
-         maskAlpha,
-         content,
-         contentAlpha,
-         ((contentAlpha * maskAlpha) / 255)));
-   foo=false;
-}
             contentAlpha = (contentAlpha * maskAlpha) / 255;
             maskedContentBuf[x] = (content & 0x00ffffff) | (contentAlpha << 24);
-//maskedContentBuf[x] = maskBuf[x];
          }
          maskedContent.setPixels(maskedContentBuf, 0, w, 0, y, w, 1);
       }
       mask.recycle();
-/**/Log.w(TAG,"processing alpha time = "+(SystemClock.elapsedRealtime()-time));
       return maskedContent;
    }
 
@@ -676,7 +662,7 @@ if (foo && x>=125 && y>=125) {
 
    private void render(SVG.Use obj)
    {
-/**/Log.d(TAG, "Use render");
+      debug("Use render");
 
       updateStyle(state, obj.style);
 
@@ -721,7 +707,6 @@ if (foo && x>=125 && y>=125) {
 
       parentPop();
 
-/**/Log.w(TAG, "use bbox = "+obj.boundingBox);
       if (compositing)
          popLayer(obj);
 
@@ -734,7 +719,7 @@ if (foo && x>=125 && y>=125) {
 
    private void render(SVG.Path obj)
    {
-//Log.d(TAG, "Path render");
+      debug("Path render");
 
       updateStyle(state, obj.style);
 
@@ -785,7 +770,8 @@ if (foo && x>=125 && y>=125) {
 
    private void render(SVG.Rect obj)
    {
-/**/Log.d(TAG, "Rect render");
+      debug("Rect render");
+
       if (obj.width == null || obj.height == null || obj.width.isZero() || obj.height.isZero())
          return;
 
@@ -820,7 +806,8 @@ if (foo && x>=125 && y>=125) {
 
    private void render(SVG.Circle obj)
    {
-/**/Log.d(TAG, "Circle render");
+      debug("Circle render");
+
       if (obj.r == null || obj.r.isZero())
          return;
 
@@ -855,7 +842,8 @@ if (foo && x>=125 && y>=125) {
 
    private void render(SVG.Ellipse obj)
    {
-/**/Log.d(TAG, "Ellipse render");
+      debug("Ellipse render");
+
       if (obj.rx == null || obj.ry == null || obj.rx.isZero() || obj.ry.isZero())
          return;
 
@@ -890,7 +878,7 @@ if (foo && x>=125 && y>=125) {
 
    private void render(SVG.Line obj)
    {
-/**/Log.d(TAG, "Line render");
+      debug("Line render");
 
       updateStyle(state, obj.style);
 
@@ -950,7 +938,7 @@ if (foo && x>=125 && y>=125) {
 
    private void render(SVG.PolyLine obj)
    {
-/**/Log.d(TAG, "PolyLine render");
+      debug("PolyLine render");
 
       updateStyle(state, obj.style);
 
@@ -1038,7 +1026,7 @@ if (foo && x>=125 && y>=125) {
 
    private void render(SVG.Polygon obj)
    {
-/**/Log.d(TAG, "Polygon render");
+      debug("Polygon render");
 
       updateStyle(state, obj.style);
 
@@ -1085,7 +1073,7 @@ if (foo && x>=125 && y>=125) {
 
    private void render(SVG.Text obj)
    {
-/**/Log.d(TAG, "Text render");
+      debug("Text render");
 
       updateStyle(state, obj.style);
 
@@ -1141,7 +1129,8 @@ if (foo && x>=125 && y>=125) {
       @Override
       public void processText(String text)
       {
-/**/Log.d(TAG, "TextSequence render");
+         debug("TextSequence render");
+
          if (visible())
          {
             if (state.hasFill)
@@ -1213,7 +1202,8 @@ if (foo && x>=125 && y>=125) {
       }
       else if (obj instanceof SVG.TSpan)
       {
-/**/Log.d(TAG, "TSpan render");
+         debug("TSpan render");
+
          // Save state
          statePush();
 
@@ -1278,7 +1268,7 @@ if (foo && x>=125 && y>=125) {
 
    private void renderTextPath(SVG.TextPath obj)
    {
-/**/Log.d(TAG, "TextPath render");
+      debug("TextPath render");
 
       updateStyle(state, obj.style);
 
@@ -1455,7 +1445,7 @@ if (foo && x>=125 && y>=125) {
 
    private void render(SVG.Symbol obj, SVG.Length width, SVG.Length height)
    {
-/**/Log.d(TAG, "Symbol render");
+      debug("Symbol render");
 
       if ((width != null && width.isZero()) ||
           (height != null && height.isZero()))
@@ -1492,7 +1482,7 @@ if (foo && x>=125 && y>=125) {
 
    private void render(SVG.Image obj)
    {
-/**/Log.d(TAG, "Image render");
+      debug("Image render");
 
       if (obj.width == null || obj.width.isZero() ||
           obj.height == null || obj.height.isZero())
@@ -3639,7 +3629,8 @@ if (foo && x>=125 && y>=125) {
     */
    private void  renderMask(SVG.Mask mask, SvgElement obj)
    {
-/**/Log.w(TAG,"Mask render");
+      debug(TAG,"Mask render");
+
       boolean      maskUnitsAreUser = (mask.maskUnitsAreUser != null && mask.maskUnitsAreUser);
       float        x, y, w, h;
 

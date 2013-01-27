@@ -21,7 +21,6 @@ import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
 
 import android.graphics.Matrix;
-import android.renderscript.Font;
 import android.util.Log;
 
 import com.caverock.androidsvg.SVG.Box;
@@ -32,7 +31,6 @@ import com.caverock.androidsvg.SVG.GradientSpread;
 import com.caverock.androidsvg.SVG.Length;
 import com.caverock.androidsvg.SVG.PaintReference;
 import com.caverock.androidsvg.SVG.Style;
-import com.caverock.androidsvg.SVG.Style.FontStyle;
 import com.caverock.androidsvg.SVG.Style.TextDecoration;
 import com.caverock.androidsvg.SVG.SvgElementBase;
 import com.caverock.androidsvg.SVG.SvgObject;
@@ -727,9 +725,10 @@ public class SVGParser extends DefaultHandler
    public void endDocument() throws SAXException
    {
       super.endDocument();
-/**/Log.d(TAG, "<svg> DOCUMENT END!");
-// Dump document
-dumpNode(svgDocument.getRootElement(), "");
+
+      // Dump document
+      if (SVG.DEBUG)
+         dumpNode(svgDocument.getRootElement(), "");
    }
 
 
@@ -745,6 +744,16 @@ dumpNode(svgDocument.getRootElement(), "");
    }
 
 
+   //==============================================================================
+
+
+   private void  debug(String format, Object... args)
+   {
+      if (SVG.DEBUG)
+         Log.d(TAG, String.format(format, args));
+   }
+
+
    //=========================================================================
    // Handlers for each SVG element
    //=========================================================================
@@ -752,7 +761,8 @@ dumpNode(svgDocument.getRootElement(), "");
 
    private void  svg(Attributes attributes) throws SAXException
    {
-/**/Log.d(TAG, "<svg>");
+      debug("<svg>");
+
       SVG.Svg  obj = new SVG.Svg();
       obj.document = svgDocument;
       obj.parent = currentElement;
@@ -810,7 +820,8 @@ dumpNode(svgDocument.getRootElement(), "");
 
    private void  g(Attributes attributes) throws SAXException
    {
-/**/Log.d(TAG, "<g>");
+      debug("<g>");
+
       if (currentElement == null)
          throw new SAXException("Invalid document. Root element must be <svg>");
       SVG.Group  obj = new SVG.Group();
@@ -831,7 +842,8 @@ dumpNode(svgDocument.getRootElement(), "");
 
    private void  defs(Attributes attributes) throws SAXException
    {
-/**/Log.d(TAG, "<defs>");
+      debug("<defs>");
+
       if (currentElement == null)
          throw new SAXException("Invalid document. Root element must be <svg>");
       SVG.Defs  obj = new SVG.Defs();
@@ -851,7 +863,8 @@ dumpNode(svgDocument.getRootElement(), "");
 
    private void  use(Attributes attributes) throws SAXException
    {
-/**/Log.d(TAG, "<use>");
+      debug("<use>");
+
       if (currentElement == null)
          throw new SAXException("Invalid document. Root element must be <svg>");
       SVG.Use  obj = new SVG.Use();
@@ -908,7 +921,8 @@ dumpNode(svgDocument.getRootElement(), "");
 
    private void  image(Attributes attributes) throws SAXException
    {
-/**/Log.d(TAG, "<image>");
+      debug("<image>");
+
       if (currentElement == null)
          throw new SAXException("Invalid document. Root element must be <svg>");
       SVG.Image  obj = new SVG.Image();
@@ -968,7 +982,8 @@ dumpNode(svgDocument.getRootElement(), "");
 
    private void  path(Attributes attributes) throws SAXException
    {
-/**/Log.d(TAG, "<path>");
+      debug("<path>");
+
       if (currentElement == null)
          throw new SAXException("Invalid document. Root element must be <svg>");
       SVG.Path  obj = new SVG.Path();
@@ -1011,7 +1026,8 @@ dumpNode(svgDocument.getRootElement(), "");
 
    private void  rect(Attributes attributes) throws SAXException
    {
-/**/Log.d(TAG, "<rect>");
+      debug("<rect>");
+
       if (currentElement == null)
          throw new SAXException("Invalid document. Root element must be <svg>");
       SVG.Rect  obj = new SVG.Rect();
@@ -1072,7 +1088,8 @@ dumpNode(svgDocument.getRootElement(), "");
 
    private void  circle(Attributes attributes) throws SAXException
    {
-/**/Log.d(TAG, "<circle>");
+      debug("<circle>");
+
       if (currentElement == null)
          throw new SAXException("Invalid document. Root element must be <svg>");
       SVG.Circle  obj = new SVG.Circle();
@@ -1118,7 +1135,8 @@ dumpNode(svgDocument.getRootElement(), "");
 
    private void  ellipse(Attributes attributes) throws SAXException
    {
-/**/Log.d(TAG, "<ellipse>");
+      debug("<ellipse>");
+
       if (currentElement == null)
          throw new SAXException("Invalid document. Root element must be <svg>");
       SVG.Ellipse  obj = new SVG.Ellipse();
@@ -1169,7 +1187,8 @@ dumpNode(svgDocument.getRootElement(), "");
 
    private void  line(Attributes attributes) throws SAXException
    {
-/**/Log.d(TAG, "<line>");
+      debug("<line>");
+
       if (currentElement == null)
          throw new SAXException("Invalid document. Root element must be <svg>");
       SVG.Line  obj = new SVG.Line();
@@ -1216,7 +1235,8 @@ dumpNode(svgDocument.getRootElement(), "");
 
    private void  polyline(Attributes attributes) throws SAXException
    {
-/**/Log.d(TAG, "<polyline>");
+      debug("<polyline>");
+
       if (currentElement == null)
          throw new SAXException("Invalid document. Root element must be <svg>");
       SVG.PolyLine  obj = new SVG.PolyLine();
@@ -1272,7 +1292,8 @@ dumpNode(svgDocument.getRootElement(), "");
 
    private void  polygon(Attributes attributes) throws SAXException
    {
-/**/Log.d(TAG, "<polygon>");
+      debug("<polygon>");
+
       if (currentElement == null)
          throw new SAXException("Invalid document. Root element must be <svg>");
       SVG.Polygon  obj = new SVG.Polygon();
@@ -1293,7 +1314,8 @@ dumpNode(svgDocument.getRootElement(), "");
 
    private void  text(Attributes attributes) throws SAXException
    {
-/**/Log.d(TAG, "<text>");
+      debug("<text>");
+
       if (currentElement == null)
          throw new SAXException("Invalid document. Root element must be <svg>");
       SVG.Text  obj = new SVG.Text();
@@ -1362,7 +1384,7 @@ dumpNode(svgDocument.getRootElement(), "");
       }
       else if  (obj instanceof SVG.TRef)
       {
-         // TODO
+         // N/A
       }
    }
 
@@ -1421,7 +1443,8 @@ dumpNode(svgDocument.getRootElement(), "");
 
    private void  tspan(Attributes attributes) throws SAXException
    {
-/**/Log.d(TAG, "<tspan>");
+      debug("<tspan>");
+
       if (currentElement == null)
          throw new SAXException("Invalid document. Root element must be <svg>");
       if (!(currentElement instanceof SVG.TextContainer))
@@ -1448,7 +1471,8 @@ dumpNode(svgDocument.getRootElement(), "");
 
    private void  tref(Attributes attributes) throws SAXException
    {
-/**/Log.d(TAG, "<tref>");
+      debug("<tref>");
+
       if (currentElement == null)
          throw new SAXException("Invalid document. Root element must be <svg>");
       if (!(currentElement instanceof SVG.TextContainer))
@@ -1493,7 +1517,8 @@ dumpNode(svgDocument.getRootElement(), "");
 
    private void  zwitch(Attributes attributes) throws SAXException
    {
-/**/Log.d(TAG, "<switch>");
+      debug("<switch>");
+
       if (currentElement == null)
          throw new SAXException("Invalid document. Root element must be <svg>");
       SVG.Switch  obj = new SVG.Switch();
@@ -1586,7 +1611,8 @@ dumpNode(svgDocument.getRootElement(), "");
 
    private void  symbol(Attributes attributes) throws SAXException
    {
-/**/Log.d(TAG, "<symbol>");
+      debug("<symbol>");
+
       if (currentElement == null)
          throw new SAXException("Invalid document. Root element must be <svg>");
       SVG.Symbol  obj = new SVG.Symbol();
@@ -1607,7 +1633,8 @@ dumpNode(svgDocument.getRootElement(), "");
 
    private void  marker(Attributes attributes) throws SAXException
    {
-/**/Log.d(TAG, "<marker>");
+      debug("<marker>");
+
       if (currentElement == null)
          throw new SAXException("Invalid document. Root element must be <svg>");
       SVG.Marker  obj = new SVG.Marker();
@@ -1675,7 +1702,8 @@ dumpNode(svgDocument.getRootElement(), "");
 
    private void  linearGradient(Attributes attributes) throws SAXException
    {
-/**/Log.d(TAG, "<linearGradiant>");
+      debug("<linearGradiant>");
+
       if (currentElement == null)
          throw new SAXException("Invalid document. Root element must be <svg>");
       SVG.SvgLinearGradient  obj = new SVG.SvgLinearGradient();
@@ -1763,7 +1791,8 @@ dumpNode(svgDocument.getRootElement(), "");
 
    private void  radialGradient(Attributes attributes) throws SAXException
    {
-/**/Log.d(TAG, "<marker>");
+      debug("<radialGradient>");
+
       if (currentElement == null)
          throw new SAXException("Invalid document. Root element must be <svg>");
       SVG.SvgRadialGradient  obj = new SVG.SvgRadialGradient();
@@ -1815,7 +1844,8 @@ dumpNode(svgDocument.getRootElement(), "");
 
    private void  stop(Attributes attributes) throws SAXException
    {
-/**/Log.d(TAG, "<stop>");
+      debug("<stop>");
+
       if (currentElement == null)
          throw new SAXException("Invalid document. Root element must be <svg>");
       if (!(currentElement instanceof SVG.GradientElement))
@@ -1879,7 +1909,8 @@ dumpNode(svgDocument.getRootElement(), "");
 
    private void  clipPath(Attributes attributes) throws SAXException
    {
-/**/Log.d(TAG, "<clipPath>");
+      debug("<clipPath>");
+
       if (currentElement == null)
          throw new SAXException("Invalid document. Root element must be <svg>");
       SVG.ClipPath  obj = new SVG.ClipPath();
@@ -1924,7 +1955,8 @@ dumpNode(svgDocument.getRootElement(), "");
 
    private void textPath(Attributes attributes) throws SAXException
    {
-/**/Log.d(TAG, "<textPath>");
+      debug("<textPath>");
+
       if (currentElement == null)
          throw new SAXException("Invalid document. Root element must be <svg>");
       SVG.TextPath  obj = new SVG.TextPath();
@@ -1971,7 +2003,8 @@ dumpNode(svgDocument.getRootElement(), "");
 
    private void pattern(Attributes attributes) throws SAXException
    {
-/**/Log.d(TAG, "<pattern>");
+      debug("<pattern>");
+
       if (currentElement == null)
          throw new SAXException("Invalid document. Root element must be <svg>");
       SVG.Pattern  obj = new SVG.Pattern();
@@ -2049,7 +2082,8 @@ dumpNode(svgDocument.getRootElement(), "");
 
    private void  view(Attributes attributes) throws SAXException
    {
-/**/Log.d(TAG, "<view>");
+      debug("<view>");
+
       if (currentElement == null)
          throw new SAXException("Invalid document. Root element must be <svg>");
       SVG.View  obj = new SVG.View();
@@ -2069,7 +2103,8 @@ dumpNode(svgDocument.getRootElement(), "");
 
    private void mask(Attributes attributes) throws SAXException
    {
-/**/Log.d(TAG, "<mask>");
+      debug("<mask>");
+
       if (currentElement == null)
          throw new SAXException("Invalid document. Root element must be <svg>");
       SVG.Mask  obj = new SVG.Mask();
@@ -2518,7 +2553,6 @@ dumpNode(svgDocument.getRootElement(), "");
       {
          if (SVGAttr.fromString(attributes.getLocalName(i)) == SVGAttr.id) {
                obj.id = attributes.getValue(i).trim();
-//Log.d(TAG, "<svg> id="+obj.id);
                break;
          }
       }
@@ -2530,7 +2564,6 @@ dumpNode(svgDocument.getRootElement(), "");
     */
    private void  parseAttributesStyle(SvgElementBase obj, Attributes attributes) throws SAXException
    {
-//Log.d(TAG, "parseAttributesStyle");
       String  cssStyle = null;
 
       for (int i=0; i<attributes.getLength(); i++)
@@ -2539,7 +2572,7 @@ dumpNode(svgDocument.getRootElement(), "");
          if (val.length() == 0) { // The spec doesn't say how to handle empty style attributes.
             continue;             // Our strategy is just to ignore them.
          }
-         boolean  inherit = val.equals("inherit");
+         //boolean  inherit = val.equals("inherit");
 
          switch (SVGAttr.fromString(attributes.getLocalName(i)))
          {
@@ -2795,15 +2828,6 @@ dumpNode(svgDocument.getRootElement(), "");
          }
       }
    }
-
-
-   /*
-   private void  setInherit(SVG.SvgElement obj, long flag)
-   {
-      obj.style.inheritFlags |= flag;
-      obj.style.specifiedFlags |= flag;
-   }
-   */
 
 
    private void  parseAttributesTransform(SVG.HasTransform obj, Attributes attributes) throws SAXException
@@ -3149,7 +3173,7 @@ dumpNode(svgDocument.getRootElement(), "");
             throw new SAXException("Bad colour value: "+val);
          }
       }
-      if (val.toLowerCase().startsWith("rgb("))
+      if (val.toLowerCase(Locale.US).startsWith("rgb("))
       {
          TextScanner scan = new TextScanner(val.substring(4));
          scan.skipWhitespace();
@@ -3189,8 +3213,7 @@ dumpNode(svgDocument.getRootElement(), "");
    // Parse a colour component value (0..255 or 0%-100%)
    private Colour  parseColourKeyword(String name) throws SAXException
    {
-//Log.d(TAG, "parseColourKeyword: "+name);
-      Integer  col = colourKeywords.get(name.toLowerCase());
+      Integer  col = colourKeywords.get(name.toLowerCase(Locale.US));
       if (col == null) {
          throw new SAXException("Invalid colour keyword: "+name);
       }
@@ -3448,7 +3471,7 @@ dumpNode(svgDocument.getRootElement(), "");
    {
       if ("auto".equals(val))
          return null;
-      if (!val.toLowerCase().startsWith("rect("))
+      if (!val.toLowerCase(Locale.US).startsWith("rect("))
          throw new SAXException("Invalid clip attribute shape. Only rect() is supported.");
 
       TextScanner scan = new TextScanner(val.substring(5));
