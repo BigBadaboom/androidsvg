@@ -1,0 +1,32 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="8cm" height="8cm" viewBox="0 0 700 700" version="1.1"
+     xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+
+  <defs>
+    <mask id="Mask" maskUnits="objectBoundingBox" maskContentUnits="objectBoundingBox">
+      <circle cx="0.5" cy="0.5" r="0.5" fill="white" />
+    </mask>
+    <mask id="Bite" maskUnits="objectBoundingBox" maskContentUnits="objectBoundingBox">
+      <rect x="0" y="0" width="1" height="1" fill="white" />
+      <circle cx="1" cy="0.5" r="0.25" fill="black" />
+    </mask>
+    <mask id="MaskMasked1" maskUnits="objectBoundingBox" maskContentUnits="objectBoundingBox" mask="url(#Bite)">
+      <circle cx="0.5" cy="0.5" r="0.5" fill="white" />
+    </mask>
+    <mask id="MaskMasked2" maskUnits="objectBoundingBox" maskContentUnits="objectBoundingBox">
+      <circle cx="0.5" cy="0.5" r="0.5" fill="white" mask="url(#Bite)" />
+    </mask>
+  </defs>
+
+  <!-- Outline the drawing area in blue -->
+  <rect fill="none" stroke="blue" 
+        x="1" y="1" width="698" height="698"/>
+
+  <rect fill="black" x="100" y="100" width="200" height="200" mask="url(#Mask)" />
+  <rect fill="black" x="400" y="100" width="200" height="200" mask="url(#Bite)" />
+  <rect fill="green" x="100" y="400" width="200" height="200" mask="url(#MaskMasked1)" />
+  <rect fill="blue"  x="400" y="400" width="200" height="200" mask="url(#MaskMasked2)" />
+
+</svg>

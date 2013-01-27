@@ -3,7 +3,7 @@
   "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
 <svg width="8cm" height="4cm" viewBox="0 0 800 400" version="1.1"
      xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-  <desc>Test behaviour when x1=x2 and y1=y2</desc>
+
   <defs>
     <linearGradient id="fader">
       <stop offset="0%" stop-color="white" />

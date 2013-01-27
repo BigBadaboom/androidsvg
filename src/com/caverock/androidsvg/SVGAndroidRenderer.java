@@ -495,7 +495,6 @@ public class SVGAndroidRenderer
       if (obj.boundingBox == null)  // empty bbox, possibly as a result of a badly defined element (eg bad use reference etc)
          return;
 
-/**/Log.w(TAG, "obj="+obj+" obj.bbox="+obj.boundingBox);
       // Convert the corners of the child bbox to world space
       Matrix  m = new Matrix();
       // Get the inverse of the child transform
@@ -3681,13 +3680,8 @@ if (foo && x>=125 && y>=125) {
          canvas.scale(obj.boundingBox.width, obj.boundingBox.height);
       }
 
-      //boolean  compositing = pushLayer();
-
       // Render the mask
       renderChildren(mask, false);
-
-      //if (compositing)
-      //   popLayer(); FIXME
 
       // Pop the state
       statePop();
