@@ -234,11 +234,11 @@ public class SVG
 
       public Colour     color;
 
-      public List<String>  fontFamily;
-      public Length        fontSize;
-      public Integer       fontWeight;
-      public FontStyle     fontStyle;
-      public String        textDecoration;
+      public List<String>    fontFamily;
+      public Length          fontSize;
+      public Integer         fontWeight;
+      public FontStyle       fontStyle;
+      public TextDecoration  textDecoration;
 
       public TextAnchor   textAnchor;
 
@@ -301,6 +301,15 @@ public class SVG
          End
       }
       
+      public enum TextDecoration
+      {
+         None,
+         Underline,
+         Overline,
+         LineThrough,
+         Blink
+      }
+      
       public static Style  getDefaultStyle()
       {
          Style  def = new Style();
@@ -323,7 +332,7 @@ public class SVG
          def.fontSize = new Length(12, Unit.pt);
          def.fontWeight = FONT_WEIGHT_NORMAL;
          def.fontStyle = FontStyle.Normal;
-         def.textDecoration = "none";
+         def.textDecoration = TextDecoration.None;
          def.textAnchor = TextAnchor.Start;
          def.overflow = true;  // Overflow shown/visible for root, but not for other elements (see section 14.3.3).
          def.clip = null;

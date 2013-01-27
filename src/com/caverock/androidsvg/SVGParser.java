@@ -31,6 +31,7 @@ import com.caverock.androidsvg.SVG.GradientSpread;
 import com.caverock.androidsvg.SVG.Length;
 import com.caverock.androidsvg.SVG.PaintReference;
 import com.caverock.androidsvg.SVG.Style;
+import com.caverock.androidsvg.SVG.Style.TextDecoration;
 import com.caverock.androidsvg.SVG.SvgElementBase;
 import com.caverock.androidsvg.SVG.SvgObject;
 import com.caverock.androidsvg.SVG.SvgPaint;
@@ -3227,12 +3228,18 @@ dumpNode(svgDocument.getRootElement(), "");
 
 
    // Parse a text decoration keyword
-   private String  parseTextDecoration(String val) throws SAXException
+   private TextDecoration  parseTextDecoration(String val) throws SAXException
    {
-      if (NONE.equals(val) || "overline".equals(val) || "blink".equals(val))
-         return NONE;
-      if ("underline".equals(val) || "line-through".equals(val))
-         return val;
+      if ("none".equals(val))
+         return Style.TextDecoration.None;
+      if ("underline".equals(val))
+         return Style.TextDecoration.Underline;
+      if ("overline".equals(val))
+         return Style.TextDecoration.Overline;
+      if ("line-through".equals(val))
+         return Style.TextDecoration.LineThrough;
+      if ("blink".equals(val))
+         return Style.TextDecoration.Blink;
       throw new SAXException("Invalid text-decoration property: "+val);
    }
 

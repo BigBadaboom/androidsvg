@@ -49,6 +49,7 @@ import com.caverock.androidsvg.SVG.SvgRadialGradient;
 import com.caverock.androidsvg.SVG.TextContainer;
 import com.caverock.androidsvg.SVG.TextSequence;
 import com.caverock.androidsvg.SVG.Unit;
+import com.caverock.androidsvg.SVG.Style.TextDecoration;
 
 
 public class SVGAndroidRenderer
@@ -1889,13 +1890,13 @@ canvas.getMatrix().mapPoints(pts);
       if (isSpecified(style, SVG.SPECIFIED_TEXT_DECORATION))
       {
          state.style.textDecoration = style.textDecoration;
-         state.fillPaint.setStrikeThruText(style.textDecoration.equals("line-through"));
-         state.fillPaint.setUnderlineText(style.textDecoration.equals("underline"));
+         state.fillPaint.setStrikeThruText(style.textDecoration == TextDecoration.LineThrough);
+         state.fillPaint.setUnderlineText(style.textDecoration == TextDecoration.Underline);
          // There is a bug in Android <= JELLY_BEAN (16) that causes stroked underlines to
          // not be drawn properly. See bug (39511). This has been fixed in JELLY_BEAN_MR1 (4.2)
          if (android.os.Build.VERSION.SDK_INT >= 17) {
-            state.strokePaint.setStrikeThruText(style.textDecoration.equals("line-through"));
-            state.strokePaint.setUnderlineText(style.textDecoration.equals("underline"));
+            state.strokePaint.setStrikeThruText(style.textDecoration == TextDecoration.LineThrough);
+            state.strokePaint.setUnderlineText(style.textDecoration == TextDecoration.Underline);
          }
       }
 
