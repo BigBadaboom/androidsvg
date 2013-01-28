@@ -115,27 +115,45 @@ public class SVGImageView extends View
       {
          if (this.viewId != null)
          {
-            if (this.renderDPI == null) {
-               bmcanvas.drawPicture(this.svg.getPictureForView(this.viewId, width, height, getResources().getDisplayMetrics().xdpi));
-            } else {
-               bmcanvas.drawPicture(this.svg.getPictureForView(this.viewId, width, height, this.renderDPI));
+            if (this.directRender)
+            {
+/**/Log.w("foo", "a");
+               if (this.renderDPI == null) {
+                  this.svg.renderViewToCanvas(viewId, bmcanvas, null, getResources().getDisplayMetrics().xdpi);
+               } else {
+                  this.svg.renderViewToCanvas(viewId, bmcanvas, null, this.renderDPI);
+               }
             }
-         }
-         else if (this.directRender)
-         {
-            if (this.renderDPI == null) {
-               this.svg.renderToCanvas(bmcanvas, null, getResources().getDisplayMetrics().xdpi, SVG.AspectRatioAlignment.xMidYMid, true);
-            } else {
-               this.svg.renderToCanvas(bmcanvas, null, this.renderDPI, SVG.AspectRatioAlignment.xMidYMid, true);
+            else
+            {
+/**/Log.w("foo", "b");
+               if (this.renderDPI == null) {
+                  bmcanvas.drawPicture(this.svg.renderViewToPicture(this.viewId, width, height, getResources().getDisplayMetrics().xdpi));
+               } else {
+                  bmcanvas.drawPicture(this.svg.renderViewToPicture(this.viewId, width, height, this.renderDPI));
+               }
             }
          }
          else
          {
-            svg.ensureRootViewBox();
-            if (this.renderDPI == null) {
-               bmcanvas.drawPicture(this.svg.getPicture(width, height, getResources().getDisplayMetrics().xdpi, SVG.AspectRatioAlignment.xMidYMid, true));
-            } else {
-               bmcanvas.drawPicture(this.svg.getPicture(width, height, this.renderDPI, SVG.AspectRatioAlignment.xMidYMid, true));
+            if (this.directRender)
+            {
+/**/Log.w("foo", "c");
+               if (this.renderDPI == null) {
+                  this.svg.renderToCanvas(bmcanvas, null, getResources().getDisplayMetrics().xdpi, SVG.AspectRatioAlignment.xMidYMid, true);
+               } else {
+                  this.svg.renderToCanvas(bmcanvas, null, this.renderDPI, SVG.AspectRatioAlignment.xMidYMid, true);
+               }
+            }
+            else
+            {
+/**/Log.w("foo", "d");
+               svg.ensureRootViewBox();
+               if (this.renderDPI == null) {
+                  bmcanvas.drawPicture(this.svg.renderToPicture(width, height, getResources().getDisplayMetrics().xdpi, SVG.AspectRatioAlignment.xMidYMid, true));
+               } else {
+                  bmcanvas.drawPicture(this.svg.renderToPicture(width, height, this.renderDPI, SVG.AspectRatioAlignment.xMidYMid, true));
+               }
             }
          }
       }

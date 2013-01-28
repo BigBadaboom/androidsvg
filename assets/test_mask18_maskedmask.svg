@@ -29,4 +29,6 @@
   <rect fill="green" x="100" y="400" width="200" height="200" mask="url(#MaskMasked1)" />
   <rect fill="blue"  x="400" y="400" width="200" height="200" mask="url(#MaskMasked2)" />
 
+  <view id="TestView" viewBox="400 400 200 200"/>
+
 </svg>

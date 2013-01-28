@@ -22,7 +22,7 @@ public class SVG
 {
    private static final String  TAG = "AndroidSVG";
 
-   private static final String  VERSION = "1.0.155";
+   private static final String  VERSION = "1.0.156";
 
    protected static final boolean  DEBUG = true;
 
@@ -1239,7 +1239,7 @@ public class SVG
    // SVG document rendering to a Picture object (indirect rendering)
 
 
-   public Picture  getPicture()
+   public Picture  renderToPicture()
    {
       // Determine the initial viewport. See SVG spec section 7.2.
       Length  width = rootElement.width;
@@ -1259,22 +1259,22 @@ public class SVG
                h = w;
             }
          }
-         return getPicture( (int) Math.ceil(w), (int) Math.ceil(h) );
+         return renderToPicture( (int) Math.ceil(w), (int) Math.ceil(h) );
       }
       else
       {
-         return getPicture(DEFAULT_PICTURE_WIDTH, DEFAULT_PICTURE_HEIGHT, DEFAULT_DPI, null, true);
+         return renderToPicture(DEFAULT_PICTURE_WIDTH, DEFAULT_PICTURE_HEIGHT, DEFAULT_DPI, null, true);
       }
    }
 
 
-   public Picture  getPicture(int widthInPixels, int heightInPixels)
+   public Picture  renderToPicture(int widthInPixels, int heightInPixels)
    {
-      return getPicture(widthInPixels, heightInPixels, DEFAULT_DPI, null, true);
+      return renderToPicture(widthInPixels, heightInPixels, DEFAULT_DPI, null, true);
    }
 
 
-   public Picture  getPicture(int widthInPixels, int heightInPixels, float defaultDPI, AspectRatioAlignment alignment, boolean fitToCanvas)
+   public Picture  renderToPicture(int widthInPixels, int heightInPixels, float defaultDPI, AspectRatioAlignment alignment, boolean fitToCanvas)
    {
       Picture  picture = new Picture();
       Canvas   canvas = picture.beginRecording(widthInPixels, heightInPixels);
@@ -1292,13 +1292,13 @@ public class SVG
    }
 
 
-   public Picture  getPictureForView(String viewId, int widthInPixels, int heightInPixels)
+   public Picture  renderViewToPicture(String viewId, int widthInPixels, int heightInPixels)
    {
-      return getPictureForView(viewId, widthInPixels, heightInPixels, DEFAULT_DPI);
+      return renderViewToPicture(viewId, widthInPixels, heightInPixels, DEFAULT_DPI);
    }
 
 
-   public Picture  getPictureForView(String viewId, int widthInPixels, int heightInPixels, float defaultDPI)
+   public Picture  renderViewToPicture(String viewId, int widthInPixels, int heightInPixels, float defaultDPI)
    {
       SvgObject  obj = this.getElementById(viewId);
       if (obj == null)
@@ -1356,6 +1356,45 @@ public class SVG
       SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, viewPort, defaultDPI);
 
       renderer.renderDocument(this, null, alignment, fitToCanvas, true);
+   }
+
+
+   public void  renderViewToCanvas(String viewId, Canvas canvas, RectF dst)
+   {
+      renderViewToCanvas(viewId, canvas, dst, DEFAULT_DPI);
+   }
+
+
+   public void  renderViewToCanvas(String viewId, Canvas canvas, RectF dst, float defaultDPI)
+   {
+      SvgObject  obj = this.getElementById(viewId);
+      if (obj == null)
+         return;
+      if (!(obj instanceof SVG.View))
+         return;
+
+      SVG.View  view = (SVG.View) obj;
+      
+      if (view.viewBox == null) {
+         Log.w(TAG, "View element is missing a viewBox attribute.");
+         return;
+      }
+
+      Box  viewPort;
+
+      if (dst != null) {
+         viewPort = new Box(dst.left, dst.top, (dst.right - dst.left), (dst.bottom - dst.top));
+      } else {
+         viewPort = new Box(0f, 0f, (float) canvas.getWidth(), (float) canvas.getHeight());
+      }
+
+      AspectRatioAlignment  alignment = view.preserveAspectRatioAlignment;
+      if (alignment == null)
+         alignment = AspectRatioAlignment.xMidYMid;
+
+      SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, viewPort, defaultDPI);
+
+      renderer.renderDocument(this, view.viewBox, alignment, !view.preserveAspectRatioSlice, true);
    }
 
 
