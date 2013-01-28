@@ -23,6 +23,7 @@
     <rect fill="red" x="50" y="50" width="200" height="200" transform="rotate(45, 150,150)"/>
   </g>
 
-  <text x="5" y="275">Red diamond, fully visible, not clipped or a circle</text>
+  <text x="150" y="270" text-anchor="middle">Red diamond, fully visible,</text>
+  <text x="150" y="285" text-anchor="middle">not clipped or a circle</text>
  
 </svg>

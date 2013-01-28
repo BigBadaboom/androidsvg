@@ -18,7 +18,6 @@ import android.graphics.RadialGradient;
 import android.graphics.RectF;
 import android.graphics.Shader.TileMode;
 import android.graphics.Typeface;
-import android.os.SystemClock;
 import android.util.Base64;
 import android.util.Log;
 
@@ -39,6 +38,7 @@ import com.caverock.androidsvg.SVG.Pattern;
 import com.caverock.androidsvg.SVG.Rect;
 import com.caverock.androidsvg.SVG.Stop;
 import com.caverock.androidsvg.SVG.Style;
+import com.caverock.androidsvg.SVG.Style.TextDecoration;
 import com.caverock.androidsvg.SVG.SvgContainer;
 import com.caverock.androidsvg.SVG.SvgElement;
 import com.caverock.androidsvg.SVG.SvgElementBase;
@@ -49,7 +49,6 @@ import com.caverock.androidsvg.SVG.SvgRadialGradient;
 import com.caverock.androidsvg.SVG.TextContainer;
 import com.caverock.androidsvg.SVG.TextSequence;
 import com.caverock.androidsvg.SVG.Unit;
-import com.caverock.androidsvg.SVG.Style.TextDecoration;
 
 
 public class SVGAndroidRenderer
@@ -214,26 +213,12 @@ public class SVGAndroidRenderer
       this.document = document;
       this.directRenderingMode = directRenderingMode;
       
-      resetState();
-
       // Calculate the initial transform to position the document in our canvas
       SVG.Svg  rootObj = document.getRootElement();
 
       if (rootObj == null) {
          warn("Nothing to render. Document is empty.");
          return;
-      }
-
-      if (viewBox != null)
-      {
-         canvas.concat(calculateViewBoxTransform(state.viewPort, viewBox, alignment, !fitToCanvas));
-         if (rootObj.viewBox != null)
-            state.viewPort = rootObj.viewBox;
-      }
-      else if (rootObj.viewBox != null)
-      {
-         canvas.concat(calculateViewBoxTransform(state.viewPort, rootObj.viewBox, alignment, !fitToCanvas));
-         state.viewPort = rootObj.viewBox;
       }
 
       // If the root svg element has a width expressed in physical units, then we can calculate
@@ -249,7 +234,22 @@ public class SVGAndroidRenderer
             case pc: this.dpi = 6 * perUnit; break;
             default: // Do nothing for non-physical units
          }
-         debug("Setting DPI to "+this.dpi);
+         debug("DPI is set to "+this.dpi);
+      }
+
+      // Initialise the state
+      resetState();
+
+      if (viewBox != null)
+      {
+         canvas.concat(calculateViewBoxTransform(state.viewPort, viewBox, alignment, !fitToCanvas));
+         if (rootObj.viewBox != null)
+            state.viewPort = rootObj.viewBox;
+      }
+      else if (rootObj.viewBox != null)
+      {
+         canvas.concat(calculateViewBoxTransform(state.viewPort, rootObj.viewBox, alignment, !fitToCanvas));
+         state.viewPort = rootObj.viewBox;
       }
 
       render(rootObj);
@@ -3629,7 +3629,7 @@ public class SVGAndroidRenderer
     */
    private void  renderMask(SVG.Mask mask, SvgElement obj)
    {
-      debug(TAG,"Mask render");
+      debug("Mask render");
 
       boolean      maskUnitsAreUser = (mask.maskUnitsAreUser != null && mask.maskUnitsAreUser);
       float        x, y, w, h;

@@ -21,8 +21,6 @@
 
   <use xlink:href="#TestRect" mask="url(#fadermask)" transform="translate(50,50) scale(2)"/>
  
-  <text x="50" y="275">Red square with no mask effects</text>
-  <!--  Spec is ambiguous. It says use references should be treated as use's child(ren), so
-        that should mean that they don't inherit the mask. -->
+  <text x="50" y="275">Red square with diagonal mask</text>
 
 </svg>

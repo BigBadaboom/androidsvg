@@ -22,7 +22,7 @@ public class SVG
 {
    private static final String  TAG = "AndroidSVG";
 
-   private static final String  VERSION = "1.0.154";
+   private static final String  VERSION = "1.0.155";
 
    protected static final boolean  DEBUG = true;
 
