@@ -22,9 +22,7 @@ public class SVG
 {
    private static final String  TAG = "AndroidSVG";
 
-   private static final String  VERSION = "1.0.156";
-
-   protected static final boolean  DEBUG = true;
+   private static final String  VERSION = "1.0.158";
 
    private static final float   DEFAULT_DPI = 96;
    private static final int     DEFAULT_PICTURE_WIDTH = 512;
@@ -1445,8 +1443,9 @@ public class SVG
 
 
    /**
-    * Return the version number of this library as a string.
-    * @return
+    * Returns the version number of this library.
+    * 
+    * @return the version number in string format
     */
    public String  getVersion()
    {
@@ -1454,7 +1453,7 @@ public class SVG
    }
 
 
-   public SvgObject  resolveIRI(String iri)
+   protected SvgObject  resolveIRI(String iri)
    {
       if (iri == null)
          return null;
@@ -1468,7 +1467,8 @@ public class SVG
 
 
    /**
-    * Return the contents of the <title> element in the SVG document.
+    * Returns the contents of the &lt;title&gt; element in the SVG document.
+    * 
     * @return title contents if declared, otherwise an empty string.
     */
    public String getDocumentTitle()
@@ -1478,7 +1478,8 @@ public class SVG
 
 
    /**
-    * Return the contents of the <desc> element in the SVG document.
+    * Returns the contents of the &lt;desc&gt; element in the SVG document.
+    * 
     * @return desc contents if declared, otherwise an empty string.
     */
    public String getDocumentDescription()
@@ -1488,7 +1489,8 @@ public class SVG
 
 
    /**
-    * Return the SVG version number as provided in the root <svg> tag of the document.
+    * Returns the SVG version number as provided in the root &lt;svg&gt; tag of the document.
+    * 
     * @return version string if declared, otherwise an empty string.
     */
    public String getDocumentSVGVersion()
@@ -1497,7 +1499,7 @@ public class SVG
    }
 
 
-   public SvgObject  getElementById(String id)
+   protected SvgObject  getElementById(String id)
    {
       if (id.equals(rootElement.id))
          return rootElement;
@@ -1531,16 +1533,17 @@ public class SVG
 
 
    /**
-    * Ensure that the root <svg> element has a viewBox.
+    * Ensure that the root &lt;svg&gt; element has a viewBox.
+    * <p>
     * If you want your SVG image to scale properly to your canvas, the renderer
     * needs to know how much to scale it.  It works this out from the viewPort
     * you pass to the renderer combined with the viewBox attribute of the root
     * element.  Some files are missing this viewBox.  When that is the case, the
     * renderer will just draw the image at 1:1 scale.
-    * 
+    * <p>
     * When called, this method will attempt to generate a suitable viewBox if one
     * is missing.  It does this by using the width and height attributes in the
-    * root <svg> element.
+    * root &lt;svg&gt; element.
     */
    public void  ensureRootViewBox()
    {

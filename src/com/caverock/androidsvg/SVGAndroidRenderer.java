@@ -76,7 +76,7 @@ public class SVGAndroidRenderer
 
    private static final float  BEZIER_ARC_FACTOR = 0.5522847498f;
 
-   // The feColorMatrix liminance-to-alpha corefficient. Used for <mask>s.
+   // The feColorMatrix luminance-to-alpha coefficient. Used for <mask>s.
    // Using integer arithmetic for a little extra speed.
    private static final int  LUMINANCE_FACTOR_SHIFT = 15;
    private static final int  LUMINANCE_TO_ALPHA_RED = (int)(0.2125f * (1 << LUMINANCE_FACTOR_SHIFT));
@@ -163,15 +163,15 @@ public class SVGAndroidRenderer
    }
 
 
-   /**
+   /*
     * Create a new renderer instance.
     *
-    * @param canvas The canvas to draw to.
-    * @param viewPort The default viewport to be rendered into. For example the dimensions of the bitmap.
-    * @param dpi The DPI setting to use when converting real-world units such as centimetres.
+    * @param canvas the canvas to draw to.
+    * @param viewPort the default viewport to be rendered into. For example the dimensions of the bitmap.
+    * @param defaultDPI the DPI setting to use when converting real-world units such as centimetres.
     */
 
-   public SVGAndroidRenderer(Canvas canvas, SVG.Box viewPort, float defaultDPI)
+   protected SVGAndroidRenderer(Canvas canvas, SVG.Box viewPort, float defaultDPI)
    {
       this.canvas = canvas;
       this.dpi = defaultDPI;
@@ -179,30 +179,30 @@ public class SVGAndroidRenderer
    }
 
 
-   public float  getDPI()
+   protected float  getDPI()
    {
       return dpi;
    }
 
 
-   public float  getCurrentFontSize()
+   protected float  getCurrentFontSize()
    {
       return state.fillPaint.getTextSize();
    }
 
 
-   public float  getCurrentFontXHeight()
+   protected float  getCurrentFontXHeight()
    {
       // The CSS3 spec says to use 0.5em if there is no way to determine true x-height;
       return state.fillPaint.getTextSize() / 2f;
    }
 
 
-   /**
+   /*
     * Get the current view port in user units.
-    * @return
+    *
     */
-   public SVG.Box getCurrentViewPortInUserUnits()
+   protected SVG.Box  getCurrentViewPortInUserUnits()
    {
       return state.viewBox;
    }
@@ -401,7 +401,7 @@ public class SVGAndroidRenderer
 
    private void  debug(String format, Object... args)
    {
-      if (SVG.DEBUG)
+      if (LibConfig.DEBUG)
          Log.d(TAG, String.format(format, args));
    }
 
@@ -1172,7 +1172,7 @@ public class SVGAndroidRenderer
    }
 
 
-   public void  processTextChild(SVG.SvgObject obj, TextProcessor textprocessor)
+   private void  processTextChild(SVG.SvgObject obj, TextProcessor textprocessor)
    {
       if (!display(obj))
          return;

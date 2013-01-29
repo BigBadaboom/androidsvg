@@ -13,10 +13,8 @@
                  nonavbar="false"
                  notree="false"
                  source="1.6"
-                 sourcefiles="src/com/caverock/androidsvg/SVG.java"
-                 sourcepath="gen;src"
+                 sourcefiles="src/com/caverock/androidsvg/SVG.java,src/com/caverock/androidsvg/SVGExternalFileResolver.java,src/com/caverock/androidsvg/SVGParseException.java,src/com/caverock/androidsvg/SVGAndroidRenderer.java"
                  splitindex="true"
-                 stylesheetfile="C:\Program Files (x86)\Android\android-sdk\docs\assets\android-developer-docs.css"
                  use="true"
                  version="true"/>
     </target>

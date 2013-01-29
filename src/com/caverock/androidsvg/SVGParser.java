@@ -727,7 +727,7 @@ public class SVGParser extends DefaultHandler
       super.endDocument();
 
       // Dump document
-      if (SVG.DEBUG)
+      if (LibConfig.DEBUG)
          dumpNode(svgDocument.getRootElement(), "");
    }
 
@@ -749,7 +749,7 @@ public class SVGParser extends DefaultHandler
 
    private void  debug(String format, Object... args)
    {
-      if (SVG.DEBUG)
+      if (LibConfig.DEBUG)
          Log.d(TAG, String.format(format, args));
    }
 
