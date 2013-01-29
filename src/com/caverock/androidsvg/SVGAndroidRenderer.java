@@ -1862,7 +1862,7 @@ public class SVGAndroidRenderer
 
             if (fileResolver != null) {
                for (String fontName: state.style.fontFamily) {
-                  font = fileResolver.resolveFont(fontName, state.style.fontWeight, state.style.fontStyle);
+                  font = fileResolver.resolveFont(fontName, state.style.fontWeight, String.valueOf(state.style.fontStyle));
                   if (font != null)
                      break;
                }

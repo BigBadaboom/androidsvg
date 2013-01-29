@@ -46,7 +46,7 @@ public class SVG
    SVGExternalFileResolver  fileResolver = null;
 
 
-   public enum Unit
+   protected enum Unit
    {
       px,
       em,
@@ -74,7 +74,7 @@ public class SVG
    }
 
 
-   public enum GradientSpread
+   protected enum GradientSpread
    {
       pad,
       reflect,
@@ -124,13 +124,13 @@ public class SVG
    }
 
 
-   public SVG.Svg  getRootElement()
+   protected SVG.Svg  getRootElement()
    {
       return rootElement;
    }
 
 
-   public void setRootElement(SVG.Svg rootElement)
+   protected void setRootElement(SVG.Svg rootElement)
    {
       this.rootElement = rootElement;
    }
@@ -140,7 +140,7 @@ public class SVG
    // Object sub-types used in the SVG object tree
 
 
-   public static class  Box implements Cloneable
+   protected static class  Box implements Cloneable
    {
       public float  minX, minY, width, height;
 
@@ -177,45 +177,45 @@ public class SVG
    }
 
 
-   public static final long SPECIFIED_FILL              = (1<<0);
-   public static final long SPECIFIED_FILL_RULE         = (1<<1);
-   public static final long SPECIFIED_FILL_OPACITY      = (1<<2);
-   public static final long SPECIFIED_STROKE            = (1<<3);
-   public static final long SPECIFIED_STROKE_OPACITY    = (1<<4);
-   public static final long SPECIFIED_STROKE_WIDTH      = (1<<5);
-   public static final long SPECIFIED_STROKE_LINECAP    = (1<<6);
-   public static final long SPECIFIED_STROKE_LINEJOIN   = (1<<7);
-   public static final long SPECIFIED_STROKE_MITERLIMIT = (1<<8);
-   public static final long SPECIFIED_STROKE_DASHARRAY  = (1<<9);
-   public static final long SPECIFIED_STROKE_DASHOFFSET = (1<<10);
-   public static final long SPECIFIED_OPACITY           = (1<<11);
-   public static final long SPECIFIED_COLOR             = (1<<12);
-   public static final long SPECIFIED_FONT_FAMILY       = (1<<13);
-   public static final long SPECIFIED_FONT_SIZE         = (1<<14);
-   public static final long SPECIFIED_FONT_WEIGHT       = (1<<15);
-   public static final long SPECIFIED_FONT_STYLE        = (1<<16);
-   public static final long SPECIFIED_TEXT_DECORATION   = (1<<17);
-   public static final long SPECIFIED_TEXT_ANCHOR       = (1<<18);
-   public static final long SPECIFIED_OVERFLOW          = (1<<19);
-   public static final long SPECIFIED_CLIP              = (1<<20);
-   public static final long SPECIFIED_MARKER_START      = (1<<21);
-   public static final long SPECIFIED_MARKER_MID        = (1<<22);
-   public static final long SPECIFIED_MARKER_END        = (1<<23);
-   public static final long SPECIFIED_DISPLAY           = (1<<24);
-   public static final long SPECIFIED_VISIBILITY        = (1<<25);
-   public static final long SPECIFIED_STOP_COLOR        = (1<<26);
-   public static final long SPECIFIED_STOP_OPACITY      = (1<<27);
-   public static final long SPECIFIED_CLIP_PATH         = (1<<28);
-   public static final long SPECIFIED_CLIP_RULE         = (1<<29);
-   public static final long SPECIFIED_MASK              = (1<<30);
+   protected static final long SPECIFIED_FILL              = (1<<0);
+   protected static final long SPECIFIED_FILL_RULE         = (1<<1);
+   protected static final long SPECIFIED_FILL_OPACITY      = (1<<2);
+   protected static final long SPECIFIED_STROKE            = (1<<3);
+   protected static final long SPECIFIED_STROKE_OPACITY    = (1<<4);
+   protected static final long SPECIFIED_STROKE_WIDTH      = (1<<5);
+   protected static final long SPECIFIED_STROKE_LINECAP    = (1<<6);
+   protected static final long SPECIFIED_STROKE_LINEJOIN   = (1<<7);
+   protected static final long SPECIFIED_STROKE_MITERLIMIT = (1<<8);
+   protected static final long SPECIFIED_STROKE_DASHARRAY  = (1<<9);
+   protected static final long SPECIFIED_STROKE_DASHOFFSET = (1<<10);
+   protected static final long SPECIFIED_OPACITY           = (1<<11);
+   protected static final long SPECIFIED_COLOR             = (1<<12);
+   protected static final long SPECIFIED_FONT_FAMILY       = (1<<13);
+   protected static final long SPECIFIED_FONT_SIZE         = (1<<14);
+   protected static final long SPECIFIED_FONT_WEIGHT       = (1<<15);
+   protected static final long SPECIFIED_FONT_STYLE        = (1<<16);
+   protected static final long SPECIFIED_TEXT_DECORATION   = (1<<17);
+   protected static final long SPECIFIED_TEXT_ANCHOR       = (1<<18);
+   protected static final long SPECIFIED_OVERFLOW          = (1<<19);
+   protected static final long SPECIFIED_CLIP              = (1<<20);
+   protected static final long SPECIFIED_MARKER_START      = (1<<21);
+   protected static final long SPECIFIED_MARKER_MID        = (1<<22);
+   protected static final long SPECIFIED_MARKER_END        = (1<<23);
+   protected static final long SPECIFIED_DISPLAY           = (1<<24);
+   protected static final long SPECIFIED_VISIBILITY        = (1<<25);
+   protected static final long SPECIFIED_STOP_COLOR        = (1<<26);
+   protected static final long SPECIFIED_STOP_OPACITY      = (1<<27);
+   protected static final long SPECIFIED_CLIP_PATH         = (1<<28);
+   protected static final long SPECIFIED_CLIP_RULE         = (1<<29);
+   protected static final long SPECIFIED_MASK              = (1<<30);
 
-   public static final long SPECIFIED_ALL = 0xffffffff;
+   protected static final long SPECIFIED_ALL = 0xffffffff;
 
-   public static final long SPECIFIED_NON_INHERITING = SPECIFIED_DISPLAY | SPECIFIED_OVERFLOW | SPECIFIED_CLIP
-                                                       | SPECIFIED_CLIP_PATH | SPECIFIED_OPACITY | SPECIFIED_STOP_COLOR
-                                                       | SPECIFIED_STOP_OPACITY | SPECIFIED_MASK;
+   protected static final long SPECIFIED_NON_INHERITING = SPECIFIED_DISPLAY | SPECIFIED_OVERFLOW | SPECIFIED_CLIP
+                                                          | SPECIFIED_CLIP_PATH | SPECIFIED_OPACITY | SPECIFIED_STOP_COLOR
+                                                          | SPECIFIED_STOP_OPACITY | SPECIFIED_MASK;
 
-   public static class  Style implements Cloneable
+   protected static class  Style implements Cloneable
    {
       // Which properties have been explicitly specified by this element
       public long       specifiedFlags = 0;
@@ -1102,7 +1102,7 @@ public class SVG
    // Path definition
 
 
-   public interface PathInterface
+   protected interface PathInterface
    {
       public void  moveTo(float x, float y);
       public void  lineTo(float x, float y);
@@ -1113,7 +1113,7 @@ public class SVG
    }
 
 
-   public static class PathDefinition implements PathInterface
+   protected static class PathDefinition implements PathInterface
    {
       private List<Byte>   commands = null;
       private List<Float>  coords = null;
@@ -1239,6 +1239,14 @@ public class SVG
    // SVG document rendering to a Picture object (indirect rendering)
 
 
+   /**
+    * Renders this SVG document to a Picture object.
+    * <p>
+    * An attempt will be made to determine a suitable initial viewport from the contents of the SVG file.
+    * If an appropriate viewport can't be determined, a default viewport of 1000x1000 will be used.
+    * 
+    * @return a Picture object suitable for later rendering using {@code Canvas.darwPicture()}
+    */
    public Picture  renderToPicture()
    {
       // Determine the initial viewport. See SVG spec section 7.2.
@@ -1268,12 +1276,29 @@ public class SVG
    }
 
 
+   /**
+    * Renders this SVG document to a Picture object.
+    * 
+    * @param widthInPixels the width of the initial viewport
+    * @param heightInPixels the height of the initial viewport
+    * @return a Picture object suitable for later rendering using {@code Canvas.darwPicture()}
+    */
    public Picture  renderToPicture(int widthInPixels, int heightInPixels)
    {
       return renderToPicture(widthInPixels, heightInPixels, DEFAULT_DPI, null, true);
    }
 
 
+   /**
+    * Renders this SVG document to a Picture object.
+    * 
+    * @param widthInPixels the width of the initial viewport
+    * @param heightInPixels the height of the initial viewport
+    * @param defaultDPI the default DPI value to use when calculating the size of physical units such as cm, pt etc.
+    * @param alignment the type of alignment desired when calculating how to fit the document to the viewport
+    * @param fitToCanvas whether the document should be fit inside the viewport, or scaled to fill the viewport
+    * @return a Picture object suitable for later rendering using {@code Canvas.darwPicture()}
+    */
    public Picture  renderToPicture(int widthInPixels, int heightInPixels, float defaultDPI, AspectRatioAlignment alignment, boolean fitToCanvas)
    {
       Picture  picture = new Picture();
@@ -1292,12 +1317,29 @@ public class SVG
    }
 
 
+   /**
+    * Renders this SVG document to a Picture object using the specified view defined in the document.
+    * 
+    * @param viewId the id of a view element in the document that defines which section of the document is to be visible
+    * @param widthInPixels the width of the initial viewport
+    * @param heightInPixels the height of the initial viewport
+    * @return a Picture object suitable for later rendering using {@code Canvas.darwPicture()}
+    */
    public Picture  renderViewToPicture(String viewId, int widthInPixels, int heightInPixels)
    {
       return renderViewToPicture(viewId, widthInPixels, heightInPixels, DEFAULT_DPI);
    }
 
 
+   /**
+    * Renders this SVG document to a Picture object using the specified view defined in the document.
+    * 
+    * @param viewId the id of a view element in the document that defines which section of the document is to be visible
+    * @param widthInPixels the width of the initial viewport
+    * @param heightInPixels the height of the initial viewport
+    * @param defaultDPI the default DPI value to use when calculating the size of physical units such as cm, pt etc.
+    * @return a Picture object suitable for later rendering using {@code Canvas.drawPicture()}
+    */
    public Picture  renderViewToPicture(String viewId, int widthInPixels, int heightInPixels, float defaultDPI)
    {
       SvgObject  obj = this.getElementById(viewId);

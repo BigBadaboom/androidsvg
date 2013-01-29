@@ -19,7 +19,7 @@ public abstract class SVGExternalFileResolver
     * @param fontStyle  Font style as specified in a font-style style attribute.
     * @return an Android Typeface instance
     */
-   public Typeface  resolveFont(String fontFamily, int fontWeight, Style.FontStyle fontStyle)
+   public Typeface  resolveFont(String fontFamily, int fontWeight, String fontStyle)
    {
       return null;
    }
