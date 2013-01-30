@@ -1,3 +1,19 @@
+/*
+   Copyright 2013 Paul LeBeau, Cave Rock Software Ltd.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
 package com.caverock.androidsvg;
 
 import java.io.IOException;
@@ -42,7 +58,6 @@ import com.caverock.androidsvg.SVG.Unit;
 
 /**
  * SVG parser code. Used by SVG class. Should not be called directly.
- * @author Paul
  *
  */
 public class SVGParser extends DefaultHandler
@@ -3085,8 +3100,8 @@ public class SVGParser extends DefaultHandler
       TextScanner scan = new TextScanner(val);
       scan.skipWhitespace();
 
-      SVG.AspectRatioAlignment  align;
-      boolean                   slice = false;
+      SVG.AspectRatioAlignment  align = null;
+      SVG.AspectRatioScale      scale = null;
 
       String  word = scan.nextToken();
       if ("defer".equals(word)) {    // Ignore defer keyword
@@ -3099,15 +3114,15 @@ public class SVGParser extends DefaultHandler
       if (!scan.empty()) {
          String meetOrSlice = scan.nextToken();
          if (meetOrSlice.equals("meet")) {
-            slice = false;
+            scale = SVG.AspectRatioScale.MEET;
          } else if (meetOrSlice.equals("slice")) {
-            slice = true;
+            scale = SVG.AspectRatioScale.SLICE;
          } else {
             throw new SAXException("Invalid preserveAspectRatio definition: "+val);
          }
       }
       obj.preserveAspectRatioAlignment = align;
-      obj.preserveAspectRatioSlice = slice;
+      obj.preserveAspectRatioScale = scale;
    }
 
 

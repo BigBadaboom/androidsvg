@@ -1,3 +1,19 @@
+/*
+   Copyright 2013 Paul LeBeau, Cave Rock Software Ltd.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
 package com.caverock.androidsvg;
 
 
@@ -22,6 +38,7 @@ import android.util.Base64;
 import android.util.Log;
 
 import com.caverock.androidsvg.SVG.AspectRatioAlignment;
+import com.caverock.androidsvg.SVG.AspectRatioScale;
 import com.caverock.androidsvg.SVG.Box;
 import com.caverock.androidsvg.SVG.ClipPath;
 import com.caverock.androidsvg.SVG.Colour;
@@ -50,6 +67,11 @@ import com.caverock.androidsvg.SVG.TextContainer;
 import com.caverock.androidsvg.SVG.TextSequence;
 import com.caverock.androidsvg.SVG.Unit;
 
+/**
+ * The rendering part of AndroidSVG.
+ * <p>
+ * All interaction with AndroidSVG is via the SVG class.  You may ignore this class.
+ */
 
 public class SVGAndroidRenderer
 {
@@ -208,7 +230,7 @@ public class SVGAndroidRenderer
    }
 
 
-   protected void  renderDocument(SVG document, Box viewBox, AspectRatioAlignment alignment, boolean fitToCanvas, boolean directRenderingMode)
+   protected void  renderDocument(SVG document, Box viewBox, AspectRatioAlignment alignment, AspectRatioScale scale, boolean directRenderingMode)
    {
       this.document = document;
       this.directRenderingMode = directRenderingMode;
@@ -242,13 +264,13 @@ public class SVGAndroidRenderer
 
       if (viewBox != null)
       {
-         canvas.concat(calculateViewBoxTransform(state.viewPort, viewBox, alignment, !fitToCanvas));
+         canvas.concat(calculateViewBoxTransform(state.viewPort, viewBox, alignment, scale));
          if (rootObj.viewBox != null)
             state.viewPort = rootObj.viewBox;
       }
       else if (rootObj.viewBox != null)
       {
-         canvas.concat(calculateViewBoxTransform(state.viewPort, rootObj.viewBox, alignment, !fitToCanvas));
+         canvas.concat(calculateViewBoxTransform(state.viewPort, rootObj.viewBox, alignment, scale));
          state.viewPort = rootObj.viewBox;
       }
 
@@ -444,7 +466,7 @@ public class SVGAndroidRenderer
       checkForClipPath(obj, state.viewPort);
 
       if (obj.viewBox != null) {
-         canvas.concat(calculateViewBoxTransform(state.viewPort, obj.viewBox, obj.preserveAspectRatioAlignment, obj.preserveAspectRatioSlice));
+         canvas.concat(calculateViewBoxTransform(state.viewPort, obj.viewBox, obj.preserveAspectRatioAlignment, obj.preserveAspectRatioScale));
          state.viewBox = obj.viewBox;
       }
 
@@ -1462,7 +1484,7 @@ public class SVGAndroidRenderer
       }
 
       if (obj.viewBox != null) {
-         canvas.concat(calculateViewBoxTransform(state.viewPort, obj.viewBox, obj.preserveAspectRatioAlignment, obj.preserveAspectRatioSlice));
+         canvas.concat(calculateViewBoxTransform(state.viewPort, obj.viewBox, obj.preserveAspectRatioAlignment, obj.preserveAspectRatioScale));
          state.viewBox = obj.viewBox;
       }
       
@@ -1523,7 +1545,7 @@ public class SVGAndroidRenderer
       }
 
       obj.boundingBox = new SVG.Box(0,  0,  image.getWidth(), image.getHeight());
-      canvas.concat(calculateViewBoxTransform(state.viewPort, obj.boundingBox, obj.preserveAspectRatioAlignment, obj.preserveAspectRatioSlice));
+      canvas.concat(calculateViewBoxTransform(state.viewPort, obj.boundingBox, obj.preserveAspectRatioAlignment, obj.preserveAspectRatioScale));
 
       updateParentBoundingBox(obj);
 
@@ -1595,10 +1617,12 @@ public class SVGAndroidRenderer
     * Note values in the two Box parameters whould be in user units. If you pass values
     * that are in "objectBoundingBox" space, you will get incorrect results.
     */
-   private Matrix calculateViewBoxTransform(Box viewPort, Box viewBox, AspectRatioAlignment aspectRule, boolean slice)
+   private Matrix calculateViewBoxTransform(Box viewPort, Box viewBox, AspectRatioAlignment aspectRule, AspectRatioScale aspectScale)
    {
       if (aspectRule == null)
          aspectRule = AspectRatioAlignment.xMidYMid;
+      if (aspectScale == null)
+         aspectScale = AspectRatioScale.MEET;
 
       Matrix m = new Matrix();
 
@@ -1618,10 +1642,10 @@ public class SVGAndroidRenderer
 
       // Otherwise, the aspect ratio of the image is kept.
       // What scale are we going to use?
-      float  aspectScale = (slice) ? Math.max(xScale,  yScale) : Math.min(xScale,  yScale);
+      float  scale = (aspectScale == AspectRatioScale.SLICE) ? Math.max(xScale,  yScale) : Math.min(xScale,  yScale);
       // What size will the image end up being? 
-      float  imageW = viewPort.width / aspectScale;
-      float  imageH = viewPort.height / aspectScale;
+      float  imageW = viewPort.width / scale;
+      float  imageH = viewPort.height / scale;
       // Determine final X position
       switch (aspectRule)
       {
@@ -1658,7 +1682,7 @@ public class SVGAndroidRenderer
       }
 
       m.preTranslate(viewPort.minX, viewPort.minY);
-      m.preScale(aspectScale, aspectScale);
+      m.preScale(scale, scale);
       m.preTranslate(xOffset, yOffset);
       return m;
    }
@@ -2557,7 +2581,7 @@ public class SVGAndroidRenderer
       AspectRatioAlignment  align = (marker.preserveAspectRatioAlignment != null) ? marker.preserveAspectRatioAlignment :  AspectRatioAlignment.xMidYMid;
       if (align != AspectRatioAlignment.none)
       {
-         float  aspectScale = (marker.preserveAspectRatioSlice) ? Math.max(xScale,  yScale) : Math.min(xScale,  yScale);
+         float  aspectScale = (marker.preserveAspectRatioScale == AspectRatioScale.SLICE) ? Math.max(xScale,  yScale) : Math.min(xScale,  yScale);
          xScale = yScale = aspectScale;
       }
 
@@ -3535,7 +3559,7 @@ public class SVGAndroidRenderer
             // Calculate and set the viewport for each instance of the pattern
             if (pattern.viewBox != null)
             {
-               canvas.concat(calculateViewBoxTransform(stepViewBox, pattern.viewBox, pattern.preserveAspectRatioAlignment, pattern.preserveAspectRatioSlice));
+               canvas.concat(calculateViewBoxTransform(stepViewBox, pattern.viewBox, pattern.preserveAspectRatioAlignment, pattern.preserveAspectRatioScale));
             }
             else
             {
@@ -3611,7 +3635,7 @@ public class SVGAndroidRenderer
          pattern.viewBox = pRef.viewBox;
       if (pattern.preserveAspectRatioAlignment == null) {
          pattern.preserveAspectRatioAlignment = pRef.preserveAspectRatioAlignment;
-         pattern.preserveAspectRatioSlice = pRef.preserveAspectRatioSlice;
+         pattern.preserveAspectRatioScale = pRef.preserveAspectRatioScale;
       }
 
       if (pRef.href != null)
