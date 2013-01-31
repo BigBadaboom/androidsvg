@@ -629,11 +629,16 @@ public class SVGAndroidRenderer
    @SuppressWarnings("deprecation")
    private void duplicateCanvas()
    {
-      Bitmap  newBM = Bitmap.createBitmap(canvas.getWidth(), canvas.getHeight(), Bitmap.Config.ARGB_8888);
-      bitmapStack.push(newBM);
-      Canvas  newCanvas = new Canvas(newBM);
-      newCanvas.setMatrix(canvas.getMatrix());
-      canvas = newCanvas;
+      try {
+         Bitmap  newBM = Bitmap.createBitmap(canvas.getWidth(), canvas.getHeight(), Bitmap.Config.ARGB_8888);
+         bitmapStack.push(newBM);
+         Canvas  newCanvas = new Canvas(newBM);
+         newCanvas.setMatrix(canvas.getMatrix());
+         canvas = newCanvas;
+      } catch (OutOfMemoryError e) {
+         error("Not enough memory to create temporary bitmaps for mask processing");
+         throw e;
+      }
    }
 
 
