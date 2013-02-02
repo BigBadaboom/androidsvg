@@ -55,6 +55,7 @@ import com.caverock.androidsvg.SVG.Pattern;
 import com.caverock.androidsvg.SVG.Rect;
 import com.caverock.androidsvg.SVG.Stop;
 import com.caverock.androidsvg.SVG.Style;
+import com.caverock.androidsvg.SVG.Style.FontStyle;
 import com.caverock.androidsvg.SVG.Style.TextDecoration;
 import com.caverock.androidsvg.SVG.SvgContainer;
 import com.caverock.androidsvg.SVG.SvgElement;
@@ -104,6 +105,8 @@ public class SVGAndroidRenderer
    private static final int  LUMINANCE_TO_ALPHA_RED = (int)(0.2125f * (1 << LUMINANCE_FACTOR_SHIFT));
    private static final int  LUMINANCE_TO_ALPHA_GREEN = (int)(0.7154f * (1 << LUMINANCE_FACTOR_SHIFT));
    private static final int  LUMINANCE_TO_ALPHA_BLUE = (int)(0.0721f * (1 << LUMINANCE_FACTOR_SHIFT));
+
+   private static final String DEFAULT_FONT_FAMILY = "sans-serif";
 
 
    private class RendererState implements Cloneable
@@ -1948,20 +1951,18 @@ public class SVGAndroidRenderer
          if (state.style.fontFamily != null && document != null) {
             fileResolver = document.getFileResolver();
 
-            if (fileResolver != null) {
-               for (String fontName: state.style.fontFamily) {
+            for (String fontName: state.style.fontFamily) {
+               font = checkGenericFont(fontName, state.style.fontWeight, state.style.fontStyle);
+               if (font == null && fileResolver != null) {
                   font = fileResolver.resolveFont(fontName, state.style.fontWeight, String.valueOf(state.style.fontStyle));
-                  if (font != null)
-                     break;
                }
+               if (font != null)
+                  break;
             }
          }
          if (font == null) {
             // Fall back to default font
-            if (state.style.fontWeight <= 500)
-               font = Typeface.create(Typeface.DEFAULT,  getTypefaceStyle(style));
-            else
-               font = Typeface.create(Typeface.DEFAULT_BOLD,  getTypefaceStyle(style));
+            font = checkGenericFont(DEFAULT_FONT_FAMILY, state.style.fontWeight, state.style.fontStyle);
          }
          state.fillPaint.setTypeface(font);
          state.strokePaint.setTypeface(font);
@@ -2057,13 +2058,27 @@ public class SVGAndroidRenderer
    }
 
 
-   private int  getTypefaceStyle(Style style)
+   private Typeface  checkGenericFont(String fontName, Integer fontWeight, FontStyle fontStyle)
    {
-      boolean  italic = (style.fontStyle == Style.FontStyle.Italic);
-      if ("bold".equals(style.fontWeight)) {
-         return italic ? Typeface.BOLD_ITALIC : Typeface.BOLD;
+      Typeface font = null;
+      int      typefaceStyle;
+
+      boolean  italic = (fontStyle == Style.FontStyle.Italic);
+      typefaceStyle = (fontWeight > 500) ? (italic ? Typeface.BOLD_ITALIC : Typeface.BOLD)
+                                         : (italic ? Typeface.ITALIC : Typeface.NORMAL);
+
+      if (fontName.equals("serif")) {
+         font = Typeface.create(Typeface.SERIF, typefaceStyle);
+      } else if (fontName.equals("sans-serif")) {
+         font = Typeface.create(Typeface.SANS_SERIF, typefaceStyle);
+      } else if (fontName.equals("monospace")) {
+         font = Typeface.create(Typeface.MONOSPACE, typefaceStyle);
+      } else if (fontName.equals("cursive")) {
+         font = Typeface.create(Typeface.SANS_SERIF, typefaceStyle);
+      } else if (fontName.equals("fantasy")) {
+         font = Typeface.create(Typeface.SANS_SERIF, typefaceStyle);
       }
-      return italic ? Typeface.ITALIC : Typeface.NORMAL;
+      return font;
    }
 
 
