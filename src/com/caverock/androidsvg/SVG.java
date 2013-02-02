@@ -402,6 +402,17 @@ public class SVG
     * Renders this SVG document to a Canvas object.
     * 
     * @param canvas the canvas to which the document should be rendered.
+    */
+   public void  renderToCanvas(Canvas canvas)
+   {
+      renderToCanvas(canvas, null, DEFAULT_DPI, null, null);
+   }
+
+
+   /**
+    * Renders this SVG document to a Canvas object.
+    * 
+    * @param canvas the canvas to which the document should be rendered.
     * @param viewPort the bounds of the area on the canvas you want the SVG rendered, or null for the whole canvas.
     */
    public void  renderToCanvas(Canvas canvas, RectF viewPort)
@@ -456,6 +467,25 @@ public class SVG
       SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, svgViewPort, defaultDPI);
 
       renderer.renderDocument(this, null, alignment, scale, true);
+   }
+
+
+   /**
+    * Renders this SVG document to a Canvas using the specified view defined in the document.
+    * <p>
+    * A View is an special element in a SVG documents that describes a rectangular area in the document.
+    * Calling this method with a {@code viewId} will result in the specified view being positioned and scaled
+    * to the viewport.  In other words, use {@link #renderToPicture()} to render the whole document, or use this
+    * method instead to render just a part of it.
+    * <p>
+    * If the &lt;view&gt; could not be found, nothing will be drawn.
+    *
+    * @param viewId the id of a view element in the document that defines which section of the document is to be visible.
+    * @param canvas the canvas to which the document should be rendered.
+    */
+   public void  renderViewToCanvas(String viewId, Canvas canvas)
+   {
+      renderViewToCanvas(viewId, canvas, null, DEFAULT_DPI);
    }
 
 
