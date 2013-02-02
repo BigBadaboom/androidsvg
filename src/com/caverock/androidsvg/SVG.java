@@ -316,11 +316,6 @@ public class SVG
       Canvas   canvas = picture.beginRecording(widthInPixels, heightInPixels);
       Box      viewPort = new Box(0f, 0f, (float) widthInPixels, (float) heightInPixels);
 
-      if (alignment == null)
-         alignment = AspectRatioAlignment.xMidYMid;
-      if (scale == null)
-         scale = AspectRatioScale.MEET;
-
       SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, viewPort, defaultDPI);
 
       renderer.renderDocument(this, null, alignment, scale, false);
@@ -458,11 +453,6 @@ public class SVG
       } else {
          svgViewPort = new Box(0f, 0f, (float) canvas.getWidth(), (float) canvas.getHeight());
       }
-
-      if (alignment == null)
-         alignment = AspectRatioAlignment.xMidYMid;
-      if (scale == null)
-         scale = AspectRatioScale.MEET;
 
       SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, svgViewPort, defaultDPI);
 
