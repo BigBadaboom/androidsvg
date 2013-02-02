@@ -234,7 +234,7 @@ public class SVGAndroidRenderer
    {
       this.document = document;
       this.directRenderingMode = directRenderingMode;
-      
+
       // Calculate the initial transform to position the document in our canvas
       SVG.Svg  rootObj = document.getRootElement();
 
@@ -244,7 +244,7 @@ public class SVGAndroidRenderer
       }
 
       // If the root svg element has a width expressed in physical units, then we can calculate
-      // the document author's intended scale from that, rather than relying on defaultDPI.
+      // the document author's intended DPI/scale from that, rather than relying on defaultDPI.
       if (rootObj.width != null && rootObj.viewBox != null) {
          float  perUnit = rootObj.viewBox.width / rootObj.width.value;
          switch (rootObj.width.unit)
@@ -272,6 +272,30 @@ public class SVGAndroidRenderer
       {
          canvas.concat(calculateViewBoxTransform(state.viewPort, rootObj.viewBox, alignment, scale));
          state.viewPort = rootObj.viewBox;
+      }
+      else if (alignment != null)
+      {
+         // By specifying an alignment, the caller clearly intended that document be scaled
+         // to fit the viewport.  However the root element has no viewBox.  So, to make the
+         // scale happen, let's pretend it did.
+         float  w, h, currentDPI = this.dpi;
+         if (rootObj.width != null) {
+            // Temporarily set DPI to 96 because any files with, say, width="3cm", were probably
+            // assuming a desktop DPI. Any other DPI may result in the image appearing too big or small.
+            this.dpi = 96f;
+            w = rootObj.width.floatValueX(this);
+            if (rootObj.height != null) {
+               h = rootObj.height.floatValueY(this);
+            } else {
+               h = w;
+            }
+            // Make a fake viewbox from the SVG width and height attributes
+            Box  fakeViewBox = new Box(0,0, w,h);
+            canvas.concat(calculateViewBoxTransform(state.viewPort, fakeViewBox, alignment, scale));
+            state.viewPort = state.viewBox = fakeViewBox;
+            this.dpi = currentDPI;
+         }
+         // else there was no width attribute either, so we must give up. No scaling for this file. :/
       }
 
       render(rootObj);
@@ -447,6 +471,14 @@ public class SVGAndroidRenderer
           (height != null && height.isZero()))
          return;
 
+      AspectRatioAlignment  alignment = obj.preserveAspectRatioAlignment;
+      AspectRatioScale      scale = obj.preserveAspectRatioScale;
+      // "If attribute 'preserveAspectRatio' is not specified, then the effect is as if a value of xMidYMid meet were specified."
+      if (alignment == null) {
+         alignment = AspectRatioAlignment.xMidYMid;
+         scale = AspectRatioScale.MEET;
+      }
+
       updateStyle(state, obj.style);
 
       // <svg> elements establish a new viewport.
@@ -466,7 +498,7 @@ public class SVGAndroidRenderer
       checkForClipPath(obj, state.viewPort);
 
       if (obj.viewBox != null) {
-         canvas.concat(calculateViewBoxTransform(state.viewPort, obj.viewBox, obj.preserveAspectRatioAlignment, obj.preserveAspectRatioScale));
+         canvas.concat(calculateViewBoxTransform(state.viewPort, obj.viewBox, alignment, scale));
          state.viewBox = obj.viewBox;
       }
 
@@ -691,6 +723,10 @@ public class SVGAndroidRenderer
    {
       debug("Use render");
 
+      if ((obj.width != null && obj.width.isZero()) ||
+          (obj.height != null && obj.height.isZero()))
+         return;
+
       updateStyle(state, obj.style);
 
       // Locate the referenced object
@@ -711,24 +747,31 @@ public class SVGAndroidRenderer
       m.preTranslate(_x, _y);
       canvas.concat(m);
 
-      Length _w = (obj.width != null) ? obj.width : new Length(100, Unit.percent);
-      Length _h = (obj.height != null) ? obj.height : new Length(100, Unit.percent);
-
       checkForClipPath(obj);
 
       boolean  compositing = pushLayer();
 
       parentPush(obj);
 
-      if (ref instanceof SVG.Svg) {
+      if (ref instanceof SVG.Svg)
+      {
          statePush();
-         render((SVG.Svg) ref, _w, _h);
+         SVG.Svg  svgElem = (SVG.Svg) ref;
+         Length _w = (obj.width != null) ? obj.width : svgElem.width;
+         Length _h = (obj.height != null) ? obj.height : svgElem.height;
+         render(svgElem, _w, _h);
          statePop();
-      } else if (ref instanceof SVG.Symbol) {
+      }
+      else if (ref instanceof SVG.Symbol)
+      {
+         Length _w = (obj.width != null) ? obj.width : new Length(100, Unit.percent);
+         Length _h = (obj.height != null) ? obj.height : new Length(100, Unit.percent);
          statePush();
          render((SVG.Symbol) ref, _w, _h);
          statePop();
-      } else {
+      }
+      else
+      {
          render(ref);
       }
 
@@ -1478,6 +1521,14 @@ public class SVGAndroidRenderer
           (height != null && height.isZero()))
          return;
 
+      AspectRatioAlignment  alignment = obj.preserveAspectRatioAlignment;
+      AspectRatioScale      scale = obj.preserveAspectRatioScale;
+      // "If attribute 'preserveAspectRatio' is not specified, then the effect is as if a value of xMidYMid meet were specified."
+      if (alignment == null) {
+         alignment = AspectRatioAlignment.xMidYMid;
+         scale = AspectRatioScale.MEET;
+      }
+
       updateStyle(state, obj.style);
 
       float  _w = (width != null) ? width.floatValueX(this) : state.viewPort.width;
@@ -1489,7 +1540,7 @@ public class SVGAndroidRenderer
       }
 
       if (obj.viewBox != null) {
-         canvas.concat(calculateViewBoxTransform(state.viewPort, obj.viewBox, obj.preserveAspectRatioAlignment, obj.preserveAspectRatioScale));
+         canvas.concat(calculateViewBoxTransform(state.viewPort, obj.viewBox, alignment, scale));
          state.viewBox = obj.viewBox;
       }
       
@@ -1514,9 +1565,17 @@ public class SVGAndroidRenderer
       if (obj.width == null || obj.width.isZero() ||
           obj.height == null || obj.height.isZero())
          return;
-      
+
       if (obj.href == null)
          return;
+
+      AspectRatioAlignment  alignment = obj.preserveAspectRatioAlignment;
+      AspectRatioScale      scale = obj.preserveAspectRatioScale;
+      // "If attribute 'preserveAspectRatio' is not specified, then the effect is as if a value of xMidYMid meet were specified."
+      if (alignment == null) {
+         alignment = AspectRatioAlignment.xMidYMid;
+         scale = AspectRatioScale.MEET;
+      }
 
       // Locate the referenced image
       Bitmap  image = checkForImageDataURL(obj.href);
@@ -1550,7 +1609,7 @@ public class SVGAndroidRenderer
       }
 
       obj.boundingBox = new SVG.Box(0,  0,  image.getWidth(), image.getHeight());
-      canvas.concat(calculateViewBoxTransform(state.viewPort, obj.boundingBox, obj.preserveAspectRatioAlignment, obj.preserveAspectRatioScale));
+      canvas.concat(calculateViewBoxTransform(state.viewPort, obj.boundingBox, alignment, scale));
 
       updateParentBoundingBox(obj);
 
@@ -1624,12 +1683,12 @@ public class SVGAndroidRenderer
     */
    private Matrix calculateViewBoxTransform(Box viewPort, Box viewBox, AspectRatioAlignment aspectRule, AspectRatioScale aspectScale)
    {
+      Matrix m = new Matrix();
+
       if (aspectRule == null)
-         aspectRule = AspectRatioAlignment.xMidYMid;
+         return m;
       if (aspectScale == null)
          aspectScale = AspectRatioScale.MEET;
-
-      Matrix m = new Matrix();
 
       float  xScale = viewPort.width / viewBox.width;
       float  yScale = viewPort.height / viewBox.height;
@@ -3504,6 +3563,14 @@ public class SVGAndroidRenderer
       if (w == 0 || h == 0)
          return;
 
+      AspectRatioAlignment  alignment = pattern.preserveAspectRatioAlignment;
+      AspectRatioScale      scale = pattern.preserveAspectRatioScale;
+      // "If attribute 'preserveAspectRatio' is not specified, then the effect is as if a value of xMidYMid meet were specified."
+      if (alignment == null) {
+         alignment = AspectRatioAlignment.xMidYMid;
+         scale = AspectRatioScale.MEET;
+      }
+
       // Push the state
       statePush();
       // Set path as the clip region
@@ -3564,7 +3631,7 @@ public class SVGAndroidRenderer
             // Calculate and set the viewport for each instance of the pattern
             if (pattern.viewBox != null)
             {
-               canvas.concat(calculateViewBoxTransform(stepViewBox, pattern.viewBox, pattern.preserveAspectRatioAlignment, pattern.preserveAspectRatioScale));
+               canvas.concat(calculateViewBoxTransform(stepViewBox, pattern.viewBox, alignment, scale));
             }
             else
             {

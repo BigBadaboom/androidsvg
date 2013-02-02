@@ -91,9 +91,9 @@ public class SVG
    private String  title = "";
    private String  desc = "";
 
-   // Resolvers
-   SVGExternalFileResolver  fileResolver = null;
-
+   // Resolver
+   private SVGExternalFileResolver  fileResolver = null;
+   
 
    protected enum Unit
    {
@@ -232,6 +232,9 @@ public class SVG
       is.close();
       return svg;
    }
+
+
+   //===============================================================================
 
 
    /**
