@@ -562,7 +562,7 @@ public class SVGAndroidRenderer
          return false;
 
       // Custom version of statePush() that also saves the layer
-      if (state.style.overflow) {
+      if (state.style.overflow || getCurrentViewPortInUserUnits()==null) {
          // If overflow allowed, then save the whole layer
          canvas.saveLayerAlpha(null, clamp255(state.style.opacity), Canvas.HAS_ALPHA_LAYER_SAVE_FLAG);
       } else {
