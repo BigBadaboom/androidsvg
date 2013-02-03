@@ -622,11 +622,13 @@ public class SVG
 
 
    /**
-    * Returns the width of the document as specified in the SVG file.  If the width
-    * in the document is specified in pixels, that value will be returned. If the value
-    * is listed with a physical unit such as "cm", then the {@code dpi} parameter will
-    * be used to convert that value to pixels. If the width is missing, or in a form
-    * which can't be converted to pixels, such as "100%" for example, -1 will be returned.
+    * Returns the width of the document as specified in the SVG file.
+    * <p>
+    * If the width in the document is specified in pixels, that value will be returned.
+    * If the value is listed with a physical unit such as "cm", then the {@code dpi}
+    * parameter will be used to convert that value to pixels. If the width is missing,
+    * or in a form which can't be converted to pixels, such as "100%" for example, -1
+    * will be returned.
     *  
     * @param dpi the DPI value to use when converting real-world values such as "cm" (centimetres).
     * @return the width in pixels, or -1 if there is no width available.
@@ -638,11 +640,13 @@ public class SVG
 
 
    /**
-    * Returns the height of the document as specified in the SVG file.  If the height
-    * in the document is specified in pixels, that value will be returned. If the value
-    * is listed with a physical unit such as "cm", then the {@code dpi} parameter will
-    * be used to convert that value to pixels. If the height is missing, or in a form
-    * which can't be converted to pixels, such as "100%" for example, -1 will be returned.
+    * Returns the height of the document as specified in the SVG file.
+    * <p>
+    * If the height in the document is specified in pixels, that value will be returned.
+    * If the value is listed with a physical unit such as "cm", then the {@code dpi}
+    * parameter will be used to convert that value to pixels. If the height is missing,
+    * or in a form which can't be converted to pixels, such as "100%" for example, -1
+    * will be returned.
     *  
     * @param dpi the DPI value to use when converting real-world values such as "cm" (centimetres).
     * @return the height in pixels, or -1 if there is no height available.
