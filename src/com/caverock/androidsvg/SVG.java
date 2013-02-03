@@ -73,7 +73,7 @@ public class SVG
 {
    private static final String  TAG = "AndroidSVG";
 
-   private static final String  VERSION = "1.0.168";
+   private static final String  VERSION = "1.0.170";
 
    private static final float   DEFAULT_DPI = 96;
    private static final int     DEFAULT_PICTURE_WIDTH = 512;
@@ -564,19 +564,6 @@ public class SVG
    }
 
 
-   protected SvgObject  resolveIRI(String iri)
-   {
-      if (iri == null)
-         return null;
-
-      if (iri.length() > 1 && iri.startsWith("#"))
-      {
-         return getElementById(iri.substring(1));
-      }
-      return null;
-   }
-
-
    /**
     * Returns the contents of the &lt;title&gt; element in the SVG document.
     * 
@@ -634,6 +621,38 @@ public class SVG
    }
 
 
+   /**
+    * Returns the width of the document as specified in the SVG file.  If the width
+    * in the document is specified in pixels, that value will be returned. If the value
+    * is listed with a physical unit such as "cm", then the {@code dpi} parameter will
+    * be used to convert that value to pixels. If the width is missing, or in a form
+    * which can't be converted to pixels, such as "100%" for example, -1 will be returned.
+    *  
+    * @param dpi the DPI value to use when converting real-world values such as "cm" (centimetres).
+    * @return the width in pixels, or -1 if there is no width available.
+    */
+   public float  getDocumentWidth(float dpi)
+   {
+      return getDocumentDimensions(dpi).width;
+   }
+
+
+   /**
+    * Returns the height of the document as specified in the SVG file.  If the height
+    * in the document is specified in pixels, that value will be returned. If the value
+    * is listed with a physical unit such as "cm", then the {@code dpi} parameter will
+    * be used to convert that value to pixels. If the height is missing, or in a form
+    * which can't be converted to pixels, such as "100%" for example, -1 will be returned.
+    *  
+    * @param dpi the DPI value to use when converting real-world values such as "cm" (centimetres).
+    * @return the height in pixels, or -1 if there is no height available.
+    */
+   public float  getDocumentHeight(float dpi)
+   {
+      return getDocumentDimensions(dpi).height;
+   }
+
+
    //===============================================================================
 
 
@@ -646,6 +665,51 @@ public class SVG
    protected void setRootElement(SVG.Svg rootElement)
    {
       this.rootElement = rootElement;
+   }
+
+
+   protected SvgObject  resolveIRI(String iri)
+   {
+      if (iri == null)
+         return null;
+
+      if (iri.length() > 1 && iri.startsWith("#"))
+      {
+         return getElementById(iri.substring(1));
+      }
+      return null;
+   }
+
+
+   private Box  getDocumentDimensions(float dpi)
+   {
+      if (this.rootElement == null)
+         return new Box(-1,-1,-1,-1);
+
+      Length  w = this.rootElement.width;
+      Length  h = this.rootElement.height;
+      
+      if (w == null || w.isZero() || w.unit==Unit.percent || w.unit==Unit.em || w.unit==Unit.ex)
+         return new Box(-1,-1,-1,-1);
+
+      float  wOut = w.floatValue(dpi);
+      float  hOut;
+
+      if (h != null) {
+         if (h.isZero() || h.unit==Unit.percent || h.unit==Unit.em || h.unit==Unit.ex) {
+            return new Box(-1,-1,-1,-1);
+         }
+         hOut = h.floatValue(dpi);
+      } else {
+         // height is not specified. SVG spec says this is okay. If there is a viewBox, we use
+         // that to calculate the height. Otherwise we set height equal to width.
+         if (this.rootElement.viewBox != null) {
+            hOut = (wOut * this.rootElement.viewBox.height) / this.rootElement.viewBox.width;
+         } else {
+            hOut = wOut;
+         }
+      }
+      return new Box(0,0, wOut,hOut);
    }
 
 
