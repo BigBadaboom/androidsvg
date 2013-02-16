@@ -2039,6 +2039,19 @@ public class SVGAndroidRenderer
    }
 
 
+   private void  applyCSSRules(SvgElementBase obj)
+   {
+      if (document.getCSSRules().isEmpty())
+         return;
+
+      for (CSSParser.Rule rule: document.getCSSRules())
+      {
+         if (CSSParser.ruleMatch(rule.selector, parentStack, obj))
+            updateStyle(state, rule.style);
+      }
+   }
+
+
    private void  setPaintColour(RendererState state, boolean isFill, SvgPaint paint)
    {
       float  paintOpacity = (isFill) ? state.style.fillOpacity : state.style.strokeOpacity;

@@ -93,7 +93,10 @@ public class SVG
 
    // Resolver
    private SVGExternalFileResolver  fileResolver = null;
-   
+
+   // CSS rules
+   private List<CSSParser.Rule>  cssRules = null;
+
 
    protected enum Unit
    {
@@ -718,6 +721,24 @@ public class SVG
 
 
    //===============================================================================
+   // CSS support methods
+
+
+   protected void  addCSSRules(List<CSSParser.Rule> ruleset)
+   {
+      if (this.cssRules == null)
+         this.cssRules = new ArrayList<CSSParser.Rule>(ruleset.size());
+      this.cssRules.addAll(ruleset);
+   }
+
+
+   protected List<CSSParser.Rule>  getCSSRules()
+   {
+      return this.cssRules;
+   }
+
+
+   //===============================================================================
    // Object sub-types used in the SVG object tree
 
 
@@ -1216,8 +1237,9 @@ public class SVG
    // Any object in the tree that corresponds to an SVG element
    protected static class SvgElementBase extends SvgObject
    {
-      public String  id = null;
-      public Style   style = new Style();
+      public String        id = null;
+      public Style         style = new Style();
+      public List<String>  classNames = null;
    }
 
 
