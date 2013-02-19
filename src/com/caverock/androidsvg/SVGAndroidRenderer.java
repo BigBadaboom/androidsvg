@@ -57,6 +57,7 @@ import com.caverock.androidsvg.SVG.Stop;
 import com.caverock.androidsvg.SVG.Style;
 import com.caverock.androidsvg.SVG.Style.FontStyle;
 import com.caverock.androidsvg.SVG.Style.TextDecoration;
+import com.caverock.androidsvg.SVG.Svg;
 import com.caverock.androidsvg.SVG.SvgContainer;
 import com.caverock.androidsvg.SVG.SvgElement;
 import com.caverock.androidsvg.SVG.SvgElementBase;
@@ -313,8 +314,6 @@ public class SVGAndroidRenderer
    {
       if (obj instanceof NotDirectlyRendered)
          return;
-      if (!display(obj))
-         return;
 
       // Save state
       statePush();
@@ -412,6 +411,30 @@ public class SVGAndroidRenderer
    //==============================================================================
 
 
+   private void updateStyleForElement(RendererState state, SvgElementBase obj)
+   {
+      state.style.resetNonInheritingProperties();
+
+      // Apply the styles defined by style attributes on the element
+      if (obj.baseStyle != null)
+         updateStyle(state, obj.baseStyle);
+
+      // Apply the styles from any CSS files or <style> elements
+      if (document.hasCSSRules())
+      {
+         for (CSSParser.Rule rule: document.getCSSRules())
+         {
+            if (CSSParser.ruleMatch(rule.selector, parentStack, obj))
+               updateStyle(state, rule.style);
+         }
+      }
+
+      // Apply the styles defined by the 'style' attribute. They have the highest precedence.
+      if (obj.style != null)
+         updateStyle(state, obj.style);
+   }
+
+
    /*
     * Fill a path with either the given paint, or if a pattern is set, with the pattern.
     */
@@ -482,7 +505,10 @@ public class SVGAndroidRenderer
          scale = AspectRatioScale.MEET;
       }
 
-      updateStyle(state, obj.style);
+      updateStyleForElement(state, obj);
+
+      if (!display())
+         return;
 
       // <svg> elements establish a new viewport.
       // But in the case of the root element, it has already been done for us.
@@ -523,7 +549,10 @@ public class SVGAndroidRenderer
    {
       debug("Group render");
 
-      updateStyle(state, obj.style);
+      updateStyleForElement(state, obj);
+
+      if (!display())
+         return;
 
       if (obj.transform != null) {
          canvas.concat(obj.transform);
@@ -730,7 +759,10 @@ public class SVGAndroidRenderer
           (obj.height != null && obj.height.isZero()))
          return;
 
-      updateStyle(state, obj.style);
+      updateStyleForElement(state, obj);
+
+      if (!display())
+         return;
 
       // Locate the referenced object
       SVG.SvgObject  ref = obj.document.resolveIRI(obj.href);
@@ -794,8 +826,10 @@ public class SVGAndroidRenderer
    {
       debug("Path render");
 
-      updateStyle(state, obj.style);
+      updateStyleForElement(state, obj);
 
+      if (!display())
+         return;
       if (!visible())
          return;
       if (!state.hasStroke && !state.hasFill)
@@ -848,8 +882,10 @@ public class SVGAndroidRenderer
       if (obj.width == null || obj.height == null || obj.width.isZero() || obj.height.isZero())
          return;
 
-      updateStyle(state, obj.style);
+      updateStyleForElement(state, obj);
 
+      if (!display())
+         return;
       if (!visible())
          return;
 
@@ -884,8 +920,10 @@ public class SVGAndroidRenderer
       if (obj.r == null || obj.r.isZero())
          return;
 
-      updateStyle(state, obj.style);
+      updateStyleForElement(state, obj);
 
+      if (!display())
+         return;
       if (!visible())
          return;
 
@@ -920,8 +958,10 @@ public class SVGAndroidRenderer
       if (obj.rx == null || obj.ry == null || obj.rx.isZero() || obj.ry.isZero())
          return;
 
-      updateStyle(state, obj.style);
+      updateStyleForElement(state, obj);
 
+      if (!display())
+         return;
       if (!visible())
          return;
 
@@ -953,8 +993,10 @@ public class SVGAndroidRenderer
    {
       debug("Line render");
 
-      updateStyle(state, obj.style);
+      updateStyleForElement(state, obj);
 
+      if (!display())
+         return;
       if (!visible())
          return;
       if (!state.hasStroke)
@@ -1013,8 +1055,10 @@ public class SVGAndroidRenderer
    {
       debug("PolyLine render");
 
-      updateStyle(state, obj.style);
+      updateStyleForElement(state, obj);
 
+      if (!display())
+         return;
       if (!visible())
          return;
       if (!state.hasStroke && !state.hasFill)
@@ -1101,8 +1145,10 @@ public class SVGAndroidRenderer
    {
       debug("Polygon render");
 
-      updateStyle(state, obj.style);
+      updateStyleForElement(state, obj);
 
+      if (!display())
+         return;
       if (!visible())
          return;
       if (!state.hasStroke && !state.hasFill)
@@ -1148,7 +1194,10 @@ public class SVGAndroidRenderer
    {
       debug("Text render");
 
-      updateStyle(state, obj.style);
+      updateStyleForElement(state, obj);
+
+      if (!display())
+         return;
 
       if (obj.transform != null)
          canvas.concat(obj.transform);
@@ -1181,7 +1230,9 @@ public class SVGAndroidRenderer
       
       boolean  compositing = pushLayer();
 
+/**/warn("text 1");
       enumerateTextSpans(obj, new PlainTextDrawer(x + dx, y + dy));
+/**/warn("text 2");
 
       if (compositing)
          popLayer(obj);
@@ -1247,7 +1298,7 @@ public class SVGAndroidRenderer
 
    private void  processTextChild(SVG.SvgObject obj, TextProcessor textprocessor)
    {
-      if (!display(obj))
+      if (!display())
          return;
 
       if (obj instanceof SVG.TextSequence)
@@ -1282,25 +1333,33 @@ public class SVGAndroidRenderer
 
          SVG.TSpan tspan = (SVG.TSpan) obj; 
 
-         updateStyle(state, tspan.style);
+         updateStyleForElement(state, tspan);
 
-         // Get the first coordinate pair from the lists in the x and y properties.
-         float x=0, y=0, dx=0, dy=0;
-         if (textprocessor instanceof PlainTextDrawer) {
-            x = (tspan.x == null || tspan.x.size() == 0) ? ((PlainTextDrawer) textprocessor).x : tspan.x.get(0).floatValueX(this);
-            y = (tspan.y == null || tspan.y.size() == 0) ? ((PlainTextDrawer) textprocessor).y : tspan.y.get(0).floatValueY(this);
-            dx = (tspan.dx == null || tspan.dx.size() == 0) ? 0f : tspan.dx.get(0).floatValueX(this);
-            dy = (tspan.dy == null || tspan.dy.size() == 0) ? 0f : tspan.dy.get(0).floatValueY(this);
+         if (display())
+         {
+            // Get the first coordinate pair from the lists in the x and y properties.
+            float x=0, y=0, dx=0, dy=0;
+            if (textprocessor instanceof PlainTextDrawer) {
+               x = (tspan.x == null || tspan.x.size() == 0) ? ((PlainTextDrawer) textprocessor).x : tspan.x.get(0).floatValueX(this);
+               y = (tspan.y == null || tspan.y.size() == 0) ? ((PlainTextDrawer) textprocessor).y : tspan.y.get(0).floatValueY(this);
+               dx = (tspan.dx == null || tspan.dx.size() == 0) ? 0f : tspan.dx.get(0).floatValueX(this);
+               dy = (tspan.dy == null || tspan.dy.size() == 0) ? 0f : tspan.dy.get(0).floatValueY(this);
+            }
+
+            checkForGradiantsAndPatterns(tspan.getTextRoot());
+
+            if (textprocessor instanceof PlainTextDrawer) {
+               ((PlainTextDrawer) textprocessor).x = x + dx;
+               ((PlainTextDrawer) textprocessor).y = y + dy;
+            }
+
+            boolean  compositing = pushLayer();
+
+            enumerateTextSpans(tspan, textprocessor);
+
+            if (compositing)
+               popLayer(tspan);
          }
-
-         checkForGradiantsAndPatterns(tspan.getTextRoot());      
-
-         if (textprocessor instanceof PlainTextDrawer) {
-            ((PlainTextDrawer) textprocessor).x = x + dx;
-            ((PlainTextDrawer) textprocessor).y = y + dy;
-         }
-
-         enumerateTextSpans(tspan, textprocessor);
 
          // Restore state
          statePop();
@@ -1312,22 +1371,26 @@ public class SVGAndroidRenderer
 
          SVG.TRef tref = (SVG.TRef) obj; 
 
-         updateStyle(state, tref.style);
+         updateStyleForElement(state, tref);
 
-         checkForGradiantsAndPatterns(tref.getTextRoot());      
+         if (display())
+         {
+            checkForGradiantsAndPatterns(tref.getTextRoot());      
 
-         // Locate the referenced object
-         SVG.SvgObject  ref = obj.document.resolveIRI(tref.href);
-         if (ref != null && (ref instanceof TextContainer))
-         {
-            StringBuilder  str = new StringBuilder();
-            extractRawText((TextContainer) ref, str);
-            if (str.length() > 0)
-               textprocessor.processText(str.toString());
-         }
-         else
-         {
-            error("Tref reference '%s' not found", tref.href);
+            // Locate the referenced object
+            SVG.SvgObject  ref = obj.document.resolveIRI(tref.href);
+            if (ref != null && (ref instanceof TextContainer))
+            {
+               StringBuilder  str = new StringBuilder();
+               extractRawText((TextContainer) ref, str);
+               if (str.length() > 0) {
+                  textprocessor.processText(str.toString());
+               }
+            }
+            else
+            {
+               error("Tref reference '%s' not found", tref.href);
+            }
          }
 
          // Restore state
@@ -1343,7 +1406,12 @@ public class SVGAndroidRenderer
    {
       debug("TextPath render");
 
-      updateStyle(state, obj.style);
+      updateStyleForElement(state, obj);
+
+      if (!display())
+         return;
+      if (!visible())
+         return;
 
       SVG.SvgObject  ref = obj.document.resolveIRI(obj.href);
       if (ref == null)
@@ -1374,8 +1442,12 @@ public class SVGAndroidRenderer
 
       checkForGradiantsAndPatterns(obj.getTextRoot());      
       
+      boolean  compositing = pushLayer();
+
       enumerateTextSpans(obj, new PathTextDrawer(path, startOffset, 0f));
 
+      if (compositing)
+         popLayer(obj);
    }
 
 
@@ -1532,7 +1604,7 @@ public class SVGAndroidRenderer
          scale = AspectRatioScale.MEET;
       }
 
-      updateStyle(state, obj.style);
+      updateStyleForElement(state, obj);
 
       float  _w = (width != null) ? width.floatValueX(this) : state.viewPort.width;
       float  _h = (height != null) ? height.floatValueX(this) : state.viewPort.height;
@@ -1595,7 +1667,12 @@ public class SVGAndroidRenderer
          return;
       }
 
-      updateStyle(state, obj.style);
+      updateStyleForElement(state, obj);
+
+      if (!display())
+         return;
+      if (!visible())
+         return;
 
       if (obj.transform != null) {
          canvas.concat(obj.transform);
@@ -1651,15 +1728,12 @@ public class SVGAndroidRenderer
    }
 
 
-   private boolean  display(SvgObject obj)
+   private boolean  display()
    {
-      if (!(obj instanceof SvgElement))
-         return true;
       if (state.overrideDisplay)
          return true;
-      SvgElement  elem = (SvgElement) obj;
-      if (elem.style.display != null)
-        return elem.style.display;
+      if (state.style.display != null)
+        return state.style.display;
       return true;
    }
 
@@ -1768,7 +1842,7 @@ public class SVGAndroidRenderer
    private void updateStyle(RendererState state, Style style)
    {
       // Some style attributes don't inherit, so first, lets reset those
-      style.resetNonInheritingProperties();
+//      style.resetNonInheritingProperties();    // FIXME
 
       // Now update each style property we know about
       if (isSpecified(style, SVG.SPECIFIED_COLOR))
@@ -2036,19 +2110,16 @@ public class SVGAndroidRenderer
          state.style.mask = style.mask;
       }
 
-   }
-
-
-   private void  applyCSSRules(SvgElementBase obj)
-   {
-      if (document.getCSSRules().isEmpty())
-         return;
-
-      for (CSSParser.Rule rule: document.getCSSRules())
+      if (isSpecified(style, SVG.SPECIFIED_STOP_COLOR))
       {
-         if (CSSParser.ruleMatch(rule.selector, parentStack, obj))
-            updateStyle(state, rule.style);
+         state.style.stopColor = style.stopColor;
       }
+
+      if (isSpecified(style, SVG.SPECIFIED_STOP_OPACITY))
+      {
+         state.style.stopOpacity = style.stopOpacity;
+      }
+
    }
 
 
@@ -2063,7 +2134,7 @@ public class SVGAndroidRenderer
       } else {
          return;
       }
-      col = clamp255(paintOpacity * state.style.opacity) << 24 | col;
+      col = clamp255(paintOpacity) << 24 | col;
       if (isFill)
          state.fillPaint.setColor(col);
       else
@@ -2601,7 +2672,7 @@ public class SVGAndroidRenderer
          return;
 
       // Tell children (markers) that they are being indirectly rendered
-      state.overrideDisplay = true;
+      state.overrideDisplay = true;  // FIXME?
 
       // We don't want the markers to inherit themselves as markers, otherwise we get infinite recursion. 
       state.style.markerStart = state.style.markerMid = state.style.markerEnd = null;
@@ -2753,12 +2824,12 @@ public class SVGAndroidRenderer
 
    private RendererState  findInheritFromAncestorState(SvgObject obj, RendererState newState)
    {
-      List<Style>    styles = new ArrayList<Style>();
+      List<SvgElementBase>    ancestors = new ArrayList<SvgElementBase>();
 
       // Traverse up the document tree adding element styles to a list.
       while (true) {
          if (obj instanceof SvgElementBase) {
-            styles.add(0, ((SvgElementBase) obj).style);
+            ancestors.add(0, (SvgElementBase) obj);
          }
          if (obj.parent == null)
             break;
@@ -2766,8 +2837,8 @@ public class SVGAndroidRenderer
       }
       
       // Now apply the ancestor styles in reverse order to a fresh RendererState object
-      for (Style style: styles)
-         updateStyle(newState, style);
+      for (SvgElementBase ancestor: ancestors)
+         updateStyleForElement(newState, ancestor);
 
       // Caller may also need a valid viewBox in order to calculate percentages
       newState.viewBox = document.getRootElement().viewBox;
@@ -2867,10 +2938,6 @@ public class SVGAndroidRenderer
 
       // Set the style for the gradient (inherits from its own ancestors, not from callee's state)
       state = findInheritFromAncestorState(gradient);
-      // Opacity isn't inherited by the gradient's children (ie. the <stop> elements).
-      // We could push/pop and updateStyle for each stop, but since opacity is
-      // the only property the stops use, it's simpler just to reset it here.
-      state.style.opacity = 1f;
 
       // Calculate the gradient transform matrix
       Matrix m = new Matrix();
@@ -2907,16 +2974,21 @@ public class SVGAndroidRenderer
             positions[i] = stop.offset;
             lastOffset = stop.offset;
          } else {
-            // Each offset must be equal or grater than the last one.
+            // Each offset must be equal or greater than the last one.
             // If it doesn't we need to replace it with the previous value.
             positions[i] = lastOffset;
          }
-         Colour col = (SVG.Colour) stop.style.stopColor;
+
+         statePush();
+
+         updateStyleForElement(state, stop);
+         Colour col = (SVG.Colour) state.style.stopColor;
          if (col == null)
             col = Colour.BLACK;
-         float opacity = (stop.style.stopOpacity != null) ? stop.style.stopOpacity : 1f;
-         colours[i] = clamp255(opacity * state.style.opacity) << 24 | col.colour;
+         colours[i] = clamp255(state.style.stopOpacity) << 24 | col.colour;
          i++;
+
+         statePop();
       }
 
       // If gradient vector is zero length, we instead fill with last stop colour
@@ -3003,16 +3075,29 @@ public class SVGAndroidRenderer
       int[]  colours = new int[numStops];
       float[]  positions = new float[numStops];
       int  i = 0;
+      float  lastOffset = -1;
       for (SvgObject child: gradient.children)
       {
          Stop  stop = (Stop) child;
-         positions[i] = stop.offset;
-         Colour col = (SVG.Colour) stop.style.stopColor;
+         if (i == 0 || stop.offset >= lastOffset) {
+            positions[i] = stop.offset;
+            lastOffset = stop.offset;
+         } else {
+            // Each offset must be equal or greater than the last one.
+            // If it doesn't we need to replace it with the previous value.
+            positions[i] = lastOffset;
+         }
+
+         statePush();
+
+         updateStyleForElement(state, stop);
+         Colour col = (SVG.Colour) state.style.stopColor;
          if (col == null)
             col = Colour.BLACK;
-         float opacity = (stop.style.stopOpacity != null) ? stop.style.stopOpacity : 1f;
-         colours[i] = clamp255(opacity * state.style.opacity) << 24 | col.colour;
+         colours[i] = clamp255(state.style.stopOpacity) << 24 | col.colour;
          i++;
+
+         statePop();
       }
 
       // If gradient radius is zero, we instead fill with last stop colour
@@ -3188,7 +3273,7 @@ public class SVGAndroidRenderer
 
    private void addObjectToClip(SvgObject obj, boolean allowUse, Path combinedPath, Matrix combinedPathMatrix)
    {
-      if (!display(obj))
+      if (!display())
          return;
 
       // Save state
@@ -3254,8 +3339,10 @@ public class SVGAndroidRenderer
 
    private void addObjectToClip(SVG.Path obj, Path combinedPath, Matrix combinedPathMatrix)
    {
-      updateStyle(state, obj.style);
+      updateStyleForElement(state, obj);
 
+      if (!display())
+         return;
       if (!visible())
          return;
 
@@ -3277,8 +3364,10 @@ public class SVGAndroidRenderer
 
    private void addObjectToClip(SVG.GraphicsElement obj, Path combinedPath, Matrix combinedPathMatrix)
    {
-      updateStyle(state, obj.style);
+      updateStyleForElement(state, obj);
 
+      if (!display())
+         return;
       if (!visible())
          return;
 
@@ -3306,8 +3395,10 @@ public class SVGAndroidRenderer
 
    private void addObjectToClip(SVG.Use obj, Path combinedPath, Matrix combinedPathMatrix)
    {
-      updateStyle(state, obj.style);
+      updateStyleForElement(state, obj);
 
+      if (!display())
+         return;
       if (!visible())
          return;
 
@@ -3329,7 +3420,10 @@ public class SVGAndroidRenderer
 
    private void addObjectToClip(SVG.Text obj, Path combinedPath, Matrix combinedPathMatrix)
    {
-      updateStyle(state, obj.style);
+      updateStyleForElement(state, obj);
+
+      if (!display())
+         return;
 
       if (obj.transform != null)
          combinedPathMatrix.preConcat(obj.transform);
@@ -3783,11 +3877,12 @@ public class SVGAndroidRenderer
       // Push the state
       statePush();
 
+      state = findInheritFromAncestorState(mask);
       // Set the style for the pattern (inherits from its own ancestors, not from callee's state)
       // The 'opacity', 'filter' and 'display' properties do not apply to the 'mask' element" (sect 14.4)
-      mask.style.opacity = 1f;
+      // Next line is not actually needed since we aren't calling pushLayer() here. Kept for future reference.
+      state.style.opacity = 1f;
       //state.style.filter = null;
-      state = findInheritFromAncestorState(mask);
 
       boolean  maskContentUnitsAreUser = (mask.maskContentUnitsAreUser == null || mask.maskContentUnitsAreUser);
       if (!maskContentUnitsAreUser) {

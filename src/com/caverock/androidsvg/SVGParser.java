@@ -70,7 +70,6 @@ public class SVGParser extends DefaultHandler
    private static final String  FEATURE_STRING_PREFIX = "http://www.w3.org/TR/SVG11/feature#";
    
    // SVG parser
-   private float             dpi = 96f;   // inches to pixels conversion
    private SVG               svgDocument = null;
    private SVG.SvgContainer  currentElement = null;
 
@@ -2238,7 +2237,7 @@ public class SVGParser extends DefaultHandler
          return (position == input.length());
       }
 
-      private boolean  isWhitespace(int c)
+      protected boolean  isWhitespace(int c)
       {
          return (c==' ' || c=='\n' || c=='\r' || c =='\t');
       }
@@ -2250,6 +2249,11 @@ public class SVGParser extends DefaultHandler
                break;
             position++;
          }
+      }
+
+      protected boolean  isEOL(int c)
+      {
+         return (c=='\n' || c=='\r');
       }
 
       // Skip the sequence: <space>*(<comma><space>)?
@@ -2614,7 +2618,7 @@ public class SVGParser extends DefaultHandler
     */
    private void  parseAttributesStyle(SvgElementBase obj, Attributes attributes) throws SAXException
    {
-      String  cssStyle = null;
+      String  styleAttrib = null;
 
       for (int i=0; i<attributes.getLength(); i++)
       {
@@ -2627,7 +2631,7 @@ public class SVGParser extends DefaultHandler
          switch (SVGAttr.fromString(attributes.getLocalName(i)))
          {
             case style:
-               cssStyle = val;
+               parseStyle(obj, val);
                break;
 
             case CLASS:
@@ -2635,19 +2639,18 @@ public class SVGParser extends DefaultHandler
                break;
 
             default:
-               processStyleProperty(obj.style, attributes.getLocalName(i), attributes.getValue(i).trim());
+               if (obj.baseStyle == null)
+                  obj.baseStyle = new Style();
+               processStyleProperty(obj.baseStyle, attributes.getLocalName(i), attributes.getValue(i).trim());
                break;
          }
       }
-
-      // If we encounted a 'style' attribute, process its contents now.
-      // Properties specified in a style attribute (or in CSS rules) override style attribute values.
-      if (cssStyle != null)
-         parseStyle(obj, cssStyle);
-
    }
 
 
+   /*
+    * Parse the 'style attribute.
+    */
    private static void  parseStyle(SvgElementBase obj, String style) throws SAXException
    {
       TextScanner  scan = new TextScanner(style.replaceAll("/\\*.*?\\*/", ""));  // regex strips block comments
@@ -2663,7 +2666,10 @@ public class SVGParser extends DefaultHandler
          if (propertyValue == null)
             break;  // Syntax error
          scan.skipWhitespace();
-         if (scan.empty() || scan.consume(';')) {
+         if (scan.empty() || scan.consume(';'))
+         {
+            if (obj.style == null)
+               obj.style = new Style();
             processStyleProperty(obj.style, propertyName, propertyValue);
             scan.skipWhitespace();
          }

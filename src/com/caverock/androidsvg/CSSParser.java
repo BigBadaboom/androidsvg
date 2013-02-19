@@ -120,7 +120,7 @@ public class CSSParser
 
       while (!scan.empty())
       {
-         if (scan.consume("<!--")) {
+         if (scan.consume("<!--")) {  // FIXME
             while (!scan.empty() && !scan.consume("-->")) {
                scan.nextChar();
             }
@@ -202,11 +202,11 @@ public class CSSParser
          if (ch == '-')
             ch = advanceChar();
          // nmstart
-         if ((ch >= 'a' && ch <= 'z') || (ch == '_'))
+         if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (ch == '_'))
          {
             ch = advanceChar();
             // nmchar
-            while ((ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || (ch == '-') || (ch == '_')) {
+            while ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || (ch == '-') || (ch == '_')) {
                ch = advanceChar();
             }
             lastValidPos = position;
@@ -225,11 +225,9 @@ public class CSSParser
 
          int     start = position;
 
-/**/debug();
          SimpleSelector  result = consume('*') ? new SimpleSelector(null) : new SimpleSelector(nextCSSIdentifier());
          String    attr = null,
                    value = null;
-/**/debug();
 
          if (!empty())
          {
@@ -280,13 +278,16 @@ public class CSSParser
          if (empty())
             return null;
          int  start = position;
+         int  lastValidPos = position;
 
          int  ch = input.charAt(position);
-         while (ch != -1 && ch != ';' & ch != '}') {
+         while (ch != -1 && ch != ';' && ch != '}' && !isEOL(ch)) {
+            if (!isWhitespace(ch))  // don't include an spaces at the end
+               lastValidPos = position + 1;
             ch = advanceChar();
          }
          if (position > start)
-            return input.substring(start, position);
+            return input.substring(start, lastValidPos);
          position = start;
          return null;
       }
@@ -506,10 +507,12 @@ debug("selector: %s",selectorPart);
     */
    protected static boolean  ruleMatch(List<SimpleSelector> selector, Stack<SvgContainer> parentStack, SvgElementBase obj)
    {
+/**/Log.w("x","ruleMatch "+selector.get(0));
       // Check the most common case first.
       if (selector.size() == 1 && selectorMatch(selector.get(0), obj))
          return true;
       
+/**/Log.w("x","ruleMatch false");
       // FIXME full matching
       return false;
    }

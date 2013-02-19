@@ -738,6 +738,12 @@ public class SVG
    }
 
 
+   protected boolean  hasCSSRules()
+   {
+      return (this.cssRules != null && this.cssRules.size() > 0);
+   }
+
+
    //===============================================================================
    // Object sub-types used in the SVG object tree
 
@@ -915,7 +921,7 @@ public class SVG
          Blink
       }
       
-      public static Style  getDefaultStyle()
+      public static Style  getDefaultStyle()  //FIXME singleton
       {
          Style  def = new Style();
          def.specifiedFlags = SPECIFIED_ALL;
@@ -955,13 +961,11 @@ public class SVG
       }
 
 
-      // Update the Applied to the current object's style just before we update the current style state.
-      // These are the properties that don't inherit.
-      public void  resetNonInheritingProperties()
+      public Style  getNonInheritingStyle()
       {
-         // If the incoming style doesn't specify one of the non-inheriting properties,
-         // make sure we supply a default value instead.
-         if (this.display == null)
+         Style  def = new Style();
+         def.display = Boolean.TRUE;
+         if (this.display != Boolean.TRUE)
             this.display = Boolean.TRUE;
          if (this.overflow == null)
             this.overflow = false;
@@ -980,6 +984,24 @@ public class SVG
 
          // Set the new styles flags to make sure the state (Paints etc) are correctly updated
          this.specifiedFlags |= SVG.SPECIFIED_NON_INHERITING; 
+         return def;
+      }
+
+
+      // Called on the state.style object to reset the properties that don't inherit
+      // from the parent style.
+      public void  resetNonInheritingProperties()
+      {
+         this.display = Boolean.TRUE;
+         this.overflow = false;
+         this.clip = null;
+         this.clipPath = null;
+         this.opacity = 1f;
+         this.stopColor = Colour.BLACK;
+         this.stopOpacity = 1f;
+         this.mask = null;
+
+         this.specifiedFlags = SVG.SPECIFIED_NON_INHERITING; 
       }
 
 
@@ -1238,8 +1260,9 @@ public class SVG
    protected static class SvgElementBase extends SvgObject
    {
       public String        id = null;
-      public Style         style = new Style();
-      public List<String>  classNames = null;
+      public Style         baseStyle = null;   // style defined by explicit style attributes in the element (eg. fill="black")  
+      public Style         style = null;       // style expressed in a 'style' attribute (eg. style="fill:black")
+      public List<String>  classNames = null;  // contents of the 'class' attribute
    }
 
 
