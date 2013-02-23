@@ -280,26 +280,8 @@ public class SVGAndroidRenderer
       else if (alignment != null)
       {
          // By specifying an alignment, the caller clearly intended that document be scaled
-         // to fit the viewport.  However the root element has no viewBox.  So, to make the
-         // scale happen, let's pretend it did.
-         float  w, h, currentDPI = this.dpi;
-         if (rootObj.width != null) {
-            // Temporarily set DPI to 96 because any files with, say, width="3cm", were probably
-            // assuming a desktop DPI. Any other DPI may result in the image appearing too big or small.
-            this.dpi = 96f;
-            w = rootObj.width.floatValueX(this);
-            if (rootObj.height != null) {
-               h = rootObj.height.floatValueY(this);
-            } else {
-               h = w;
-            }
-            // Make a fake viewbox from the SVG width and height attributes
-            Box  fakeViewBox = new Box(0,0, w,h);
-            canvas.concat(calculateViewBoxTransform(state.viewPort, fakeViewBox, alignment, scale));
-            state.viewPort = state.viewBox = fakeViewBox;
-            this.dpi = currentDPI;
-         }
-         // else there was no width attribute either, so we must give up. No scaling for this file. :/
+         // to fit the viewport.  However the root element has no viewBox.
+         warn("An alignment was specified, but it will have no effect because the document has no root viewBox.");
       }
 
       render(rootObj);
@@ -424,8 +406,10 @@ public class SVGAndroidRenderer
       {
          for (CSSParser.Rule rule: document.getCSSRules())
          {
-            if (CSSParser.ruleMatch(rule.selector, parentStack, obj))
+            if (CSSParser.ruleMatch(rule.selector, parentStack, obj)) {
+/**/warn("matched rule "+rule.selector);
                updateStyle(state, rule.style);
+            }
          }
       }
 
@@ -1230,9 +1214,7 @@ public class SVGAndroidRenderer
       
       boolean  compositing = pushLayer();
 
-/**/warn("text 1");
       enumerateTextSpans(obj, new PlainTextDrawer(x + dx, y + dy));
-/**/warn("text 2");
 
       if (compositing)
          popLayer(obj);

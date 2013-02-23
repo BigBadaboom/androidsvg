@@ -65,23 +65,51 @@ public class CSSParser
       follows     // E + F
    }
 
+   private enum AttribOp
+   {
+      EXISTS,     // *[foo]
+      EQUALS,     // *[foo=bar]
+      INCLUDES,   // *[foo~=bar]
+      DASHMATCH,  // *[foo|=bar]
+   }
+
+   public static class Attrib
+   {
+      public String    name = null;
+      public AttribOp  operation;
+      public String    value = null;
+      
+      public Attrib(String name, AttribOp op, String value)
+      {
+         this.name = name;
+         this.operation = op;
+         this.value = value;
+      }
+   }
+
    private static class SimpleSelector
    {
       public String  tag = null;       // null means "*"
-      public String  attrName = null;
-      //public Operator  attrOperator
-      public String  attrValue = null;
+      public List<Attrib>  attribs = null;
+      public List<String>  pseudos = null;
 
       public SimpleSelector(String tag)
       {
          this.tag = tag;
       }
 
-      public SimpleSelector  addAttrib(String attrName, String attrValue)
+      public void  addAttrib(String attrName, AttribOp op, String attrValue)
       {
-         this.attrName = attrName;
-         this.attrValue = attrValue;
-         return this;
+         if (attribs == null)
+            attribs = new ArrayList<Attrib>();
+         attribs.add(new Attrib(attrName, op, attrValue));
+      }
+
+      public void  addPseudo(String pseudo)
+      {
+         if (pseudos == null)
+            pseudos = new ArrayList<String>();
+         pseudos.add(pseudo);
       }
 
       @Override
@@ -89,11 +117,21 @@ public class CSSParser
       {
          StringBuffer sb = new StringBuffer();
          sb.append((tag == null) ? "*" : tag);
-         if (attrName != null) {
-            sb.append('[').append(attrName);
-            if (attrValue != null)
-               sb.append("=").append(attrValue);
-            sb.append(']');
+         if (attribs != null) {
+            for (Attrib attr: attribs) {
+               sb.append('[').append(attr.name);
+               switch(attr.operation) {
+                  case EQUALS: sb.append('=').append(attr.value); break;
+                  case INCLUDES: sb.append("~=").append(attr.value); break;
+                  case DASHMATCH: sb.append("|=").append(attr.value); break;
+                  default: break;
+               }
+               sb.append(']');
+            }
+         }
+         if (pseudos != null) {
+            for (String pseu: pseudos)
+               sb.append(':').append(pseu);
          }
          return sb.toString();
       }
@@ -114,19 +152,17 @@ public class CSSParser
 
    public List<Rule>  parse(SVG svg, String sheet) throws SAXException
    {
-/**/debug(">>>"+sheet);
       CSSTextScanner  scan = new CSSTextScanner(sheet);
       scan.skipWhitespace();
 
       while (!scan.empty())
       {
-         if (scan.consume("<!--")) {  // FIXME
-            while (!scan.empty() && !scan.consume("-->")) {
-               scan.nextChar();
-            }
-            scan.skipWhitespace();
-         }
-         else if (scan.consume('@'))
+         if (scan.consume("<!--"))
+            continue;
+         if (scan.consume("-->"))
+            continue;
+
+         if (scan.consume('@'))
             parseAtRule(scan);
          else
             svg.addCSSRules(parseRuleset(scan));
@@ -175,7 +211,7 @@ public class CSSParser
    {
       public CSSTextScanner(String input)
       {
-         super(input);
+         super(input.replaceAll("/\\*.*?\\*/", ""));  // strip all block comments
       }
 
       /*
@@ -218,40 +254,106 @@ public class CSSParser
       /*
        * Scans for a CSS 'selector'.
        */
-      public SimpleSelector  nextCSSSelector()
+      public SimpleSelector  nextCSSSelector() throws SAXException
       {
          if (empty())
             return null;
 
          int     start = position;
 
-         SimpleSelector  result = consume('*') ? new SimpleSelector(null) : new SimpleSelector(nextCSSIdentifier());
-         String    attr = null,
-                   value = null;
+         SimpleSelector  result = null;
+         if (consume('*')) {
+            result = new SimpleSelector(null);
+         } else {
+            String tag = nextCSSIdentifier();
+            if (tag != null)
+               result = new SimpleSelector(tag);
+         }
 
-         if (!empty())
+         while (!empty())
          {
             if (consume('.'))
             {
-               attr = CLASS;           // ".foo" is equivalent to *[class="foo"]
-               value = nextCSSAttribValue();
-               return (value != null) ? result.addAttrib(attr, value) : null;
+               // ".foo" is equivalent to *[class="foo"]
+               if (result == null)
+                  result = new SimpleSelector(null);
+               String  value = nextCSSIdentifier();
+               if (value == null) {
+                  position = start;
+                  return null;
+               }
+               result.addAttrib(CLASS, AttribOp.EQUALS, value);
+               continue;
             }
-            else if (consume('#'))
+
+            if (consume('#'))
             {
-               attr = ID;              // "#foo" is equivalent to *[id="foo"]
-               value = nextCSSAttribValue();
-               return (value != null) ? result.addAttrib(attr, value) : null;
+               // "#foo" is equivalent to *[id="foo"]
+               if (result == null)
+                  result = new SimpleSelector(null);
+               String  value = nextCSSIdentifier();
+               if (value == null) {
+                  position = start;
+                  return null;
+               }
+               result.addAttrib(ID, AttribOp.EQUALS, value);
             }
-            else if (consume('['))
+
+            if (result == null)
+               break;
+
+            // Now check for attribute selection and pseudo selectors   
+            if (consume('['))
             {
-               // TODO
-               return null;
+               skipWhitespace();
+               String  attrName = nextCSSIdentifier();
+               String  attrValue = null;
+               if (attrName == null)
+                  throw new SAXException("Invalid attribute selector in <style> element");
+               skipWhitespace();
+               AttribOp  op = null;
+               if (consume('='))
+                  op = AttribOp.EQUALS;
+               else if (consume("~="))
+                  op = AttribOp.INCLUDES;
+               else if (consume("|="))
+                  op = AttribOp.DASHMATCH;
+               if (op != null) {
+                  skipWhitespace();
+                  attrValue = nextCSSAttribValue();
+                  if (attrValue == null)
+                     throw new SAXException("Invalid attribute selector in <style> element");
+                  skipWhitespace();
+               }
+               if (!consume(']'))
+                  throw new SAXException("Invalid attribute selector in <style> element");
+               result.addAttrib(attrName, (op == null) ? AttribOp.EXISTS : op, attrValue);
+               continue;
             }
+
+            if (consume(':'))
+            {
+               // skip pseudo
+               int  pseudoStart = position;
+               if (nextCSSIdentifier() != null) {
+                  if (consume('(')) {
+                     skipWhitespace();
+                     if (nextCSSIdentifier() != null) {
+                        skipWhitespace();
+                        if (!consume(')')) {
+                           position = pseudoStart - 1;
+                           break;
+                        }
+                     }
+                  }
+                  result.addPseudo(input.substring(pseudoStart, position));
+               }
+            }
+
+            break;
          }
 
-         // If there was a tag name found, return this selector   
-         if (result.tag != null)
+         if (result != null)
             return result;
 
          // Otherwise 'fail'
@@ -259,6 +361,9 @@ public class CSSParser
          return null;
       }
 
+      /*
+       * The value (bar) part of "[foo="bar"]".
+       */
       private String  nextCSSAttribValue()
       {
          if (empty())
@@ -292,6 +397,8 @@ public class CSSParser
          return null;
       }
 
+
+      /* for debugging - returns the characters surrounding 'position'. */
       public void  debug()
       {
          StringBuffer sb = new StringBuffer();
@@ -507,12 +614,10 @@ debug("selector: %s",selectorPart);
     */
    protected static boolean  ruleMatch(List<SimpleSelector> selector, Stack<SvgContainer> parentStack, SvgElementBase obj)
    {
-/**/Log.w("x","ruleMatch "+selector.get(0));
       // Check the most common case first.
       if (selector.size() == 1 && selectorMatch(selector.get(0), obj))
          return true;
       
-/**/Log.w("x","ruleMatch false");
       // FIXME full matching
       return false;
    }
@@ -520,22 +625,50 @@ debug("selector: %s",selectorPart);
 
    private static boolean selectorMatch(SimpleSelector sel, SvgElementBase obj)
    {
+/**/if (obj.id!= null && obj.id.equals("right-eye")) Log.w("**** sM", ""+sel);
+//Log.w("sM", "test: "+sel+"  class="+obj.classNames);
       // Check tag name. tag==null means tag is "*" which matches everything.
       if (sel.tag != null && !sel.tag.equalsIgnoreCase(obj.getClass().getSimpleName()))
          return false;
       // If here, then tag part matched
-      if (sel.attrName == null)
-         return true;
 
-      if (sel.attrName == ID)
-         return sel.attrValue.equals(obj.id);
-      if (sel.attrName == CLASS) {
-         if (obj.classNames == null)
-            return false;
-         return obj.classNames.contains(sel.attrValue);
+      // Check the attributes
+      if (sel.attribs != null)
+      {
+         for (Attrib attr: sel.attribs)
+         {
+//Log.w("sM", "====: "+attr.name);
+            if (attr.name == ID)
+            {
+//Log.w("sM", "iiiii: "+attr.value);
+               if (!attr.value.equals(obj.id))
+                  return false;
+            }
+            else if (attr.name == CLASS)
+            {
+//Log.w("sM", ">>>>: "+attr.value);
+               if (obj.classNames == null)
+                  return false;
+               if (!obj.classNames.contains(attr.value))
+                  return false;
+            }
+            else
+            {
+               // Other attribute selector not yet supported
+               return false;
+            }
+         }
       }
-      // TODO? add support for other attributes. For now we will fail the match.
-      return false;
+
+      // Check the pseudo classes
+      // Not yet supported - so fail match
+/**/if (obj.id!= null && obj.id.equals("nose")) Log.w("sM", "NOSE "+sel);
+      if (sel.pseudos != null)
+         return false;
+
+/**/Log.w("sM", "return true");
+      // If w reached this point, the selector matched
+      return true;
    }
 
 

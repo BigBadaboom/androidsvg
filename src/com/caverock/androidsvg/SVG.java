@@ -961,47 +961,18 @@ public class SVG
       }
 
 
-      public Style  getNonInheritingStyle()
-      {
-         Style  def = new Style();
-         def.display = Boolean.TRUE;
-         if (this.display != Boolean.TRUE)
-            this.display = Boolean.TRUE;
-         if (this.overflow == null)
-            this.overflow = false;
-         //if (this.clip == null)
-         //   this.clip = null;
-         //if (this.clipPath == null)
-         //   this.clipPath = null;
-         if (this.opacity == null)
-            this.opacity = 1f;
-         if (this.stopColor == null)
-            this.stopColor = Colour.BLACK;
-         if (this.stopOpacity == null)
-            this.stopOpacity = 1f;
-         //if (this.mask == null)
-         //   this.mask = null;
-
-         // Set the new styles flags to make sure the state (Paints etc) are correctly updated
-         this.specifiedFlags |= SVG.SPECIFIED_NON_INHERITING; 
-         return def;
-      }
-
-
       // Called on the state.style object to reset the properties that don't inherit
       // from the parent style.
       public void  resetNonInheritingProperties()
       {
          this.display = Boolean.TRUE;
-         this.overflow = false;
+         this.overflow = Boolean.FALSE;
          this.clip = null;
          this.clipPath = null;
          this.opacity = 1f;
          this.stopColor = Colour.BLACK;
          this.stopOpacity = 1f;
          this.mask = null;
-
-         this.specifiedFlags = SVG.SPECIFIED_NON_INHERITING; 
       }
 
 

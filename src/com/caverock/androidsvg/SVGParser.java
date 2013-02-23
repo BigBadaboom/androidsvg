@@ -34,7 +34,7 @@ import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
-import org.xml.sax.helpers.DefaultHandler;
+import org.xml.sax.ext.DefaultHandler2;
 
 import android.graphics.Matrix;
 import android.util.Log;
@@ -61,7 +61,7 @@ import com.caverock.androidsvg.SVG.Unit;
  * SVG parser code. Used by SVG class. Should not be called directly.
  *
  */
-public class SVGParser extends DefaultHandler
+public class SVGParser extends DefaultHandler2
 {
    private static final String  TAG = "SVGParser";
 
@@ -552,6 +552,7 @@ public class SVGParser extends DefaultHandler
          SAXParser sp = spf.newSAXParser();
          XMLReader xr = sp.getXMLReader();
          xr.setContentHandler(this);
+         xr.setProperty("http://xml.org/sax/properties/lexical-handler", this);
          xr.parse(new InputSource(is));
       }
       catch (IOException e)
@@ -665,8 +666,6 @@ public class SVGParser extends DefaultHandler
    @Override
    public void characters(char[] ch, int start, int length) throws SAXException
    {
-      super.characters(ch, start, length);
-
       if (ignoring)
          return;
 
@@ -701,6 +700,25 @@ public class SVGParser extends DefaultHandler
             // Add a new TextSequence to the child node list
             ((SVG.SvgConditionalContainer) currentElement).addChild(new SVG.TextSequence( new String(ch, start, length) ));
          }
+      }
+
+   }
+
+
+   @Override
+   public void comment(char[] ch, int start, int length) throws SAXException
+   {
+      if (ignoring)
+         return;
+
+      // It is legal for the contents of the <style> element to be enclosed in XML comments (ie. "<!--" and "-->").
+      // So we need to include the contents of the comment in the text sent to the CSS parser.
+      if (inStyleElement)
+      {
+         if (styleElementContents == null)
+            styleElementContents = new StringBuffer(length);
+         styleElementContents.append(ch, start, length);
+         return;
       }
 
    }
@@ -2618,8 +2636,6 @@ public class SVGParser extends DefaultHandler
     */
    private void  parseAttributesStyle(SvgElementBase obj, Attributes attributes) throws SAXException
    {
-      String  styleAttrib = null;
-
       for (int i=0; i<attributes.getLength(); i++)
       {
          String  val = attributes.getValue(i).trim();
