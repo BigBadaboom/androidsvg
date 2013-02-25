@@ -443,19 +443,19 @@ public class SVGAndroidRenderer
    //==============================================================================
 
 
-   private void  warn(String format, Object... args)
+   private static void  warn(String format, Object... args)
    {
       Log.w(TAG, String.format(format, args));
    }
 
 
-   private void  error(String format, Object... args)
+   private static void  error(String format, Object... args)
    {
       Log.e(TAG, String.format(format, args));
    }
 
 
-   private void  debug(String format, Object... args)
+   private static void  debug(String format, Object... args)
    {
       if (LibConfig.DEBUG)
          Log.d(TAG, String.format(format, args));

@@ -35,6 +35,8 @@ import android.graphics.Picture;
 import android.graphics.RectF;
 import android.util.Log;
 
+import com.caverock.androidsvg.CSSParser.Ruleset;
+
 /**
  * AndroidSVG is a library for reading, parsing and rendering SVG documents on Android devices.
  * <p>
@@ -95,7 +97,7 @@ public class SVG
    private SVGExternalFileResolver  fileResolver = null;
 
    // CSS rules
-   private List<CSSParser.Rule>  cssRules = null;
+   private Ruleset  cssRules = new Ruleset();
 
 
    protected enum Unit
@@ -724,23 +726,21 @@ public class SVG
    // CSS support methods
 
 
-   protected void  addCSSRules(List<CSSParser.Rule> ruleset)
+   protected void  addCSSRules(Ruleset ruleset)
    {
-      if (this.cssRules == null)
-         this.cssRules = new ArrayList<CSSParser.Rule>(ruleset.size());
       this.cssRules.addAll(ruleset);
    }
 
 
    protected List<CSSParser.Rule>  getCSSRules()
    {
-      return this.cssRules;
+      return this.cssRules.getRules();
    }
 
 
    protected boolean  hasCSSRules()
    {
-      return (this.cssRules != null && this.cssRules.size() > 0);
+      return !this.cssRules.isEmpty();
    }
 
 

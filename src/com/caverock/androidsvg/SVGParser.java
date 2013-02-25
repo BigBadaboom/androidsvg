@@ -597,64 +597,64 @@ public class SVGParser extends DefaultHandler2
          return;
       }
 
-      if (localName.equalsIgnoreCase(TAG_SVG)) {
+      if (localName.equals(TAG_SVG)) {
          svg(attributes);
-      } else if (localName.equalsIgnoreCase(TAG_G)) {
+      } else if (localName.equals(TAG_G)) {
          g(attributes);
-      } else if (localName.equalsIgnoreCase(TAG_DEFS)) {
+      } else if (localName.equals(TAG_DEFS)) {
          defs(attributes);
-      } else if (localName.equalsIgnoreCase(TAG_USE)) {
+      } else if (localName.equals(TAG_USE)) {
          use(attributes);
-      } else if (localName.equalsIgnoreCase(TAG_PATH)) {
+      } else if (localName.equals(TAG_PATH)) {
          path(attributes);
-      } else if (localName.equalsIgnoreCase(TAG_RECT)) {
+      } else if (localName.equals(TAG_RECT)) {
          rect(attributes);
-      } else if (localName.equalsIgnoreCase(TAG_CIRCLE)) {
+      } else if (localName.equals(TAG_CIRCLE)) {
          circle(attributes);
-      } else if (localName.equalsIgnoreCase(TAG_ELLIPSE)) {
+      } else if (localName.equals(TAG_ELLIPSE)) {
          ellipse(attributes);
-      } else if (localName.equalsIgnoreCase(TAG_LINE)) {
+      } else if (localName.equals(TAG_LINE)) {
          line(attributes);
-      } else if (localName.equalsIgnoreCase(TAG_POLYLINE)) {
+      } else if (localName.equals(TAG_POLYLINE)) {
          polyline(attributes);
-      } else if (localName.equalsIgnoreCase(TAG_POLYGON)) {
+      } else if (localName.equals(TAG_POLYGON)) {
          polygon(attributes);
-      } else if (localName.equalsIgnoreCase(TAG_TEXT)) {
+      } else if (localName.equals(TAG_TEXT)) {
          text(attributes);
-      } else if (localName.equalsIgnoreCase(TAG_TSPAN)) {
+      } else if (localName.equals(TAG_TSPAN)) {
          tspan(attributes);
-      } else if (localName.equalsIgnoreCase(TAG_TREF)) {
+      } else if (localName.equals(TAG_TREF)) {
          tref(attributes);
-      } else if (localName.equalsIgnoreCase(TAG_SWITCH)) {
+      } else if (localName.equals(TAG_SWITCH)) {
          zwitch(attributes);
-      } else if (localName.equalsIgnoreCase(TAG_SYMBOL)) {
+      } else if (localName.equals(TAG_SYMBOL)) {
          symbol(attributes);
-      } else if (localName.equalsIgnoreCase(TAG_MARKER)) {
+      } else if (localName.equals(TAG_MARKER)) {
          marker(attributes);
-      } else if (localName.equalsIgnoreCase(TAG_LINEARGRADIENT)) {
+      } else if (localName.equals(TAG_LINEARGRADIENT)) {
          linearGradient(attributes);
-      } else if (localName.equalsIgnoreCase(TAG_RADIALGRADIENT)) {
+      } else if (localName.equals(TAG_RADIALGRADIENT)) {
          radialGradient(attributes);
-      } else if (localName.equalsIgnoreCase(TAG_STOP)) {
+      } else if (localName.equals(TAG_STOP)) {
          stop(attributes);
-      } else if (localName.equalsIgnoreCase(TAG_A)) {
+      } else if (localName.equals(TAG_A)) {
          g(attributes);    // Treat like a group element
-      } else if (localName.equalsIgnoreCase(TAG_TITLE) || localName.equalsIgnoreCase(TAG_DESC)) {
+      } else if (localName.equals(TAG_TITLE) || localName.equals(TAG_DESC)) {
          inMetadataElement = true;
          metadataTag = localName;
-      } else if (localName.equalsIgnoreCase(TAG_CLIPPATH)) {
+      } else if (localName.equals(TAG_CLIPPATH)) {
          clipPath(attributes);
-      } else if (localName.equalsIgnoreCase(TAG_TEXTPATH)) {
+      } else if (localName.equals(TAG_TEXTPATH)) {
          textPath(attributes);
-      } else if (localName.equalsIgnoreCase(TAG_PATTERN)) {
+      } else if (localName.equals(TAG_PATTERN)) {
          pattern(attributes);
-      } else if (localName.equalsIgnoreCase(TAG_IMAGE)) {
+      } else if (localName.equals(TAG_IMAGE)) {
          image(attributes);
-      } else if (localName.equalsIgnoreCase(TAG_VIEW)) {
+      } else if (localName.equals(TAG_VIEW)) {
          view(attributes);
-      } else if (localName.equalsIgnoreCase(TAG_MASK)) {
+      } else if (localName.equals(TAG_MASK)) {
          mask(attributes);
-      } else if (localName.equalsIgnoreCase(TAG_STYLE)) {
+      } else if (localName.equals(TAG_STYLE)) {
          style(attributes);
       } else {
          ignoring = true;
@@ -740,45 +740,45 @@ public class SVGParser extends DefaultHandler2
          return;
       }
 
-      if (localName.equalsIgnoreCase(TAG_TITLE) || localName.equalsIgnoreCase(TAG_DESC)) {
+      if (localName.equals(TAG_TITLE) || localName.equals(TAG_DESC)) {
          inMetadataElement = false;
          return;
       }
 
-      if (localName.equalsIgnoreCase(TAG_STYLE)) {
+      if (localName.equals(TAG_STYLE) && styleElementContents != null) {
          inStyleElement = false;
          parseCSSStyleSheet(styleElementContents.toString());
          styleElementContents.setLength(0);
          return;
       }
 
-      if (localName.equalsIgnoreCase(TAG_TEXT)) {
+      if (localName.equals(TAG_TEXT)) {
          collapseSpaces((SVG.Text) currentElement);
       }
 
-      if (localName.equalsIgnoreCase(TAG_SWITCH)) {
+      if (localName.equals(TAG_SWITCH)) {
          switchPostFilter((SVG.Switch) currentElement);
       }
 
       // Yes this is ugly. May switch to using tokens in the future.
-      if (localName.equalsIgnoreCase(TAG_SVG) ||
-          localName.equalsIgnoreCase(TAG_DEFS) ||
-          localName.equalsIgnoreCase(TAG_G) ||
-          localName.equalsIgnoreCase(TAG_USE) ||
-          localName.equalsIgnoreCase(TAG_IMAGE) ||
-          localName.equalsIgnoreCase(TAG_TEXT) ||
-          localName.equalsIgnoreCase(TAG_TSPAN) ||
-          localName.equalsIgnoreCase(TAG_SWITCH) ||
-          localName.equalsIgnoreCase(TAG_SYMBOL) ||
-          localName.equalsIgnoreCase(TAG_MARKER) ||
-          localName.equalsIgnoreCase(TAG_LINEARGRADIENT) ||
-          localName.equalsIgnoreCase(TAG_RADIALGRADIENT) ||
-          localName.equalsIgnoreCase(TAG_STOP) ||
-          localName.equalsIgnoreCase(TAG_CLIPPATH) ||
-          localName.equalsIgnoreCase(TAG_TEXTPATH) ||
-          localName.equalsIgnoreCase(TAG_PATTERN) ||
-          localName.equalsIgnoreCase(TAG_VIEW) ||
-          localName.equalsIgnoreCase(TAG_MASK)) {
+      if (localName.equals(TAG_SVG) ||
+          localName.equals(TAG_DEFS) ||
+          localName.equals(TAG_G) ||
+          localName.equals(TAG_USE) ||
+          localName.equals(TAG_IMAGE) ||
+          localName.equals(TAG_TEXT) ||
+          localName.equals(TAG_TSPAN) ||
+          localName.equals(TAG_SWITCH) ||
+          localName.equals(TAG_SYMBOL) ||
+          localName.equals(TAG_MARKER) ||
+          localName.equals(TAG_LINEARGRADIENT) ||
+          localName.equals(TAG_RADIALGRADIENT) ||
+          localName.equals(TAG_STOP) ||
+          localName.equals(TAG_CLIPPATH) ||
+          localName.equals(TAG_TEXTPATH) ||
+          localName.equals(TAG_PATTERN) ||
+          localName.equals(TAG_VIEW) ||
+          localName.equals(TAG_MASK)) {
          currentElement = ((SvgObject) currentElement).parent;
       }
 
