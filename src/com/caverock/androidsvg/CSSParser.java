@@ -528,7 +528,7 @@ public class CSSParser
          int  lastValidPos = position;
 
          int  ch = input.charAt(position);
-         while (ch != -1 && ch != ';' && ch != '}' && !isEOL(ch)) {
+         while (ch != -1 && ch != ';' && ch != '}' && ch != '!' && !isEOL(ch)) {
             if (!isWhitespace(ch))  // don't include an spaces at the end
                lastValidPos = position + 1;
             ch = advanceChar();
@@ -762,7 +762,16 @@ debug("}done"); // FIXME
          String  propertyValue = scan.nextPropertyValue();
          if (propertyValue == null)
             break;  // Syntax error
+         // Check for !important flag.
          scan.skipWhitespace();
+         if (scan.consume('!')) {
+            scan.skipWhitespace();
+            if (!scan.consume("important")) {
+               throw new SAXException("Malformed rule set in <style> element: found unexpected '!'");
+            }
+            // We don't do anything with these. We just ignore them.
+            scan.skipWhitespace();
+         }
          scan.consume(';');
          SVGParser.processStyleProperty(ruleStyle, propertyName, propertyValue);
          scan.skipWhitespace();
