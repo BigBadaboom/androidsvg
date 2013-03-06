@@ -2665,7 +2665,7 @@ public class SVGParser extends DefaultHandler2
 
 
    /*
-    * Parse the 'style attribute.
+    * Parse the 'style' attribute.
     */
    private static void  parseStyle(SvgElementBase obj, String style) throws SAXException
    {
@@ -3916,7 +3916,7 @@ public class SVGParser extends DefaultHandler2
    //=========================================================================
 
 
-   private void style(Attributes attributes) throws SAXException
+   private void  style(Attributes attributes) throws SAXException
    {
       debug("<style>");
 
@@ -3954,10 +3954,8 @@ public class SVGParser extends DefaultHandler2
 
    private void  parseCSSStyleSheet(String sheet) throws SAXException
    {
-//Log.w(TAG, "CSS: "+new String(ch, start, length));
-      CSSParser  cssp = new CSSParser();
-      //svgDocument.addCSSRules( cssp.parse(ch, start, length) );
-      cssp.parse(svgDocument, sheet);
+      CSSParser  cssp = new CSSParser(MediaType.screen);
+      svgDocument.addCSSRules(cssp.parse(sheet));
    }
 
 }

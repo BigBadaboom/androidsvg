@@ -42,7 +42,9 @@ public class CSSParser
    private static final String  ID = "id";
    private static final String  CLASS = "class";
 
-   private boolean  isAcceptableMediaType = true;
+   private MediaType  rendererMediaType = null;
+
+   private boolean  inMediaRule = false;
 
 
    public enum MediaType
@@ -166,6 +168,8 @@ public class CSSParser
 
       public void  addAll(Ruleset rules)
       {
+         if (rules.rules == null)
+            return;
          if (this.rules == null)
             this.rules = new ArrayList<Rule>(rules.rules.size());
          for (Rule rule: rules.rules) {
@@ -186,6 +190,8 @@ public class CSSParser
       @Override
       public String toString()
       {
+         if (rules == null)
+            return "";
          StringBuilder sb = new StringBuilder();
          for (Rule rule: rules)
             sb.append(rule.toString()).append('\n');
@@ -268,24 +274,22 @@ public class CSSParser
    }
 
 
-   public List<Rule>  parse(SVG svg, String sheet) throws SAXException
+   //===========================================================================================
+
+
+   
+   public CSSParser(MediaType rendererMediaType)
+   {
+      this.rendererMediaType = rendererMediaType;
+   }
+
+
+   public Ruleset  parse(String sheet) throws SAXException
    {
       CSSTextScanner  scan = new CSSTextScanner(sheet);
       scan.skipWhitespace();
 
-      while (!scan.empty())
-      {
-         if (scan.consume("<!--"))
-            continue;
-         if (scan.consume("-->"))
-            continue;
-
-         if (scan.consume('@'))
-            parseAtRule(scan);
-         else
-            svg.addCSSRules(parseRuleset(scan));
-      }
-      return null;
+      return parseRuleset(scan);
    }
 
 
@@ -540,11 +544,12 @@ public class CSSParser
       public void  debug()
       {
          StringBuilder sb = new StringBuilder();
-         for (int i = Math.max(0, position-3); i<Math.min(position+3, input.length()); i++) {
+         for (int i = Math.max(0, position-5); i<Math.min(position+5, input.length()); i++) {
             if (i==position)
                sb.append('>');
             sb.append(input.charAt(i));
-         }   
+         }
+         sb.append("   (pos=").append(position).append(")");
          Log.d("TS", sb.toString());
       }
    }
@@ -582,17 +587,40 @@ public class CSSParser
    }
 
 
-   private void  parseAtRule(CSSTextScanner scan) throws SAXException
+   private void  parseAtRule(Ruleset ruleset, CSSTextScanner scan) throws SAXException
    {
       String  atKeyword = scan.nextIdentifier();
+/**/debug("parseAtRule: "+atKeyword);
       scan.skipWhitespace();
       if (atKeyword == null)
          throw new SAXException("Invalid '@' rule in <style> element");
-      if (atKeyword.equals("charset")) {
-         
-      //} else if (atKeyword.equals("media")) {
+      if (!inMediaRule && atKeyword.equals("media"))
+      {
+         List<MediaType>  mediaList = parseMediaList(scan);
+         if (!scan.consume('{'))
+            throw new SAXException("Invalid @media rule: missing rule set");
+/**/debug("parseAtRule: consumed {");
+            
+         scan.skipWhitespace();
+         if (mediaMatches(mediaList, rendererMediaType)) {
+/**/debug("parseAtRule: rule ok");
+            inMediaRule = true;
+            ruleset.addAll( parseRuleset(scan) );
+            inMediaRule = false;
+         } else {
+/**/debug("parseAtRule: skipping");
+            parseRuleset(scan);  // parse and ignore accompanying ruleset
+         }
+
+/**/debug("parseAtRule: consumed }");
+         if (!scan.consume('}'))
+            throw new SAXException("Invalid @media rule: expected '}' at end of rule set");
+
+      //} else if (atKeyword.equals("charset")) {
       //} else if (atKeyword.equals("import")) {
-      } else {
+      }
+      else
+      {
          // Unknown/unsupported at-rule
          debug("Ignoring @%s rule", atKeyword);
          skipAtRule(scan);
@@ -634,17 +662,32 @@ debug("}done"); // FIXME
 
    private Ruleset  parseRuleset(CSSTextScanner scan) throws SAXException
    {
-//debug("parseRuleset");
+/**/debug("parseRuleset");
       Ruleset  ruleset = new Ruleset(); 
-      while (!scan.empty()) {
-         parseRule(ruleset, scan);
+      while (!scan.empty())
+      {
+/**/scan.debug();
+         if (scan.consume("<!--"))
+            continue;
+         if (scan.consume("-->"))
+            continue;
+
+         if (scan.consume('@')) {
+            parseAtRule(ruleset, scan);
+            continue;
+         }
+         if (parseRule(ruleset, scan))
+            continue;
+
+         // Nothing recognisable found. Could be end of rule set. Return.
+         break;
       }
 /**/warn("Found rules:\n%s", ruleset);
       return ruleset;
    }
 
 
-   private void  parseRule(Ruleset ruleset, CSSTextScanner scan) throws SAXException
+   private boolean  parseRule(Ruleset ruleset, CSSTextScanner scan) throws SAXException
    {
 //debug("parseRule");
       List<Selector>  selectors = parseSelectorGroup(scan);
@@ -660,9 +703,13 @@ debug("}done"); // FIXME
          for (Selector selector: selectors) {
             ruleset.add( new Rule(selector, ruleStyle) );
          }
+         return true;
       }
       else
-         throw new SAXException("Malformed <style> element: no selector found");
+      {
+/**/scan.debug();
+         return false;
+      }
    }
 
 
