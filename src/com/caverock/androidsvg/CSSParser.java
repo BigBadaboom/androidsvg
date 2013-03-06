@@ -17,9 +17,7 @@
 package com.caverock.androidsvg;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Stack;
 
 import org.xml.sax.SAXException;
 
@@ -313,10 +311,12 @@ public class CSSParser
    }
 
 
+   /*
    private static void  error(String format, Object... args)
    {
       Log.e(TAG, String.format(format, args));
    }
+   */
 
 
    private static void  debug(String format, Object... args)
@@ -493,7 +493,6 @@ public class CSSParser
 
          if (selectorPart != null)
          {
-//debug("selector: %s",selectorPart);
             selector.add(selectorPart);
             return true;
          }
@@ -590,7 +589,6 @@ public class CSSParser
    private void  parseAtRule(Ruleset ruleset, CSSTextScanner scan) throws SAXException
    {
       String  atKeyword = scan.nextIdentifier();
-/**/debug("parseAtRule: "+atKeyword);
       scan.skipWhitespace();
       if (atKeyword == null)
          throw new SAXException("Invalid '@' rule in <style> element");
@@ -599,20 +597,16 @@ public class CSSParser
          List<MediaType>  mediaList = parseMediaList(scan);
          if (!scan.consume('{'))
             throw new SAXException("Invalid @media rule: missing rule set");
-/**/debug("parseAtRule: consumed {");
             
          scan.skipWhitespace();
          if (mediaMatches(mediaList, rendererMediaType)) {
-/**/debug("parseAtRule: rule ok");
             inMediaRule = true;
             ruleset.addAll( parseRuleset(scan) );
             inMediaRule = false;
          } else {
-/**/debug("parseAtRule: skipping");
             parseRuleset(scan);  // parse and ignore accompanying ruleset
          }
 
-/**/debug("parseAtRule: consumed }");
          if (!scan.consume('}'))
             throw new SAXException("Invalid @media rule: expected '}' at end of rule set");
 
@@ -622,31 +616,20 @@ public class CSSParser
       else
       {
          // Unknown/unsupported at-rule
-         debug("Ignoring @%s rule", atKeyword);
+         warn("Ignoring @%s rule", atKeyword);
          skipAtRule(scan);
       }
       scan.skipWhitespace();
-      /*
-      String param1 = scan.nextToken("{;");
-      if (atKeyword == null || param1 == null)
-      if (scan.consume('{')) {
-         
-      } else if (scan.consume(';')) {
-         
-      }
-      */
    }
 
 
    // Skip an unsupported at-rule: "ignore everything up to and including the next semicolon or block".
    private void  skipAtRule(CSSTextScanner scan)
    {
-debug("skipAtRule"); // FIXME
       int depth = 0;
       while (!scan.empty())
       {
          int ch = scan.nextChar();
-//debug("{depth=%d ch='%c'", depth, ch); // FIXME
          if (ch == ';' && depth == 0)
             return;
          if (ch == '{')
@@ -656,17 +639,14 @@ debug("skipAtRule"); // FIXME
                return;
          }
       }
-debug("}done"); // FIXME
    }
 
 
    private Ruleset  parseRuleset(CSSTextScanner scan) throws SAXException
    {
-/**/debug("parseRuleset");
       Ruleset  ruleset = new Ruleset(); 
       while (!scan.empty())
       {
-/**/scan.debug();
          if (scan.consume("<!--"))
             continue;
          if (scan.consume("-->"))
@@ -682,19 +662,15 @@ debug("}done"); // FIXME
          // Nothing recognisable found. Could be end of rule set. Return.
          break;
       }
-/**/warn("Found rules:\n%s", ruleset);
       return ruleset;
    }
 
 
    private boolean  parseRule(Ruleset ruleset, CSSTextScanner scan) throws SAXException
    {
-//debug("parseRule");
       List<Selector>  selectors = parseSelectorGroup(scan);
-//debug("selectors: %s",selectors.toString());
       if (selectors != null && !selectors.isEmpty())
       {
-//debug("doing ruleset block");
          if (!scan.consume('{'))
             throw new SAXException("Malformed rule block in <style> element: missing '{'");
          scan.skipWhitespace();
@@ -707,7 +683,6 @@ debug("}done"); // FIXME
       }
       else
       {
-/**/scan.debug();
          return false;
       }
    }
@@ -718,7 +693,6 @@ debug("}done"); // FIXME
     */
    private List<Selector>  parseSelectorGroup(CSSTextScanner scan) throws SAXException
    {
-//debug("parseSelectorGroup");
       if (scan.empty())
          return null;
 
@@ -750,7 +724,6 @@ debug("}done"); // FIXME
    // Parse a list of
    private SVG.Style  parseDeclarations(CSSTextScanner scan) throws SAXException
    {
-//debug("parseDeclarations");
       SVG.Style  ruleStyle = new SVG.Style();
       while (true)
       {
@@ -809,28 +782,34 @@ debug("}done"); // FIXME
    /*
     * Used by renderer to check if a CSS rule matches the current element.
     */
-   protected static boolean  ruleMatch(Selector selector, Stack<SvgContainer> parentStack, SvgElementBase obj)
+   protected static boolean  ruleMatch(Selector selector, SvgElementBase obj)
    {
-      int  parentStackPos = parentStack.size() - 1;
+      // Build the list of ancestor objects
+      List<SvgContainer> ancestors = new ArrayList<SvgContainer>();
+      SvgContainer  parent = obj.parent;
+      while (parent != null) {
+         ancestors.add(0, parent);
+         parent = ((SvgObject) parent).parent;
+      }
+      
+      int  ancestorsPos = ancestors.size() - 1;
 
       // Check the most common case first as a shortcut.
       if (selector.size() == 1)
-         return selectorMatch(selector.get(0), parentStack, parentStackPos, obj);
+         return selectorMatch(selector.get(0), ancestors, ancestorsPos, obj);
       
       // We start at the last part of the selector and loop back through the parts
       // Get the next selector part
-      return ruleMatch(selector, selector.size() - 1, parentStack, parentStackPos, obj);
+      return ruleMatch(selector, selector.size() - 1, ancestors, ancestorsPos, obj);
    }
 
 
-   protected static boolean  ruleMatch(Selector selector, int selPartPos, Stack<SvgContainer> parentStack, int parentStackPos, SvgElementBase obj)
+   private static boolean  ruleMatch(Selector selector, int selPartPos, List<SvgContainer> ancestors, int ancestorsPos, SvgElementBase obj)
    {
-/**/debug("Testing selector: %s",selector);
       // We start at the last part of the selector and loop back through the parts
       // Get the next selector part
       SimpleSelector  sel = selector.get(selPartPos);
-/**/debug("0 Testing part: %s = %s",sel, obj);
-      if (!selectorMatch(sel, parentStack, parentStackPos, obj))
+      if (!selectorMatch(sel, ancestors, ancestorsPos, obj))
          return false;
 
       // Selector part matched, check its combinator
@@ -838,37 +817,35 @@ debug("}done"); // FIXME
       {
          if (selPartPos == 0)
             return true;
-         // Search up the parent stack for a node that matches the next selector
-         while (parentStackPos >= 0) {
-            if (ruleMatchOnAncestors(selector, selPartPos - 1, parentStack, parentStackPos))
+         // Search up the ancestors list for a node that matches the next selector
+         while (ancestorsPos >= 0) {
+            if (ruleMatchOnAncestors(selector, selPartPos - 1, ancestors, ancestorsPos))
                return true;
-            parentStackPos--;
+            ancestorsPos--;
          }
          return false;
       }
       else if (sel.combinator == Combinator.CHILD)
       {
-         return ruleMatchOnAncestors(selector, selPartPos - 1, parentStack, parentStackPos);
+         return ruleMatchOnAncestors(selector, selPartPos - 1, ancestors, ancestorsPos);
       }
       else //if (sel.combinator == Combinator.FOLLOWS)
       {
-         int  childPos = getChildPosition(parentStack, parentStackPos, obj);
+         int  childPos = getChildPosition(ancestors, ancestorsPos, obj);
          if (childPos <= 0)
             return false;
          SvgElementBase  prevSibling = (SvgElementBase) obj.parent.getChildren().get(childPos - 1);
-         return ruleMatch(selector, selPartPos - 1, parentStack, parentStackPos, prevSibling);
+         return ruleMatch(selector, selPartPos - 1, ancestors, ancestorsPos, prevSibling);
       }
    }
 
 
-   private static boolean  ruleMatchOnAncestors(Selector selector, int selPartPos, Stack<SvgContainer> parentStack, int parentStackPos)
+   private static boolean  ruleMatchOnAncestors(Selector selector, int selPartPos, List<SvgContainer> ancestors, int ancestorsPos)
    {
       SimpleSelector  sel = selector.get(selPartPos);
-      SvgElementBase  obj = (SvgElementBase) parentStack.get(parentStackPos);
-//debug("Testing part: %s = %s[class=%s] (%d)",sel, obj, obj.classNames, selPartPos);
+      SvgElementBase  obj = (SvgElementBase) ancestors.get(ancestorsPos);
 
-/**/debug("1 Testing part: %s = %s",sel, obj);
-      if (!selectorMatch(sel, parentStack, parentStackPos, obj))
+      if (!selectorMatch(sel, ancestors, ancestorsPos, obj))
          return false;
 
       // Selector part matched, check its combinator
@@ -876,33 +853,33 @@ debug("}done"); // FIXME
       {
          if (selPartPos == 0)
             return true;
-         // Search up the parent stack for a node that matches the next selector
-         while (parentStackPos > 0) {
-            if (ruleMatchOnAncestors(selector, selPartPos - 1, parentStack, --parentStackPos))
+         // Search up the ancestors list for a node that matches the next selector
+         while (ancestorsPos > 0) {
+            if (ruleMatchOnAncestors(selector, selPartPos - 1, ancestors, --ancestorsPos))
                return true;
          }
          return false;
       }
       else if (sel.combinator == Combinator.CHILD)
       {
-         return ruleMatchOnAncestors(selector, selPartPos - 1, parentStack, parentStackPos - 1);
+         return ruleMatchOnAncestors(selector, selPartPos - 1, ancestors, ancestorsPos - 1);
       }
       else //if (sel.combinator == Combinator.FOLLOWS)
       {
-         int  childPos = getChildPosition(parentStack, parentStackPos, obj);
+         int  childPos = getChildPosition(ancestors, ancestorsPos, obj);
          if (childPos <= 0)
             return false;
          SvgElementBase  prevSibling = (SvgElementBase) obj.parent.getChildren().get(childPos - 1);
-         return ruleMatch(selector, selPartPos - 1, parentStack, parentStackPos, prevSibling);
+         return ruleMatch(selector, selPartPos - 1, ancestors, ancestorsPos, prevSibling);
       }
    }
 
 
-   private static int getChildPosition(Stack<SvgContainer> parentStack, int parentStackPos, SvgElementBase obj)
+   private static int getChildPosition(List<SvgContainer> ancestors, int ancestorsPos, SvgElementBase obj)
    {
-      if (parentStackPos < 0)  // Has no parent, so can't have a sibling
+      if (ancestorsPos < 0)  // Has no parent, so can't have a sibling
          return -1;
-      if (parentStack.get(parentStackPos) != obj.parent)  // parent doesn't match, so obj must be an indirect reference (eg. from a <use>)
+      if (ancestors.get(ancestorsPos) != obj.parent)  // parent doesn't match, so obj must be an indirect reference (eg. from a <use>)
          return -1;
       int  childPos = 0;
       for (SvgObject child: obj.parent.getChildren())
@@ -915,7 +892,7 @@ debug("}done"); // FIXME
    }
 
 
-   private static boolean selectorMatch(SimpleSelector sel, Stack<SvgContainer> parentStack, int parentStackPos, SvgElementBase obj)
+   private static boolean selectorMatch(SimpleSelector sel, List<SvgContainer> ancestors, int ancestorsPos, SvgElementBase obj)
    {
       // Check tag name. tag==null means tag is "*" which matches everything.
       if (sel.tag != null) {
@@ -938,16 +915,13 @@ debug("}done"); // FIXME
       {
          for (Attrib attr: sel.attribs)
          {
-//Log.w("sM", "====: "+attr.name);
             if (attr.name == ID)
             {
-//Log.w("sM", "iiiii: "+attr.value);
                if (!attr.value.equals(obj.id))
                   return false;
             }
             else if (attr.name == CLASS)
             {
-//Log.w("sM", ">>>>: "+attr.value);
                if (obj.classNames == null)
                   return false;
                if (!obj.classNames.contains(attr.value))
@@ -965,7 +939,7 @@ debug("}done"); // FIXME
       if (sel.pseudos != null) {
          for (String pseudo: sel.pseudos) {
             if (pseudo.equals("first-child")) {
-               if (getChildPosition(parentStack, parentStackPos, obj) != 0)
+               if (getChildPosition(ancestors, ancestorsPos, obj) != 0)
                   return false;
             } else {
                return false;
