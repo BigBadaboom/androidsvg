@@ -120,9 +120,6 @@ public class SVGAndroidRenderer
       public SVG.Box  viewPort;
       public SVG.Box  viewBox;
 
-      // Set when we are about to render an object by reference rather than directly. Eg. via <use>.
-      public boolean  overrideDisplay;
-
       // Set when we doing direct rendering.
       public boolean  directRendering;
 
@@ -1712,8 +1709,6 @@ public class SVGAndroidRenderer
 
    private boolean  display()
    {
-      if (state.overrideDisplay)
-         return true;
       if (state.style.display != null)
         return state.style.display;
       return true;
@@ -2652,9 +2647,6 @@ public class SVGAndroidRenderer
       int  markerCount = markers.size();
       if (markerCount == 0)
          return;
-
-      // Tell children (markers) that they are being indirectly rendered
-      state.overrideDisplay = true;  // FIXME?
 
       // We don't want the markers to inherit themselves as markers, otherwise we get infinite recursion. 
       state.style.markerStart = state.style.markerMid = state.style.markerEnd = null;
