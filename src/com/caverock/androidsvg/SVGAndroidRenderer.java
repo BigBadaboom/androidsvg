@@ -404,7 +404,6 @@ public class SVGAndroidRenderer
          for (CSSParser.Rule rule: document.getCSSRules())
          {
             if (CSSParser.ruleMatch(rule.selector, obj)) {
-/**/warn("matched rule "+rule.selector);
                updateStyle(state, rule.style);
             }
          }
