@@ -78,12 +78,13 @@ public class SVGParser extends DefaultHandler2
    private int       ignoreDepth;
 
    // For handling <title> and <desc>
-   private boolean   inMetadataElement = false;
-   private String    metadataTag = null;
+   private boolean        inMetadataElement = false;
+   private String         metadataTag = null;
+   private StringBuilder  metadataElementContents = null;
 
    // For handling <style>
-   private boolean       inStyleElement = false;
-   private StringBuffer  styleElementContents = null;
+   private boolean        inStyleElement = false;
+   private StringBuilder  styleElementContents = null;
 
 
    // Define SVG tags
@@ -671,17 +672,16 @@ public class SVGParser extends DefaultHandler2
 
       if (inMetadataElement)
       {
-         if (metadataTag.equals(TAG_TITLE))
-            svgDocument.setTitle(new String(ch, start, length));
-         else if (metadataTag.equals(TAG_DESC))
-            svgDocument.setDesc(new String(ch, start, length));
+         if (metadataElementContents == null)
+            metadataElementContents = new StringBuilder(length);
+         metadataElementContents.append(ch, start, length);
          return;
       }
 
       if (inStyleElement)
       {
          if (styleElementContents == null)
-            styleElementContents = new StringBuffer(length);
+            styleElementContents = new StringBuilder(length);
          styleElementContents.append(ch, start, length);
          return;
       }
@@ -716,7 +716,7 @@ public class SVGParser extends DefaultHandler2
       if (inStyleElement)
       {
          if (styleElementContents == null)
-            styleElementContents = new StringBuffer(length);
+            styleElementContents = new StringBuilder(length);
          styleElementContents.append(ch, start, length);
          return;
       }
@@ -742,6 +742,11 @@ public class SVGParser extends DefaultHandler2
 
       if (localName.equals(TAG_TITLE) || localName.equals(TAG_DESC)) {
          inMetadataElement = false;
+         if (metadataTag.equals(TAG_TITLE))
+            svgDocument.setTitle(metadataElementContents.toString());
+         else if (metadataTag.equals(TAG_DESC))
+            svgDocument.setDesc(metadataElementContents.toString());
+         metadataElementContents.setLength(0);
          return;
       }
 
