@@ -1,0 +1,42 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+    <parent>
+        <groupId>org.sonatype.oss</groupId>
+        <artifactId>oss-parent</artifactId>
+        <version>7</version>
+    </parent>
+
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.caverock</groupId>
+    <artifactId>androidsvg</artifactId>
+    <packaging>jar</packaging>
+    <name>AndroidSVG</name>
+    <version>{{VERSION}}</version>
+    <description>AndroidSVG is an SVG rendering library for Android.</description>
+    <url>http://code.google.com/p/androidsvg/</url>
+    
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <scm>
+        <url>http://code.google.com/p/androidsvg/</url>
+        <connection>scm:hg:https://code.google.com/p/androidsvg/</connection>
+        <developerConnection>scm:hg:https://code.google.com/p/androidsvg/</developerConnection>
+    </scm>
+
+    <developers>
+        <developer>
+            <id>paullebeau</id>
+            <name>Paul LeBeau</name>
+            <email>paul.lebeau@gmail.com</email>
+            <timezone>GMT+12</timezone>
+            <roles></roles>
+        </developer>
+    </developers>
+
+</project>
