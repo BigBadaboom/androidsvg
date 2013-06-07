@@ -75,7 +75,9 @@ public class SVG
 {
    private static final String  TAG = "AndroidSVG";
 
-   private static final String  VERSION = "1.1.182";
+   private static final String  VERSION = "1.2.0";
+
+   protected static final String  SUPPORTED_SVG_VERSION = "1.1";
 
    private static final float   DEFAULT_DPI = 96;
    private static final int     DEFAULT_PICTURE_WIDTH = 512;
@@ -89,7 +91,6 @@ public class SVG
    private Svg     rootElement = null;
 
    // Metadata
-   private String  svgVersion = "";
    private String  title = "";
    private String  desc = "";
 
@@ -598,7 +599,9 @@ public class SVG
     */
    public String getDocumentSVGVersion()
    {
-      return svgVersion;
+      if (rootElement == null)
+         return null;
+      return rootElement.version;
    }
 
 
@@ -1338,6 +1341,7 @@ public class SVG
       public Length  y;
       public Length  width;
       public Length  height;
+      public String  version;
    }
 
 
@@ -1668,7 +1672,7 @@ public class SVG
 
 
    //===============================================================================
-   // Protected getters for internal use
+   // Protected setters for internal use
 
 
    protected void setTitle(String title)
@@ -1680,12 +1684,6 @@ public class SVG
    protected void setDesc(String desc)
    {
       this.desc = desc;
-   }
-
-
-   protected void setVersion(String version)
-   {
-      this.svgVersion = version;
    }
 
 

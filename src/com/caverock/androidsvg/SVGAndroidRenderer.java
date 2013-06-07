@@ -473,6 +473,10 @@ public class SVGAndroidRenderer
    {
       debug("Svg render");
 
+      if (Float.parseFloat(obj.version) > Float.parseFloat(SVG.SUPPORTED_SVG_VERSION)) {
+         warn("This document's version number (%s) is higher than that supported by AndroidSVG (%s). This document may not render correctly.", obj.version, SVG.SUPPORTED_SVG_VERSION);
+      }
+
       if ((width != null && width.isZero()) ||
           (height != null && height.isZero()))
          return;

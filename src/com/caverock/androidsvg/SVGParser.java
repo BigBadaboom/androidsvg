@@ -873,8 +873,7 @@ public class SVGParser extends DefaultHandler2
                   throw new SAXException("Invalid <svg> element. height cannot be negative");
                break;
             case version:
-               if (currentElement == null)
-                  svgDocument.setVersion(val);
+               obj.version = val;
                break;
             default:
                break;
