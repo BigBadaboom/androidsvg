@@ -53,11 +53,11 @@ import com.caverock.androidsvg.SVG.PathDefinition;
 import com.caverock.androidsvg.SVG.PathInterface;
 import com.caverock.androidsvg.SVG.Pattern;
 import com.caverock.androidsvg.SVG.Rect;
+import com.caverock.androidsvg.SVG.SolidColor;
 import com.caverock.androidsvg.SVG.Stop;
 import com.caverock.androidsvg.SVG.Style;
 import com.caverock.androidsvg.SVG.Style.FontStyle;
 import com.caverock.androidsvg.SVG.Style.TextDecoration;
-import com.caverock.androidsvg.SVG.Svg;
 import com.caverock.androidsvg.SVG.SvgContainer;
 import com.caverock.androidsvg.SVG.SvgElement;
 import com.caverock.androidsvg.SVG.SvgElementBase;
@@ -2881,6 +2881,8 @@ public class SVGAndroidRenderer
          makeLinearGradiant(isFill, obj, (SvgLinearGradient) ref);
       if (ref instanceof SvgRadialGradient)
          makeRadialGradiant(isFill, obj, (SvgRadialGradient) ref);
+      if (ref instanceof SolidColor)
+         setSolidColor(isFill, obj, (SolidColor) ref);
       //if (ref instanceof SVG.Pattern) {}  // May be needed later if/when we do direct rendering
    }
 
@@ -3176,6 +3178,51 @@ public class SVGAndroidRenderer
          gradient.fx = grRef.fx;
       if (gradient.fy == null)
          gradient.fy = grRef.fy;
+   }
+
+
+   private void setSolidColor(boolean isFill, SvgElement obj, SolidColor ref)
+   {
+      // Make a Style object that has fill or stroke color values set depending on the value of isFill.
+      if (isFill)
+      {
+        if (isSpecified(ref.baseStyle, SVG.SPECIFIED_SOLID_COLOR))
+        {
+           state.style.fill = ref.baseStyle.solidColor;
+           state.hasFill = (ref.baseStyle.solidColor != null);
+        }
+
+        if (isSpecified(ref.baseStyle, SVG.SPECIFIED_SOLID_OPACITY))
+        {
+           state.style.fillOpacity = ref.baseStyle.solidOpacity;
+        }
+
+        // If either fill or its opacity has changed, update the fillPaint
+        if (isSpecified(ref.baseStyle, SVG.SPECIFIED_SOLID_COLOR | SVG.SPECIFIED_SOLID_OPACITY))
+        {
+           setPaintColour(state, isFill, state.style.fill);
+        }
+      }
+      else
+      {
+        if (isSpecified(ref.baseStyle, SVG.SPECIFIED_SOLID_COLOR))
+        {
+           state.style.stroke = ref.baseStyle.solidColor;
+           state.hasStroke = (ref.baseStyle.solidColor != null);
+        }
+
+        if (isSpecified(ref.baseStyle, SVG.SPECIFIED_SOLID_OPACITY))
+        {
+           state.style.strokeOpacity = ref.baseStyle.solidOpacity;
+        }
+
+        // If either fill or its opacity has changed, update the fillPaint
+        if (isSpecified(ref.baseStyle, SVG.SPECIFIED_SOLID_COLOR | SVG.SPECIFIED_SOLID_OPACITY))
+        {
+           setPaintColour(state, isFill, state.style.stroke);
+        }
+      }
+      
    }
 
 

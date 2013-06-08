@@ -77,7 +77,7 @@ public class SVG
 
    private static final String  VERSION = "1.2.0";
 
-   protected static final String  SUPPORTED_SVG_VERSION = "1.1";
+   protected static final String  SUPPORTED_SVG_VERSION = "1.2";
 
    private static final float   DEFAULT_DPI = 96;
    private static final int     DEFAULT_PICTURE_WIDTH = 512;
@@ -819,12 +819,15 @@ public class SVG
    protected static final long SPECIFIED_CLIP_PATH         = (1<<28);
    protected static final long SPECIFIED_CLIP_RULE         = (1<<29);
    protected static final long SPECIFIED_MASK              = (1<<30);
+   protected static final long SPECIFIED_SOLID_COLOR       = (1<<31);
+   protected static final long SPECIFIED_SOLID_OPACITY     = (1<<32);
 
    protected static final long SPECIFIED_ALL = 0xffffffff;
 
    protected static final long SPECIFIED_NON_INHERITING = SPECIFIED_DISPLAY | SPECIFIED_OVERFLOW | SPECIFIED_CLIP
                                                           | SPECIFIED_CLIP_PATH | SPECIFIED_OPACITY | SPECIFIED_STOP_COLOR
-                                                          | SPECIFIED_STOP_OPACITY | SPECIFIED_MASK;
+                                                          | SPECIFIED_STOP_OPACITY | SPECIFIED_MASK | SPECIFIED_SOLID_COLOR
+                                                          | SPECIFIED_SOLID_OPACITY;
 
    protected static class  Style implements Cloneable
    {
@@ -873,6 +876,9 @@ public class SVG
       public FillRule   clipRule;
 
       public String     mask;
+
+      public SvgPaint   solidColor;
+      public Float      solidOpacity;
 
 
       public static final int  FONT_WEIGHT_NORMAL = 400;
@@ -1668,6 +1674,20 @@ public class SVG
       public Length   y;
       public Length   width;
       public Length   height;
+   }
+
+
+   protected static class SolidColor extends SvgElementBase implements SvgContainer
+   {
+      public Length  solidColor;
+      public Length  solidOpacity;
+
+      // Dummy container methods. Stop is officially a container, but we 
+      // are not interested in any of its possible child elements.
+      @Override
+      public List<SvgObject> getChildren() { return EMPTY_CHILD_LIST; }
+      @Override
+      public void addChild(SvgObject elem) throws SAXException { /* do nothing */ }
    }
 
 

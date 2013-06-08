@@ -107,6 +107,7 @@ public class SVGParser extends DefaultHandler2
    private static final String  TAG_POLYLINE       = "polyline";
    private static final String  TAG_RADIALGRADIENT = "radialGradient";
    private static final String  TAG_RECT           = "rect";
+   private static final String  TAG_SOLIDCOLOR     = "solidColor";
    private static final String  TAG_STOP           = "stop";
    private static final String  TAG_STYLE          = "style";
    private static final String  TAG_SWITCH         = "switch";
@@ -222,6 +223,7 @@ public class SVGParser extends DefaultHandler2
       refY,
       requiredFeatures, requiredExtensions,
       rx, ry,
+      solid_color, solid_opacity,
       spreadMethod,
       startOffset,
       stop_color, stop_opacity,
@@ -657,6 +659,8 @@ public class SVGParser extends DefaultHandler2
          mask(attributes);
       } else if (localName.equals(TAG_STYLE)) {
          style(attributes);
+      } else if (localName.equals(TAG_SOLIDCOLOR)) {
+         solidColor(attributes);
       } else {
          ignoring = true;
          ignoreDepth = 1;
@@ -783,7 +787,8 @@ public class SVGParser extends DefaultHandler2
           localName.equals(TAG_TEXTPATH) ||
           localName.equals(TAG_PATTERN) ||
           localName.equals(TAG_VIEW) ||
-          localName.equals(TAG_MASK)) {
+          localName.equals(TAG_MASK) ||
+          localName.equals(TAG_SOLIDCOLOR)) {
          currentElement = ((SvgObject) currentElement).parent;
       }
 
@@ -1972,6 +1977,26 @@ public class SVGParser extends DefaultHandler2
 
 
    //=========================================================================
+   // <solidColor> element
+
+
+   private void  solidColor(Attributes attributes) throws SAXException
+   {
+      debug("<solidColor>");
+
+      if (currentElement == null)
+         throw new SAXException("Invalid document. Root element must be <svg>");
+      SVG.SolidColor  obj = new SVG.SolidColor();
+      obj.document = svgDocument;
+      obj.parent = currentElement;
+      parseAttributesCore(obj, attributes);
+      parseAttributesStyle(obj, attributes);
+      currentElement.addChild(obj);
+      currentElement = obj;
+   }
+
+
+   //=========================================================================
    // <clipPath> element
 
 
@@ -2882,6 +2907,20 @@ public class SVGParser extends DefaultHandler2
          case mask:
             style.mask = parseFunctionalIRI(val, localName);
             style.specifiedFlags |= SVG.SPECIFIED_MASK;
+            break;
+
+         case solid_color:
+            if (val.equals(CURRENTCOLOR)) {
+               style.solidColor = CurrentColor.getInstance();
+            } else {
+               style.solidColor = parseColour(val);
+            }
+            style.specifiedFlags |= SVG.SPECIFIED_SOLID_COLOR;
+            break;
+
+         case solid_opacity:
+            style.solidOpacity = parseFloat(val);
+            style.specifiedFlags |= SVG.SPECIFIED_SOLID_OPACITY;
             break;
 
          default:
