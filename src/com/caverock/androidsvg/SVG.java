@@ -75,7 +75,7 @@ public class SVG
 {
    private static final String  TAG = "AndroidSVG";
 
-   private static final String  VERSION = "1.2.187";
+   private static final String  VERSION = "1.2.188";
 
    protected static final String  SUPPORTED_SVG_VERSION = "1.2";
 
@@ -966,6 +966,8 @@ public class SVG
          def.clipPath = null;
          def.clipRule = FillRule.NonZero;
          def.mask = null;
+         def.solidColor = null;
+         def.solidOpacity = 1f;
          return def;
       }
 
@@ -982,6 +984,8 @@ public class SVG
          this.stopColor = Colour.BLACK;
          this.stopOpacity = 1f;
          this.mask = null;
+         this.solidColor = null;
+         this.solidOpacity = 1f;
       }
 
 
