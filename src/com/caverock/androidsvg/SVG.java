@@ -75,7 +75,7 @@ public class SVG
 {
    private static final String  TAG = "AndroidSVG";
 
-   private static final String  VERSION = "1.2.188";
+   private static final String  VERSION = "1.2.189";
 
    protected static final String  SUPPORTED_SVG_VERSION = "1.2";
 
@@ -788,46 +788,48 @@ public class SVG
    }
 
 
-   protected static final long SPECIFIED_FILL              = (1<<0);
-   protected static final long SPECIFIED_FILL_RULE         = (1<<1);
-   protected static final long SPECIFIED_FILL_OPACITY      = (1<<2);
-   protected static final long SPECIFIED_STROKE            = (1<<3);
-   protected static final long SPECIFIED_STROKE_OPACITY    = (1<<4);
-   protected static final long SPECIFIED_STROKE_WIDTH      = (1<<5);
-   protected static final long SPECIFIED_STROKE_LINECAP    = (1<<6);
-   protected static final long SPECIFIED_STROKE_LINEJOIN   = (1<<7);
-   protected static final long SPECIFIED_STROKE_MITERLIMIT = (1<<8);
-   protected static final long SPECIFIED_STROKE_DASHARRAY  = (1<<9);
-   protected static final long SPECIFIED_STROKE_DASHOFFSET = (1<<10);
-   protected static final long SPECIFIED_OPACITY           = (1<<11);
-   protected static final long SPECIFIED_COLOR             = (1<<12);
-   protected static final long SPECIFIED_FONT_FAMILY       = (1<<13);
-   protected static final long SPECIFIED_FONT_SIZE         = (1<<14);
-   protected static final long SPECIFIED_FONT_WEIGHT       = (1<<15);
-   protected static final long SPECIFIED_FONT_STYLE        = (1<<16);
-   protected static final long SPECIFIED_TEXT_DECORATION   = (1<<17);
-   protected static final long SPECIFIED_TEXT_ANCHOR       = (1<<18);
-   protected static final long SPECIFIED_OVERFLOW          = (1<<19);
-   protected static final long SPECIFIED_CLIP              = (1<<20);
-   protected static final long SPECIFIED_MARKER_START      = (1<<21);
-   protected static final long SPECIFIED_MARKER_MID        = (1<<22);
-   protected static final long SPECIFIED_MARKER_END        = (1<<23);
-   protected static final long SPECIFIED_DISPLAY           = (1<<24);
-   protected static final long SPECIFIED_VISIBILITY        = (1<<25);
-   protected static final long SPECIFIED_STOP_COLOR        = (1<<26);
-   protected static final long SPECIFIED_STOP_OPACITY      = (1<<27);
-   protected static final long SPECIFIED_CLIP_PATH         = (1<<28);
-   protected static final long SPECIFIED_CLIP_RULE         = (1<<29);
-   protected static final long SPECIFIED_MASK              = (1<<30);
-   protected static final long SPECIFIED_SOLID_COLOR       = (1<<31);
-   protected static final long SPECIFIED_SOLID_OPACITY     = (1<<32);
+   protected static final long SPECIFIED_FILL                  = (1<<0);
+   protected static final long SPECIFIED_FILL_RULE             = (1<<1);
+   protected static final long SPECIFIED_FILL_OPACITY          = (1<<2);
+   protected static final long SPECIFIED_STROKE                = (1<<3);
+   protected static final long SPECIFIED_STROKE_OPACITY        = (1<<4);
+   protected static final long SPECIFIED_STROKE_WIDTH          = (1<<5);
+   protected static final long SPECIFIED_STROKE_LINECAP        = (1<<6);
+   protected static final long SPECIFIED_STROKE_LINEJOIN       = (1<<7);
+   protected static final long SPECIFIED_STROKE_MITERLIMIT     = (1<<8);
+   protected static final long SPECIFIED_STROKE_DASHARRAY      = (1<<9);
+   protected static final long SPECIFIED_STROKE_DASHOFFSET     = (1<<10);
+   protected static final long SPECIFIED_OPACITY               = (1<<11);
+   protected static final long SPECIFIED_COLOR                 = (1<<12);
+   protected static final long SPECIFIED_FONT_FAMILY           = (1<<13);
+   protected static final long SPECIFIED_FONT_SIZE             = (1<<14);
+   protected static final long SPECIFIED_FONT_WEIGHT           = (1<<15);
+   protected static final long SPECIFIED_FONT_STYLE            = (1<<16);
+   protected static final long SPECIFIED_TEXT_DECORATION       = (1<<17);
+   protected static final long SPECIFIED_TEXT_ANCHOR           = (1<<18);
+   protected static final long SPECIFIED_OVERFLOW              = (1<<19);
+   protected static final long SPECIFIED_CLIP                  = (1<<20);
+   protected static final long SPECIFIED_MARKER_START          = (1<<21);
+   protected static final long SPECIFIED_MARKER_MID            = (1<<22);
+   protected static final long SPECIFIED_MARKER_END            = (1<<23);
+   protected static final long SPECIFIED_DISPLAY               = (1<<24);
+   protected static final long SPECIFIED_VISIBILITY            = (1<<25);
+   protected static final long SPECIFIED_STOP_COLOR            = (1<<26);
+   protected static final long SPECIFIED_STOP_OPACITY          = (1<<27);
+   protected static final long SPECIFIED_CLIP_PATH             = (1<<28);
+   protected static final long SPECIFIED_CLIP_RULE             = (1<<29);
+   protected static final long SPECIFIED_MASK                  = (1<<30);
+   protected static final long SPECIFIED_SOLID_COLOR           = (1L<<31);
+   protected static final long SPECIFIED_SOLID_OPACITY         = (1L<<32);
+   protected static final long SPECIFIED_VIEWPORT_FILL         = (1L<<33);
+   protected static final long SPECIFIED_VIEWPORT_FILL_OPACITY = (1L<<34);
 
    protected static final long SPECIFIED_ALL = 0xffffffff;
 
    protected static final long SPECIFIED_NON_INHERITING = SPECIFIED_DISPLAY | SPECIFIED_OVERFLOW | SPECIFIED_CLIP
                                                           | SPECIFIED_CLIP_PATH | SPECIFIED_OPACITY | SPECIFIED_STOP_COLOR
                                                           | SPECIFIED_STOP_OPACITY | SPECIFIED_MASK | SPECIFIED_SOLID_COLOR
-                                                          | SPECIFIED_SOLID_OPACITY;
+                                                          | SPECIFIED_SOLID_OPACITY | SPECIFIED_VIEWPORT_FILL | SPECIFIED_VIEWPORT_FILL_OPACITY;
 
    protected static class  Style implements Cloneable
    {
@@ -880,6 +882,9 @@ public class SVG
       public SvgPaint   solidColor;
       public Float      solidOpacity;
 
+      public SvgPaint   viewportFill;
+      public Float      viewportFillOpacity;
+
 
       public static final int  FONT_WEIGHT_NORMAL = 400;
       public static final int  FONT_WEIGHT_BOLD = 700;
@@ -930,7 +935,7 @@ public class SVG
          Blink
       }
       
-      public static Style  getDefaultStyle()  //FIXME singleton
+      public static Style  getDefaultStyle()
       {
          Style  def = new Style();
          def.specifiedFlags = SPECIFIED_ALL;
@@ -968,6 +973,8 @@ public class SVG
          def.mask = null;
          def.solidColor = null;
          def.solidOpacity = 1f;
+         def.viewportFill = null;
+         def.viewportFillOpacity = 1f;
          return def;
       }
 
@@ -976,8 +983,13 @@ public class SVG
       // from the parent style.
       public void  resetNonInheritingProperties()
       {
+         resetNonInheritingProperties(false);
+      }
+
+      public void  resetNonInheritingProperties(boolean isRootSVG)
+      {
          this.display = Boolean.TRUE;
-         this.overflow = Boolean.FALSE;
+         this.overflow = isRootSVG ? Boolean.TRUE : Boolean.FALSE;
          this.clip = null;
          this.clipPath = null;
          this.opacity = 1f;
@@ -986,6 +998,8 @@ public class SVG
          this.mask = null;
          this.solidColor = null;
          this.solidOpacity = 1f;
+         this.viewportFill = null;
+         this.viewportFillOpacity = 1f;
       }
 
 

@@ -56,8 +56,10 @@ import com.caverock.androidsvg.SVG.Rect;
 import com.caverock.androidsvg.SVG.SolidColor;
 import com.caverock.androidsvg.SVG.Stop;
 import com.caverock.androidsvg.SVG.Style;
+import com.caverock.androidsvg.SVG.SvgPreserveAspectRatioContainer;
 import com.caverock.androidsvg.SVG.Style.FontStyle;
 import com.caverock.androidsvg.SVG.Style.TextDecoration;
+import com.caverock.androidsvg.SVG.Svg;
 import com.caverock.androidsvg.SVG.SvgContainer;
 import com.caverock.androidsvg.SVG.SvgElement;
 import com.caverock.androidsvg.SVG.SvgElementBase;
@@ -392,7 +394,8 @@ public class SVGAndroidRenderer
 
    private void updateStyleForElement(RendererState state, SvgElementBase obj)
    {
-      state.style.resetNonInheritingProperties();
+      boolean  isRootSVG = (obj.parent == null);
+      state.style.resetNonInheritingProperties(isRootSVG);
 
       // Apply the styles defined by style attributes on the element
       if (obj.baseStyle != null)
@@ -517,6 +520,9 @@ public class SVGAndroidRenderer
 
       boolean  compositing = pushLayer();
 
+      // Action the viewport-fill property (if set)
+      viewportFill();
+
       renderChildren(obj, true);
 
       if (compositing)
@@ -610,13 +616,8 @@ public class SVGAndroidRenderer
          return false;
 
       // Custom version of statePush() that also saves the layer
-      if (state.style.overflow || getCurrentViewPortInUserUnits()==null) {
-         // If overflow allowed, then save the whole layer
-         canvas.saveLayerAlpha(null, clamp255(state.style.opacity), Canvas.HAS_ALPHA_LAYER_SAVE_FLAG);
-      } else {
-         // Just save the current viewport to save memory
-         canvas.saveLayerAlpha(getCurrentViewPortInUserUnits().toRectF(), clamp255(state.style.opacity), Canvas.HAS_ALPHA_LAYER_SAVE_FLAG);
-      }
+      canvas.saveLayerAlpha(null, clamp255(state.style.opacity), Canvas.HAS_ALPHA_LAYER_SAVE_FLAG);
+
       // Save style state
       stateStack.push(state);
       state = (RendererState) state.clone();
@@ -1679,6 +1680,8 @@ public class SVGAndroidRenderer
 
       boolean  compositing = pushLayer();
 
+      viewportFill();
+
       canvas.drawBitmap(image, 0, 0, state.fillPaint);
 
       if (compositing)
@@ -1821,9 +1824,6 @@ public class SVGAndroidRenderer
     */
    private void updateStyle(RendererState state, Style style)
    {
-      // Some style attributes don't inherit, so first, lets reset those
-//      style.resetNonInheritingProperties();    // FIXME
-
       // Now update each style property we know about
       if (isSpecified(style, SVG.SPECIFIED_COLOR))
       {
@@ -2100,6 +2100,16 @@ public class SVGAndroidRenderer
          state.style.stopOpacity = style.stopOpacity;
       }
 
+      if (isSpecified(style, SVG.SPECIFIED_VIEWPORT_FILL))
+      {
+         state.style.viewportFill = style.viewportFill;
+      }
+
+      if (isSpecified(style, SVG.SPECIFIED_VIEWPORT_FILL_OPACITY))
+      {
+         state.style.viewportFillOpacity = style.viewportFillOpacity;
+      }
+
    }
 
 
@@ -2183,6 +2193,26 @@ public class SVGAndroidRenderer
       }
 
       canvas.clipRect(left, top, right, bottom);
+   }
+
+
+   /*
+    * Viewport fill colour. A new feature in SVG 1.2.
+    */
+   private void viewportFill()
+   {
+      int    col;
+      if (state.style.viewportFill instanceof SVG.Colour) {
+         col = ((SVG.Colour) state.style.viewportFill).colour;
+      } else if (state.style.viewportFill instanceof CurrentColor) {
+         col = state.style.color.colour;
+      } else {
+         return;
+      }
+      if (state.style.viewportFillOpacity != null)
+         col = clamp255(state.style.viewportFillOpacity) << 24 | col;
+
+      canvas.drawColor(col);
    }
 
 

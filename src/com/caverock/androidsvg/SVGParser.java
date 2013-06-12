@@ -247,6 +247,7 @@ public class SVGParser extends DefaultHandler2
       x, y,
       x1, y1,
       x2, y2,
+      viewport_fill, viewport_fill_opacity,
       visibility,
       UNSUPPORTED;
 
@@ -2743,7 +2744,7 @@ public class SVGParser extends DefaultHandler2
             break;
 
          case fill_opacity:
-            style.fillOpacity = parseFloat(val);
+            style.fillOpacity = parseOpacity(val);
             style.specifiedFlags |= SVG.SPECIFIED_FILL_OPACITY;
             break;
 
@@ -2753,7 +2754,7 @@ public class SVGParser extends DefaultHandler2
             break;
 
          case stroke_opacity:
-            style.strokeOpacity = parseFloat(val);
+            style.strokeOpacity = parseOpacity(val);
             style.specifiedFlags |= SVG.SPECIFIED_STROKE_OPACITY;
             break;
 
@@ -2791,7 +2792,7 @@ public class SVGParser extends DefaultHandler2
             break;
 
          case opacity:
-            style.opacity = parseFloat(val);
+            style.opacity = parseOpacity(val);
             style.specifiedFlags |= SVG.SPECIFIED_OPACITY;
             break;
 
@@ -2885,7 +2886,7 @@ public class SVGParser extends DefaultHandler2
             break;
 
          case stop_opacity:
-            style.stopOpacity = parseFloat(val);
+            style.stopOpacity = parseOpacity(val);
             style.specifiedFlags |= SVG.SPECIFIED_STOP_OPACITY;
             break;
 
@@ -2919,8 +2920,22 @@ public class SVGParser extends DefaultHandler2
             break;
 
          case solid_opacity:
-            style.solidOpacity = parseFloat(val);
+            style.solidOpacity = parseOpacity(val);
             style.specifiedFlags |= SVG.SPECIFIED_SOLID_OPACITY;
+            break;
+
+         case viewport_fill:
+            if (val.equals(CURRENTCOLOR)) {
+               style.viewportFill = CurrentColor.getInstance();
+            } else {
+               style.viewportFill = parseColour(val);
+            }
+            style.specifiedFlags |= SVG.SPECIFIED_VIEWPORT_FILL;
+            break;
+
+         case viewport_fill_opacity:
+            style.viewportFillOpacity = parseOpacity(val);
+            style.specifiedFlags |= SVG.SPECIFIED_VIEWPORT_FILL_OPACITY;
             break;
 
          default:
@@ -3152,12 +3167,12 @@ public class SVGParser extends DefaultHandler2
 
 
    /*
-    * Parse a generic float value (eg. opacity).
+    * Parse a generic float value.
     */
    private static float  parseFloat(String val) throws SAXException
    {
       if (val.length() == 0)
-         throw new SAXException("Invalid float value  (empty string)");
+         throw new SAXException("Invalid float value (empty string)");
       try
       {
          return Float.parseFloat(val);
@@ -3166,6 +3181,16 @@ public class SVGParser extends DefaultHandler2
       {
          throw new SAXException("Invalid float value: "+val, e);
       }
+   }
+
+
+   /*
+    * Parse an opacity value (a float clamped to the range 0..1).
+    */
+   private static float  parseOpacity(String val) throws SAXException
+   {
+      float  o = parseFloat(val);
+      return (o < 0f) ? 0f : (o > 1f) ? 1f : o;
    }
 
 
