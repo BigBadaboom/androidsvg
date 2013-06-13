@@ -2653,9 +2653,10 @@ public class SVGParser extends DefaultHandler2
    {
       for (int i=0; i<attributes.getLength(); i++)
       {
-         if (SVGAttr.fromString(attributes.getLocalName(i)) == SVGAttr.id) {
-               obj.id = attributes.getValue(i).trim();
-               break;
+         String  qname = attributes.getQName(i);
+         if (qname.equals("id") || qname.equals("xml:id")) {
+            obj.id = attributes.getValue(i).trim();
+            break;
          }
       }
    }
