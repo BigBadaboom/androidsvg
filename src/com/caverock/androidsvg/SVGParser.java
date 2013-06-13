@@ -255,6 +255,8 @@ public class SVGParser extends DefaultHandler2
       {
          if (str.equals("class"))
             return CLASS;
+         if (str.indexOf('_') != -1)
+            return UNSUPPORTED;
          try
          {
             return valueOf(str.replace('-', '_'));
