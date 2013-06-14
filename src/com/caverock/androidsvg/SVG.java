@@ -823,13 +823,15 @@ public class SVG
    protected static final long SPECIFIED_SOLID_OPACITY         = (1L<<32);
    protected static final long SPECIFIED_VIEWPORT_FILL         = (1L<<33);
    protected static final long SPECIFIED_VIEWPORT_FILL_OPACITY = (1L<<34);
+   protected static final long SPECIFIED_VECTOR_EFFECT         = (1L<<35);
 
    protected static final long SPECIFIED_ALL = 0xffffffff;
 
    protected static final long SPECIFIED_NON_INHERITING = SPECIFIED_DISPLAY | SPECIFIED_OVERFLOW | SPECIFIED_CLIP
                                                           | SPECIFIED_CLIP_PATH | SPECIFIED_OPACITY | SPECIFIED_STOP_COLOR
                                                           | SPECIFIED_STOP_OPACITY | SPECIFIED_MASK | SPECIFIED_SOLID_COLOR
-                                                          | SPECIFIED_SOLID_OPACITY | SPECIFIED_VIEWPORT_FILL | SPECIFIED_VIEWPORT_FILL_OPACITY;
+                                                          | SPECIFIED_SOLID_OPACITY | SPECIFIED_VIEWPORT_FILL
+                                                          | SPECIFIED_VIEWPORT_FILL_OPACITY | SPECIFIED_VECTOR_EFFECT;
 
    protected static class  Style implements Cloneable
    {
@@ -884,6 +886,8 @@ public class SVG
 
       public SvgPaint   viewportFill;
       public Float      viewportFillOpacity;
+      
+      public VectorEffect  vectorEffect;
 
 
       public static final int  FONT_WEIGHT_NORMAL = 400;
@@ -935,6 +939,12 @@ public class SVG
          Blink
       }
       
+      public enum VectorEffect
+      {
+         None,
+         NonScalingStroke
+      }
+      
       public static Style  getDefaultStyle()
       {
          Style  def = new Style();
@@ -975,6 +985,7 @@ public class SVG
          def.solidOpacity = 1f;
          def.viewportFill = null;
          def.viewportFillOpacity = 1f;
+         def.vectorEffect = VectorEffect.None;
          return def;
       }
 
@@ -1000,6 +1011,7 @@ public class SVG
          this.solidOpacity = 1f;
          this.viewportFill = null;
          this.viewportFillOpacity = 1f;
+         this.vectorEffect = VectorEffect.None;
       }
 
 

@@ -49,6 +49,7 @@ import com.caverock.androidsvg.SVG.Length;
 import com.caverock.androidsvg.SVG.PaintReference;
 import com.caverock.androidsvg.SVG.Style;
 import com.caverock.androidsvg.SVG.Style.TextDecoration;
+import com.caverock.androidsvg.SVG.Style.VectorEffect;
 import com.caverock.androidsvg.SVG.SvgElementBase;
 import com.caverock.androidsvg.SVG.SvgObject;
 import com.caverock.androidsvg.SVG.SvgPaint;
@@ -241,6 +242,7 @@ public class SVGParser extends DefaultHandler2
       text_decoration,
       transform,
       type,
+      vector_effect,
       version,
       viewBox,
       width,
@@ -2941,6 +2943,11 @@ public class SVGParser extends DefaultHandler2
             style.specifiedFlags |= SVG.SPECIFIED_VIEWPORT_FILL_OPACITY;
             break;
 
+         case vector_effect:
+            style.vectorEffect = parseVectorEffect(val);
+            style.specifiedFlags |= SVG.SPECIFIED_VECTOR_EFFECT;
+            break;
+
          default:
             break;
       }
@@ -3646,6 +3653,17 @@ public class SVGParser extends DefaultHandler2
          return new Length(0f);
 
       return scan.nextLength();
+   }
+
+
+   // Parse a vector effect keyword
+   private static VectorEffect  parseVectorEffect(String val) throws SAXException
+   {
+      if ("none".equals(val))
+         return Style.VectorEffect.None;
+      if ("non-scaling-stroke".equals(val))
+         return Style.VectorEffect.NonScalingStroke;
+      throw new SAXException("Invalid vector-effect property: "+val);
    }
 
 

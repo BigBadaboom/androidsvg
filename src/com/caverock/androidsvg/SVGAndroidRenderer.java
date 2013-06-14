@@ -59,6 +59,7 @@ import com.caverock.androidsvg.SVG.Style;
 import com.caverock.androidsvg.SVG.SvgPreserveAspectRatioContainer;
 import com.caverock.androidsvg.SVG.Style.FontStyle;
 import com.caverock.androidsvg.SVG.Style.TextDecoration;
+import com.caverock.androidsvg.SVG.Style.VectorEffect;
 import com.caverock.androidsvg.SVG.Svg;
 import com.caverock.androidsvg.SVG.SvgContainer;
 import com.caverock.androidsvg.SVG.SvgElement;
@@ -1874,10 +1875,15 @@ public class SVGAndroidRenderer
          setPaintColour(state, false, state.style.stroke);
       }
 
-      if (isSpecified(style, SVG.SPECIFIED_STROKE_WIDTH))
+      if (isSpecified(style, SVG.SPECIFIED_VECTOR_EFFECT))
+      {
+         state.style.vectorEffect = style.vectorEffect;
+      }
+
+      if (isSpecified(style, SVG.SPECIFIED_STROKE_WIDTH | SVG.SPECIFIED_VECTOR_EFFECT))
       {
          state.style.strokeWidth = style.strokeWidth;
-         state.strokePaint.setStrokeWidth(style.strokeWidth.floatValue(this));
+         state.strokePaint.setStrokeWidth(calculateStrokeWidth());
       }
 
       if (isSpecified(style, SVG.SPECIFIED_STROKE_LINECAP))
@@ -2178,7 +2184,7 @@ public class SVGAndroidRenderer
    }
 
 
-   private void setClipRect(float minX, float minY, float width, float height)
+   private void  setClipRect(float minX, float minY, float width, float height)
    {
       float  left = minX;
       float  top = minY;
@@ -2199,7 +2205,7 @@ public class SVGAndroidRenderer
    /*
     * Viewport fill colour. A new feature in SVG 1.2.
     */
-   private void viewportFill()
+   private void  viewportFill()
    {
       int    col;
       if (state.style.viewportFill instanceof SVG.Colour) {
@@ -2213,6 +2219,24 @@ public class SVGAndroidRenderer
          col = clamp255(state.style.viewportFillOpacity) << 24 | col;
 
       canvas.drawColor(col);
+   }
+
+
+   private float  calculateStrokeWidth()
+   {
+      float  newWidth = state.style.strokeWidth.floatValue(this);
+
+      // We can't perform an accurate Non-scaling stroke without support from the 2D renderer.
+      // The best we can do is approximate the effect.
+      if (state.style.vectorEffect == VectorEffect.NonScalingStroke)
+      {
+         // Need to convert stroke width back to "host" coordinate space
+         float  scaledWidth = matrixStack.peek().mapRadius(newWidth);
+         if (scaledWidth != 0f)
+            newWidth = newWidth / scaledWidth;
+      }
+
+      return newWidth;
    }
 
 
