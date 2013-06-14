@@ -46,6 +46,7 @@ import com.caverock.androidsvg.SVG.CurrentColor;
 import com.caverock.androidsvg.SVG.GradientElement;
 import com.caverock.androidsvg.SVG.GradientSpread;
 import com.caverock.androidsvg.SVG.Length;
+import com.caverock.androidsvg.SVG.Line;
 import com.caverock.androidsvg.SVG.Marker;
 import com.caverock.androidsvg.SVG.NotDirectlyRendered;
 import com.caverock.androidsvg.SVG.PaintReference;
@@ -56,11 +57,9 @@ import com.caverock.androidsvg.SVG.Rect;
 import com.caverock.androidsvg.SVG.SolidColor;
 import com.caverock.androidsvg.SVG.Stop;
 import com.caverock.androidsvg.SVG.Style;
-import com.caverock.androidsvg.SVG.SvgPreserveAspectRatioContainer;
 import com.caverock.androidsvg.SVG.Style.FontStyle;
 import com.caverock.androidsvg.SVG.Style.TextDecoration;
 import com.caverock.androidsvg.SVG.Style.VectorEffect;
-import com.caverock.androidsvg.SVG.Svg;
 import com.caverock.androidsvg.SVG.SvgContainer;
 import com.caverock.androidsvg.SVG.SvgElement;
 import com.caverock.androidsvg.SVG.SvgElementBase;
@@ -991,15 +990,7 @@ public class SVGAndroidRenderer
       if (obj.transform != null)
          canvas.concat(obj.transform);
 
-      float _x1, _y1, _x2, _y2;
-      _x1 = (obj.x1 != null) ? obj.x1.floatValueX(this) : 0f;
-      _y1 = (obj.y1 != null) ? obj.y1.floatValueY(this) : 0f;
-      _x2 = (obj.x2 != null) ? obj.x2.floatValueX(this) : 0f;
-      _y2 = (obj.y2 != null) ? obj.y2.floatValueY(this) : 0f;
-
-      if (obj.boundingBox == null) {
-         obj.boundingBox = Box.fromLimits(Math.min(_x1, _x2), Math.min(_y1, _y2), Math.max(_x1, _x2), Math.max(_y1, _y2));
-      }
+      Path  path = makePathAndBoundingBox(obj);
       updateParentBoundingBox(obj);
 
       checkForGradiantsAndPatterns(obj);      
@@ -1007,10 +998,7 @@ public class SVGAndroidRenderer
 
       boolean  compositing = pushLayer();
 
-      if ((_x1 != _x2) || (_y1 != _y2))
-         canvas.drawLine(_x1, _y1, _x2, _y2, state.strokePaint);
-      else
-         canvas.drawPoint(_x1, _y1, state.strokePaint);  // Workaround for Android bug 40780
+      canvas.drawPath(path, state.strokePaint);
 
       renderMarkers(obj);
 
@@ -3581,6 +3569,24 @@ public class SVGAndroidRenderer
    //==============================================================================
    // Convert the different shapes to paths
    //==============================================================================
+
+
+   private Path  makePathAndBoundingBox(Line obj)
+   {
+      float x1 = (obj.x1 == null) ? 0 : obj.x1.floatValue(this);
+      float y1 = (obj.y1 == null) ? 0 : obj.y1.floatValue(this);
+      float x2 = (obj.x2 == null) ? 0 : obj.x2.floatValue(this);
+      float y2 = (obj.y2 == null) ? 0 : obj.y2.floatValue(this);
+
+      if (obj.boundingBox == null) {
+         obj.boundingBox = new Box(Math.min(x1, y1), Math.min(y1, y2), Math.abs(x2-x1), Math.abs(y2-y1));
+      }
+
+      Path  p = new Path();
+      p.moveTo(x1, y1);
+      p.lineTo(x2, y2);
+      return p;
+   }
 
 
    private Path  makePathAndBoundingBox(Rect obj)
