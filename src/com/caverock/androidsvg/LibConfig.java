@@ -23,5 +23,5 @@ package com.caverock.androidsvg;
  */
 public class LibConfig
 {
-   public static final boolean DEBUG = true;
+   public static final boolean DEBUG = false;
 }
