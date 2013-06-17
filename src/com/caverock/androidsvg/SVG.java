@@ -665,6 +665,46 @@ public class SVG
    }
 
 
+   /**
+    * Returns the aspect ratio of the document as a width/height fraction.
+    * <p>
+    * If the width or height of the document are listed with a physical unit such as "cm",
+    * then the {@code dpi} parameter will be used to convert that value to pixels.  It is
+    * safe to pass a value of 0 for {@code dpi} if you know that physical units are not
+    * being used.
+    * <p>
+    * If the width or height cannot be determined, -1 will be returned.
+    * 
+    * @param dpi the DPI value to use when converting real-world values such as "cm" (centimetres).
+    * @return the aspect ratio as a width/height fraction, or -1 if the ratio cannot be determined.
+    */
+   public float  getDocumentAspectRatio(float dpi)
+   {
+      if (this.rootElement == null)
+         return -1f;
+
+      Length  w = this.rootElement.width;
+      Length  h = this.rootElement.height;
+
+      // If width and height are both specified and are not percentages, aspect ratio is calculated from these (SVG1.1 sect 7.12)
+      if (w != null && h != null && w.unit!=Unit.percent && h.unit!=Unit.percent)
+      {
+         if (w.isZero() || h.isZero())
+            return -1f;
+         return w.floatValue(dpi) / h.floatValue(dpi);
+      }
+
+      // Otherwise, get the ratio from the viewBox
+      if (this.rootElement.viewBox != null && this.rootElement.viewBox.width != 0f && this.rootElement.viewBox.height != 0f) {
+         return this.rootElement.viewBox.width / this.rootElement.viewBox.height;
+      }
+
+      // Could not determine aspect ratio
+      return -1f;
+   }
+
+
+
    //===============================================================================
 
 
