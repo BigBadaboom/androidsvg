@@ -32,6 +32,7 @@ import android.graphics.Path;
 import android.graphics.PathMeasure;
 import android.graphics.RadialGradient;
 import android.graphics.RectF;
+import android.graphics.Shader;
 import android.graphics.Shader.TileMode;
 import android.graphics.Typeface;
 import android.util.Base64;
@@ -283,6 +284,7 @@ public class SVGAndroidRenderer
          warn("An alignment was specified, but it will have no effect because the document has no root viewBox.");
       }
 
+      // Render the document
       render(rootObj);
    }
 
@@ -421,7 +423,7 @@ public class SVGAndroidRenderer
    /*
     * Fill a path with either the given paint, or if a pattern is set, with the pattern.
     */
-   private void doFilledPath(SvgElement obj, Path path, Paint fillPaint)
+   private void doFilledPath(SvgElement obj, Path path)
    {
       // First check for pattern fill. It requires special handling.
       if (state.style.fill instanceof SVG.PaintReference)
@@ -435,7 +437,51 @@ public class SVGAndroidRenderer
       }
 
       // Otherwise do a normal fill
-      canvas.drawPath(path, fillPaint);
+      canvas.drawPath(path, state.fillPaint);
+   }
+
+
+   @SuppressWarnings("deprecation")
+   private void  doStroke(Path path)
+   {
+      // TODO handle degenerate subpaths properly
+
+      if (state.style.vectorEffect == VectorEffect.NonScalingStroke)
+      {
+         // For non-scaling-stroke, the stroke width is not transformed along with the path.
+         // It will be rendered at the same width no matter how the document contents are transformed.
+
+         // First step: get the current canvas matrix
+         Matrix  currentMatrix = canvas.getMatrix();
+         // Transform the path using this transform
+         Path  transformedPath = new Path();
+         path.transform(currentMatrix, transformedPath);
+         // Reset the current canvas transform completely
+         canvas.setMatrix(new Matrix());
+
+         // If there is a shader (such as a gradient), we need to update its transform also
+         Shader  shader = state.strokePaint.getShader();
+         Matrix  currentShaderMatrix = new Matrix();
+         if (shader != null) {
+            shader.getLocalMatrix(currentShaderMatrix);
+            Matrix  newShaderMatrix = new Matrix(currentShaderMatrix);
+            newShaderMatrix.postConcat(currentMatrix);
+            shader.setLocalMatrix(newShaderMatrix);
+         }
+
+         // Render the transformed path. The stroke width used will be in unscaled device units.
+         canvas.drawPath(transformedPath, state.strokePaint);
+
+         // Return the current canvas transform to what it was before all this happened         
+         canvas.setMatrix(currentMatrix);
+         // And reset the shader matrix also
+         if (shader != null)
+            shader.setLocalMatrix(currentShaderMatrix);
+      }
+      else
+      {
+         canvas.drawPath(path, state.strokePaint);
+      }
    }
 
 
@@ -833,10 +879,10 @@ public class SVGAndroidRenderer
 
       if (state.hasFill) {
          path.setFillType(getFillTypeFromState());
-         doFilledPath(obj, path, state.fillPaint);
+         doFilledPath(obj, path);
       }
       if (state.hasStroke)
-         canvas.drawPath(path, state.strokePaint);
+         doStroke(path);
 
       renderMarkers(obj);
 
@@ -882,9 +928,10 @@ public class SVGAndroidRenderer
       boolean  compositing = pushLayer();
 
       if (state.hasFill)
-         doFilledPath(obj, path, state.fillPaint);
+         doFilledPath(obj, path);
       if (state.hasStroke)
-         canvas.drawPath(path, state.strokePaint);
+         doStroke(path);
+
 
       if (compositing)
          popLayer(obj);
@@ -920,9 +967,9 @@ public class SVGAndroidRenderer
       boolean  compositing = pushLayer();
 
       if (state.hasFill)
-         doFilledPath(obj, path, state.fillPaint);
+         doFilledPath(obj, path);
       if (state.hasStroke)
-         canvas.drawPath(path, state.strokePaint);
+         doStroke(path);
 
       if (compositing)
          popLayer(obj);
@@ -958,9 +1005,9 @@ public class SVGAndroidRenderer
       boolean  compositing = pushLayer();
 
       if (state.hasFill)
-         doFilledPath(obj, path, state.fillPaint);
+         doFilledPath(obj, path);
       if (state.hasStroke)
-         canvas.drawPath(path, state.strokePaint);
+         doStroke(path);
 
       if (compositing)
          popLayer(obj);
@@ -994,7 +1041,7 @@ public class SVGAndroidRenderer
 
       boolean  compositing = pushLayer();
 
-      canvas.drawPath(path, state.strokePaint);
+      doStroke(path);
 
       renderMarkers(obj);
 
@@ -1050,15 +1097,9 @@ public class SVGAndroidRenderer
       boolean  compositing = pushLayer();
 
       if (state.hasFill)
-         doFilledPath(obj, path, state.fillPaint);
-      if (state.hasStroke) {
-         if (numPoints == 2) {
-            // Android path render doesn't draw degenerate lines, so we have to use drawPoint instead.
-            canvas.drawPoint(obj.points[0], obj.points[1], state.strokePaint);
-         } else {
-            canvas.drawPath(path, state.strokePaint);
-         }
-      }
+         doFilledPath(obj, path);
+      if (state.hasStroke)
+         doStroke(path);
 
       renderMarkers(obj);
 
@@ -1140,15 +1181,9 @@ public class SVGAndroidRenderer
       boolean  compositing = pushLayer();
 
       if (state.hasFill)
-         doFilledPath(obj, path, state.fillPaint);
-      if (state.hasStroke) {
-         if (numPoints == 2) {
-            // Android path render doesn't draw degenerate lines, so we have to use drawPoint instead.
-            canvas.drawPoint(obj.points[0], obj.points[1], state.strokePaint);
-         } else {
-            canvas.drawPath(path, state.strokePaint);
-         }
-      }
+         doFilledPath(obj, path);
+      if (state.hasStroke)
+         doStroke(path);
 
       renderMarkers(obj);
 
@@ -1864,10 +1899,10 @@ public class SVGAndroidRenderer
          state.style.vectorEffect = style.vectorEffect;
       }
 
-      if (isSpecified(style, SVG.SPECIFIED_STROKE_WIDTH | SVG.SPECIFIED_VECTOR_EFFECT))
+      if (isSpecified(style, SVG.SPECIFIED_STROKE_WIDTH))
       {
          state.style.strokeWidth = style.strokeWidth;
-         state.strokePaint.setStrokeWidth(calculateStrokeWidth());
+         state.strokePaint.setStrokeWidth(state.style.strokeWidth.floatValue(this));
       }
 
       if (isSpecified(style, SVG.SPECIFIED_STROKE_LINECAP))
@@ -2203,24 +2238,6 @@ public class SVGAndroidRenderer
          col = clamp255(state.style.viewportFillOpacity) << 24 | col;
 
       canvas.drawColor(col);
-   }
-
-
-   private float  calculateStrokeWidth()
-   {
-      float  newWidth = state.style.strokeWidth.floatValue(this);
-
-      // We can't perform an accurate Non-scaling stroke without support from the 2D renderer.
-      // The best we can do is approximate the effect.
-      if (state.style.vectorEffect == VectorEffect.NonScalingStroke)
-      {
-         // Need to convert stroke width back to "host" coordinate space
-         float  scaledWidth = matrixStack.peek().mapRadius(newWidth);
-         if (scaledWidth != 0f)
-            newWidth = newWidth / scaledWidth;
-      }
-
-      return newWidth;
    }
 
 
@@ -2888,10 +2905,10 @@ public class SVGAndroidRenderer
    private void  checkForGradiantsAndPatterns(SvgElement obj)
    {
       if (state.style.fill instanceof PaintReference) {
-         decodePaintReference(true, obj, (PaintReference) state.style.fill);
+         decodePaintReference(true, obj.boundingBox, (PaintReference) state.style.fill);
       }
       if (state.style.stroke instanceof PaintReference) {
-         decodePaintReference(false, obj, (PaintReference) state.style.stroke);
+         decodePaintReference(false, obj.boundingBox, (PaintReference) state.style.stroke);
       }
    }
 
@@ -2899,9 +2916,9 @@ public class SVGAndroidRenderer
    /*
     * Takes a PaintReference object and generates an appropriate Android Shader object from it.
     */
-   private void  decodePaintReference(boolean isFill, SvgElement obj, PaintReference paintref)
+   private void  decodePaintReference(boolean isFill, Box boundingBox, PaintReference paintref)
    {
-      SVG.SvgObject  ref = obj.document.resolveIRI(paintref.href);
+      SVG.SvgObject  ref = document.resolveIRI(paintref.href);
       if (ref == null)
       {
          error("%s reference '%s' not found", (isFill ? "Fill":"Stroke"), paintref.href);
@@ -2916,16 +2933,16 @@ public class SVGAndroidRenderer
          return;
       }
       if (ref instanceof SvgLinearGradient)
-         makeLinearGradiant(isFill, obj, (SvgLinearGradient) ref);
+         makeLinearGradiant(isFill, boundingBox, (SvgLinearGradient) ref);
       if (ref instanceof SvgRadialGradient)
-         makeRadialGradiant(isFill, obj, (SvgRadialGradient) ref);
+         makeRadialGradiant(isFill, boundingBox, (SvgRadialGradient) ref);
       if (ref instanceof SolidColor)
-         setSolidColor(isFill, obj, (SolidColor) ref);
+         setSolidColor(isFill, (SolidColor) ref);
       //if (ref instanceof SVG.Pattern) {}  // May be needed later if/when we do direct rendering
    }
 
 
-   private void  makeLinearGradiant(boolean isFill, SvgElement obj, SvgLinearGradient gradient)
+   private void  makeLinearGradiant(boolean isFill, Box boundingBox, SvgLinearGradient gradient)
    {
       if (gradient.href != null)
          fillInChainedGradientFields(gradient, gradient.href);
@@ -2960,8 +2977,8 @@ public class SVGAndroidRenderer
       Matrix m = new Matrix();
       if (!userUnits)
       {
-         m.preTranslate(obj.boundingBox.minX, obj.boundingBox.minY);
-         m.preScale(obj.boundingBox.width, obj.boundingBox.height);
+         m.preTranslate(boundingBox.minX, boundingBox.minY);
+         m.preScale(boundingBox.width, boundingBox.height);
       }
       if (gradient.gradientTransform != null)
       {
@@ -3034,7 +3051,7 @@ public class SVGAndroidRenderer
    }
 
 
-   private void makeRadialGradiant(boolean isFill, SvgElement obj, SvgRadialGradient gradient)
+   private void makeRadialGradiant(boolean isFill, Box boundingBox, SvgRadialGradient gradient)
    {
       if (gradient.href != null)
          fillInChainedGradientFields(gradient, gradient.href);
@@ -3069,8 +3086,8 @@ public class SVGAndroidRenderer
       Matrix m = new Matrix();
       if (!userUnits)
       {
-         m.preTranslate(obj.boundingBox.minX, obj.boundingBox.minY);
-         m.preScale(obj.boundingBox.width, obj.boundingBox.height);
+         m.preTranslate(boundingBox.minX, boundingBox.minY);
+         m.preScale(boundingBox.width, boundingBox.height);
       }
       if (gradient.gradientTransform != null)
       {
@@ -3219,7 +3236,7 @@ public class SVGAndroidRenderer
    }
 
 
-   private void setSolidColor(boolean isFill, SvgElement obj, SolidColor ref)
+   private void setSolidColor(boolean isFill, SolidColor ref)
    {
       // Make a Style object that has fill or stroke color values set depending on the value of isFill.
       if (isFill)
