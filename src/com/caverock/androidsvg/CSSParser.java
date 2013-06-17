@@ -32,6 +32,8 @@ import com.caverock.androidsvg.SVGParser.TextScanner;
  * A very simple CSS parser that is not very compliant with the CSS spec but
  * hopefully parses almost all the CSS we are likely to strike in an SVG file.
  * The main goals are to (a) be small, and (b) parse the CSS in a Corel Draw SVG file.
+ * 
+ * @hide
  */
 public class CSSParser
 {

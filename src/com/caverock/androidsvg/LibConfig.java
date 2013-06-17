@@ -16,7 +16,12 @@ package com.caverock.androidsvg;
    limitations under the License.
 */
 
+/**
+ * Configure debugging on or off.
+ * 
+ * @hide
+ */
 public class LibConfig
 {
-   public static final boolean DEBUG = false;
+   public static final boolean DEBUG = true;
 }

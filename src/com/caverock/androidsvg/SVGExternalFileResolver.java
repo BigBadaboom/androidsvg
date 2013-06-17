@@ -24,9 +24,9 @@ import com.caverock.androidsvg.SVG.Style;
 /**
  * Resolver class used by the renderer when processing Text and Image elements.
  * <p>
- * The default behaviour is to tell AndroidSVG that the reference could not me found.
+ * The default behaviour is to tell AndroidSVG that the reference could not be found.
  * <p>
- * Extend this class if you want to customise how AndroidSVG treats for font and image references.
+ * Extend this class and override the methods if you want to customise how AndroidSVG treats font and image references.
  */
 
 public abstract class SVGExternalFileResolver

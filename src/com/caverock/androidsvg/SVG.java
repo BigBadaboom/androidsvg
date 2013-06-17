@@ -1131,6 +1131,9 @@ public class SVG
    }
 
 
+   /**
+    * @hide
+    */
    protected static class Length implements Cloneable
    {
       float  value = 0;

@@ -76,6 +76,8 @@ import com.caverock.androidsvg.SVG.Unit;
  * The rendering part of AndroidSVG.
  * <p>
  * All interaction with AndroidSVG is via the SVG class.  You may ignore this class.
+ * 
+ * @hide
  */
 
 public class SVGAndroidRenderer
@@ -288,8 +290,8 @@ public class SVGAndroidRenderer
          {
             // By specifying an alignment, the caller clearly intended that document be scaled
             // to fit the viewport.  However the root element has no viewBox.
-            warn("An alignment was specified, but it may have no effect because the document has no viewBox.");
-            // Document still may scale to fit the viewport if all the dimensions are in percent units.
+            info("An alignment was specified, but it may have no effect because the document has no viewBox.");
+            // Document still may scale to fit the viewport if some or all of the elements use percent units.
          }
 
          // There is no viewBox, so need to determine the initial viewport some other way
@@ -531,6 +533,12 @@ public class SVGAndroidRenderer
    {
       if (LibConfig.DEBUG)
          Log.d(TAG, String.format(format, args));
+   }
+
+
+   private static void  info(String format, Object... args)
+   {
+      Log.i(TAG, String.format(format, args));
    }
 
 

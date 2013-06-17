@@ -60,7 +60,8 @@ import com.caverock.androidsvg.SVG.Unit;
 
 /**
  * SVG parser code. Used by SVG class. Should not be called directly.
- *
+ * 
+ * @hide
  */
 public class SVGParser extends DefaultHandler2
 {
