@@ -12,6 +12,11 @@ import android.graphics.Typeface;
 import android.util.Log;
 
 
+/**
+ * A sample implementation of SVGExternalFileResolver that retrieves files from
+ * an application's "assets" folder.
+ */
+
 public class SimpleAssetResolver extends SVGExternalFileResolver
 {
    private static final String  TAG = SimpleAssetResolver.class.getSimpleName();
@@ -46,6 +51,10 @@ public class SimpleAssetResolver extends SVGExternalFileResolver
    }
 
 
+   /**
+    * Attempt to find the specified font in the "assets" folder and return a Typeface object.
+    * For the font name "Foo", first the file "Foo.ttf" will be tried and if that fails, "Foo.otf".
+    */
    @Override
    public Typeface resolveFont(String fontFamily, int fontWeight, String fontStyle)
    {
@@ -70,6 +79,9 @@ public class SimpleAssetResolver extends SVGExternalFileResolver
    }
 
 
+   /**
+    * Attempt to find the specified image file in the "assets" folder and return a decoded Bitmap.
+    */
    @Override
    public Bitmap resolveImage(String filename)
    {
@@ -87,6 +99,10 @@ public class SimpleAssetResolver extends SVGExternalFileResolver
    }
 
 
+   /**
+    * Returns true when passed the MIME types for SVG, JPEG, PNG or any of the
+    * other bitmap image formats supported by Android's BitmapFactory class.
+    */
    @Override
    public boolean isFormatSupported(String mimeType)
    {

@@ -4,6 +4,7 @@ var DATA = [
       { id:2, label:"com.caverock.androidsvg.SVG.AspectRatioAlignment", link:"com/caverock/androidsvg/SVG.AspectRatioAlignment.html", type:"class" },
       { id:3, label:"com.caverock.androidsvg.SVG.AspectRatioScale", link:"com/caverock/androidsvg/SVG.AspectRatioScale.html", type:"class" },
       { id:4, label:"com.caverock.androidsvg.SVGExternalFileResolver", link:"com/caverock/androidsvg/SVGExternalFileResolver.html", type:"class" },
-      { id:5, label:"com.caverock.androidsvg.SVGParseException", link:"com/caverock/androidsvg/SVGParseException.html", type:"class" }
+      { id:5, label:"com.caverock.androidsvg.SVGParseException", link:"com/caverock/androidsvg/SVGParseException.html", type:"class" },
+      { id:6, label:"com.caverock.androidsvg.SimpleAssetResolver", link:"com/caverock/androidsvg/SimpleAssetResolver.html", type:"class" }
 
     ];

@@ -155,6 +155,7 @@
               
     <li><h2>Classes</h2>
       <ul>
+          <li class="api apilevel-"><a href="../../../com/caverock/androidsvg/SimpleAssetResolver.html">SimpleAssetResolver</a></li>
           <li class="api apilevel-"><a href="../../../com/caverock/androidsvg/SVG.html">SVG</a></li>
           <li class="selected api apilevel-"><a href="../../../com/caverock/androidsvg/SVGExternalFileResolver.html">SVGExternalFileResolver</a></li>
       </ul>
@@ -308,6 +309,38 @@ Summary:
 
 
 
+<table class="jd-sumtable jd-sumtable-subclasses"><tr><td colspan="12" style="border:none;margin:0;padding:0;">
+
+  <a href="#" onclick="return toggleInherited(this, null)" id="subclasses-direct" class="jd-expando-trigger closed"
+          ><img id="subclasses-direct-trigger"
+          src="../../../../assets/images/triangle-closed.png"
+          class="jd-expando-trigger-img" /></a>Known Direct Subclasses
+
+  <div id="subclasses-direct">
+      <div id="subclasses-direct-list"
+              class="jd-inheritedlinks"
+              
+              >
+          
+            
+              <a href="../../../com/caverock/androidsvg/SimpleAssetResolver.html">SimpleAssetResolver</a>
+            
+          
+      </div>
+      <div id="subclasses-direct-summary"
+              style="display: none;"
+              >
+  <table class="jd-sumtable-expando">
+        <tr class="alt-color api apilevel-" >
+              <td class="jd-linkcol"><a href="../../../com/caverock/androidsvg/SimpleAssetResolver.html">SimpleAssetResolver</a></td>
+              <td class="jd-descrcol" width="100%">A sample implementation of SVGExternalFileResolver that retrieves files from
+ an application's "assets" folder.&nbsp;</td>
+          </tr>
+  </table>
+      </div>
+  </div>
+</td></tr></table>
+
 
 
 
@@ -412,6 +445,24 @@ Summary:
             
             
             
+            boolean
+        </td>
+        <td class="jd-linkcol" width="100%">
+        <span class="sympad"><a href="../../../com/caverock/androidsvg/SVGExternalFileResolver.html#isFormatSupported(java.lang.String)">isFormatSupported</a></span>(<a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/String.html">String</a> mimeType)
+        
+        <div class="jd-descrdiv">Called by renderer to determine whether a particular format is supported.</div>
+  
+  </td></tr>
+
+
+	 
+    <tr class=" api apilevel-" >
+        <td class="jd-typecol">
+            
+            
+            
+            
+            
             Typeface
         </td>
         <td class="jd-linkcol" width="100%">
@@ -423,7 +474,7 @@ Summary:
 
 
 	 
-    <tr class=" api apilevel-" >
+    <tr class="alt-color api apilevel-" >
         <td class="jd-typecol">
             
             
@@ -704,6 +755,53 @@ From class
 
 
 
+<a id="isFormatSupported(java.lang.String)"></a>
+
+<div class="jd-details api apilevel-"> 
+    <h4 class="jd-details-title">
+      <span class="normal">
+        public 
+         
+         
+         
+         
+        boolean
+      </span>
+      <span class="sympad">isFormatSupported</span>
+      <span class="normal">(<a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/String.html">String</a> mimeType)</span>
+    </h4>
+      <div class="api-level">
+        <div>
+
+</div>
+        
+  
+
+      </div>
+    <div class="jd-details-descr">
+      
+  <div class="jd-tagdata jd-tagdescr"><p>Called by renderer to determine whether a particular format is supported.  In particular,
+ this method is used in &lt;switch&gt; elements when processing <code>requiredFormats</code>
+ conditionals.</p></div>
+  <div class="jd-tagdata">
+      <h5 class="jd-tagtitle">Parameters</h5>
+      <table class="jd-tagtable">
+        <tr>
+          <th>mimeType</th>
+          <td>A MIME type (such as "image/jpeg").</td>
+        </tr>
+      </table>
+  </div>
+  <div class="jd-tagdata">
+      <h5 class="jd-tagtitle">Returns</h5>
+      <ul class="nolist"><li>true if your <code>resolveImage()</code> implementation supports this file format.
+</li></ul>
+  </div>
+
+    </div>
+</div>
+
+
 <a id="resolveFont(java.lang.String, int, java.lang.String)"></a>
 
 <div class="jd-details api apilevel-"> 
@@ -731,8 +829,11 @@ From class
       
   <div class="jd-tagdata jd-tagdescr"><p>Called by renderer to resolve font references in &lt;text&gt; elements.
  <p>
- Return a typeface instance, or null if you want the renderer to ignore
- this font and use the default Android font instead.</p></div>
+ Return a <code>Typeface</code> instance, or null if you want the renderer to ignore
+ this font and use the default Android font instead.
+ <p>
+ Note that AndroidSVG does not attempt to cache Typeface references.  If you want
+ them cached, for speed or memory reasons, you should do so yourself.</p></div>
   <div class="jd-tagdata">
       <h5 class="jd-tagtitle">Parameters</h5>
       <table class="jd-tagtable">
@@ -785,7 +886,13 @@ From class
       </div>
     <div class="jd-details-descr">
       
-  <div class="jd-tagdata jd-tagdescr"><p>Called by renderer to resolve image file references in &lt;image&gt; elements.</p></div>
+  <div class="jd-tagdata jd-tagdescr"><p>Called by renderer to resolve image file references in &lt;image&gt; elements.
+ <p>
+ Return a <code>Bitmap</code> instance, or null if you want the renderer to ignore
+ this image.
+ <p>
+ Note that AndroidSVG does not attempt to cache Bitmap references.  If you want
+ them cached, for speed or memory reasons, you should do so yourself.</p></div>
   <div class="jd-tagdata">
       <h5 class="jd-tagtitle">Parameters</h5>
       <table class="jd-tagtable">
