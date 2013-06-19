@@ -434,7 +434,7 @@ public class SVG
     * desktop monitor. You can choose to use this value, or supply the DPI of your device if you wish.
     * <p>
     * Note that the file itself could override the DPI value you supply anyway.  For example, if
-    * your file's root &lt;SVG&gt; element was defined as follows:
+    * your file's root &lt;svg&gt; element was defined as follows:
     * <pre>
     * {@code
     * <svg width="8cm" height="8cm" viewBox="0 0 400 400">
@@ -1335,6 +1335,10 @@ public class SVG
       public String       getRequiredExtensions();
       public void         setSystemLanguage(Set<String> languages);
       public Set<String>  getSystemLanguage();
+      public void         setRequiredFormats(Set<String> mimeTypes);
+      public Set<String>  getRequiredFormats();
+      public void         setRequiredFonts(Set<String> fontNames);
+      public Set<String>  getRequiredFonts();
    }
 
 
@@ -1344,6 +1348,8 @@ public class SVG
       public Set<String>  requiredFeatures = null;
       public String       requiredExtensions = null;
       public Set<String>  systemLanguage = null;
+      public Set<String>  requiredFormats = null;
+      public Set<String>  requiredFonts = null;
 
       @Override
       public void setRequiredFeatures(Set<String> features) { this.requiredFeatures = features; }
@@ -1357,6 +1363,14 @@ public class SVG
       public void setSystemLanguage(Set<String> languages) { this.systemLanguage = languages; }
       @Override
       public Set<String> getSystemLanguage() { return this.systemLanguage; }
+      @Override
+      public void setRequiredFormats(Set<String> mimeTypes) { this.requiredFormats = mimeTypes; }
+      @Override
+      public Set<String> getRequiredFormats() { return this.requiredFormats; }
+      @Override
+      public void setRequiredFonts(Set<String> fontNames) { this.requiredFonts = fontNames; }
+      @Override
+      public Set<String> getRequiredFonts() { return this.requiredFonts; }
    }
 
 
@@ -1371,9 +1385,11 @@ public class SVG
    {
       public List<SvgObject> children = new ArrayList<SvgObject>();
 
-      public Set<String>     requiredFeatures = null;
-      public String          requiredExtensions = null;
-      public Set<String>     systemLanguage = null;
+      public Set<String>  requiredFeatures = null;
+      public String       requiredExtensions = null;
+      public Set<String>  systemLanguage = null;
+      public Set<String>  requiredFormats = null;
+      public Set<String>  requiredFonts = null;
 
       @Override
       public List<SvgObject>  getChildren() { return children; }
@@ -1392,6 +1408,14 @@ public class SVG
       public void setSystemLanguage(Set<String> languages) { this.systemLanguage = languages; }
       @Override
       public Set<String> getSystemLanguage() { return null; }
+      @Override
+      public void setRequiredFormats(Set<String> mimeTypes) { this.requiredFormats = mimeTypes; }
+      @Override
+      public Set<String> getRequiredFormats() { return this.requiredFormats; }
+      @Override
+      public void setRequiredFonts(Set<String> fontNames) { this.requiredFonts = fontNames; }
+      @Override
+      public Set<String> getRequiredFonts() { return this.requiredFonts; }
    }
 
 

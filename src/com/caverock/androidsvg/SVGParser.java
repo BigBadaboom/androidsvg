@@ -19,6 +19,7 @@ package com.caverock.androidsvg;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -87,6 +88,8 @@ public class SVGParser extends DefaultHandler2
    // For handling <style>
    private boolean        inStyleElement = false;
    private StringBuilder  styleElementContents = null;
+
+   private HashSet<String> supportedFormats = null;
 
 
    // Define SVG tags
@@ -223,7 +226,7 @@ public class SVGParser extends DefaultHandler2
       r,
       refX,
       refY,
-      requiredFeatures, requiredExtensions,
+      requiredFeatures, requiredExtensions, requiredFormats, requiredFonts,
       rx, ry,
       solid_color, solid_opacity,
       spreadMethod,
@@ -288,7 +291,7 @@ public class SVGParser extends DefaultHandler2
    private static HashMap<String, Integer> fontWeightKeywords = new HashMap<String, Integer>(13);
    private static HashMap<String, Style.FontStyle>fontStyleKeywords = new HashMap<String, Style.FontStyle>(3); 
    private static HashMap<String, SVG.AspectRatioAlignment> aspectRatioKeywords = new HashMap<String, SVG.AspectRatioAlignment>();
-   private static HashSet<String> supportedFeatures = new HashSet<String>();
+   protected static HashSet<String> supportedFeatures = new HashSet<String>();
 
    static {
       colourKeywords.put("aliceblue", 0xf0f8ff);
@@ -548,6 +551,13 @@ public class SVGParser extends DefaultHandler2
    }
 
 
+   protected void  setSupportedFormats(String[] mimeTypes)
+   {
+      this.supportedFormats = new HashSet<String>(mimeTypes.length);
+      Collections.addAll(this.supportedFormats, mimeTypes);
+   }
+
+
    //=========================================================================
    // Main parser invocation methods
    //=========================================================================
@@ -769,10 +779,6 @@ public class SVGParser extends DefaultHandler2
 
       if (localName.equals(TAG_TEXT)) {
          collapseSpaces((SVG.Text) currentElement);
-      }
-
-      if (localName.equals(TAG_SWITCH)) {
-         switchPostFilter((SVG.Switch) currentElement);
       }
 
       // Yes this is ugly. May switch to using tokens in the future.
@@ -1628,58 +1634,17 @@ public class SVGParser extends DefaultHandler2
             case systemLanguage:
                obj.setSystemLanguage(parseSystemLanguage(val));
                break;
+            case requiredFormats:
+               obj.setRequiredFormats(parseRequiredFormats(val));
+               break;
+            case requiredFonts:
+               List<String>  fonts = parseFontFamily(val);
+               Set<String>  fontSet = (fonts != null) ? new HashSet<String>(fonts) : new HashSet<String>(0);
+               obj.setRequiredFonts(fontSet);
+               break;
             default:
                break;
          }
-      }
-   }
-
-
-   // Find the first child of the switch that passes the feature tests and disable all others.
-   // Called when the end tag (</switch>) is reached.
-   private void  switchPostFilter(SVG.Switch obj)
-   {
-      Iterator<SVG.SvgObject>  iter = obj.children.iterator();
-      boolean                  matchFound = false;
-      String                   deviceLanguage = Locale.getDefault().getLanguage();
-
-      while (iter.hasNext())
-      {
-         SVG.SvgObject  childObj = iter.next();
-
-         // If a match has been found, continue the iterator loop
-         // removing all subsequent children
-         if (matchFound) {
-            iter.remove();
-            continue;
-         }
-
-         // Remove any objects that don't belong in a <switch>
-         if (!(childObj instanceof SVG.SvgConditional)) {
-            iter.remove();
-         }
-         SVG.SvgConditional  condObj = (SVG.SvgConditional) childObj;
-
-         // We don't support extensions
-         if (condObj.getRequiredExtensions() != null) {
-            iter.remove();
-            continue;
-         }
-         // Check language
-         Set<String>  syslang = condObj.getSystemLanguage();
-         if (syslang != null && (syslang.isEmpty() || !syslang.contains(deviceLanguage))) {
-            iter.remove();
-            continue;
-         }
-         // Check features
-         Set<String>  reqfeat = condObj.getRequiredFeatures();
-         if (reqfeat != null && (reqfeat.isEmpty() || !supportedFeatures.containsAll(reqfeat))) {
-            iter.remove();
-            continue;
-         }
-         
-         // All checks passed!
-         matchFound = true;
       }
    }
 
@@ -3983,6 +3948,23 @@ public class SVGParser extends DefaultHandler2
          // Get canonical version of language code in case it has changed (see the JavaDoc for Locale.getLanguage())
          language = new Locale(language, "", "").getLanguage();
          result.add(language);
+         scan.skipWhitespace();
+      }
+      return result;
+   }
+
+
+   // Parse the attribute that declares the list of MIME types that must be
+   // supported if we are to render this element
+   private static Set<String>  parseRequiredFormats(String val) throws SAXException
+   {
+      TextScanner      scan = new TextScanner(val);
+      HashSet<String>  result = new HashSet<String>();
+
+      while (!scan.empty())
+      {
+         String mimetype = scan.nextToken();
+         result.add(mimetype);
          scan.skipWhitespace();
       }
       return result;

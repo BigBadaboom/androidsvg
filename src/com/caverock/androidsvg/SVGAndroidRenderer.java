@@ -18,7 +18,10 @@ package com.caverock.androidsvg;
 
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import java.util.Stack;
 
 import android.graphics.Bitmap;
@@ -334,6 +337,8 @@ public class SVGAndroidRenderer
          render((SVG.Svg) obj);
       } else if (obj instanceof SVG.Use) {
          render((SVG.Use) obj);
+      } else if (obj instanceof SVG.Switch) {
+         render((SVG.Switch) obj);
       } else if (obj instanceof SVG.Group) {
          render((SVG.Group) obj);
       } else if (obj instanceof SVG.Image) {
@@ -807,6 +812,94 @@ public class SVGAndroidRenderer
       }
       mask.recycle();
       return maskedContent;
+   }
+
+
+   //==============================================================================
+
+
+   /*
+    * Find the first child of the switch that passes the feature tests and render only that child.
+    */
+   private void render(SVG.Switch obj)
+   {
+      debug("Switch render");
+
+      updateStyleForElement(state, obj);
+
+      if (!display())
+         return;
+
+      if (obj.transform != null) {
+         canvas.concat(obj.transform);
+      }
+
+      checkForClipPath(obj);
+
+      boolean  compositing = pushLayer();
+
+      renderSwitchChild(obj);
+
+      if (compositing)
+         popLayer(obj);
+
+      updateParentBoundingBox(obj);
+   }
+
+
+   private void  renderSwitchChild(SVG.Switch obj)
+   {
+      String                   deviceLanguage = Locale.getDefault().getLanguage();
+      SVGExternalFileResolver  fileResolver = document.getFileResolver();
+
+      ChildLoop:
+      for (SVG.SvgObject child: obj.getChildren())
+      {
+         // Ignore any objects that don't belong in a <switch>
+         if (!(child instanceof SVG.SvgConditional)) {
+            continue;
+         }
+         SVG.SvgConditional  condObj = (SVG.SvgConditional) child;
+
+         // We don't support extensions
+         if (condObj.getRequiredExtensions() != null) {
+            continue;
+         }
+         // Check language
+         Set<String>  syslang = condObj.getSystemLanguage();
+         if (syslang != null && (syslang.isEmpty() || !syslang.contains(deviceLanguage))) {
+            continue;
+         }
+         // Check features
+         Set<String>  reqfeat = condObj.getRequiredFeatures();
+         if (reqfeat != null && (reqfeat.isEmpty() || !SVGParser.supportedFeatures.containsAll(reqfeat))) {
+            continue;
+         }
+         // Check formats (MIME types)
+         Set<String>  reqfmts = condObj.getRequiredFormats();
+         if (reqfmts != null) {
+            if (reqfmts.isEmpty() || fileResolver==null)
+               continue;
+            for (String mimeType: reqfmts) {
+               if (!fileResolver.isFormatSupported(mimeType))
+                  continue ChildLoop;
+            }
+         }
+         // Check formats (MIME types)
+         Set<String>  reqfonts = condObj.getRequiredFonts();
+         if (reqfonts != null) {
+            if (reqfonts.isEmpty() || fileResolver==null)
+               continue;
+            for (String fontName: reqfonts) {
+               if (fileResolver.resolveFont(fontName, state.style.fontWeight, String.valueOf(state.style.fontStyle)) == null)
+                  continue ChildLoop;
+            }
+         }
+         
+         // All checks passed!  Render this one element and exit
+         render(child);
+         break;
+      }
    }
 
 
