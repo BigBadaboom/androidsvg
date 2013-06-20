@@ -318,7 +318,6 @@ public class CSSParser
    {
       Log.e(TAG, String.format(format, args));
    }
-   */
 
 
    private static void  debug(String format, Object... args)
@@ -326,6 +325,7 @@ public class CSSParser
       if (LibConfig.DEBUG)
          Log.d(TAG, String.format(format, args));
    }
+   */
 
 
    //==============================================================================
@@ -540,19 +540,6 @@ public class CSSParser
          return null;
       }
 
-
-      /* for debugging - returns the characters surrounding 'position'. */  // FIXME remove
-      public void  debug()
-      {
-         StringBuilder sb = new StringBuilder();
-         for (int i = Math.max(0, position-5); i<Math.min(position+5, input.length()); i++) {
-            if (i==position)
-               sb.append('>');
-            sb.append(input.charAt(i));
-         }
-         sb.append("   (pos=").append(position).append(")");
-         Log.d("TS", sb.toString());
-      }
    }
 
 
@@ -700,8 +687,6 @@ public class CSSParser
 
       ArrayList<Selector>  selectorGroup = new ArrayList<Selector>(1);
       Selector             selector = new Selector();
-      
-      boolean firstPart = true;
 
       while (!scan.empty())
       {
@@ -712,7 +697,6 @@ public class CSSParser
                continue;  // if not a comma, go back and check for next part of selector
             selectorGroup.add(selector);
             selector = new Selector();
-            firstPart = true;
          }
          else
             break;
