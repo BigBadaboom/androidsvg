@@ -62,6 +62,7 @@ import com.caverock.androidsvg.SVG.SolidColor;
 import com.caverock.androidsvg.SVG.Stop;
 import com.caverock.androidsvg.SVG.Style;
 import com.caverock.androidsvg.SVG.Style.FontStyle;
+import com.caverock.androidsvg.SVG.Style.TextAnchor;
 import com.caverock.androidsvg.SVG.Style.TextDecoration;
 import com.caverock.androidsvg.SVG.Style.VectorEffect;
 import com.caverock.androidsvg.SVG.SvgContainer;
@@ -1342,9 +1343,10 @@ public class SVGAndroidRenderer
       float  dy = (obj.dy == null || obj.dy.size() == 0) ? 0f : obj.dy.get(0).floatValueY(this);
 
       // Handle text alignment
-      if (state.style.textAnchor != Style.TextAnchor.Start) {
+      Style.TextAnchor  anchor = getAnchorPosition();
+      if (anchor != Style.TextAnchor.Start) {
          float  textWidth = calculateTextWidth(obj);
-         if (state.style.textAnchor == Style.TextAnchor.Middle) {
+         if (anchor == Style.TextAnchor.Middle) {
             x -= (textWidth / 2);
          } else {
             x -= textWidth;  // 'End' (right justify)
@@ -1367,6 +1369,16 @@ public class SVGAndroidRenderer
 
       if (compositing)
          popLayer(obj);
+   }
+
+
+   private Style.TextAnchor  getAnchorPosition()
+   {
+      if (state.style.direction == Style.TextDirection.LTR || state.style.textAnchor == TextAnchor.Middle)
+         return state.style.textAnchor;
+
+      // Handle RTL case where Start and End are reversed
+      return (state.style.textAnchor == TextAnchor.Start) ? TextAnchor.End : TextAnchor.Start;
    }
 
 
@@ -1562,9 +1574,10 @@ public class SVGAndroidRenderer
       float  startOffset = (obj.startOffset != null) ? obj.startOffset.floatValue(this, measure.getLength()) : 0f;
 
       // Handle text alignment
-      if (state.style.textAnchor != Style.TextAnchor.Start) {
+      Style.TextAnchor  anchor = getAnchorPosition();
+      if (anchor != Style.TextAnchor.Start) {
          float  textWidth = calculateTextWidth(obj);
-         if (state.style.textAnchor == Style.TextAnchor.Middle) {
+         if (anchor == Style.TextAnchor.Middle) {
             startOffset -= (textWidth / 2);
          } else {
             startOffset -= textWidth;  // 'End' (right justify)
@@ -2186,6 +2199,11 @@ public class SVGAndroidRenderer
             state.strokePaint.setStrikeThruText(style.textDecoration == TextDecoration.LineThrough);
             state.strokePaint.setUnderlineText(style.textDecoration == TextDecoration.Underline);
          }
+      }
+
+      if (isSpecified(style, SVG.SPECIFIED_DIRECTION))
+      {
+         state.style.direction = style.direction;
       }
 
       if (isSpecified(style, SVG.SPECIFIED_TEXT_ANCHOR))

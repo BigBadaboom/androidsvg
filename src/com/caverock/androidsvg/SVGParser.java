@@ -50,6 +50,7 @@ import com.caverock.androidsvg.SVG.Length;
 import com.caverock.androidsvg.SVG.PaintReference;
 import com.caverock.androidsvg.SVG.Style;
 import com.caverock.androidsvg.SVG.Style.TextDecoration;
+import com.caverock.androidsvg.SVG.Style.TextDirection;
 import com.caverock.androidsvg.SVG.Style.VectorEffect;
 import com.caverock.androidsvg.SVG.SvgElementBase;
 import com.caverock.androidsvg.SVG.SvgObject;
@@ -191,6 +192,7 @@ public class SVGParser extends DefaultHandler2
       clip_rule,
       color,
       cx, cy,
+      direction,
       dx, dy,
       fx, fy,
       d,
@@ -2801,6 +2803,11 @@ public class SVGParser extends DefaultHandler2
             style.specifiedFlags |= SVG.SPECIFIED_TEXT_DECORATION;
             break;
 
+         case direction:
+            style.direction = parseTextDirection(val);
+            style.specifiedFlags |= SVG.SPECIFIED_DIRECTION;
+            break;
+
          case text_anchor:
             style.textAnchor = parseTextAnchor(val);
             style.specifiedFlags |= SVG.SPECIFIED_TEXT_ANCHOR;
@@ -3482,6 +3489,17 @@ public class SVGParser extends DefaultHandler2
       if ("blink".equals(val))
          return Style.TextDecoration.Blink;
       throw new SAXException("Invalid text-decoration property: "+val);
+   }
+
+
+   // Parse a text decoration keyword
+   private static TextDirection  parseTextDirection(String val) throws SAXException
+   {
+      if ("ltr".equals(val))
+         return Style.TextDirection.LTR;
+      if ("rtl".equals(val))
+         return Style.TextDirection.RTL;
+      throw new SAXException("Invalid direction property: "+val);
    }
 
 

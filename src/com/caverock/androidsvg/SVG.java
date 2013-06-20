@@ -864,6 +864,7 @@ public class SVG
    protected static final long SPECIFIED_VIEWPORT_FILL         = (1L<<33);
    protected static final long SPECIFIED_VIEWPORT_FILL_OPACITY = (1L<<34);
    protected static final long SPECIFIED_VECTOR_EFFECT         = (1L<<35);
+   protected static final long SPECIFIED_DIRECTION             = (1L<<36);
 
    protected static final long SPECIFIED_ALL = 0xffffffff;
 
@@ -900,6 +901,7 @@ public class SVG
       public Integer         fontWeight;
       public FontStyle       fontStyle;
       public TextDecoration  textDecoration;
+      public TextDirection   direction;
 
       public TextAnchor   textAnchor;
 
@@ -979,6 +981,12 @@ public class SVG
          Blink
       }
       
+      public enum TextDirection
+      {
+         LTR,
+         RTL
+      }
+      
       public enum VectorEffect
       {
          None,
@@ -1008,6 +1016,7 @@ public class SVG
          def.fontWeight = FONT_WEIGHT_NORMAL;
          def.fontStyle = FontStyle.Normal;
          def.textDecoration = TextDecoration.None;
+         def.direction = TextDirection.LTR;
          def.textAnchor = TextAnchor.Start;
          def.overflow = true;  // Overflow shown/visible for root, but not for other elements (see section 14.3.3).
          def.clip = null;
