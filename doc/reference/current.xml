@@ -147,6 +147,17 @@
 <exception name="SVGParseException" type="com.caverock.androidsvg.SVGParseException">
 </exception>
 </method>
+<method name="getRenderDPI"
+ return="float"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
 <method name="getVersion"
  return="java.lang.String"
  abstract="false"
@@ -224,8 +235,6 @@
 </parameter>
 <parameter name="viewPort" type="android.graphics.RectF">
 </parameter>
-<parameter name="defaultDPI" type="float">
-</parameter>
 <parameter name="alignment" type="com.caverock.androidsvg.SVG.AspectRatioAlignment">
 </parameter>
 <parameter name="scale" type="com.caverock.androidsvg.SVG.AspectRatioScale">
@@ -271,8 +280,6 @@
 </parameter>
 <parameter name="heightInPixels" type="int">
 </parameter>
-<parameter name="defaultDPI" type="float">
-</parameter>
 <parameter name="alignment" type="com.caverock.androidsvg.SVG.AspectRatioAlignment">
 </parameter>
 <parameter name="scale" type="com.caverock.androidsvg.SVG.AspectRatioScale">
@@ -310,7 +317,43 @@
 <parameter name="viewPort" type="android.graphics.RectF">
 </parameter>
 </method>
-<method name="renderViewToCanvas"
+<method name="renderViewToPicture"
+ return="android.graphics.Picture"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="viewId" type="java.lang.String">
+</parameter>
+<parameter name="widthInPixels" type="int">
+</parameter>
+<parameter name="heightInPixels" type="int">
+</parameter>
+</method>
+<method name="renderViewToPicture"
+ return="android.graphics.Picture"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="viewId" type="java.lang.String">
+</parameter>
+<parameter name="widthInPixels" type="int">
+</parameter>
+<parameter name="heightInPixels" type="int">
+</parameter>
+<parameter name="defaultDPI" type="java.lang.Float">
+</parameter>
+</method>
+<method name="setRenderDPI"
  return="void"
  abstract="false"
  native="false"
@@ -320,49 +363,7 @@
  deprecated="not deprecated"
  visibility="public"
 >
-<parameter name="viewId" type="java.lang.String">
-</parameter>
-<parameter name="canvas" type="android.graphics.Canvas">
-</parameter>
-<parameter name="viewPort" type="android.graphics.RectF">
-</parameter>
-<parameter name="defaultDPI" type="float">
-</parameter>
-</method>
-<method name="renderViewToPicture"
- return="android.graphics.Picture"
- abstract="false"
- native="false"
- synchronized="false"
- static="false"
- final="false"
- deprecated="not deprecated"
- visibility="public"
->
-<parameter name="viewId" type="java.lang.String">
-</parameter>
-<parameter name="widthInPixels" type="int">
-</parameter>
-<parameter name="heightInPixels" type="int">
-</parameter>
-</method>
-<method name="renderViewToPicture"
- return="android.graphics.Picture"
- abstract="false"
- native="false"
- synchronized="false"
- static="false"
- final="false"
- deprecated="not deprecated"
- visibility="public"
->
-<parameter name="viewId" type="java.lang.String">
-</parameter>
-<parameter name="widthInPixels" type="int">
-</parameter>
-<parameter name="heightInPixels" type="int">
-</parameter>
-<parameter name="defaultDPI" type="float">
+<parameter name="dpi" type="float">
 </parameter>
 </method>
 </class>
@@ -620,6 +621,39 @@
 </method>
 <method name="values"
  return="com.caverock.androidsvg.SVG.Style.TextDecoration[]"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="true"
+ final="true"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+</class>
+<class name="SVG.Style.TextDirection"
+ extends="java.lang.Enum"
+ abstract="false"
+ static="true"
+ final="true"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<method name="valueOf"
+ return="com.caverock.androidsvg.SVG.Style.TextDirection"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="true"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="name" type="java.lang.String">
+</parameter>
+</method>
+<method name="values"
+ return="com.caverock.androidsvg.SVG.Style.TextDirection[]"
  abstract="false"
  native="false"
  synchronized="false"
