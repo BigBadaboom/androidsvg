@@ -18,7 +18,6 @@ package com.caverock.androidsvg;
 
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -254,22 +253,6 @@ public class SVGAndroidRenderer
       if (rootObj == null) {
          warn("Nothing to render. Document is empty.");
          return;
-      }
-
-      // If the root svg element has a width expressed in physical units, then we can calculate
-      // the document author's intended DPI/scale from that, rather than relying on defaultDPI.
-      if (rootObj.width != null && rootObj.viewBox != null) {
-         float  perUnit = rootObj.viewBox.width / rootObj.width.value;
-         switch (rootObj.width.unit)
-         {
-            case in: this.dpi = perUnit; break;
-            case cm: this.dpi = 2.54f * perUnit; break;
-            case mm: this.dpi = 25.4f * perUnit; break;
-            case pt: this.dpi = 72 * perUnit; break;
-            case pc: this.dpi = 6 * perUnit; break;
-            default: // Do nothing for non-physical units
-         }
-         debug("DPI is set to "+this.dpi);
       }
 
       // Initialise the state
