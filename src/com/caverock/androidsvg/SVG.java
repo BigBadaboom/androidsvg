@@ -64,7 +64,7 @@ import com.caverock.androidsvg.CSSParser.Ruleset;
  * Canvas  bmcanvas = new Canvas(newBM);
  * bmcanvas.drawRGB(255, 255, 255);  // Clear bg to white
  *
- * svg.renderToCanvas(bmcanvas, null, getResources().getDisplayMetrics().xdpi, SVG.AspectRatioAlignment.xMidYMid, true);
+ * svg.renderToCanvas(bmcanvas, null, SVGPositioning.LETTERBOX);
  * }
  * </pre>
  * 
@@ -114,56 +114,6 @@ public class SVG
       pt,
       pc,
       percent
-   }
-
-   /**
-    * Determines how the document is to me positioned relative to the viewport (normally the canvas).
-    * <0>
-    * For the value {@code none}, the document is stretched to fit the viewport dimensions. For all
-    * other values, the aspect ratio of the document is kept the same but the document is scaled to
-    * fit the viewport. 
-    */
-   public enum AspectRatioAlignment
-   {
-      /** Document is stretched to fit both the width and height of the viewport. */
-      none,
-      /** Document is positioned at the top left of the viewport. */
-      xMinYMin,
-      /** Document is positioned at the centre top of the viewport. */
-      xMidYMin,
-      /** Document is positioned at the top right of the viewport. */
-      xMaxYMin,
-      /** Document is positioned at the middle left of the viewport. */
-      xMinYMid,
-      /** Document is centred in the viewport both vertically and horizontally. */
-      xMidYMid,
-      /** Document is positioned at the middle right of the viewport. */
-      xMaxYMid,
-      /** Document is positioned at the bottom left of the viewport. */
-      xMinYMax,
-      /** Document is positioned at the bottom centre of the viewport. */
-      xMidYMax,
-      /** Document is positioned at the bottom right of the viewport. */
-      xMaxYMax
-   }
-
-
-   /**
-    * Determine whether the scaled document fills the viewport entirely or is scaled to
-    * fill the viewport without overflowing.
-    */
-   public enum AspectRatioScale
-   {
-      /**
-       * The document is scaled so that it is as large as possible without overflowing the viewport.
-       * There may be blank areas on one or more sides of the document.
-       */
-      MEET,
-      /**
-       * The document is scaled so that entirely fills the viewport. That means that some of the
-       * document may fall outside the viewport and will not be rendered.
-       */
-      SLICE
    }
 
 
@@ -291,6 +241,8 @@ public class SVG
     * <p>
     * An attempt will be made to determine a suitable initial viewport from the contents of the SVG file.
     * If an appropriate viewport can't be determined, a default viewport of 512x512 will be used.
+    * <p>
+    * If the document has a viewBox, it will be scaled to the viewport using the SVGPositioning value LETTERBOX.
     * 
     * @return a Picture object suitable for later rendering using {@code Canvas.drawPicture()}
     */
@@ -318,13 +270,15 @@ public class SVG
       }
       else
       {
-         return renderToPicture(DEFAULT_PICTURE_WIDTH, DEFAULT_PICTURE_HEIGHT, null, null);
+         return renderToPicture(DEFAULT_PICTURE_WIDTH, DEFAULT_PICTURE_HEIGHT, SVGPositioning.LETTERBOX);
       }
    }
 
 
    /**
     * Renders this SVG document to a Picture object.
+    * <p>
+    * If the document has a viewBox, it will be scaled to the viewport using the SVGPositioning value LETTERBOX.
     * 
     * @param widthInPixels the width of the initial viewport
     * @param heightInPixels the height of the initial viewport
@@ -332,7 +286,7 @@ public class SVG
     */
    public Picture  renderToPicture(int widthInPixels, int heightInPixels)
    {
-      return renderToPicture(widthInPixels, heightInPixels, null, null);
+      return renderToPicture(widthInPixels, heightInPixels, SVGPositioning.LETTERBOX);
    }
 
 
@@ -341,19 +295,23 @@ public class SVG
     * 
     * @param widthInPixels the width of the initial viewport
     * @param heightInPixels the height of the initial viewport
-    * @param alignment the type of alignment desired when calculating how to fit the document to the viewport. If null, the default xMidYMid will be used.
+    * @param positioning the method that should be used when calculating how to fit the document to the viewport.
     * @param scale the degree of scaling to be applied to the document to fit the viewport. If null, the default of MEET will be used.
     * @return a Picture object suitable for later rendering using {@code Canvas.drawPicture()}.
+    * @throws NullPointerException if positioning is null.
     */
-   public Picture  renderToPicture(int widthInPixels, int heightInPixels, AspectRatioAlignment alignment, AspectRatioScale scale)
+   public Picture  renderToPicture(int widthInPixels, int heightInPixels, SVGPositioning positioning)
    {
+      if (positioning == null)
+         throw new NullPointerException("Parameter 'positioning' must not be null");
+
       Picture  picture = new Picture();
       Canvas   canvas = picture.beginRecording(widthInPixels, heightInPixels);
       Box      viewPort = new Box(0f, 0f, (float) widthInPixels, (float) heightInPixels);
 
       SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, viewPort, this.renderDPI);
 
-      renderer.renderDocument(this, null, alignment, scale, false);
+      renderer.renderDocument(this, null, positioning, false);
 
       picture.endRecording();
       return picture;
@@ -363,26 +321,7 @@ public class SVG
    /**
     * Renders this SVG document to a Picture object using the specified view defined in the document.
     * <p>
-    * A View is an special element in a SVG documents that describes a rectangular area in the document.
-    * Calling this method with a {@code viewId} will result in the specified view being positioned and scaled
-    * to the viewport.  In other words, use {@link #renderToPicture()} to render the whole document, or use this
-    * method instead to render just a part of it.
-    * 
-    * @param viewId the id of a view element in the document that defines which section of the document is to be visible.
-    * @param widthInPixels the width of the initial viewport.
-    * @param heightInPixels the height of the initial viewport.
-    * @return a Picture object suitable for later rendering using {@code Canvas.drawPicture()}, or null if the viewId was not found.
-    */
-   public Picture  renderViewToPicture(String viewId, int widthInPixels, int heightInPixels)
-   {
-      return renderViewToPicture(viewId, widthInPixels, heightInPixels, this.renderDPI);
-   }
-
-
-   /**
-    * Renders this SVG document to a Picture object using the specified view defined in the document.
-    * <p>
-    * A View is an special element in a SVG documents that describes a rectangular area in the document.
+    * A View is an special element in a SVG document that describes a rectangular area in the document.
     * Calling this method with a {@code viewId} will result in the specified view being positioned and scaled
     * to the viewport.  In other words, use {@link #renderToPicture()} to render the whole document, or use this
     * method instead to render just a part of it.
@@ -390,10 +329,9 @@ public class SVG
     * @param viewId the id of a view element in the document that defines which section of the document is to be visible.
     * @param widthInPixels the width of the initial viewport
     * @param heightInPixels the height of the initial viewport
-    * @param defaultDPI the default DPI value to use when calculating the size of physical units such as cm, pt etc.
     * @return a Picture object suitable for later rendering using {@code Canvas.drawPicture()}, or null if the viewId was not found.
     */
-   public Picture  renderViewToPicture(String viewId, int widthInPixels, int heightInPixels, Float defaultDPI)
+   public Picture  renderViewToPicture(String viewId, int widthInPixels, int heightInPixels)
    {
       SvgObject  obj = this.getElementById(viewId);
       if (obj == null)
@@ -412,12 +350,11 @@ public class SVG
       Canvas   canvas = picture.beginRecording(widthInPixels, heightInPixels);
       Box      viewPort = new Box(0f, 0f, (float) widthInPixels, (float) heightInPixels);
 
-      AspectRatioAlignment  alignment = (view.preserveAspectRatioAlignment != null)? view.preserveAspectRatioAlignment : AspectRatioAlignment.xMidYMid;
-      AspectRatioScale      scale = (view.preserveAspectRatioScale != null) ? view.preserveAspectRatioScale : AspectRatioScale.MEET;
+      SVGPositioning  positioning = (view.positioning != null) ? view.positioning : SVGPositioning.LETTERBOX;
 
-      SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, viewPort, defaultDPI);
+      SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, viewPort, this.renderDPI);
 
-      renderer.renderDocument(this, view.viewBox, alignment, scale, false);
+      renderer.renderDocument(this, view.viewBox, positioning, false);
 
       picture.endRecording();
       return picture;
@@ -430,24 +367,28 @@ public class SVG
 
    /**
     * Renders this SVG document to a Canvas object.
+    * <p>
+    * If the document has a viewBox, it will be scaled to the viewport using the SVGPositioning value LETTERBOX.
     * 
     * @param canvas the canvas to which the document should be rendered.
     */
    public void  renderToCanvas(Canvas canvas)
    {
-      renderToCanvas(canvas, null, null, null);
+      renderToCanvas(canvas, null, SVGPositioning.LETTERBOX);
    }
 
 
    /**
     * Renders this SVG document to a Canvas object.
+    * <p>
+    * If the document has a viewBox, it will be scaled to the viewport using the SVGPositioning value LETTERBOX.
     * 
     * @param canvas the canvas to which the document should be rendered.
     * @param viewPort the bounds of the area on the canvas you want the SVG rendered, or null for the whole canvas.
     */
    public void  renderToCanvas(Canvas canvas, RectF viewPort)
    {
-      renderToCanvas(canvas, viewPort, null, null);
+      renderToCanvas(canvas, viewPort, SVGPositioning.LETTERBOX);
    }
 
 
@@ -459,28 +400,20 @@ public class SVG
     * "20mm".  The default for most desktop SVG renderers is 96, matching the DPI of a standard
     * desktop monitor. You can choose to use this value, or supply the DPI of your device if you wish.
     * <p>
-    * Note that the file itself could override the DPI value you supply anyway.  For example, if
-    * your file's root &lt;svg&gt; element was defined as follows:
-    * <pre>
-    * {@code
-    * <svg width="8cm" height="8cm" viewBox="0 0 400 400">
-    * }
-    * </pre>
-    * AndroidSVG would use a DPI of 127 rather than any value you supply (50 pixels per centimetre
-    * corresponds to a DPI of 127).
-    * <p>
-    * The {@code alignment} and {@code scale} parameters control how the document is positioned within the
-    * {@code viewPort}. See the definition for {@link SVG.AspectRatioAlignment} and {@link SVG.AspectRatioScale}
-    * for more information.
+    * The {@code positioning} parameter controls how the document is positioned within the
+    * {@code viewPort}. See the definition for {@link SVGPositioning} for more information.
     *  
     * @param canvas the canvas to which the document should be rendered.
     * @param viewPort the bounds of the area on the canvas you want the SVG rendered, or null for the whole canvas.
-    * @param alignment the type of alignment desired when calculating how to fit the document to the viewport. If null, the default xMidYMid will be used.
-    * @param scale the degree of scaling to be applied to the document to fit the viewport. If null, the default of MEET will be used.
+    * @param positioning the method that should be used when calculating how to fit the document to the viewport.
+    * @throws NullPointerException if positioning is null.
     */
-   public void  renderToCanvas(Canvas canvas, RectF viewPort, AspectRatioAlignment alignment, AspectRatioScale scale)
+   public void  renderToCanvas(Canvas canvas, RectF viewPort, SVGPositioning positioning)
    {
       Box  svgViewPort;
+
+      if (positioning == null)
+         throw new NullPointerException("Parameter 'positioning' must not be null");
 
       if (viewPort != null) {
          svgViewPort = new Box(viewPort.left, viewPort.top, (viewPort.right - viewPort.left), (viewPort.bottom - viewPort.top));
@@ -490,7 +423,7 @@ public class SVG
 
       SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, svgViewPort, this.renderDPI);
 
-      renderer.renderDocument(this, null, alignment, scale, true);
+      renderer.renderDocument(this, null, positioning, true);
    }
 
 
@@ -550,12 +483,11 @@ public class SVG
          svgViewPort = new Box(0f, 0f, (float) canvas.getWidth(), (float) canvas.getHeight());
       }
 
-      AspectRatioAlignment  alignment = (view.preserveAspectRatioAlignment != null)? view.preserveAspectRatioAlignment : AspectRatioAlignment.xMidYMid;
-      AspectRatioScale      scale = (view.preserveAspectRatioScale != null) ? view.preserveAspectRatioScale : AspectRatioScale.MEET;
+      SVGPositioning  positioning = (view.positioning != null) ? view.positioning : SVGPositioning.LETTERBOX;
 
       SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, svgViewPort, this.renderDPI);
 
-      renderer.renderDocument(this, view.viewBox, alignment, scale, true);
+      renderer.renderDocument(this, view.viewBox, positioning, true);
    }
 
 
@@ -1440,8 +1372,7 @@ public class SVG
 
    protected static class SvgPreserveAspectRatioContainer extends SvgConditionalContainer
    {
-      public AspectRatioAlignment preserveAspectRatioAlignment = null;
-      public AspectRatioScale     preserveAspectRatioScale = null;
+      public SVGPositioning  positioning = null;
    }
 
 

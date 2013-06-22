@@ -292,7 +292,7 @@ public class SVGParser extends DefaultHandler2
    private static HashMap<String, Length> fontSizeKeywords = new HashMap<String, Length>(9);
    private static HashMap<String, Integer> fontWeightKeywords = new HashMap<String, Integer>(13);
    private static HashMap<String, Style.FontStyle>fontStyleKeywords = new HashMap<String, Style.FontStyle>(3); 
-   private static HashMap<String, SVG.AspectRatioAlignment> aspectRatioKeywords = new HashMap<String, SVG.AspectRatioAlignment>();
+   private static HashMap<String, SVGPositioning.Alignment> aspectRatioKeywords = new HashMap<String, SVGPositioning.Alignment>();
    protected static HashSet<String> supportedFeatures = new HashSet<String>();
 
    static {
@@ -472,16 +472,16 @@ public class SVGParser extends DefaultHandler2
       fontStyleKeywords.put("italic", Style.FontStyle.Italic);
       fontStyleKeywords.put("oblique", Style.FontStyle.Oblique);
 
-      aspectRatioKeywords.put(NONE, SVG.AspectRatioAlignment.none);
-      aspectRatioKeywords.put("xMinYMin", SVG.AspectRatioAlignment.xMinYMin);
-      aspectRatioKeywords.put("xMidYMin", SVG.AspectRatioAlignment.xMidYMin);
-      aspectRatioKeywords.put("xMaxYMin", SVG.AspectRatioAlignment.xMaxYMin);
-      aspectRatioKeywords.put("xMinYMid", SVG.AspectRatioAlignment.xMinYMid);
-      aspectRatioKeywords.put("xMidYMid", SVG.AspectRatioAlignment.xMidYMid);
-      aspectRatioKeywords.put("xMaxYMid", SVG.AspectRatioAlignment.xMaxYMid);
-      aspectRatioKeywords.put("xMinYMax", SVG.AspectRatioAlignment.xMinYMax);
-      aspectRatioKeywords.put("xMidYMax", SVG.AspectRatioAlignment.xMidYMax);
-      aspectRatioKeywords.put("xMaxYMax", SVG.AspectRatioAlignment.xMaxYMax);
+      aspectRatioKeywords.put(NONE, SVGPositioning.Alignment.None);
+      aspectRatioKeywords.put("xMinYMin", SVGPositioning.Alignment.XMinYMin);
+      aspectRatioKeywords.put("xMidYMin", SVGPositioning.Alignment.XMidYMin);
+      aspectRatioKeywords.put("xMaxYMin", SVGPositioning.Alignment.XMaxYMin);
+      aspectRatioKeywords.put("xMinYMid", SVGPositioning.Alignment.XMinYMid);
+      aspectRatioKeywords.put("xMidYMid", SVGPositioning.Alignment.XMidYMid);
+      aspectRatioKeywords.put("xMaxYMid", SVGPositioning.Alignment.XMaxYMid);
+      aspectRatioKeywords.put("xMinYMax", SVGPositioning.Alignment.XMinYMax);
+      aspectRatioKeywords.put("xMidYMax", SVGPositioning.Alignment.XMidYMax);
+      aspectRatioKeywords.put("xMaxYMax", SVGPositioning.Alignment.XMaxYMax);
 
       // SVG features this SVG implementation supports
       // Actual feature strings have the prefix: FEATURE_STRING_PREFIX (see above)
@@ -3212,8 +3212,8 @@ public class SVGParser extends DefaultHandler2
       TextScanner scan = new TextScanner(val);
       scan.skipWhitespace();
 
-      SVG.AspectRatioAlignment  align = null;
-      SVG.AspectRatioScale      scale = null;
+      SVGPositioning.Alignment  align = null;
+      SVGPositioning.Scale      scale = null;
 
       String  word = scan.nextToken();
       if ("defer".equals(word)) {    // Ignore defer keyword
@@ -3226,15 +3226,14 @@ public class SVGParser extends DefaultHandler2
       if (!scan.empty()) {
          String meetOrSlice = scan.nextToken();
          if (meetOrSlice.equals("meet")) {
-            scale = SVG.AspectRatioScale.MEET;
+            scale = SVGPositioning.Scale.Meet;
          } else if (meetOrSlice.equals("slice")) {
-            scale = SVG.AspectRatioScale.SLICE;
+            scale = SVGPositioning.Scale.Slice;
          } else {
             throw new SAXException("Invalid preserveAspectRatio definition: "+val);
          }
       }
-      obj.preserveAspectRatioAlignment = align;
-      obj.preserveAspectRatioScale = scale;
+      obj.positioning = new SVGPositioning(align, scale);
    }
 
 
