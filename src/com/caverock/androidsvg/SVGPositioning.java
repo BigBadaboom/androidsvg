@@ -98,7 +98,7 @@ public class SVGPositioning
     */
    public enum Alignment
    {
-      /** Document is stretched to fit both the width and height of the viewport. */
+      /** Document is stretched to fit both the width and height of the viewport. When using this Alignment value, the value of Scale is not used and will be ignored. */
       None,
       /** Document is positioned at the top left of the viewport. */
       XMinYMin,

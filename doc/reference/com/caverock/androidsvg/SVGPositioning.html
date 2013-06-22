@@ -57,7 +57,7 @@
 <link rel="shortcut icon" type="image/x-icon" href="../../../favicon.ico" />
 <title>
 
-  SVGExternalFileResolver
+  SVGPositioning
 
 
 | AndroidSVG
@@ -157,8 +157,8 @@
       <ul>
           <li class="api apilevel-"><a href="../../../com/caverock/androidsvg/SimpleAssetResolver.html">SimpleAssetResolver</a></li>
           <li class="api apilevel-"><a href="../../../com/caverock/androidsvg/SVG.html">SVG</a></li>
-          <li class="selected api apilevel-"><a href="../../../com/caverock/androidsvg/SVGExternalFileResolver.html">SVGExternalFileResolver</a></li>
-          <li class="api apilevel-"><a href="../../../com/caverock/androidsvg/SVGPositioning.html">SVGPositioning</a></li>
+          <li class="api apilevel-"><a href="../../../com/caverock/androidsvg/SVGExternalFileResolver.html">SVGExternalFileResolver</a></li>
+          <li class="selected api apilevel-"><a href="../../../com/caverock/androidsvg/SVGPositioning.html">SVGPositioning</a></li>
       </ul>
     </li>
               
@@ -226,6 +226,8 @@
 
 Summary:
 
+  <a href="#nestedclasses">Nested Classes</a>
+  
 
 
 
@@ -233,8 +235,12 @@ Summary:
 
 
 
+  &#124; <a href="#lfields">Fields</a>
+  
 
-  <a href="#pubctors">Ctors</a>
+
+
+  &#124; <a href="#pubctors">Ctors</a>
   
 
 
@@ -266,9 +272,9 @@ Summary:
     public
      
      
-    abstract
+    
     class
-<h1>SVGExternalFileResolver</h1>
+<h1>SVGPositioning</h1>
 
 
 
@@ -301,7 +307,7 @@ Summary:
         
             <td class="jd-inheritance-space">&nbsp;&nbsp;&nbsp;&#x21b3;</td>
          	
-        <td colspan="1" class="jd-inheritance-class-cell">com.caverock.androidsvg.SVGExternalFileResolver</td>
+        <td colspan="1" class="jd-inheritance-class-cell">com.caverock.androidsvg.SVGPositioning</td>
     </tr>
     
 
@@ -310,38 +316,6 @@ Summary:
 
 
 
-<table class="jd-sumtable jd-sumtable-subclasses"><tr><td colspan="12" style="border:none;margin:0;padding:0;">
-
-  <a href="#" onclick="return toggleInherited(this, null)" id="subclasses-direct" class="jd-expando-trigger closed"
-          ><img id="subclasses-direct-trigger"
-          src="../../../../assets/images/triangle-closed.png"
-          class="jd-expando-trigger-img" /></a>Known Direct Subclasses
-
-  <div id="subclasses-direct">
-      <div id="subclasses-direct-list"
-              class="jd-inheritedlinks"
-              
-              >
-          
-            
-              <a href="../../../com/caverock/androidsvg/SimpleAssetResolver.html">SimpleAssetResolver</a>
-            
-          
-      </div>
-      <div id="subclasses-direct-summary"
-              style="display: none;"
-              >
-  <table class="jd-sumtable-expando">
-        <tr class="alt-color api apilevel-" >
-              <td class="jd-linkcol"><a href="../../../com/caverock/androidsvg/SimpleAssetResolver.html">SimpleAssetResolver</a></td>
-              <td class="jd-descrcol" width="100%">A sample implementation of SVGExternalFileResolver that retrieves files from
- an application's "assets" folder.&nbsp;</td>
-          </tr>
-  </table>
-      </div>
-  </div>
-</td></tr></table>
-
 
 
 
@@ -349,11 +323,17 @@ Summary:
 
 
 <h2>Class Overview</h2>
-<p>Resolver class used by the renderer when processing Text and Image elements.
+<p>The SVGPositioning class tells the renderer how to scale and position the
+ SVG document in the current viewport.
  <p>
- The default behaviour is to tell AndroidSVG that the reference could not be found.
- <p>
- Extend this class and override the methods if you want to customise how AndroidSVG treats font and image references.
+ In order for scaling to happen, the SVG document must have a viewBox attribute set.
+ For example:
+ 
+ <pre>
+ <code>&lt;svg version="1.1" viewBox="0 0 200 100"&gt;
+ </code>
+ </pre>
+ 
 </p>
 
 
@@ -384,6 +364,38 @@ Summary:
 
 
 
+<!-- ======== NESTED CLASS SUMMARY ======== -->
+<table id="nestedclasses" class="jd-sumtable"><tr><th colspan="12">Nested Classes</th></tr>
+
+
+  
+    <tr class="alt-color api apilevel-" >
+      <td class="jd-typecol">
+        
+         
+         
+        
+        enum</td>
+      <td class="jd-linkcol"><a href="../../../com/caverock/androidsvg/SVGPositioning.Alignment.html">SVGPositioning.Alignment</a></td>
+      <td class="jd-descrcol" width="100%">Determines how the document is to me positioned relative to the viewport (normally the canvas).&nbsp;</td>
+    </tr>
+    
+    
+    <tr class=" api apilevel-" >
+      <td class="jd-typecol">
+        
+         
+         
+        
+        enum</td>
+      <td class="jd-linkcol"><a href="../../../com/caverock/androidsvg/SVGPositioning.Scale.html">SVGPositioning.Scale</a></td>
+      <td class="jd-descrcol" width="100%">Determine whether the scaled document fills the viewport entirely or is scaled to
+ fill the viewport without overflowing.&nbsp;</td>
+    </tr>
+    
+    
+
+</table>
 
 
 
@@ -397,6 +409,116 @@ Summary:
 
 
 
+
+
+
+
+<!-- =========== FIELD SUMMARY =========== -->
+<table id="lfields" class="jd-sumtable"><tr><th colspan="12">Fields</th></tr>
+
+
+    
+      <tr class="alt-color api apilevel-" >
+          <td class="jd-typecol">
+          public
+          static
+          final
+          <a href="../../../com/caverock/androidsvg/SVGPositioning.html">SVGPositioning</a></td>
+          <td class="jd-linkcol"><a href="../../../com/caverock/androidsvg/SVGPositioning.html#BOTTOM">BOTTOM</a></td>
+          <td class="jd-descrcol" width="100%">Keep the document's aspect ratio, but scale it so that it fits neatly inside the viewport.</td>
+      </tr>
+      
+    
+      <tr class=" api apilevel-" >
+          <td class="jd-typecol">
+          public
+          static
+          final
+          <a href="../../../com/caverock/androidsvg/SVGPositioning.html">SVGPositioning</a></td>
+          <td class="jd-linkcol"><a href="../../../com/caverock/androidsvg/SVGPositioning.html#END">END</a></td>
+          <td class="jd-descrcol" width="100%">Keep the document's aspect ratio, but scale it so that it fits neatly inside the viewport.</td>
+      </tr>
+      
+    
+      <tr class="alt-color api apilevel-" >
+          <td class="jd-typecol">
+          public
+          static
+          final
+          <a href="../../../com/caverock/androidsvg/SVGPositioning.html">SVGPositioning</a></td>
+          <td class="jd-linkcol"><a href="../../../com/caverock/androidsvg/SVGPositioning.html#FULLSCREEN">FULLSCREEN</a></td>
+          <td class="jd-descrcol" width="100%">Keep the document's aspect ratio, but scale it so that it fills the entire viewport.</td>
+      </tr>
+      
+    
+      <tr class=" api apilevel-" >
+          <td class="jd-typecol">
+          public
+          static
+          final
+          <a href="../../../com/caverock/androidsvg/SVGPositioning.html">SVGPositioning</a></td>
+          <td class="jd-linkcol"><a href="../../../com/caverock/androidsvg/SVGPositioning.html#FULLSCREEN_START">FULLSCREEN_START</a></td>
+          <td class="jd-descrcol" width="100%">Keep the document's aspect ratio, but scale it so that it fills the entire viewport.</td>
+      </tr>
+      
+    
+      <tr class="alt-color api apilevel-" >
+          <td class="jd-typecol">
+          public
+          static
+          final
+          <a href="../../../com/caverock/androidsvg/SVGPositioning.html">SVGPositioning</a></td>
+          <td class="jd-linkcol"><a href="../../../com/caverock/androidsvg/SVGPositioning.html#LETTERBOX">LETTERBOX</a></td>
+          <td class="jd-descrcol" width="100%">Keep the document's aspect ratio, but scale it so that it fits neatly inside the viewport.</td>
+      </tr>
+      
+    
+      <tr class=" api apilevel-" >
+          <td class="jd-typecol">
+          public
+          static
+          final
+          <a href="../../../com/caverock/androidsvg/SVGPositioning.html">SVGPositioning</a></td>
+          <td class="jd-linkcol"><a href="../../../com/caverock/androidsvg/SVGPositioning.html#START">START</a></td>
+          <td class="jd-descrcol" width="100%">Keep the document's aspect ratio, but scale it so that it fits neatly inside the viewport.</td>
+      </tr>
+      
+    
+      <tr class="alt-color api apilevel-" >
+          <td class="jd-typecol">
+          public
+          static
+          final
+          <a href="../../../com/caverock/androidsvg/SVGPositioning.html">SVGPositioning</a></td>
+          <td class="jd-linkcol"><a href="../../../com/caverock/androidsvg/SVGPositioning.html#STRETCH">STRETCH</a></td>
+          <td class="jd-descrcol" width="100%">Stretch horizontally and vertically to fill the viewport.</td>
+      </tr>
+      
+    
+      <tr class=" api apilevel-" >
+          <td class="jd-typecol">
+          public
+          static
+          final
+          <a href="../../../com/caverock/androidsvg/SVGPositioning.html">SVGPositioning</a></td>
+          <td class="jd-linkcol"><a href="../../../com/caverock/androidsvg/SVGPositioning.html#TOP">TOP</a></td>
+          <td class="jd-descrcol" width="100%">Keep the document's aspect ratio, but scale it so that it fits neatly inside the viewport.</td>
+      </tr>
+      
+    
+      <tr class="alt-color api apilevel-" >
+          <td class="jd-typecol">
+          public
+          static
+          final
+          <a href="../../../com/caverock/androidsvg/SVGPositioning.html">SVGPositioning</a></td>
+          <td class="jd-linkcol"><a href="../../../com/caverock/androidsvg/SVGPositioning.html#UNSCALED">UNSCALED</a></td>
+          <td class="jd-descrcol" width="100%">Draw doucment at its natural position and scale.</td>
+      </tr>
+      
+    
+
+</table>
 
 
 
@@ -420,7 +542,7 @@ Summary:
             
         </td>
         <td class="jd-linkcol" width="100%">
-        <span class="sympad"><a href="../../../com/caverock/androidsvg/SVGExternalFileResolver.html#SVGExternalFileResolver()">SVGExternalFileResolver</a></span>()
+        <span class="sympad"><a href="../../../com/caverock/androidsvg/SVGPositioning.html#SVGPositioning(com.caverock.androidsvg.SVGPositioning.Alignment, com.caverock.androidsvg.SVGPositioning.Scale)">SVGPositioning</a></span>(<a href="../../../com/caverock/androidsvg/SVGPositioning.Alignment.html">SVGPositioning.Alignment</a> alignment, <a href="../../../com/caverock/androidsvg/SVGPositioning.Scale.html">SVGPositioning.Scale</a> scale)
         
   </td></tr>
 
@@ -449,46 +571,8 @@ Summary:
             boolean
         </td>
         <td class="jd-linkcol" width="100%">
-        <span class="sympad"><a href="../../../com/caverock/androidsvg/SVGExternalFileResolver.html#isFormatSupported(java.lang.String)">isFormatSupported</a></span>(<a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/String.html">String</a> mimeType)
+        <span class="sympad"><a href="../../../com/caverock/androidsvg/SVGPositioning.html#equals(java.lang.Object)">equals</a></span>(<a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/Object.html">Object</a> obj)
         
-        <div class="jd-descrdiv">Called by renderer to determine whether a particular format is supported.</div>
-  
-  </td></tr>
-
-
-	 
-    <tr class=" api apilevel-" >
-        <td class="jd-typecol">
-            
-            
-            
-            
-            
-            Typeface
-        </td>
-        <td class="jd-linkcol" width="100%">
-        <span class="sympad"><a href="../../../com/caverock/androidsvg/SVGExternalFileResolver.html#resolveFont(java.lang.String, int, java.lang.String)">resolveFont</a></span>(<a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/String.html">String</a> fontFamily, int fontWeight, <a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/String.html">String</a> fontStyle)
-        
-        <div class="jd-descrdiv">Called by renderer to resolve font references in &lt;text&gt; elements.</div>
-  
-  </td></tr>
-
-
-	 
-    <tr class="alt-color api apilevel-" >
-        <td class="jd-typecol">
-            
-            
-            
-            
-            
-            Bitmap
-        </td>
-        <td class="jd-linkcol" width="100%">
-        <span class="sympad"><a href="../../../com/caverock/androidsvg/SVGExternalFileResolver.html#resolveImage(java.lang.String)">resolveImage</a></span>(<a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/String.html">String</a> filename)
-        
-        <div class="jd-descrdiv">Called by renderer to resolve image file references in &lt;image&gt; elements.</div>
-  
   </td></tr>
 
 
@@ -702,6 +786,315 @@ From class
 <!-- Fields -->
 
 
+<!-- ========= FIELD DETAIL ======== -->
+<h2>Fields</h2>
+
+
+
+
+<a id="BOTTOM"></a>
+
+<div class="jd-details api apilevel-"> 
+    <h4 class="jd-details-title">
+      <span class="normal">
+        public 
+        static 
+        final 
+        <a href="../../../com/caverock/androidsvg/SVGPositioning.html">SVGPositioning</a>
+      </span>
+        BOTTOM
+    </h4>
+      <div class="api-level">
+        
+
+
+        
+  
+
+      </div>
+    <div class="jd-details-descr">
+      
+  <div class="jd-tagdata jd-tagdescr"><p>Keep the document's aspect ratio, but scale it so that it fits neatly inside the viewport.
+ <p>
+ The document will be positioned at the bottom of tall and narrow viewports, and at the centre of
+ short and wide viewports.
+</p></div>
+
+    
+    </div>
+</div>
+
+
+
+<a id="END"></a>
+
+<div class="jd-details api apilevel-"> 
+    <h4 class="jd-details-title">
+      <span class="normal">
+        public 
+        static 
+        final 
+        <a href="../../../com/caverock/androidsvg/SVGPositioning.html">SVGPositioning</a>
+      </span>
+        END
+    </h4>
+      <div class="api-level">
+        
+
+
+        
+  
+
+      </div>
+    <div class="jd-details-descr">
+      
+  <div class="jd-tagdata jd-tagdescr"><p>Keep the document's aspect ratio, but scale it so that it fits neatly inside the viewport.
+ <p>
+ The document will be positioned at the bottom of tall and narrow viewports, and at the right of short
+ and wide viewports.
+</p></div>
+
+    
+    </div>
+</div>
+
+
+
+<a id="FULLSCREEN"></a>
+
+<div class="jd-details api apilevel-"> 
+    <h4 class="jd-details-title">
+      <span class="normal">
+        public 
+        static 
+        final 
+        <a href="../../../com/caverock/androidsvg/SVGPositioning.html">SVGPositioning</a>
+      </span>
+        FULLSCREEN
+    </h4>
+      <div class="api-level">
+        
+
+
+        
+  
+
+      </div>
+    <div class="jd-details-descr">
+      
+  <div class="jd-tagdata jd-tagdescr"><p>Keep the document's aspect ratio, but scale it so that it fills the entire viewport.
+ This may result in some of the document falling outside the viewport.
+ <p>
+ The document will be positioned so that the centre of the document will always be visible,
+ but the edges of the document may not.
+</p></div>
+
+    
+    </div>
+</div>
+
+
+
+<a id="FULLSCREEN_START"></a>
+
+<div class="jd-details api apilevel-"> 
+    <h4 class="jd-details-title">
+      <span class="normal">
+        public 
+        static 
+        final 
+        <a href="../../../com/caverock/androidsvg/SVGPositioning.html">SVGPositioning</a>
+      </span>
+        FULLSCREEN_START
+    </h4>
+      <div class="api-level">
+        
+
+
+        
+  
+
+      </div>
+    <div class="jd-details-descr">
+      
+  <div class="jd-tagdata jd-tagdescr"><p>Keep the document's aspect ratio, but scale it so that it fills the entire viewport.
+ This may result in some of the document falling outside the viewport.
+ <p>
+ The document will be positioned so that the top left of the document will always be visible,
+ but the right hand or bottom edge may not.
+</p></div>
+
+    
+    </div>
+</div>
+
+
+
+<a id="LETTERBOX"></a>
+
+<div class="jd-details api apilevel-"> 
+    <h4 class="jd-details-title">
+      <span class="normal">
+        public 
+        static 
+        final 
+        <a href="../../../com/caverock/androidsvg/SVGPositioning.html">SVGPositioning</a>
+      </span>
+        LETTERBOX
+    </h4>
+      <div class="api-level">
+        
+
+
+        
+  
+
+      </div>
+    <div class="jd-details-descr">
+      
+  <div class="jd-tagdata jd-tagdescr"><p>Keep the document's aspect ratio, but scale it so that it fits neatly inside the viewport.
+ <p>
+ The document will be centred in the viewport and may have blank strips at either the top and
+ bottom of the viewport or at the sides. 
+</p></div>
+
+    
+    </div>
+</div>
+
+
+
+<a id="START"></a>
+
+<div class="jd-details api apilevel-"> 
+    <h4 class="jd-details-title">
+      <span class="normal">
+        public 
+        static 
+        final 
+        <a href="../../../com/caverock/androidsvg/SVGPositioning.html">SVGPositioning</a>
+      </span>
+        START
+    </h4>
+      <div class="api-level">
+        
+
+
+        
+  
+
+      </div>
+    <div class="jd-details-descr">
+      
+  <div class="jd-tagdata jd-tagdescr"><p>Keep the document's aspect ratio, but scale it so that it fits neatly inside the viewport.
+ <p>
+ The document will be positioned at the top of tall and narrow viewports, and at the left of short
+ and wide viewports.
+</p></div>
+
+    
+    </div>
+</div>
+
+
+
+<a id="STRETCH"></a>
+
+<div class="jd-details api apilevel-"> 
+    <h4 class="jd-details-title">
+      <span class="normal">
+        public 
+        static 
+        final 
+        <a href="../../../com/caverock/androidsvg/SVGPositioning.html">SVGPositioning</a>
+      </span>
+        STRETCH
+    </h4>
+      <div class="api-level">
+        
+
+
+        
+  
+
+      </div>
+    <div class="jd-details-descr">
+      
+  <div class="jd-tagdata jd-tagdescr"><p>Stretch horizontally and vertically to fill the viewport.
+</p></div>
+
+    
+    </div>
+</div>
+
+
+
+<a id="TOP"></a>
+
+<div class="jd-details api apilevel-"> 
+    <h4 class="jd-details-title">
+      <span class="normal">
+        public 
+        static 
+        final 
+        <a href="../../../com/caverock/androidsvg/SVGPositioning.html">SVGPositioning</a>
+      </span>
+        TOP
+    </h4>
+      <div class="api-level">
+        
+
+
+        
+  
+
+      </div>
+    <div class="jd-details-descr">
+      
+  <div class="jd-tagdata jd-tagdescr"><p>Keep the document's aspect ratio, but scale it so that it fits neatly inside the viewport.
+ <p>
+ The document will be positioned at the top of tall and narrow viewports, and at the centre of
+ short and wide viewports.
+</p></div>
+
+    
+    </div>
+</div>
+
+
+
+<a id="UNSCALED"></a>
+
+<div class="jd-details api apilevel-"> 
+    <h4 class="jd-details-title">
+      <span class="normal">
+        public 
+        static 
+        final 
+        <a href="../../../com/caverock/androidsvg/SVGPositioning.html">SVGPositioning</a>
+      </span>
+        UNSCALED
+    </h4>
+      <div class="api-level">
+        
+
+
+        
+  
+
+      </div>
+    <div class="jd-details-descr">
+      
+  <div class="jd-tagdata jd-tagdescr"><p>Draw doucment at its natural position and scale.
+</p></div>
+
+    
+    </div>
+</div>
+
+
+
+
 <!-- Public ctors -->
 
 
@@ -710,7 +1103,7 @@ From class
 
 
 
-<a id="SVGExternalFileResolver()"></a>
+<a id="SVGPositioning(com.caverock.androidsvg.SVGPositioning.Alignment, com.caverock.androidsvg.SVGPositioning.Scale)"></a>
 
 <div class="jd-details api apilevel-"> 
     <h4 class="jd-details-title">
@@ -722,8 +1115,8 @@ From class
          
         
       </span>
-      <span class="sympad">SVGExternalFileResolver</span>
-      <span class="normal">()</span>
+      <span class="sympad">SVGPositioning</span>
+      <span class="normal">(<a href="../../../com/caverock/androidsvg/SVGPositioning.Alignment.html">SVGPositioning.Alignment</a> alignment, <a href="../../../com/caverock/androidsvg/SVGPositioning.Scale.html">SVGPositioning.Scale</a> scale)</span>
     </h4>
       <div class="api-level">
         <div>
@@ -756,7 +1149,7 @@ From class
 
 
 
-<a id="isFormatSupported(java.lang.String)"></a>
+<a id="equals(java.lang.Object)"></a>
 
 <div class="jd-details api apilevel-"> 
     <h4 class="jd-details-title">
@@ -768,8 +1161,8 @@ From class
          
         boolean
       </span>
-      <span class="sympad">isFormatSupported</span>
-      <span class="normal">(<a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/String.html">String</a> mimeType)</span>
+      <span class="sympad">equals</span>
+      <span class="normal">(<a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/Object.html">Object</a> obj)</span>
     </h4>
       <div class="api-level">
         <div>
@@ -781,133 +1174,7 @@ From class
       </div>
     <div class="jd-details-descr">
       
-  <div class="jd-tagdata jd-tagdescr"><p>Called by renderer to determine whether a particular format is supported.  In particular,
- this method is used in &lt;switch&gt; elements when processing <code>requiredFormats</code>
- conditionals.</p></div>
-  <div class="jd-tagdata">
-      <h5 class="jd-tagtitle">Parameters</h5>
-      <table class="jd-tagtable">
-        <tr>
-          <th>mimeType</th>
-          <td>A MIME type (such as "image/jpeg").</td>
-        </tr>
-      </table>
-  </div>
-  <div class="jd-tagdata">
-      <h5 class="jd-tagtitle">Returns</h5>
-      <ul class="nolist"><li>true if your <code>resolveImage()</code> implementation supports this file format.
-</li></ul>
-  </div>
-
-    </div>
-</div>
-
-
-<a id="resolveFont(java.lang.String, int, java.lang.String)"></a>
-
-<div class="jd-details api apilevel-"> 
-    <h4 class="jd-details-title">
-      <span class="normal">
-        public 
-         
-         
-         
-         
-        Typeface
-      </span>
-      <span class="sympad">resolveFont</span>
-      <span class="normal">(<a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/String.html">String</a> fontFamily, int fontWeight, <a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/String.html">String</a> fontStyle)</span>
-    </h4>
-      <div class="api-level">
-        <div>
-
-</div>
-        
-  
-
-      </div>
-    <div class="jd-details-descr">
-      
-  <div class="jd-tagdata jd-tagdescr"><p>Called by renderer to resolve font references in &lt;text&gt; elements.
- <p>
- Return a <code>Typeface</code> instance, or null if you want the renderer to ignore
- this font and use the default Android font instead.
- <p>
- Note that AndroidSVG does not attempt to cache Typeface references.  If you want
- them cached, for speed or memory reasons, you should do so yourself.</p></div>
-  <div class="jd-tagdata">
-      <h5 class="jd-tagtitle">Parameters</h5>
-      <table class="jd-tagtable">
-        <tr>
-          <th>fontFamily</th>
-          <td>Font family as specified in a font-family style attribute.</td>
-        </tr>
-        <tr>
-          <th>fontWeight</th>
-          <td>Font weight as specified in a font-weight style attribute.</td>
-        </tr>
-        <tr>
-          <th>fontStyle</th>
-          <td>Font style as specified in a font-style style attribute.</td>
-        </tr>
-      </table>
-  </div>
-  <div class="jd-tagdata">
-      <h5 class="jd-tagtitle">Returns</h5>
-      <ul class="nolist"><li>an Android Typeface instance, or null
-</li></ul>
-  </div>
-
-    </div>
-</div>
-
-
-<a id="resolveImage(java.lang.String)"></a>
-
-<div class="jd-details api apilevel-"> 
-    <h4 class="jd-details-title">
-      <span class="normal">
-        public 
-         
-         
-         
-         
-        Bitmap
-      </span>
-      <span class="sympad">resolveImage</span>
-      <span class="normal">(<a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/String.html">String</a> filename)</span>
-    </h4>
-      <div class="api-level">
-        <div>
-
-</div>
-        
-  
-
-      </div>
-    <div class="jd-details-descr">
-      
-  <div class="jd-tagdata jd-tagdescr"><p>Called by renderer to resolve image file references in &lt;image&gt; elements.
- <p>
- Return a <code>Bitmap</code> instance, or null if you want the renderer to ignore
- this image.
- <p>
- Note that AndroidSVG does not attempt to cache Bitmap references.  If you want
- them cached, for speed or memory reasons, you should do so yourself.</p></div>
-  <div class="jd-tagdata">
-      <h5 class="jd-tagtitle">Parameters</h5>
-      <table class="jd-tagtable">
-        <tr>
-          <th>filename</th>
-          <td>the filename as provided in the xlink:href attribute of a &lt;image&gt; element.</td>
-        </tr>
-      </table>
-  </div>
-  <div class="jd-tagdata">
-      <h5 class="jd-tagtitle">Returns</h5>
-      <ul class="nolist"><li>an Android Bitmap object, or null if the image could not be found.
-</li></ul>
-  </div>
+  <div class="jd-tagdata jd-tagdescr"><p></p></div>
 
     </div>
 </div>

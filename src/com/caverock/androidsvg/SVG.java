@@ -296,7 +296,6 @@ public class SVG
     * @param widthInPixels the width of the initial viewport
     * @param heightInPixels the height of the initial viewport
     * @param positioning the method that should be used when calculating how to fit the document to the viewport.
-    * @param scale the degree of scaling to be applied to the document to fit the viewport. If null, the default of MEET will be used.
     * @return a Picture object suitable for later rendering using {@code Canvas.drawPicture()}.
     * @throws NullPointerException if positioning is null.
     */
@@ -509,7 +508,7 @@ public class SVG
    /**
     * Returns the contents of the &lt;title&gt; element in the SVG document.
     * 
-    * @return title contents if declared, otherwise an empty string.
+    * @return title contents if available, otherwise an empty string.
     */
    public String getDocumentTitle()
    {
@@ -520,7 +519,7 @@ public class SVG
    /**
     * Returns the contents of the &lt;desc&gt; element in the SVG document.
     * 
-    * @return desc contents if declared, otherwise an empty string.
+    * @return desc contents if available, otherwise an empty string.
     */
    public String getDocumentDescription()
    {
@@ -611,10 +610,9 @@ public class SVG
     * <p>
     * If the width or height cannot be determined, -1 will be returned.
     * 
-    * @param dpi the DPI value to use when converting real-world values such as "cm" (centimetres).
     * @return the aspect ratio as a width/height fraction, or -1 if the ratio cannot be determined.
     */
-   public float  getDocumentAspectRatio(float dpi)
+   public float  getDocumentAspectRatio()
    {
       if (this.rootElement == null)
          return -1f;
@@ -627,7 +625,7 @@ public class SVG
       {
          if (w.isZero() || h.isZero())
             return -1f;
-         return w.floatValue(dpi) / h.floatValue(dpi);
+         return w.floatValue(this.renderDPI) / h.floatValue(this.renderDPI);
       }
 
       // Otherwise, get the ratio from the viewBox

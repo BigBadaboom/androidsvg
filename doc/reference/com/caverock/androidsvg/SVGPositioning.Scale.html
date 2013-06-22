@@ -57,7 +57,7 @@
 <link rel="shortcut icon" type="image/x-icon" href="../../../favicon.ico" />
 <title>
 
-  SVGParseException
+  SVGPositioning.Scale
 
 
 | AndroidSVG
@@ -166,13 +166,13 @@
     <li><h2>Enums</h2>
       <ul>
           <li class="api apilevel-"><a href="../../../com/caverock/androidsvg/SVGPositioning.Alignment.html">SVGPositioning.Alignment</a></li>
-          <li class="api apilevel-"><a href="../../../com/caverock/androidsvg/SVGPositioning.Scale.html">SVGPositioning.Scale</a></li>
+          <li class="selected api apilevel-"><a href="../../../com/caverock/androidsvg/SVGPositioning.Scale.html">SVGPositioning.Scale</a></li>
       </ul>
     </li>
               
     <li><h2>Exceptions</h2>
       <ul>
-          <li class="selected api apilevel-"><a href="../../../com/caverock/androidsvg/SVGParseException.html">SVGParseException</a></li>
+          <li class="api apilevel-"><a href="../../../com/caverock/androidsvg/SVGParseException.html">SVGParseException</a></li>
       </ul>
     </li>
               
@@ -214,11 +214,6 @@
 
 
   
-  
-  
-  
-
-  
    
   
   
@@ -232,6 +227,13 @@
   
   
 
+  
+  
+  
+  
+
+  
+   
   
   
   
@@ -246,15 +248,18 @@ Summary:
 
 
 
-
-
-
-
-
-  <a href="#pubctors">Ctors</a>
+  <a href="#enumconstants">Enums</a>
   
 
 
+
+
+
+
+
+
+  &#124; <a href="#pubmethods">Methods</a>
+  
 
 
 
@@ -278,11 +283,11 @@ Summary:
 
 <div id="jd-header">
     public
-     
-     
+    static 
+    final 
     
-    class
-<h1>SVGParseException</h1>
+    enum
+<h1>SVGPositioning.Scale</h1>
 
 
 
@@ -291,11 +296,7 @@ Summary:
   
 
   
-  
-  
-
-  
-    extends <a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/Exception.html">Exception</a><br/>
+    extends <a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/Enum.html">Enum</a>&lt;E&nbsp;extends&nbsp;<a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/Enum.html">Enum</a>&lt;E&gt;&gt;<br/>
   
   
   
@@ -315,7 +316,7 @@ Summary:
 
     <tr>
          	
-        <td colspan="4" class="jd-inheritance-class-cell"><a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/Object.html">java.lang.Object</a></td>
+        <td colspan="3" class="jd-inheritance-class-cell"><a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/Object.html">java.lang.Object</a></td>
     </tr>
     
 
@@ -323,7 +324,7 @@ Summary:
         
             <td class="jd-inheritance-space">&nbsp;&nbsp;&nbsp;&#x21b3;</td>
          	
-        <td colspan="3" class="jd-inheritance-class-cell"><a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/Throwable.html">java.lang.Throwable</a></td>
+        <td colspan="2" class="jd-inheritance-class-cell"><a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/Enum.html">java.lang.Enum</a>&lt;E&nbsp;extends&nbsp;<a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/Enum.html">java.lang.Enum</a>&lt;E&gt;&gt;</td>
     </tr>
     
 
@@ -333,19 +334,7 @@ Summary:
         
             <td class="jd-inheritance-space">&nbsp;&nbsp;&nbsp;&#x21b3;</td>
          	
-        <td colspan="2" class="jd-inheritance-class-cell"><a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/Exception.html">java.lang.Exception</a></td>
-    </tr>
-    
-
-    <tr>
-        
-            <td class="jd-inheritance-space">&nbsp;</td>
-        
-            <td class="jd-inheritance-space">&nbsp;</td>
-        
-            <td class="jd-inheritance-space">&nbsp;&nbsp;&nbsp;&#x21b3;</td>
-         	
-        <td colspan="1" class="jd-inheritance-class-cell">com.caverock.androidsvg.SVGParseException</td>
+        <td colspan="1" class="jd-inheritance-class-cell">com.caverock.androidsvg.SVGPositioning.Scale</td>
     </tr>
     
 
@@ -361,7 +350,8 @@ Summary:
 
 
 <h2>Class Overview</h2>
-<p>Thrown by the parser if a problem is found in the SVG file.
+<p>Determine whether the scaled document fills the viewport entirely or is scaled to
+ fill the viewport without overflowing.
 </p>
 
 
@@ -400,6 +390,25 @@ Summary:
 
 
 
+<!-- =========== ENUM CONSTANT SUMMARY =========== -->
+<table id="enumconstants" class="jd-sumtable"><tr><th colspan="12">Enum Values</th></tr>
+
+    
+    <tr class="alt-color api apilevel-" >
+        <td class="jd-descrcol"><a href="../../../com/caverock/androidsvg/SVGPositioning.Scale.html">SVGPositioning.Scale</a>&nbsp;</td>
+        <td class="jd-linkcol">Meet&nbsp;</td>
+        <td class="jd-descrcol" width="100%">The document is scaled so that it is as large as possible without overflowing the viewport.&nbsp;</td>
+    </tr>
+    
+    
+    <tr class=" api apilevel-" >
+        <td class="jd-descrcol"><a href="../../../com/caverock/androidsvg/SVGPositioning.Scale.html">SVGPositioning.Scale</a>&nbsp;</td>
+        <td class="jd-linkcol">Slice&nbsp;</td>
+        <td class="jd-descrcol" width="100%">The document is scaled so that entirely fills the viewport.&nbsp;</td>
+    </tr>
+    
+    
+</table>
 
 
 
@@ -412,8 +421,14 @@ Summary:
 
 
 
-<!-- ======== CONSTRUCTOR SUMMARY ======== -->
-<table id="pubctors" class="jd-sumtable"><tr><th colspan="12">Public Constructors</th></tr>
+
+
+
+
+
+
+<!-- ========== METHOD SUMMARY =========== -->
+<table id="pubmethods" class="jd-sumtable"><tr><th colspan="12">Public Methods</th></tr>
 
 
 
@@ -423,12 +438,12 @@ Summary:
             
             
             
+            static
             
-            
-            
+            <a href="../../../com/caverock/androidsvg/SVGPositioning.Scale.html">SVGPositioning.Scale</a>
         </td>
         <td class="jd-linkcol" width="100%">
-        <span class="sympad"><a href="../../../com/caverock/androidsvg/SVGParseException.html#SVGParseException(java.lang.String)">SVGParseException</a></span>(<a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/String.html">String</a> msg)
+        <span class="sympad"><a href="../../../com/caverock/androidsvg/SVGPositioning.Scale.html#valueOf(java.lang.String)">valueOf</a></span>(<a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/String.html">String</a> name)
         
   </td></tr>
 
@@ -438,29 +453,13 @@ Summary:
         <td class="jd-typecol">
             
             
+            final
+            static
             
-            
-            
-            
+            <a href="../../../com/caverock/androidsvg/SVGPositioning.Scale.html">Scale[]</a>
         </td>
         <td class="jd-linkcol" width="100%">
-        <span class="sympad"><a href="../../../com/caverock/androidsvg/SVGParseException.html#SVGParseException(java.lang.String, java.lang.Throwable)">SVGParseException</a></span>(<a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/String.html">String</a> msg, <a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/Throwable.html">Throwable</a> cause)
-        
-  </td></tr>
-
-
-	 
-    <tr class="alt-color api apilevel-" >
-        <td class="jd-typecol">
-            
-            
-            
-            
-            
-            
-        </td>
-        <td class="jd-linkcol" width="100%">
-        <span class="sympad"><a href="../../../com/caverock/androidsvg/SVGParseException.html#SVGParseException(java.lang.Throwable)">SVGParseException</a></span>(<a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/Throwable.html">Throwable</a> cause)
+        <span class="sympad"><a href="../../../com/caverock/androidsvg/SVGPositioning.Scale.html#values()">values</a></span>()
         
   </td></tr>
 
@@ -474,33 +473,27 @@ Summary:
 
 
 
-
-
-
-
 <!-- ========== METHOD SUMMARY =========== -->
 <table id="inhmethods" class="jd-sumtable"><tr><th>
   <a href="#" class="toggle-all" onclick="return toggleAllInherited(this, null)">[Expand]</a>
   <div style="clear:left;">Inherited Methods</div></th></tr>
 
 
-
-
 <tr class="api apilevel-" >
 <td colspan="12">
-  <a href="#" onclick="return toggleInherited(this, null)" id="inherited-methods-java.lang.Throwable" class="jd-expando-trigger closed"
-          ><img id="inherited-methods-java.lang.Throwable-trigger"
+  <a href="#" onclick="return toggleInherited(this, null)" id="inherited-methods-java.lang.Enum" class="jd-expando-trigger closed"
+          ><img id="inherited-methods-java.lang.Enum-trigger"
           src="../../../../assets/images/triangle-closed.png"
           class="jd-expando-trigger-img" /></a>
 From class
 
-  <a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/Throwable.html">java.lang.Throwable</a>
+  <a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/Enum.html">java.lang.Enum</a>
 
-<div id="inherited-methods-java.lang.Throwable">
-  <div id="inherited-methods-java.lang.Throwable-list"
+<div id="inherited-methods-java.lang.Enum">
+  <div id="inherited-methods-java.lang.Enum-list"
         class="jd-inheritedlinks">
   </div>
-  <div id="inherited-methods-java.lang.Throwable-summary" style="display: none;">
+  <div id="inherited-methods-java.lang.Enum-summary" style="display: none;">
     <table class="jd-sumtable-expando">
     
 
@@ -513,10 +506,10 @@ From class
             
             
             
-            <a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/Throwable.html">Throwable</a>
+            int
         </td>
         <td class="jd-linkcol" width="100%">
-        <span class="sympad">fillInStackTrace</span>()
+        <span class="sympad">compareTo</span>(<a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/Object.html">Object</a> arg0)
         
   </td></tr>
 
@@ -526,13 +519,13 @@ From class
         <td class="jd-typecol">
             
             
+            final
             
             
-            
-            <a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/Throwable.html">Throwable</a>
+            int
         </td>
         <td class="jd-linkcol" width="100%">
-        <span class="sympad">getCause</span>()
+        <span class="sympad">compareTo</span>(E arg0)
         
   </td></tr>
 
@@ -542,29 +535,61 @@ From class
         <td class="jd-typecol">
             
             
+            final
             
+            
+            boolean
+        </td>
+        <td class="jd-linkcol" width="100%">
+        <span class="sympad">equals</span>(<a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/Object.html">Object</a> arg0)
+        
+  </td></tr>
+
+
+	 
+    <tr class=" api apilevel-" >
+        <td class="jd-typecol">
+            
+            
+            final
+            
+            
+            <a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/Class.html">Class</a>&lt;E&gt;
+        </td>
+        <td class="jd-linkcol" width="100%">
+        <span class="sympad">getDeclaringClass</span>()
+        
+  </td></tr>
+
+
+	 
+    <tr class="alt-color api apilevel-" >
+        <td class="jd-typecol">
+            
+            
+            final
+            
+            
+            int
+        </td>
+        <td class="jd-linkcol" width="100%">
+        <span class="sympad">hashCode</span>()
+        
+  </td></tr>
+
+
+	 
+    <tr class=" api apilevel-" >
+        <td class="jd-typecol">
+            
+            
+            final
             
             
             <a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/String.html">String</a>
         </td>
         <td class="jd-linkcol" width="100%">
-        <span class="sympad">getLocalizedMessage</span>()
-        
-  </td></tr>
-
-
-	 
-    <tr class=" api apilevel-" >
-        <td class="jd-typecol">
-            
-            
-            
-            
-            
-            <a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/String.html">String</a>
-        </td>
-        <td class="jd-linkcol" width="100%">
-        <span class="sympad">getMessage</span>()
+        <span class="sympad">name</span>()
         
   </td></tr>
 
@@ -574,99 +599,19 @@ From class
         <td class="jd-typecol">
             
             
+            final
             
             
-            
-            <a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/StackTraceElement.html">StackTraceElement[]</a>
+            int
         </td>
         <td class="jd-linkcol" width="100%">
-        <span class="sympad">getStackTrace</span>()
+        <span class="sympad">ordinal</span>()
         
   </td></tr>
 
 
 	 
     <tr class=" api apilevel-" >
-        <td class="jd-typecol">
-            
-            
-            
-            
-            
-            <a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/Throwable.html">Throwable</a>
-        </td>
-        <td class="jd-linkcol" width="100%">
-        <span class="sympad">initCause</span>(<a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/Throwable.html">Throwable</a> arg0)
-        
-  </td></tr>
-
-
-	 
-    <tr class="alt-color api apilevel-" >
-        <td class="jd-typecol">
-            
-            
-            
-            
-            
-            void
-        </td>
-        <td class="jd-linkcol" width="100%">
-        <span class="sympad">printStackTrace</span>(<a href="http://download.oracle.com/javase/6/docs/api/index.html?java/io/PrintWriter.html">PrintWriter</a> arg0)
-        
-  </td></tr>
-
-
-	 
-    <tr class=" api apilevel-" >
-        <td class="jd-typecol">
-            
-            
-            
-            
-            
-            void
-        </td>
-        <td class="jd-linkcol" width="100%">
-        <span class="sympad">printStackTrace</span>(<a href="http://download.oracle.com/javase/6/docs/api/index.html?java/io/PrintStream.html">PrintStream</a> arg0)
-        
-  </td></tr>
-
-
-	 
-    <tr class="alt-color api apilevel-" >
-        <td class="jd-typecol">
-            
-            
-            
-            
-            
-            void
-        </td>
-        <td class="jd-linkcol" width="100%">
-        <span class="sympad">printStackTrace</span>()
-        
-  </td></tr>
-
-
-	 
-    <tr class=" api apilevel-" >
-        <td class="jd-typecol">
-            
-            
-            
-            
-            
-            void
-        </td>
-        <td class="jd-linkcol" width="100%">
-        <span class="sympad">setStackTrace</span>(<a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/StackTraceElement.html">StackTraceElement[]</a> arg0)
-        
-  </td></tr>
-
-
-	 
-    <tr class="alt-color api apilevel-" >
         <td class="jd-typecol">
             
             
@@ -677,6 +622,22 @@ From class
         </td>
         <td class="jd-linkcol" width="100%">
         <span class="sympad">toString</span>()
+        
+  </td></tr>
+
+
+	 
+    <tr class="alt-color api apilevel-" >
+        <td class="jd-typecol">
+            
+            
+            
+            static
+            &lt;T&nbsp;extends&nbsp;<a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/Enum.html">Enum</a>&lt;T&gt;&gt;
+            T
+        </td>
+        <td class="jd-linkcol" width="100%">
+        <span class="sympad">valueOf</span>(<a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/Class.html">Class</a>&lt;T&gt; arg0, <a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/String.html">String</a> arg1)
         
   </td></tr>
 
@@ -859,6 +820,48 @@ From class
 
 
 
+
+<tr class="api apilevel-" >
+<td colspan="12">
+  <a href="#" onclick="return toggleInherited(this, null)" id="inherited-methods-java.lang.Comparable" class="jd-expando-trigger closed"
+          ><img id="inherited-methods-java.lang.Comparable-trigger"
+          src="../../../../assets/images/triangle-closed.png"
+          class="jd-expando-trigger-img" /></a>
+From interface
+
+  <a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/Comparable.html">java.lang.Comparable</a>
+
+<div id="inherited-methods-java.lang.Comparable">
+  <div id="inherited-methods-java.lang.Comparable-list"
+        class="jd-inheritedlinks">
+  </div>
+  <div id="inherited-methods-java.lang.Comparable-summary" style="display: none;">
+    <table class="jd-sumtable-expando">
+    
+
+
+	 
+    <tr class="alt-color api apilevel-" >
+        <td class="jd-typecol">
+            abstract
+            
+            
+            
+            
+            int
+        </td>
+        <td class="jd-linkcol" width="100%">
+        <span class="sympad">compareTo</span>(T arg0)
+        
+  </td></tr>
+
+
+</table>
+  </div>
+</div>
+</td></tr>
+
+
 </table>
 
 
@@ -879,6 +882,77 @@ From class
 <!-- Enum Values -->
 
 
+<!-- ========= ENUM CONSTANTS DETAIL ======== -->
+<h2>Enum Values</h2>
+
+
+
+
+<a id="Meet"></a>
+
+<div class="jd-details api apilevel-"> 
+    <h4 class="jd-details-title">
+      <span class="normal">
+        public 
+        static 
+        final 
+        <a href="../../../com/caverock/androidsvg/SVGPositioning.Scale.html">SVGPositioning.Scale</a>
+      </span>
+        Meet
+    </h4>
+      <div class="api-level">
+        
+
+
+        
+  
+
+      </div>
+    <div class="jd-details-descr">
+      
+  <div class="jd-tagdata jd-tagdescr"><p>The document is scaled so that it is as large as possible without overflowing the viewport.
+ There may be blank areas on one or more sides of the document.
+</p></div>
+
+    
+    </div>
+</div>
+
+
+
+<a id="Slice"></a>
+
+<div class="jd-details api apilevel-"> 
+    <h4 class="jd-details-title">
+      <span class="normal">
+        public 
+        static 
+        final 
+        <a href="../../../com/caverock/androidsvg/SVGPositioning.Scale.html">SVGPositioning.Scale</a>
+      </span>
+        Slice
+    </h4>
+      <div class="api-level">
+        
+
+
+        
+  
+
+      </div>
+    <div class="jd-details-descr">
+      
+  <div class="jd-tagdata jd-tagdescr"><p>The document is scaled so that entirely fills the viewport. That means that some of the
+ document may fall outside the viewport and will not be rendered.
+</p></div>
+
+    
+    </div>
+</div>
+
+
+
+
 <!-- Constants -->
 
 
@@ -886,106 +960,6 @@ From class
 
 
 <!-- Public ctors -->
-
-
-<!-- ========= CONSTRUCTOR DETAIL ======== -->
-<h2>Public Constructors</h2>
-
-
-
-<a id="SVGParseException(java.lang.String)"></a>
-
-<div class="jd-details api apilevel-"> 
-    <h4 class="jd-details-title">
-      <span class="normal">
-        public 
-         
-         
-         
-         
-        
-      </span>
-      <span class="sympad">SVGParseException</span>
-      <span class="normal">(<a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/String.html">String</a> msg)</span>
-    </h4>
-      <div class="api-level">
-        <div>
-
-</div>
-        
-  
-
-      </div>
-    <div class="jd-details-descr">
-      
-  <div class="jd-tagdata jd-tagdescr"><p></p></div>
-
-    </div>
-</div>
-
-
-<a id="SVGParseException(java.lang.String, java.lang.Throwable)"></a>
-
-<div class="jd-details api apilevel-"> 
-    <h4 class="jd-details-title">
-      <span class="normal">
-        public 
-         
-         
-         
-         
-        
-      </span>
-      <span class="sympad">SVGParseException</span>
-      <span class="normal">(<a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/String.html">String</a> msg, <a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/Throwable.html">Throwable</a> cause)</span>
-    </h4>
-      <div class="api-level">
-        <div>
-
-</div>
-        
-  
-
-      </div>
-    <div class="jd-details-descr">
-      
-  <div class="jd-tagdata jd-tagdescr"><p></p></div>
-
-    </div>
-</div>
-
-
-<a id="SVGParseException(java.lang.Throwable)"></a>
-
-<div class="jd-details api apilevel-"> 
-    <h4 class="jd-details-title">
-      <span class="normal">
-        public 
-         
-         
-         
-         
-        
-      </span>
-      <span class="sympad">SVGParseException</span>
-      <span class="normal">(<a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/Throwable.html">Throwable</a> cause)</span>
-    </h4>
-      <div class="api-level">
-        <div>
-
-</div>
-        
-  
-
-      </div>
-    <div class="jd-details-descr">
-      
-  <div class="jd-tagdata jd-tagdescr"><p></p></div>
-
-    </div>
-</div>
-
-
 
 
 
@@ -996,6 +970,73 @@ From class
 
 <!-- ========= METHOD DETAIL ======== -->
 <!-- Public methdos -->
+
+<h2>Public Methods</h2>
+
+
+
+<a id="valueOf(java.lang.String)"></a>
+
+<div class="jd-details api apilevel-"> 
+    <h4 class="jd-details-title">
+      <span class="normal">
+        public 
+        static 
+         
+         
+         
+        <a href="../../../com/caverock/androidsvg/SVGPositioning.Scale.html">SVGPositioning.Scale</a>
+      </span>
+      <span class="sympad">valueOf</span>
+      <span class="normal">(<a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/String.html">String</a> name)</span>
+    </h4>
+      <div class="api-level">
+        <div>
+
+</div>
+        
+  
+
+      </div>
+    <div class="jd-details-descr">
+      
+  <div class="jd-tagdata jd-tagdescr"><p></p></div>
+
+    </div>
+</div>
+
+
+<a id="values()"></a>
+
+<div class="jd-details api apilevel-"> 
+    <h4 class="jd-details-title">
+      <span class="normal">
+        public 
+        static 
+        final 
+         
+         
+        <a href="../../../com/caverock/androidsvg/SVGPositioning.Scale.html">Scale[]</a>
+      </span>
+      <span class="sympad">values</span>
+      <span class="normal">()</span>
+    </h4>
+      <div class="api-level">
+        <div>
+
+</div>
+        
+  
+
+      </div>
+    <div class="jd-details-descr">
+      
+  <div class="jd-tagdata jd-tagdescr"><p></p></div>
+
+    </div>
+</div>
+
+
 
 
 

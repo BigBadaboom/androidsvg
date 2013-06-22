@@ -158,14 +158,15 @@
           <li class="api apilevel-"><a href="../../../com/caverock/androidsvg/SimpleAssetResolver.html">SimpleAssetResolver</a></li>
           <li class="selected api apilevel-"><a href="../../../com/caverock/androidsvg/SVG.html">SVG</a></li>
           <li class="api apilevel-"><a href="../../../com/caverock/androidsvg/SVGExternalFileResolver.html">SVGExternalFileResolver</a></li>
+          <li class="api apilevel-"><a href="../../../com/caverock/androidsvg/SVGPositioning.html">SVGPositioning</a></li>
       </ul>
     </li>
               
               
     <li><h2>Enums</h2>
       <ul>
-          <li class="api apilevel-"><a href="../../../com/caverock/androidsvg/SVG.AspectRatioAlignment.html">SVG.AspectRatioAlignment</a></li>
-          <li class="api apilevel-"><a href="../../../com/caverock/androidsvg/SVG.AspectRatioScale.html">SVG.AspectRatioScale</a></li>
+          <li class="api apilevel-"><a href="../../../com/caverock/androidsvg/SVGPositioning.Alignment.html">SVGPositioning.Alignment</a></li>
+          <li class="api apilevel-"><a href="../../../com/caverock/androidsvg/SVGPositioning.Scale.html">SVGPositioning.Scale</a></li>
       </ul>
     </li>
               
@@ -225,8 +226,6 @@
 
 Summary:
 
-  <a href="#nestedclasses">Nested Classes</a>
-  
 
 
 
@@ -237,8 +236,7 @@ Summary:
 
 
 
-
-  &#124; <a href="#pubmethods">Methods</a>
+  <a href="#pubmethods">Methods</a>
   
 
 
@@ -341,7 +339,7 @@ Summary:
  Canvas  bmcanvas = new Canvas(newBM);
  bmcanvas.drawRGB(255, 255, 255);  // Clear bg to white
 
- svg.renderToCanvas(bmcanvas, null, getResources().getDisplayMetrics().xdpi, SVG.AspectRatioAlignment.xMidYMid, true);
+ svg.renderToCanvas(bmcanvas, null, SVGPositioning.LETTERBOX);
  </code>
  </pre>
  
@@ -374,40 +372,6 @@ Summary:
 
 <h2>Summary</h2>
 
-
-
-<!-- ======== NESTED CLASS SUMMARY ======== -->
-<table id="nestedclasses" class="jd-sumtable"><tr><th colspan="12">Nested Classes</th></tr>
-
-
-  
-    <tr class="alt-color api apilevel-" >
-      <td class="jd-typecol">
-        
-         
-         
-        
-        enum</td>
-      <td class="jd-linkcol"><a href="../../../com/caverock/androidsvg/SVG.AspectRatioAlignment.html">SVG.AspectRatioAlignment</a></td>
-      <td class="jd-descrcol" width="100%">Determines how the document is to me positioned relative to the viewport (normally the canvas).&nbsp;</td>
-    </tr>
-    
-    
-    <tr class=" api apilevel-" >
-      <td class="jd-typecol">
-        
-         
-         
-        
-        enum</td>
-      <td class="jd-linkcol"><a href="../../../com/caverock/androidsvg/SVG.AspectRatioScale.html">SVG.AspectRatioScale</a></td>
-      <td class="jd-descrcol" width="100%">Determine whether the scaled document fills the viewport entirely or is scaled to
- fill the viewport without overflowing.&nbsp;</td>
-    </tr>
-    
-    
-
-</table>
 
 
 
@@ -450,7 +414,7 @@ Summary:
             float
         </td>
         <td class="jd-linkcol" width="100%">
-        <span class="sympad"><a href="../../../com/caverock/androidsvg/SVG.html#getDocumentAspectRatio(float)">getDocumentAspectRatio</a></span>(float dpi)
+        <span class="sympad"><a href="../../../com/caverock/androidsvg/SVG.html#getDocumentAspectRatio()">getDocumentAspectRatio</a></span>()
         
         <div class="jd-descrdiv">Returns the aspect ratio of the document as a width/height fraction.</div>
   
@@ -703,7 +667,7 @@ Summary:
             void
         </td>
         <td class="jd-linkcol" width="100%">
-        <span class="sympad"><a href="../../../com/caverock/androidsvg/SVG.html#renderToCanvas(android.graphics.Canvas, android.graphics.RectF, com.caverock.androidsvg.SVG.AspectRatioAlignment, com.caverock.androidsvg.SVG.AspectRatioScale)">renderToCanvas</a></span>(Canvas canvas, RectF viewPort, <a href="../../../com/caverock/androidsvg/SVG.AspectRatioAlignment.html">SVG.AspectRatioAlignment</a> alignment, <a href="../../../com/caverock/androidsvg/SVG.AspectRatioScale.html">SVG.AspectRatioScale</a> scale)
+        <span class="sympad"><a href="../../../com/caverock/androidsvg/SVG.html#renderToCanvas(android.graphics.Canvas, android.graphics.RectF)">renderToCanvas</a></span>(Canvas canvas, RectF viewPort)
         
         <div class="jd-descrdiv">Renders this SVG document to a Canvas object.</div>
   
@@ -721,7 +685,7 @@ Summary:
             void
         </td>
         <td class="jd-linkcol" width="100%">
-        <span class="sympad"><a href="../../../com/caverock/androidsvg/SVG.html#renderToCanvas(android.graphics.Canvas, android.graphics.RectF)">renderToCanvas</a></span>(Canvas canvas, RectF viewPort)
+        <span class="sympad"><a href="../../../com/caverock/androidsvg/SVG.html#renderToCanvas(android.graphics.Canvas, android.graphics.RectF, com.caverock.androidsvg.SVGPositioning)">renderToCanvas</a></span>(Canvas canvas, RectF viewPort, <a href="../../../com/caverock/androidsvg/SVGPositioning.html">SVGPositioning</a> positioning)
         
         <div class="jd-descrdiv">Renders this SVG document to a Canvas object.</div>
   
@@ -757,7 +721,7 @@ Summary:
             Picture
         </td>
         <td class="jd-linkcol" width="100%">
-        <span class="sympad"><a href="../../../com/caverock/androidsvg/SVG.html#renderToPicture(int, int, com.caverock.androidsvg.SVG.AspectRatioAlignment, com.caverock.androidsvg.SVG.AspectRatioScale)">renderToPicture</a></span>(int widthInPixels, int heightInPixels, <a href="../../../com/caverock/androidsvg/SVG.AspectRatioAlignment.html">SVG.AspectRatioAlignment</a> alignment, <a href="../../../com/caverock/androidsvg/SVG.AspectRatioScale.html">SVG.AspectRatioScale</a> scale)
+        <span class="sympad"><a href="../../../com/caverock/androidsvg/SVG.html#renderToPicture(int, int, com.caverock.androidsvg.SVGPositioning)">renderToPicture</a></span>(int widthInPixels, int heightInPixels, <a href="../../../com/caverock/androidsvg/SVGPositioning.html">SVGPositioning</a> positioning)
         
         <div class="jd-descrdiv">Renders this SVG document to a Picture object.</div>
   
@@ -856,24 +820,6 @@ Summary:
 
 	 
     <tr class=" api apilevel-" >
-        <td class="jd-typecol">
-            
-            
-            
-            
-            
-            Picture
-        </td>
-        <td class="jd-linkcol" width="100%">
-        <span class="sympad"><a href="../../../com/caverock/androidsvg/SVG.html#renderViewToPicture(java.lang.String, int, int, java.lang.Float)">renderViewToPicture</a></span>(<a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/String.html">String</a> viewId, int widthInPixels, int heightInPixels, <a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/Float.html">Float</a> defaultDPI)
-        
-        <div class="jd-descrdiv">Renders this SVG document to a Picture object using the specified view defined in the document.</div>
-  
-  </td></tr>
-
-
-	 
-    <tr class="alt-color api apilevel-" >
         <td class="jd-typecol">
             
             
@@ -1116,7 +1062,7 @@ From class
 
 
 
-<a id="getDocumentAspectRatio(float)"></a>
+<a id="getDocumentAspectRatio()"></a>
 
 <div class="jd-details api apilevel-"> 
     <h4 class="jd-details-title">
@@ -1129,7 +1075,7 @@ From class
         float
       </span>
       <span class="sympad">getDocumentAspectRatio</span>
-      <span class="normal">(float dpi)</span>
+      <span class="normal">()</span>
     </h4>
       <div class="api-level">
         <div>
@@ -1149,15 +1095,6 @@ From class
  being used.
  <p>
  If the width or height cannot be determined, -1 will be returned.</p></div>
-  <div class="jd-tagdata">
-      <h5 class="jd-tagtitle">Parameters</h5>
-      <table class="jd-tagtable">
-        <tr>
-          <th>dpi</th>
-          <td>the DPI value to use when converting real-world values such as "cm" (centimetres).</td>
-        </tr>
-      </table>
-  </div>
   <div class="jd-tagdata">
       <h5 class="jd-tagtitle">Returns</h5>
       <ul class="nolist"><li>the aspect ratio as a width/height fraction, or -1 if the ratio cannot be determined.
@@ -1196,7 +1133,7 @@ From class
   <div class="jd-tagdata jd-tagdescr"><p>Returns the contents of the &lt;desc&gt; element in the SVG document.</p></div>
   <div class="jd-tagdata">
       <h5 class="jd-tagtitle">Returns</h5>
-      <ul class="nolist"><li>desc contents if declared, otherwise an empty string.
+      <ul class="nolist"><li>desc contents if available, otherwise an empty string.
 </li></ul>
   </div>
 
@@ -1319,7 +1256,7 @@ From class
   <div class="jd-tagdata jd-tagdescr"><p>Returns the contents of the &lt;title&gt; element in the SVG document.</p></div>
   <div class="jd-tagdata">
       <h5 class="jd-tagtitle">Returns</h5>
-      <ul class="nolist"><li>title contents if declared, otherwise an empty string.
+      <ul class="nolist"><li>title contents if available, otherwise an empty string.
 </li></ul>
   </div>
 
@@ -1758,77 +1695,6 @@ From class
 </div>
 
 
-<a id="renderToCanvas(android.graphics.Canvas, android.graphics.RectF, com.caverock.androidsvg.SVG.AspectRatioAlignment, com.caverock.androidsvg.SVG.AspectRatioScale)"></a>
-
-<div class="jd-details api apilevel-"> 
-    <h4 class="jd-details-title">
-      <span class="normal">
-        public 
-         
-         
-         
-         
-        void
-      </span>
-      <span class="sympad">renderToCanvas</span>
-      <span class="normal">(Canvas canvas, RectF viewPort, <a href="../../../com/caverock/androidsvg/SVG.AspectRatioAlignment.html">SVG.AspectRatioAlignment</a> alignment, <a href="../../../com/caverock/androidsvg/SVG.AspectRatioScale.html">SVG.AspectRatioScale</a> scale)</span>
-    </h4>
-      <div class="api-level">
-        <div>
-
-</div>
-        
-  
-
-      </div>
-    <div class="jd-details-descr">
-      
-  <div class="jd-tagdata jd-tagdescr"><p>Renders this SVG document to a Canvas object.
- <p>
- The <code>defaultDPI</code> (dots per inch) parameter tells the renderer what DPI to use when
- calculating the size of any real world units that appear in the file. An example would be
- "20mm".  The default for most desktop SVG renderers is 96, matching the DPI of a standard
- desktop monitor. You can choose to use this value, or supply the DPI of your device if you wish.
- <p>
- Note that the file itself could override the DPI value you supply anyway.  For example, if
- your file's root &lt;svg&gt; element was defined as follows:
- <pre>
- <code>&lt;svg width="8cm" height="8cm" viewBox="0 0 400 400"&gt;
- </code>
- </pre>
- AndroidSVG would use a DPI of 127 rather than any value you supply (50 pixels per centimetre
- corresponds to a DPI of 127).
- <p>
- The <code>alignment</code> and <code>scale</code> parameters control how the document is positioned within the
- <code>viewPort</code>. See the definition for <code><a href="../../../com/caverock/androidsvg/SVG.AspectRatioAlignment.html">SVG.AspectRatioAlignment</a></code> and <code><a href="../../../com/caverock/androidsvg/SVG.AspectRatioScale.html">SVG.AspectRatioScale</a></code>
- for more information.</p></div>
-  <div class="jd-tagdata">
-      <h5 class="jd-tagtitle">Parameters</h5>
-      <table class="jd-tagtable">
-        <tr>
-          <th>canvas</th>
-          <td>the canvas to which the document should be rendered.</td>
-        </tr>
-        <tr>
-          <th>viewPort</th>
-          <td>the bounds of the area on the canvas you want the SVG rendered, or null for the whole canvas.</td>
-        </tr>
-        <tr>
-          <th>alignment</th>
-          <td>the type of alignment desired when calculating how to fit the document to the viewport. If null, the default xMidYMid will be used.</td>
-        </tr>
-        <tr>
-          <th>scale</th>
-          <td>the degree of scaling to be applied to the document to fit the viewport. If null, the default of MEET will be used.
-</td>
-        </tr>
-      </table>
-  </div>
-
-    </div>
-</div>
-
-
 <a id="renderToCanvas(android.graphics.Canvas, android.graphics.RectF)"></a>
 
 <div class="jd-details api apilevel-"> 
@@ -1854,7 +1720,9 @@ From class
       </div>
     <div class="jd-details-descr">
       
-  <div class="jd-tagdata jd-tagdescr"><p>Renders this SVG document to a Canvas object.</p></div>
+  <div class="jd-tagdata jd-tagdescr"><p>Renders this SVG document to a Canvas object.
+ <p>
+ If the document has a viewBox, it will be scaled to the viewport using the SVGPositioning value LETTERBOX.</p></div>
   <div class="jd-tagdata">
       <h5 class="jd-tagtitle">Parameters</h5>
       <table class="jd-tagtable">
@@ -1865,6 +1733,72 @@ From class
         <tr>
           <th>viewPort</th>
           <td>the bounds of the area on the canvas you want the SVG rendered, or null for the whole canvas.
+</td>
+        </tr>
+      </table>
+  </div>
+
+    </div>
+</div>
+
+
+<a id="renderToCanvas(android.graphics.Canvas, android.graphics.RectF, com.caverock.androidsvg.SVGPositioning)"></a>
+
+<div class="jd-details api apilevel-"> 
+    <h4 class="jd-details-title">
+      <span class="normal">
+        public 
+         
+         
+         
+         
+        void
+      </span>
+      <span class="sympad">renderToCanvas</span>
+      <span class="normal">(Canvas canvas, RectF viewPort, <a href="../../../com/caverock/androidsvg/SVGPositioning.html">SVGPositioning</a> positioning)</span>
+    </h4>
+      <div class="api-level">
+        <div>
+
+</div>
+        
+  
+
+      </div>
+    <div class="jd-details-descr">
+      
+  <div class="jd-tagdata jd-tagdescr"><p>Renders this SVG document to a Canvas object.
+ <p>
+ The <code>defaultDPI</code> (dots per inch) parameter tells the renderer what DPI to use when
+ calculating the size of any real world units that appear in the file. An example would be
+ "20mm".  The default for most desktop SVG renderers is 96, matching the DPI of a standard
+ desktop monitor. You can choose to use this value, or supply the DPI of your device if you wish.
+ <p>
+ The <code>positioning</code> parameter controls how the document is positioned within the
+ <code>viewPort</code>. See the definition for <code><a href="../../../com/caverock/androidsvg/SVGPositioning.html">SVGPositioning</a></code> for more information.</p></div>
+  <div class="jd-tagdata">
+      <h5 class="jd-tagtitle">Parameters</h5>
+      <table class="jd-tagtable">
+        <tr>
+          <th>canvas</th>
+          <td>the canvas to which the document should be rendered.</td>
+        </tr>
+        <tr>
+          <th>viewPort</th>
+          <td>the bounds of the area on the canvas you want the SVG rendered, or null for the whole canvas.</td>
+        </tr>
+        <tr>
+          <th>positioning</th>
+          <td>the method that should be used when calculating how to fit the document to the viewport.</td>
+        </tr>
+      </table>
+  </div>
+  <div class="jd-tagdata">
+      <h5 class="jd-tagtitle">Throws</h5>
+      <table class="jd-tagtable">  
+        <tr>
+            <th><a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/NullPointerException.html">NullPointerException</a></td>
+            <td>if positioning is null.
 </td>
         </tr>
       </table>
@@ -1899,7 +1833,9 @@ From class
       </div>
     <div class="jd-details-descr">
       
-  <div class="jd-tagdata jd-tagdescr"><p>Renders this SVG document to a Canvas object.</p></div>
+  <div class="jd-tagdata jd-tagdescr"><p>Renders this SVG document to a Canvas object.
+ <p>
+ If the document has a viewBox, it will be scaled to the viewport using the SVGPositioning value LETTERBOX.</p></div>
   <div class="jd-tagdata">
       <h5 class="jd-tagtitle">Parameters</h5>
       <table class="jd-tagtable">
@@ -1915,7 +1851,7 @@ From class
 </div>
 
 
-<a id="renderToPicture(int, int, com.caverock.androidsvg.SVG.AspectRatioAlignment, com.caverock.androidsvg.SVG.AspectRatioScale)"></a>
+<a id="renderToPicture(int, int, com.caverock.androidsvg.SVGPositioning)"></a>
 
 <div class="jd-details api apilevel-"> 
     <h4 class="jd-details-title">
@@ -1928,7 +1864,7 @@ From class
         Picture
       </span>
       <span class="sympad">renderToPicture</span>
-      <span class="normal">(int widthInPixels, int heightInPixels, <a href="../../../com/caverock/androidsvg/SVG.AspectRatioAlignment.html">SVG.AspectRatioAlignment</a> alignment, <a href="../../../com/caverock/androidsvg/SVG.AspectRatioScale.html">SVG.AspectRatioScale</a> scale)</span>
+      <span class="normal">(int widthInPixels, int heightInPixels, <a href="../../../com/caverock/androidsvg/SVGPositioning.html">SVGPositioning</a> positioning)</span>
     </h4>
       <div class="api-level">
         <div>
@@ -1953,19 +1889,24 @@ From class
           <td>the height of the initial viewport</td>
         </tr>
         <tr>
-          <th>alignment</th>
-          <td>the type of alignment desired when calculating how to fit the document to the viewport. If null, the default xMidYMid will be used.</td>
-        </tr>
-        <tr>
-          <th>scale</th>
-          <td>the degree of scaling to be applied to the document to fit the viewport. If null, the default of MEET will be used.</td>
+          <th>positioning</th>
+          <td>the method that should be used when calculating how to fit the document to the viewport.</td>
         </tr>
       </table>
   </div>
   <div class="jd-tagdata">
       <h5 class="jd-tagtitle">Returns</h5>
-      <ul class="nolist"><li>a Picture object suitable for later rendering using <code>Canvas.drawPicture()</code>.
-</li></ul>
+      <ul class="nolist"><li>a Picture object suitable for later rendering using <code>Canvas.drawPicture()</code>.</li></ul>
+  </div>
+  <div class="jd-tagdata">
+      <h5 class="jd-tagtitle">Throws</h5>
+      <table class="jd-tagtable">  
+        <tr>
+            <th><a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/NullPointerException.html">NullPointerException</a></td>
+            <td>if positioning is null.
+</td>
+        </tr>
+      </table>
   </div>
 
     </div>
@@ -2000,7 +1941,9 @@ From class
   <div class="jd-tagdata jd-tagdescr"><p>Renders this SVG document to a Picture object.
  <p>
  An attempt will be made to determine a suitable initial viewport from the contents of the SVG file.
- If an appropriate viewport can't be determined, a default viewport of 512x512 will be used.</p></div>
+ If an appropriate viewport can't be determined, a default viewport of 512x512 will be used.
+ <p>
+ If the document has a viewBox, it will be scaled to the viewport using the SVGPositioning value LETTERBOX.</p></div>
   <div class="jd-tagdata">
       <h5 class="jd-tagtitle">Returns</h5>
       <ul class="nolist"><li>a Picture object suitable for later rendering using <code>Canvas.drawPicture()</code>
@@ -2036,7 +1979,9 @@ From class
       </div>
     <div class="jd-details-descr">
       
-  <div class="jd-tagdata jd-tagdescr"><p>Renders this SVG document to a Picture object.</p></div>
+  <div class="jd-tagdata jd-tagdescr"><p>Renders this SVG document to a Picture object.
+ <p>
+ If the document has a viewBox, it will be scaled to the viewport using the SVGPositioning value LETTERBOX.</p></div>
   <div class="jd-tagdata">
       <h5 class="jd-tagtitle">Parameters</h5>
       <table class="jd-tagtable">
@@ -2195,65 +2140,7 @@ From class
       
   <div class="jd-tagdata jd-tagdescr"><p>Renders this SVG document to a Picture object using the specified view defined in the document.
  <p>
- A View is an special element in a SVG documents that describes a rectangular area in the document.
- Calling this method with a <code>viewId</code> will result in the specified view being positioned and scaled
- to the viewport.  In other words, use <code><a href="../../../com/caverock/androidsvg/SVG.html#renderToPicture()">renderToPicture()</a></code> to render the whole document, or use this
- method instead to render just a part of it.</p></div>
-  <div class="jd-tagdata">
-      <h5 class="jd-tagtitle">Parameters</h5>
-      <table class="jd-tagtable">
-        <tr>
-          <th>viewId</th>
-          <td>the id of a view element in the document that defines which section of the document is to be visible.</td>
-        </tr>
-        <tr>
-          <th>widthInPixels</th>
-          <td>the width of the initial viewport.</td>
-        </tr>
-        <tr>
-          <th>heightInPixels</th>
-          <td>the height of the initial viewport.</td>
-        </tr>
-      </table>
-  </div>
-  <div class="jd-tagdata">
-      <h5 class="jd-tagtitle">Returns</h5>
-      <ul class="nolist"><li>a Picture object suitable for later rendering using <code>Canvas.drawPicture()</code>, or null if the viewId was not found.
-</li></ul>
-  </div>
-
-    </div>
-</div>
-
-
-<a id="renderViewToPicture(java.lang.String, int, int, java.lang.Float)"></a>
-
-<div class="jd-details api apilevel-"> 
-    <h4 class="jd-details-title">
-      <span class="normal">
-        public 
-         
-         
-         
-         
-        Picture
-      </span>
-      <span class="sympad">renderViewToPicture</span>
-      <span class="normal">(<a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/String.html">String</a> viewId, int widthInPixels, int heightInPixels, <a href="http://download.oracle.com/javase/6/docs/api/index.html?java/lang/Float.html">Float</a> defaultDPI)</span>
-    </h4>
-      <div class="api-level">
-        <div>
-
-</div>
-        
-  
-
-      </div>
-    <div class="jd-details-descr">
-      
-  <div class="jd-tagdata jd-tagdescr"><p>Renders this SVG document to a Picture object using the specified view defined in the document.
- <p>
- A View is an special element in a SVG documents that describes a rectangular area in the document.
+ A View is an special element in a SVG document that describes a rectangular area in the document.
  Calling this method with a <code>viewId</code> will result in the specified view being positioned and scaled
  to the viewport.  In other words, use <code><a href="../../../com/caverock/androidsvg/SVG.html#renderToPicture()">renderToPicture()</a></code> to render the whole document, or use this
  method instead to render just a part of it.</p></div>
@@ -2271,10 +2158,6 @@ From class
         <tr>
           <th>heightInPixels</th>
           <td>the height of the initial viewport</td>
-        </tr>
-        <tr>
-          <th>defaultDPI</th>
-          <td>the default DPI value to use when calculating the size of physical units such as cm, pt etc.</td>
         </tr>
       </table>
   </div>
