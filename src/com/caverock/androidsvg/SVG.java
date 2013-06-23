@@ -270,7 +270,7 @@ public class SVG
       }
       else
       {
-         return renderToPicture(DEFAULT_PICTURE_WIDTH, DEFAULT_PICTURE_HEIGHT, SVGPositioning.LETTERBOX);
+         return renderToPicture(DEFAULT_PICTURE_WIDTH, DEFAULT_PICTURE_HEIGHT);
       }
    }
 
@@ -286,7 +286,7 @@ public class SVG
     */
    public Picture  renderToPicture(int widthInPixels, int heightInPixels)
    {
-      return renderToPicture(widthInPixels, heightInPixels, SVGPositioning.LETTERBOX);
+      return renderToPictureInternal(widthInPixels, heightInPixels, null);
    }
 
 
@@ -297,13 +297,19 @@ public class SVG
     * @param heightInPixels the height of the initial viewport
     * @param positioning the method that should be used when calculating how to fit the document to the viewport.
     * @return a Picture object suitable for later rendering using {@code Canvas.drawPicture()}.
-    * @throws NullPointerException if positioning is null.
+    * @throws NullPointerException if {@code positioning} is null.
     */
    public Picture  renderToPicture(int widthInPixels, int heightInPixels, SVGPositioning positioning)
    {
       if (positioning == null)
-         throw new NullPointerException("Parameter 'positioning' must not be null");
+         throw new NullPointerException("Parameter 'positioning' cannot be null");
 
+      return renderToPictureInternal(widthInPixels, heightInPixels, positioning);
+   }
+
+
+   private Picture  renderToPictureInternal(int widthInPixels, int heightInPixels, SVGPositioning positioning)
+   {
       Picture  picture = new Picture();
       Canvas   canvas = picture.beginRecording(widthInPixels, heightInPixels);
       Box      viewPort = new Box(0f, 0f, (float) widthInPixels, (float) heightInPixels);
@@ -367,27 +373,27 @@ public class SVG
    /**
     * Renders this SVG document to a Canvas object.
     * <p>
-    * If the document has a viewBox, it will be scaled to the viewport using the SVGPositioning value LETTERBOX.
+    * No scaling will be applied unless the document itself requests it.
     * 
     * @param canvas the canvas to which the document should be rendered.
     */
    public void  renderToCanvas(Canvas canvas)
    {
-      renderToCanvas(canvas, null, SVGPositioning.LETTERBOX);
+      renderToCanvasInternal(canvas, null, null);
    }
 
 
    /**
     * Renders this SVG document to a Canvas object.
     * <p>
-    * If the document has a viewBox, it will be scaled to the viewport using the SVGPositioning value LETTERBOX.
+    * No scaling will be applied unless the document itself requests it.
     * 
     * @param canvas the canvas to which the document should be rendered.
     * @param viewPort the bounds of the area on the canvas you want the SVG rendered, or null for the whole canvas.
     */
    public void  renderToCanvas(Canvas canvas, RectF viewPort)
    {
-      renderToCanvas(canvas, viewPort, SVGPositioning.LETTERBOX);
+      renderToCanvasInternal(canvas, viewPort, null);
    }
 
 
@@ -401,18 +407,25 @@ public class SVG
     * <p>
     * The {@code positioning} parameter controls how the document is positioned within the
     * {@code viewPort}. See the definition for {@link SVGPositioning} for more information.
+    * The positioning parameter will override any value specified in the document.
     *  
     * @param canvas the canvas to which the document should be rendered.
     * @param viewPort the bounds of the area on the canvas you want the SVG rendered, or null for the whole canvas.
     * @param positioning the method that should be used when calculating how to fit the document to the viewport.
-    * @throws NullPointerException if positioning is null.
+    * @throws NullPointerException if {@code positioning} is null.
     */
    public void  renderToCanvas(Canvas canvas, RectF viewPort, SVGPositioning positioning)
    {
-      Box  svgViewPort;
-
       if (positioning == null)
-         throw new NullPointerException("Parameter 'positioning' must not be null");
+         throw new NullPointerException("Parameter 'positioning' cannot be null");
+
+      renderToCanvasInternal(canvas, viewPort, positioning);
+   }
+
+
+   private void  renderToCanvasInternal(Canvas canvas, RectF viewPort, SVGPositioning positioning)
+   {
+      Box  svgViewPort;
 
       if (viewPort != null) {
          svgViewPort = new Box(viewPort.left, viewPort.top, (viewPort.right - viewPort.left), (viewPort.bottom - viewPort.top));

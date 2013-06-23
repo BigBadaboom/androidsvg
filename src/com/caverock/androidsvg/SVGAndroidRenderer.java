@@ -87,7 +87,6 @@ public class SVGAndroidRenderer
 
    private Canvas   canvas;
    private Box      canvasViewPort;
-   private Box      initialViewPort;
    private float    dpi;    // dots per inch. Needed for accurate conversion of length values that have real world units, such as "cm".
    private boolean  directRenderingMode;
 
@@ -175,7 +174,7 @@ public class SVGAndroidRenderer
       // Initialise the style state properties like Paints etc using a fresh instance of Style
       updateStyle(state, Style.getDefaultStyle());
 
-      state.viewPort = this.initialViewPort;
+      state.viewPort = this.canvasViewPort;
       
       state.directRendering = this.directRenderingMode;
 
@@ -253,53 +252,16 @@ public class SVGAndroidRenderer
          return;
       }
 
+      // If no scaling specified, then try getting it from the root element.
+      if (positioning == null)
+         positioning = rootObj.positioning;
+
       // Initialise the state
       resetState();
 
-      // Determine the initial transform
-      this.initialViewPort = this.canvasViewPort;
-      if (viewBox != null)
-      {
-         canvas.concat(calculateViewBoxTransform(this.canvasViewPort, viewBox, positioning));
-         if (rootObj.viewBox != null)
-            state.viewPort = rootObj.viewBox;
-      }
-      else if (rootObj.viewBox != null)
-      {
-         canvas.concat(calculateViewBoxTransform(this.canvasViewPort, rootObj.viewBox, positioning));
-         state.viewPort = rootObj.viewBox;
-      }
-      else
-      {
-         if (positioning.getAlignment() != null)
-         {
-            // By specifying an alignment, the caller clearly intended that document be scaled
-            // to fit the viewport.  However the root element has no viewBox.
-            info("An alignment was specified, but it may have no effect because the document has no viewBox.");
-            // Document still may scale to fit the viewport if some or all of the elements use percent units.
-         }
-
-         // There is no viewBox, so need to determine the initial viewport some other way
-         float  viewportWidth = this.canvasViewPort.width;
-         float  viewportHeight = this.canvasViewPort.height;
-         if (rootObj.width != null) {
-            if (rootObj.width.unit == Unit.percent)
-               viewportWidth = rootObj.width.value * this.canvasViewPort.width / 100f;
-            else
-               viewportWidth = rootObj.width.floatValue(this.dpi);
-         }
-         if (rootObj.height != null) {
-            if (rootObj.height.unit == Unit.percent)
-               viewportHeight = rootObj.height.value * this.canvasViewPort.height / 100f;
-            else
-               viewportHeight = rootObj.height.floatValue(this.dpi);
-         }
-         this.initialViewPort = new Box(0, 0, viewportWidth, viewportHeight);
-         state.viewPort = this.initialViewPort;
-      }
-
       // Render the document
-      render(rootObj);
+      render(rootObj, rootObj.width, rootObj.height,
+             (viewBox != null) ? viewBox : rootObj.viewBox);
    }
 
 
@@ -542,6 +504,15 @@ public class SVGAndroidRenderer
    // When referenced by a <use> element, it's width and height take precedence over the ones in the <svg> object.
    private void render(SVG.Svg obj, SVG.Length width, SVG.Length height)
    {
+      render(obj, obj.width, obj.height, obj.viewBox);
+   }
+
+
+   // When called from renderDocument, we pass in our own viewBox.
+   // If rendering the whole document, it will be rootObj.viewBox.  When rendering a view
+   // it will be the viewBox from the <view> element.
+   private void render(SVG.Svg obj, SVG.Length width, SVG.Length height, Box viewBox)
+   {
       debug("Svg render");
 
       if ((width != null && width.isZero()) ||
@@ -557,24 +528,27 @@ public class SVGAndroidRenderer
          return;
 
       // <svg> elements establish a new viewport.
-      // But in the case of the root element, it has already been done for us.
-      if (obj.parent != null)
+      float  _x = 0f;
+      float  _y = 0f;
+      if (obj.parent != null)  // Ignore x,y for root <svg> element
       {
-         float  _x = (obj.x != null) ? obj.x.floatValueX(this) : 0f;
-         float  _y = (obj.y != null) ? obj.y.floatValueY(this) : 0f;
-         float  _w = (width != null) ? width.floatValueX(this) : state.viewPort.width;
-         float  _h = (height != null) ? height.floatValueX(this) : state.viewPort.height;
-         state.viewPort = new SVG.Box(_x, _y, _w, _h);
+         _x = (obj.x != null) ? obj.x.floatValueX(this) : 0f;
+         _y = (obj.y != null) ? obj.y.floatValueY(this) : 0f;
       }
+         
+      float  _w = (width != null) ? width.floatValue(this, state.viewPort.width) : state.viewPort.width;
+      float  _h = (height != null) ? height.floatValue(this, state.viewPort.height) : state.viewPort.height;
+      state.viewPort = new SVG.Box(_x, _y, _w, _h);
+
       if (!state.style.overflow) {
          setClipRect(state.viewPort.minX, state.viewPort.minY, state.viewPort.width, state.viewPort.height);
       }
 
       checkForClipPath(obj, state.viewPort);
 
-      if (obj.viewBox != null) {
-         canvas.concat(calculateViewBoxTransform(state.viewPort, obj.viewBox, positioning));
-         state.viewBox = obj.viewBox;
+      if (viewBox != null) {
+         canvas.concat(calculateViewBoxTransform(state.viewPort, viewBox, positioning));
+         state.viewBox = obj.viewBox;  // Note: definitely obj.viewBox here. Not viewBox parameter.
       }
 
       boolean  compositing = pushLayer();
@@ -1872,7 +1846,7 @@ public class SVGAndroidRenderer
    {
       Matrix m = new Matrix();
 
-      if (positioning.getAlignment() == null)
+      if (positioning == null || positioning.getAlignment() == null)
          return m;
 
       float  xScale = viewPort.width / viewBox.width;
@@ -2985,11 +2959,11 @@ public class SVGAndroidRenderer
       // Caller may also need a valid viewBox in order to calculate percentages
       newState.viewBox = document.getRootElement().viewBox;
       if (newState.viewBox == null) {
-         newState.viewBox = this.initialViewPort;
+         newState.viewBox = this.canvasViewPort;
       }
 
       // May also need a base viewport
-      newState.viewPort = this.initialViewPort;
+      newState.viewPort = this.canvasViewPort;
 
       // Set the directRendering mode based on what the current state has set
       newState.directRendering = state.directRendering;
