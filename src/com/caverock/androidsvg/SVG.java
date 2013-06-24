@@ -64,7 +64,7 @@ import com.caverock.androidsvg.CSSParser.Ruleset;
  * Canvas  bmcanvas = new Canvas(newBM);
  * bmcanvas.drawRGB(255, 255, 255);  // Clear bg to white
  *
- * svg.renderToCanvas(bmcanvas, null, SVGPositioning.LETTERBOX);
+ * svg.renderToCanvas(bmcanvas);
  * }
  * </pre>
  * 
@@ -241,8 +241,6 @@ public class SVG
     * <p>
     * An attempt will be made to determine a suitable initial viewport from the contents of the SVG file.
     * If an appropriate viewport can't be determined, a default viewport of 512x512 will be used.
-    * <p>
-    * If the document has a viewBox, it will be scaled to the viewport using the SVGPositioning value LETTERBOX.
     * 
     * @return a Picture object suitable for later rendering using {@code Canvas.drawPicture()}
     */
@@ -277,8 +275,6 @@ public class SVG
 
    /**
     * Renders this SVG document to a Picture object.
-    * <p>
-    * If the document has a viewBox, it will be scaled to the viewport using the SVGPositioning value LETTERBOX.
     * 
     * @param widthInPixels the width of the initial viewport
     * @param heightInPixels the height of the initial viewport
@@ -286,37 +282,13 @@ public class SVG
     */
    public Picture  renderToPicture(int widthInPixels, int heightInPixels)
    {
-      return renderToPictureInternal(widthInPixels, heightInPixels, null);
-   }
-
-
-   /**
-    * Renders this SVG document to a Picture object.
-    * 
-    * @param widthInPixels the width of the initial viewport
-    * @param heightInPixels the height of the initial viewport
-    * @param positioning the method that should be used when calculating how to fit the document to the viewport.
-    * @return a Picture object suitable for later rendering using {@code Canvas.drawPicture()}.
-    * @throws NullPointerException if {@code positioning} is null.
-    */
-   public Picture  renderToPicture(int widthInPixels, int heightInPixels, SVGPositioning positioning)
-   {
-      if (positioning == null)
-         throw new NullPointerException("Parameter 'positioning' cannot be null");
-
-      return renderToPictureInternal(widthInPixels, heightInPixels, positioning);
-   }
-
-
-   private Picture  renderToPictureInternal(int widthInPixels, int heightInPixels, SVGPositioning positioning)
-   {
       Picture  picture = new Picture();
       Canvas   canvas = picture.beginRecording(widthInPixels, heightInPixels);
       Box      viewPort = new Box(0f, 0f, (float) widthInPixels, (float) heightInPixels);
 
       SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, viewPort, this.renderDPI);
 
-      renderer.renderDocument(this, null, positioning, false);
+      renderer.renderDocument(this, null, false);
 
       picture.endRecording();
       return picture;
@@ -355,11 +327,9 @@ public class SVG
       Canvas   canvas = picture.beginRecording(widthInPixels, heightInPixels);
       Box      viewPort = new Box(0f, 0f, (float) widthInPixels, (float) heightInPixels);
 
-      SVGPositioning  positioning = (view.positioning != null) ? view.positioning : SVGPositioning.LETTERBOX;
-
       SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, viewPort, this.renderDPI);
 
-      renderer.renderDocument(this, view.viewBox, positioning, false);
+      renderer.renderDocument(this, view.viewBox, false);
 
       picture.endRecording();
       return picture;
@@ -371,59 +341,24 @@ public class SVG
 
 
    /**
-    * Renders this SVG document to a Canvas object.
-    * <p>
-    * No scaling will be applied unless the document itself requests it.
+    * Renders this SVG document to a Canvas object.  The full width and height of the canvas
+    * will be used as the viewport into which the document will be rendered.
     * 
     * @param canvas the canvas to which the document should be rendered.
     */
    public void  renderToCanvas(Canvas canvas)
    {
-      renderToCanvasInternal(canvas, null, null);
+      renderToCanvas(canvas, null);
    }
 
 
    /**
     * Renders this SVG document to a Canvas object.
-    * <p>
-    * No scaling will be applied unless the document itself requests it.
     * 
     * @param canvas the canvas to which the document should be rendered.
     * @param viewPort the bounds of the area on the canvas you want the SVG rendered, or null for the whole canvas.
     */
    public void  renderToCanvas(Canvas canvas, RectF viewPort)
-   {
-      renderToCanvasInternal(canvas, viewPort, null);
-   }
-
-
-   /**
-    * Renders this SVG document to a Canvas object.
-    * <p>
-    * The {@code defaultDPI} (dots per inch) parameter tells the renderer what DPI to use when
-    * calculating the size of any real world units that appear in the file. An example would be
-    * "20mm".  The default for most desktop SVG renderers is 96, matching the DPI of a standard
-    * desktop monitor. You can choose to use this value, or supply the DPI of your device if you wish.
-    * <p>
-    * The {@code positioning} parameter controls how the document is positioned within the
-    * {@code viewPort}. See the definition for {@link SVGPositioning} for more information.
-    * The positioning parameter will override any value specified in the document.
-    *  
-    * @param canvas the canvas to which the document should be rendered.
-    * @param viewPort the bounds of the area on the canvas you want the SVG rendered, or null for the whole canvas.
-    * @param positioning the method that should be used when calculating how to fit the document to the viewport.
-    * @throws NullPointerException if {@code positioning} is null.
-    */
-   public void  renderToCanvas(Canvas canvas, RectF viewPort, SVGPositioning positioning)
-   {
-      if (positioning == null)
-         throw new NullPointerException("Parameter 'positioning' cannot be null");
-
-      renderToCanvasInternal(canvas, viewPort, positioning);
-   }
-
-
-   private void  renderToCanvasInternal(Canvas canvas, RectF viewPort, SVGPositioning positioning)
    {
       Box  svgViewPort;
 
@@ -435,7 +370,7 @@ public class SVG
 
       SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, svgViewPort, this.renderDPI);
 
-      renderer.renderDocument(this, null, positioning, true);
+      renderer.renderDocument(this, null, true);
    }
 
 
@@ -495,11 +430,9 @@ public class SVG
          svgViewPort = new Box(0f, 0f, (float) canvas.getWidth(), (float) canvas.getHeight());
       }
 
-      SVGPositioning  positioning = (view.positioning != null) ? view.positioning : SVGPositioning.LETTERBOX;
-
       SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, svgViewPort, this.renderDPI);
 
-      renderer.renderDocument(this, view.viewBox, positioning, true);
+      renderer.renderDocument(this, view.viewBox, true);
    }
 
 
@@ -581,17 +514,51 @@ public class SVG
     * Returns the width of the document as specified in the SVG file.
     * <p>
     * If the width in the document is specified in pixels, that value will be returned.
-    * If the value is listed with a physical unit such as "cm", then the {@code dpi}
-    * parameter will be used to convert that value to pixels. If the width is missing,
-    * or in a form which can't be converted to pixels, such as "100%" for example, -1
-    * will be returned.
+    * If the value is listed with a physical unit such as "cm", then the current
+    * {@code RenderDPI} value will be used to convert that value to pixels. If the width
+    * is missing, or in a form which can't be converted to pixels, such as "100%" for
+    * example, -1 will be returned.
     *  
-    * @param dpi the DPI value to use when converting real-world values such as "cm" (centimetres).
     * @return the width in pixels, or -1 if there is no width available.
     */
-   public float  getDocumentWidth(float dpi)
+   public float  getDocumentWidth()
    {
-      return getDocumentDimensions(dpi).width;
+      return getDocumentDimensions(this.renderDPI).width;
+   }
+
+
+   /**
+    * Change the width of the document by altering the "width" attribute
+    * of the root {@code &lt;svg&gt;} element.
+    * 
+    * @param pixels The new value of width in pixels.
+    */
+   public void  setDocumentWidth(float pixels)
+   {
+      if (this.rootElement == null)
+         throw new IllegalArgumentException("SVG document is empty");
+
+      this.rootElement.width = new Length(pixels);
+   }
+
+
+   /**
+    * Change the width of the document by altering the "width" attribute
+    * of the root {@code &lt;svg&gt;} element.
+    * 
+    * @param value A valid SVG 'length' attribute, such as "100px" or "10cm".
+    * @throws SVGParseException if {@code value} cannot be parsed successfully.
+    */
+   public void  setDocumentWidth(String value) throws SVGParseException
+   {
+      if (this.rootElement == null)
+         throw new IllegalArgumentException("SVG document is empty");
+
+      try {
+        this.rootElement.width = SVGParser.parseLength(value);
+      } catch (SAXException e) {
+         throw new SVGParseException(e.getMessage());
+      }
    }
 
 
@@ -599,17 +566,95 @@ public class SVG
     * Returns the height of the document as specified in the SVG file.
     * <p>
     * If the height in the document is specified in pixels, that value will be returned.
-    * If the value is listed with a physical unit such as "cm", then the {@code dpi}
-    * parameter will be used to convert that value to pixels. If the height is missing,
-    * or in a form which can't be converted to pixels, such as "100%" for example, -1
-    * will be returned.
+    * If the value is listed with a physical unit such as "cm", then the current
+    * {@code RenderDPI} value will be used to convert that value to pixels. If the height
+    * is missing, or in a form which can't be converted to pixels, such as "100%" for
+    * example, -1 will be returned.
     *  
     * @param dpi the DPI value to use when converting real-world values such as "cm" (centimetres).
     * @return the height in pixels, or -1 if there is no height available.
     */
-   public float  getDocumentHeight(float dpi)
+   public float  getDocumentHeight()
    {
-      return getDocumentDimensions(dpi).height;
+      return getDocumentDimensions(this.renderDPI).height;
+   }
+
+
+   /**
+    * Change the height of the document by altering the "height" attribute
+    * of the root {@code &lt;svg&gt;} element.
+    * 
+    * @param pixels The new value of height in pixels.
+    */
+   public void  setDocumentHeight(float pixels)
+   {
+      if (this.rootElement == null)
+         throw new IllegalArgumentException("SVG document is empty");
+
+      this.rootElement.height = new Length(pixels);
+   }
+
+
+   /**
+    * Change the height of the document by altering the "height" attribute
+    * of the root {@code &lt;svg&gt;} element.
+    * 
+    * @param value A valid SVG 'length' attribute, such as "100px" or "10cm".
+    * @throws SVGParseException if {@code value} cannot be parsed successfully.
+    */
+   public void  setDocumentHeight(String value) throws SVGParseException
+   {
+      if (this.rootElement == null)
+         throw new IllegalArgumentException("SVG document is empty");
+
+      try {
+        this.rootElement.height = SVGParser.parseLength(value);
+      } catch (SAXException e) {
+         throw new SVGParseException(e.getMessage());
+      }
+   }
+
+
+   /**
+    * Change the document view box by altering the "viewBox" attribute
+    * of the root {@code &lt;svg&gt;} element.
+    * <p>
+    * The viewBox generally describes the bounding box dimensions of the
+    * document contents.  A valid viewBox is necessary if you want the
+    * document scaled to fit the canvas or viewport the document is to be
+    * rendered into.
+    * <p>
+    * By setting a viewBox that describes only a portion of the document,
+    * you can reproduce the effect of image sprites.
+    * 
+    * @param minX the left coordinate of the viewBox in pixels
+    * @param minY the top coordinate of the viewBox in pixels.
+    * @param width the width of the viewBox in pixels
+    * @param height the height of the viewBox in pixels
+    */
+   public void  setDocumentViewBox(float minX, float minY, float width, float height)
+   {
+      if (this.rootElement == null)
+         throw new IllegalArgumentException("SVG document is empty");
+
+      this.rootElement.viewBox = new Box(minX, minY, width, height);
+   }
+
+
+   /**
+    * Change the document positioning by altering the "preserveAspectRatio"
+    * attribute of the root {@code &lt;svg&gt;} element.  See the
+    * documentation for {@link SVGPositioning} for more information
+    * on how positioning works.
+    * 
+    * @param positioning the positioning decriptor.
+    */
+   public void  setDocumentPositioning(SVGPositioning positioning)
+   {
+      if (this.rootElement == null)
+         throw new IllegalArgumentException("SVG document is empty");
+
+      this.rootElement.positioning = positioning;
    }
 
 

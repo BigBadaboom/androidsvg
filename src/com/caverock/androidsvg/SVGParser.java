@@ -3089,7 +3089,7 @@ public class SVGParser extends DefaultHandler2
     * Parse an SVG 'Length' value (usually a coordinate).
     * Spec says: length ::= number ("em" | "ex" | "px" | "in" | "cm" | "mm" | "pt" | "pc" | "%")?
     */
-   private static Length  parseLength(String val) throws SAXException
+   protected static Length  parseLength(String val) throws SAXException
    {
       if (val.length() == 0)
          throw new SAXException("Invalid length value (empty string)");

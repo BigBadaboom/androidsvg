@@ -240,7 +240,10 @@ public class SVGAndroidRenderer
    }
 
 
-   protected void  renderDocument(SVG document, Box viewBox, SVGPositioning positioning, boolean directRenderingMode)
+   /*
+    * Render the whole document.
+    */
+   protected void  renderDocument(SVG document, Box viewBox, boolean directRenderingMode)
    {
       this.document = document;
       this.directRenderingMode = directRenderingMode;
@@ -251,10 +254,6 @@ public class SVGAndroidRenderer
          warn("Nothing to render. Document is empty.");
          return;
       }
-
-      // If no scaling specified, then try getting it from the root element.
-      if (positioning == null)
-         positioning = rootObj.positioning;
 
       // Initialise the state
       resetState();
