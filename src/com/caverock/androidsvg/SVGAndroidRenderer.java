@@ -504,7 +504,7 @@ public class SVGAndroidRenderer
    // When referenced by a <use> element, it's width and height take precedence over the ones in the <svg> object.
    private void render(SVG.Svg obj, SVG.Length width, SVG.Length height)
    {
-      render(obj, obj.width, obj.height, obj.viewBox);
+      render(obj, width, height, obj.viewBox);
    }
 
 
