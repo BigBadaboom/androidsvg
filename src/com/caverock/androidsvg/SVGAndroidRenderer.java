@@ -535,8 +535,9 @@ public class SVGAndroidRenderer
          _y = (obj.y != null) ? obj.y.floatValueY(this) : 0f;
       }
          
-      float  _w = (width != null) ? width.floatValue(this, state.viewPort.width) : state.viewPort.width;
-      float  _h = (height != null) ? height.floatValue(this, state.viewPort.height) : state.viewPort.height;
+      Box  viewPortUser = getCurrentViewPortInUserUnits();
+      float  _w = (width != null) ? width.floatValueX(this) : viewPortUser.width;  // default 100%
+      float  _h = (height != null) ? height.floatValueY(this) : viewPortUser.height;
       state.viewPort = new SVG.Box(_x, _y, _w, _h);
 
       if (!state.style.overflow) {
