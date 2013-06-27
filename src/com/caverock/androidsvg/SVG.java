@@ -363,7 +363,7 @@ public class SVG
       Box  svgViewPort;
 
       if (viewPort != null) {
-         svgViewPort = new Box(viewPort.left, viewPort.top, (viewPort.right - viewPort.left), (viewPort.bottom - viewPort.top));
+         svgViewPort = Box.fromLimits(viewPort.left, viewPort.top, viewPort.right, viewPort.bottom);
       } else {
          svgViewPort = new Box(0f, 0f, (float) canvas.getWidth(), (float) canvas.getHeight());
       }
@@ -425,7 +425,7 @@ public class SVG
       Box  svgViewPort;
 
       if (viewPort != null) {
-         svgViewPort = new Box(viewPort.left, viewPort.top, (viewPort.right - viewPort.left), (viewPort.bottom - viewPort.top));
+         svgViewPort = Box.fromLimits(viewPort.left, viewPort.top, viewPort.right, viewPort.bottom);
       } else {
          svgViewPort = new Box(0f, 0f, (float) canvas.getWidth(), (float) canvas.getHeight());
       }
@@ -455,9 +455,13 @@ public class SVG
     * Returns the contents of the &lt;title&gt; element in the SVG document.
     * 
     * @return title contents if available, otherwise an empty string.
+    * @throws IllegalArgumentException if there is no current SVG document loaded.
     */
    public String getDocumentTitle()
    {
+      if (this.rootElement == null)
+         throw new IllegalArgumentException("SVG document is empty");
+
       return title;
    }
 
@@ -466,9 +470,13 @@ public class SVG
     * Returns the contents of the &lt;desc&gt; element in the SVG document.
     * 
     * @return desc contents if available, otherwise an empty string.
+    * @throws IllegalArgumentException if there is no current SVG document loaded.
     */
    public String getDocumentDescription()
    {
+      if (this.rootElement == null)
+         throw new IllegalArgumentException("SVG document is empty");
+
       return desc;
    }
 
@@ -477,11 +485,13 @@ public class SVG
     * Returns the SVG version number as provided in the root &lt;svg&gt; tag of the document.
     * 
     * @return the version string if declared, otherwise an empty string.
+    * @throws IllegalArgumentException if there is no current SVG document loaded.
     */
    public String getDocumentSVGVersion()
    {
-      if (rootElement == null)
-         return null;
+      if (this.rootElement == null)
+         throw new IllegalArgumentException("SVG document is empty");
+
       return rootElement.version;
    }
 
@@ -489,12 +499,16 @@ public class SVG
    /**
     * Returns a list of ids for all &lt;view&gt; elements in this SVG document.
     * <p>
-    * The returned view ids could be used when calling and of the {@code renderToXForView()} methods.
+    * The returned view ids could be used when calling and of the {@code renderViewToX()} methods.
     * 
     * @return the list of id strings.
+    * @throws IllegalArgumentException if there is no current SVG document loaded.
     */
    public Set<String> getViewList()
    {
+      if (this.rootElement == null)
+         throw new IllegalArgumentException("SVG document is empty");
+
       List<SvgObject>  viewElems = getElementsByTagName(View.class);
 
       Set<String>  viewIds = new HashSet<String>(viewElems.size());
@@ -520,9 +534,13 @@ public class SVG
     * example, -1 will be returned.
     *  
     * @return the width in pixels, or -1 if there is no width available.
+    * @throws IllegalArgumentException if there is no current SVG document loaded.
     */
    public float  getDocumentWidth()
    {
+      if (this.rootElement == null)
+         throw new IllegalArgumentException("SVG document is empty");
+
       return getDocumentDimensions(this.renderDPI).width;
    }
 
@@ -532,6 +550,7 @@ public class SVG
     * of the root {@code &lt;svg&gt;} element.
     * 
     * @param pixels The new value of width in pixels.
+    * @throws IllegalArgumentException if there is no current SVG document loaded.
     */
    public void  setDocumentWidth(float pixels)
    {
@@ -548,6 +567,7 @@ public class SVG
     * 
     * @param value A valid SVG 'length' attribute, such as "100px" or "10cm".
     * @throws SVGParseException if {@code value} cannot be parsed successfully.
+    * @throws IllegalArgumentException if there is no current SVG document loaded.
     */
    public void  setDocumentWidth(String value) throws SVGParseException
    {
@@ -573,9 +593,13 @@ public class SVG
     *  
     * @param dpi the DPI value to use when converting real-world values such as "cm" (centimetres).
     * @return the height in pixels, or -1 if there is no height available.
+    * @throws IllegalArgumentException if there is no current SVG document loaded.
     */
    public float  getDocumentHeight()
    {
+      if (this.rootElement == null)
+         throw new IllegalArgumentException("SVG document is empty");
+
       return getDocumentDimensions(this.renderDPI).height;
    }
 
@@ -585,6 +609,7 @@ public class SVG
     * of the root {@code &lt;svg&gt;} element.
     * 
     * @param pixels The new value of height in pixels.
+    * @throws IllegalArgumentException if there is no current SVG document loaded.
     */
    public void  setDocumentHeight(float pixels)
    {
@@ -601,6 +626,7 @@ public class SVG
     * 
     * @param value A valid SVG 'length' attribute, such as "100px" or "10cm".
     * @throws SVGParseException if {@code value} cannot be parsed successfully.
+    * @throws IllegalArgumentException if there is no current SVG document loaded.
     */
    public void  setDocumentHeight(String value) throws SVGParseException
    {
@@ -631,6 +657,7 @@ public class SVG
     * @param minY the top coordinate of the viewBox in pixels.
     * @param width the width of the viewBox in pixels
     * @param height the height of the viewBox in pixels
+    * @throws IllegalArgumentException if there is no current SVG document loaded.
     */
    public void  setDocumentViewBox(float minX, float minY, float width, float height)
    {
@@ -642,12 +669,31 @@ public class SVG
 
 
    /**
+    * Returns the viewBox attribute of the current SVG document.
+    * 
+    * @return the document's viewBox attribute as a RectF object, or null if not set.
+    * @throws IllegalArgumentException if there is no current SVG document loaded.
+    */
+   public RectF  getDocumentViewBox()
+   {
+      if (this.rootElement == null)
+         throw new IllegalArgumentException("SVG document is empty");
+
+      if (this.rootElement.viewBox == null)
+         return null;
+
+      return this.rootElement.viewBox.toRectF();       
+   }
+
+
+   /**
     * Change the document positioning by altering the "preserveAspectRatio"
     * attribute of the root {@code &lt;svg&gt;} element.  See the
     * documentation for {@link SVGPositioning} for more information
     * on how positioning works.
     * 
-    * @param positioning the positioning decriptor.
+    * @param positioning the positioning descriptor.
+    * @throws IllegalArgumentException if there is no current SVG document loaded.
     */
    public void  setDocumentPositioning(SVGPositioning positioning)
    {
@@ -655,6 +701,25 @@ public class SVG
          throw new IllegalArgumentException("SVG document is empty");
 
       this.rootElement.positioning = positioning;
+   }
+
+
+   /**
+    * Return the "preserveAspectRatio" attribute of the root {@code &lt;svg&gt;}
+    * element in the form of an {@code SVGPositioning} object.
+    * 
+    * @return the document positioning, or null if not set.
+    * @throws IllegalArgumentException if there is no current SVG document loaded.
+    */
+   public SVGPositioning  getDocumentPositioning()
+   {
+      if (this.rootElement == null)
+         throw new IllegalArgumentException("SVG document is empty");
+
+      if (this.rootElement.positioning == null)
+         return null;
+
+      return this.rootElement.positioning;
    }
 
 
@@ -669,11 +734,12 @@ public class SVG
     * If the width or height cannot be determined, -1 will be returned.
     * 
     * @return the aspect ratio as a width/height fraction, or -1 if the ratio cannot be determined.
+    * @throws IllegalArgumentException if there is no current SVG document loaded.
     */
    public float  getDocumentAspectRatio()
    {
       if (this.rootElement == null)
-         return -1f;
+         throw new IllegalArgumentException("SVG document is empty");
 
       Length  w = this.rootElement.width;
       Length  h = this.rootElement.height;
@@ -727,9 +793,6 @@ public class SVG
 
    private Box  getDocumentDimensions(float dpi)
    {
-      if (this.rootElement == null)
-         return new Box(-1,-1,-1,-1);
-
       Length  w = this.rootElement.width;
       Length  h = this.rootElement.height;
       
