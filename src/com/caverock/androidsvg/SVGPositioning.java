@@ -3,7 +3,7 @@ package com.caverock.androidsvg;
 /**
  * The SVGPositioning class tells the renderer how to scale and position the
  * SVG document in the current viewport.  It is roughly equivalent to the
- * {@code preserveAspectRatio} attribute of an {@code &lt;svg&gt;} element. 
+ * {@code preserveAspectRatio} attribute of an {@code <svg>} element. 
  * <p>
  * In order for scaling to happen, the SVG document must have a viewBox attribute set.
  * For example:

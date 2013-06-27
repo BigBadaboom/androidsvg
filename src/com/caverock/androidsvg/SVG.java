@@ -62,7 +62,7 @@ import com.caverock.androidsvg.CSSParser.Ruleset;
  *
  * Bitmap  newBM = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
  * Canvas  bmcanvas = new Canvas(newBM);
- * bmcanvas.drawRGB(255, 255, 255);  // Clear bg to white
+ * bmcanvas.drawRGB(255, 255, 255);  // Clear background to white
  *
  * svg.renderToCanvas(bmcanvas);
  * }
@@ -382,7 +382,7 @@ public class SVG
     * to the viewport.  In other words, use {@link #renderToPicture()} to render the whole document, or use this
     * method instead to render just a part of it.
     * <p>
-    * If the &lt;view&gt; could not be found, nothing will be drawn.
+    * If the {@code <view>} could not be found, nothing will be drawn.
     *
     * @param viewId the id of a view element in the document that defines which section of the document is to be visible.
     * @param canvas the canvas to which the document should be rendered.
@@ -401,7 +401,7 @@ public class SVG
     * to the viewport.  In other words, use {@link #renderToPicture()} to render the whole document, or use this
     * method instead to render just a part of it.
     * <p>
-    * If the &lt;view&gt; could not be found, nothing will be drawn.
+    * If the {@code <view>} could not be found, nothing will be drawn.
     * 
     * @param viewId the id of a view element in the document that defines which section of the document is to be visible.
     * @param canvas the canvas to which the document should be rendered.
@@ -452,7 +452,7 @@ public class SVG
 
 
    /**
-    * Returns the contents of the &lt;title&gt; element in the SVG document.
+    * Returns the contents of the {@code <title>} element in the SVG document.
     * 
     * @return title contents if available, otherwise an empty string.
     * @throws IllegalArgumentException if there is no current SVG document loaded.
@@ -467,7 +467,7 @@ public class SVG
 
 
    /**
-    * Returns the contents of the &lt;desc&gt; element in the SVG document.
+    * Returns the contents of the {@code <desc>} element in the SVG document.
     * 
     * @return desc contents if available, otherwise an empty string.
     * @throws IllegalArgumentException if there is no current SVG document loaded.
@@ -482,7 +482,7 @@ public class SVG
 
 
    /**
-    * Returns the SVG version number as provided in the root &lt;svg&gt; tag of the document.
+    * Returns the SVG version number as provided in the root {@code <svg>} tag of the document.
     * 
     * @return the version string if declared, otherwise an empty string.
     * @throws IllegalArgumentException if there is no current SVG document loaded.
@@ -497,7 +497,7 @@ public class SVG
 
 
    /**
-    * Returns a list of ids for all &lt;view&gt; elements in this SVG document.
+    * Returns a list of ids for all {@code <view>} elements in this SVG document.
     * <p>
     * The returned view ids could be used when calling and of the {@code renderViewToX()} methods.
     * 
@@ -547,7 +547,7 @@ public class SVG
 
    /**
     * Change the width of the document by altering the "width" attribute
-    * of the root {@code &lt;svg&gt;} element.
+    * of the root {@code <svg>} element.
     * 
     * @param pixels The new value of width in pixels.
     * @throws IllegalArgumentException if there is no current SVG document loaded.
@@ -563,7 +563,7 @@ public class SVG
 
    /**
     * Change the width of the document by altering the "width" attribute
-    * of the root {@code &lt;svg&gt;} element.
+    * of the root {@code <svg>} element.
     * 
     * @param value A valid SVG 'length' attribute, such as "100px" or "10cm".
     * @throws SVGParseException if {@code value} cannot be parsed successfully.
@@ -591,7 +591,6 @@ public class SVG
     * is missing, or in a form which can't be converted to pixels, such as "100%" for
     * example, -1 will be returned.
     *  
-    * @param dpi the DPI value to use when converting real-world values such as "cm" (centimetres).
     * @return the height in pixels, or -1 if there is no height available.
     * @throws IllegalArgumentException if there is no current SVG document loaded.
     */
@@ -606,7 +605,7 @@ public class SVG
 
    /**
     * Change the height of the document by altering the "height" attribute
-    * of the root {@code &lt;svg&gt;} element.
+    * of the root {@code <svg>} element.
     * 
     * @param pixels The new value of height in pixels.
     * @throws IllegalArgumentException if there is no current SVG document loaded.
@@ -622,7 +621,7 @@ public class SVG
 
    /**
     * Change the height of the document by altering the "height" attribute
-    * of the root {@code &lt;svg&gt;} element.
+    * of the root {@code <svg>} element.
     * 
     * @param value A valid SVG 'length' attribute, such as "100px" or "10cm".
     * @throws SVGParseException if {@code value} cannot be parsed successfully.
@@ -643,7 +642,7 @@ public class SVG
 
    /**
     * Change the document view box by altering the "viewBox" attribute
-    * of the root {@code &lt;svg&gt;} element.
+    * of the root {@code <svg>} element.
     * <p>
     * The viewBox generally describes the bounding box dimensions of the
     * document contents.  A valid viewBox is necessary if you want the
@@ -671,7 +670,7 @@ public class SVG
    /**
     * Returns the viewBox attribute of the current SVG document.
     * 
-    * @return the document's viewBox attribute as a RectF object, or null if not set.
+    * @return the document's viewBox attribute as a {@code android.graphics.RectF} object, or null if not set.
     * @throws IllegalArgumentException if there is no current SVG document loaded.
     */
    public RectF  getDocumentViewBox()
@@ -688,7 +687,7 @@ public class SVG
 
    /**
     * Change the document positioning by altering the "preserveAspectRatio"
-    * attribute of the root {@code &lt;svg&gt;} element.  See the
+    * attribute of the root {@code <svg>} element.  See the
     * documentation for {@link SVGPositioning} for more information
     * on how positioning works.
     * 
@@ -705,8 +704,8 @@ public class SVG
 
 
    /**
-    * Return the "preserveAspectRatio" attribute of the root {@code &lt;svg&gt;}
-    * element in the form of an {@code SVGPositioning} object.
+    * Return the "preserveAspectRatio" attribute of the root {@code <svg>}
+    * element in the form of an {@link SVGPositioning} object.
     * 
     * @return the document positioning, or null if not set.
     * @throws IllegalArgumentException if there is no current SVG document loaded.

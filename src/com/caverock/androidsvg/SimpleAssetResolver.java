@@ -13,7 +13,7 @@ import android.util.Log;
 
 
 /**
- * A sample implementation of SVGExternalFileResolver that retrieves files from
+ * A sample implementation of {@link SVGExternalFileResolver} that retrieves files from
  * an application's "assets" folder.
  */
 
