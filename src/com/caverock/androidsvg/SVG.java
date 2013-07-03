@@ -984,7 +984,7 @@ public class SVG
       public Float      viewportFillOpacity;
       
       public VectorEffect  vectorEffect;
-
+      
 
       public static final int  FONT_WEIGHT_NORMAL = 400;
       public static final int  FONT_WEIGHT_BOLD = 700;
@@ -1376,6 +1376,7 @@ public class SVG
    protected static class SvgElementBase extends SvgObject
    {
       public String        id = null;
+      public Boolean       spacePreserve = null;
       public Style         baseStyle = null;   // style defined by explicit style attributes in the element (eg. fill="black")  
       public Style         style = null;       // style expressed in a 'style' attribute (eg. style="fill:black")
       public List<String>  classNames = null;  // contents of the 'class' attribute
@@ -1608,10 +1609,16 @@ public class SVG
    }
 
 
+   // A root text container such as <text> or <textArea>
+   protected interface  TextRoot
+   {
+   }
+   
+
    protected interface  TextChild
    {
-      public void  setTextRoot(Text obj);
-      public Text  getTextRoot();
+      public void      setTextRoot(TextRoot obj);
+      public TextRoot  getTextRoot();
    }
    
 
@@ -1637,7 +1644,7 @@ public class SVG
    }
 
 
-   protected static class Text extends TextPositionedContainer implements HasTransform
+   protected static class Text extends TextPositionedContainer implements TextRoot, HasTransform
    {
       public Matrix  transform;
 
@@ -1648,12 +1655,12 @@ public class SVG
 
    protected static class TSpan extends TextPositionedContainer implements TextChild
    {
-      private Text  textRoot;
+      private TextRoot  textRoot;
 
       @Override
-      public void  setTextRoot(Text obj) { this.textRoot = obj; }
+      public void  setTextRoot(TextRoot obj) { this.textRoot = obj; }
       @Override
-      public Text  getTextRoot() { return this.textRoot; }
+      public TextRoot  getTextRoot() { return this.textRoot; }
    }
 
 
@@ -1661,7 +1668,7 @@ public class SVG
    {
       public String  text;
 
-      private Text   textRoot;
+      private TextRoot   textRoot;
       
       public TextSequence(String text)
       {
@@ -1674,9 +1681,9 @@ public class SVG
       }
 
       @Override
-      public void  setTextRoot(Text obj) { this.textRoot = obj; }
+      public void  setTextRoot(TextRoot obj) { this.textRoot = obj; }
       @Override
-      public Text  getTextRoot() { return this.textRoot; }
+      public TextRoot  getTextRoot() { return this.textRoot; }
    }
 
 
@@ -1684,12 +1691,12 @@ public class SVG
    {
       public String  href;
 
-      private Text   textRoot;
+      private TextRoot   textRoot;
 
       @Override
-      public void  setTextRoot(Text obj) { this.textRoot = obj; }
+      public void  setTextRoot(TextRoot obj) { this.textRoot = obj; }
       @Override
-      public Text  getTextRoot() { return this.textRoot; }
+      public TextRoot  getTextRoot() { return this.textRoot; }
    }
 
 
@@ -1698,12 +1705,25 @@ public class SVG
       public String  href;
       public Length  startOffset;
 
-      private Text  textRoot;
+      private TextRoot  textRoot;
 
       @Override
-      public void  setTextRoot(Text obj) { this.textRoot = obj; }
+      public void  setTextRoot(TextRoot obj) { this.textRoot = obj; }
       @Override
-      public Text  getTextRoot() { return this.textRoot; }
+      public TextRoot  getTextRoot() { return this.textRoot; }
+   }
+
+
+   protected static class  TextArea extends TextContainer implements TextRoot, HasTransform
+   {
+      public Length  x;
+      public Length  y;
+      public Length  width;
+      public Length  height;
+      public Matrix  transform;
+
+      @Override
+      public void setTransform(Matrix transform) { this.transform = transform; }
    }
 
 

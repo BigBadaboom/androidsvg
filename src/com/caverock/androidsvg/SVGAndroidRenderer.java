@@ -37,6 +37,11 @@ import android.graphics.RectF;
 import android.graphics.Shader;
 import android.graphics.Shader.TileMode;
 import android.graphics.Typeface;
+import android.text.Layout;
+import android.text.Spannable;
+import android.text.SpannableStringBuilder;
+import android.text.StaticLayout;
+import android.text.TextPaint;
 import android.util.Base64;
 import android.util.Log;
 
@@ -125,6 +130,7 @@ public class SVGAndroidRenderer
       public Paint    strokePaint;
       public SVG.Box  viewPort;
       public SVG.Box  viewBox;
+      public boolean  spacePreserve;
 
       // Set when we doing direct rendering.
       public boolean  directRendering;
@@ -175,7 +181,8 @@ public class SVGAndroidRenderer
       updateStyle(state, Style.getDefaultStyle());
 
       state.viewPort = this.canvasViewPort;
-      
+
+      state.spacePreserve = false;
       state.directRendering = this.directRenderingMode;
 
       // Push a copy of the state with 'default' style, so that inherit works for top level objects
@@ -258,6 +265,8 @@ public class SVGAndroidRenderer
       // Initialise the state
       resetState();
 
+      checkXMLSpaceAttribute(rootObj);
+
       // Render the document
       render(rootObj, rootObj.width, rootObj.height,
              (viewBox != null) ? viewBox : rootObj.viewBox);
@@ -275,6 +284,8 @@ public class SVGAndroidRenderer
 
       // Save state
       statePush();
+
+      checkXMLSpaceAttribute(obj);
 
       if (obj instanceof SVG.Svg) {
          render((SVG.Svg) obj);
@@ -302,6 +313,8 @@ public class SVGAndroidRenderer
          render((SVG.PolyLine) obj);
       } else if (obj instanceof SVG.Text) {
          render((SVG.Text) obj);
+      } else if (obj instanceof SVG.TextArea) {
+         render((SVG.TextArea) obj);
       }
 
       // Restore state
@@ -394,6 +407,20 @@ public class SVGAndroidRenderer
       // Apply the styles defined by the 'style' attribute. They have the highest precedence.
       if (obj.style != null)
          updateStyle(state, obj.style);
+   }
+
+
+   /*
+    * Check and update xml:space handling.
+    */
+   private void checkXMLSpaceAttribute(SVG.SvgObject obj)
+   {
+      if (!(obj instanceof SvgElementBase))
+        return;
+
+      SvgElementBase bobj = (SvgElementBase) obj;
+      if (bobj.spacePreserve != null)
+         state.spacePreserve = bobj.spacePreserve;
    }
 
 
@@ -1439,7 +1466,7 @@ public class SVGAndroidRenderer
                dy = (tspan.dy == null || tspan.dy.size() == 0) ? 0f : tspan.dy.get(0).floatValueY(this);
             }
 
-            checkForGradiantsAndPatterns(tspan.getTextRoot());
+            checkForGradiantsAndPatterns((SvgElement) tspan.getTextRoot());
 
             if (textprocessor instanceof PlainTextDrawer) {
                ((PlainTextDrawer) textprocessor).x = x + dx;
@@ -1468,7 +1495,7 @@ public class SVGAndroidRenderer
 
          if (display())
          {
-            checkForGradiantsAndPatterns(tref.getTextRoot());      
+            checkForGradiantsAndPatterns((SvgElement) tref.getTextRoot());      
 
             // Locate the referenced object
             SVG.SvgObject  ref = obj.document.resolveIRI(tref.href);
@@ -1534,7 +1561,7 @@ public class SVGAndroidRenderer
          }
       }
 
-      checkForGradiantsAndPatterns(obj.getTextRoot());      
+      checkForGradiantsAndPatterns((SvgElement) obj.getTextRoot());      
       
       boolean  compositing = pushLayer();
 
@@ -1678,6 +1705,97 @@ public class SVGAndroidRenderer
       }
    }
  
+
+   //==============================================================================
+
+
+   private void render(SVG.TextArea obj)
+   {
+      debug("TextArea render");
+
+      updateStyleForElement(state, obj);
+
+      if (!display())
+         return;
+
+      if (obj.transform != null)
+         canvas.concat(obj.transform);
+
+      // Get the first coordinate pair from the lists in the x and y properties.
+      float  x = (obj.x == null) ? 0f : obj.x.floatValueX(this);
+      float  y = (obj.y == null) ? 0f : obj.y.floatValueY(this);
+      float  w = (obj.width == null) ? Float.MAX_VALUE : obj.width.floatValueX(this);
+      float  h = (obj.height == null) ? Float.MAX_VALUE : obj.height.floatValueY(this);
+
+      if (obj.boundingBox == null) {
+         obj.boundingBox = new Box(x, y, w, h);  // FIXEME handle width/height = auto
+      }
+      updateParentBoundingBox(obj);
+
+      checkForGradiantsAndPatterns(obj);      
+      checkForClipPath(obj);
+      
+      if (visible())
+      {
+         boolean  compositing = pushLayer();
+
+         SpannableStringBuilder  sb = new SpannableStringBuilder(); 
+         enumerateTextSpans(obj, new SpannableTextGenerator(sb));
+
+         canvas.translate(x, y);
+
+         if (state.hasFill) {
+            StaticLayout  layout = new StaticLayout(sb.subSequence(0, sb.length()), new TextPaint(state.fillPaint), (int) Math.ceil(w), Layout.Alignment.ALIGN_NORMAL, 1f, 0f, false);
+            layout.draw(canvas);
+         }
+         
+         if (state.hasStroke) {
+            StaticLayout  layout = new StaticLayout(sb.subSequence(0, sb.length()), new TextPaint(state.strokePaint), (int) Math.ceil(w), Layout.Alignment.ALIGN_NORMAL, 1f, 0f, false);
+            layout.draw(canvas);
+         }
+
+         if (compositing)
+            popLayer(obj);
+      }
+   }
+
+
+   private class  SpannableTextGenerator extends TextProcessor
+   {
+      public SpannableStringBuilder sb;
+
+      public SpannableTextGenerator(SpannableStringBuilder sb)
+      {
+         this.sb = sb;
+      }
+
+      @Override
+      public void processText(String text)
+      {
+         debug("SpannableTextGenerator processText");
+
+         int  start = sb.length();
+         sb.append(textXMLSpaceTransform(text));
+         int  end = sb.length();
+
+//         sb.setSpan(new xxx(), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+      }
+   }
+
+
+   // Process the text string according to the xml:space rules
+   private String  textXMLSpaceTransform(String text)
+   {
+      if (state.spacePreserve)  // xml:space = "preserve"
+         return text.replaceAll("[\\n\\t]", " ");
+
+      // xml:space = "default"
+      text = text.replaceAll("\\n", "");
+      text = text.replaceAll("\\t", " ");
+      text = text.trim();
+      return text.replaceAll("\\s{2,}", " ");
+   }
+
 
    //==============================================================================
 
