@@ -56,7 +56,6 @@ import com.caverock.androidsvg.SVG.SvgElementBase;
 import com.caverock.androidsvg.SVG.SvgObject;
 import com.caverock.androidsvg.SVG.SvgPaint;
 import com.caverock.androidsvg.SVG.Text;
-import com.caverock.androidsvg.SVG.TextArea;
 import com.caverock.androidsvg.SVG.TextChild;
 import com.caverock.androidsvg.SVG.TextPositionedContainer;
 import com.caverock.androidsvg.SVG.TextRoot;
@@ -121,7 +120,6 @@ public class SVGParser extends DefaultHandler2
    private static final String  TAG_SWITCH         = "switch";
    private static final String  TAG_SYMBOL         = "symbol";
    private static final String  TAG_TEXT           = "text";
-   private static final String  TAG_TEXTAREA       = "textArea";
    private static final String  TAG_TEXTPATH       = "textPath";
    private static final String  TAG_TITLE          = "title";
    private static final String  TAG_TREF           = "tref";
@@ -682,8 +680,6 @@ public class SVGParser extends DefaultHandler2
          style(attributes);
       } else if (localName.equals(TAG_SOLIDCOLOR)) {
          solidColor(attributes);
-      } else if (localName.equals(TAG_TEXTAREA)) {
-         textArea(attributes);
       } else {
          ignoring = true;
          ignoreDepth = 1;
@@ -807,8 +803,7 @@ public class SVGParser extends DefaultHandler2
           localName.equals(TAG_PATTERN) ||
           localName.equals(TAG_VIEW) ||
           localName.equals(TAG_MASK) ||
-          localName.equals(TAG_SOLIDCOLOR) ||
-          localName.equals(TAG_TEXTAREA)) {
+          localName.equals(TAG_SOLIDCOLOR)) {
          currentElement = ((SvgObject) currentElement).parent;
       }
 
@@ -1596,63 +1591,6 @@ public class SVGParser extends DefaultHandler2
                if (!XLINK_NAMESPACE.equals(attributes.getURI(i)))
                   break;
                obj.href = val;
-               break;
-            default:
-               break;
-         }
-      }
-   }
-
-
-   //=========================================================================
-   // <textArea> element
-
-
-   private void  textArea(Attributes attributes) throws SAXException
-   {
-      debug("<textArea>");
-
-      if (currentElement == null)
-         throw new SAXException("Invalid document. Root element must be <svg>");
-      SVG.TextArea  obj = new SVG.TextArea();
-      obj.document = svgDocument;
-      obj.parent = currentElement;
-      parseAttributesCore(obj, attributes);
-      parseAttributesStyle(obj, attributes);
-      parseAttributesTransform(obj, attributes);
-      parseAttributesConditional(obj, attributes);
-      parseAttributesTextArea(obj, attributes);
-      currentElement.addChild(obj);
-      currentElement = obj;
-   }
-
-
-   private void  parseAttributesTextArea(SVG.TextArea obj, Attributes attributes) throws SAXException
-   {
-      for (int i=0; i<attributes.getLength(); i++)
-      {
-         String val = attributes.getValue(i).trim();
-         switch (SVGAttr.fromString(attributes.getLocalName(i)))
-         {
-            case x:
-               obj.x = parseLength(val);
-               break;
-            case y:
-               obj.y = parseLength(val);
-               break;
-            case width:
-               if ("auto".equals(val)) {
-                  obj.width = null;
-               } else {
-                  obj.width = parseLength(val);
-               }
-               break;
-            case height:
-               if ("auto".equals(val)) {
-                  obj.height = null;
-               } else {
-                  obj.height = parseLength(val);
-               }
                break;
             default:
                break;

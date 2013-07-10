@@ -313,8 +313,6 @@ public class SVGAndroidRenderer
          render((SVG.PolyLine) obj);
       } else if (obj instanceof SVG.Text) {
          render((SVG.Text) obj);
-      } else if (obj instanceof SVG.TextArea) {
-         render((SVG.TextArea) obj);
       }
 
       // Restore state
@@ -1428,11 +1426,9 @@ public class SVGAndroidRenderer
          return;
       }
 
-
       // Ask the processor implementation if it wants to process this object
       if (!textprocessor.doTextContainer((SVG.TextContainer) obj))
          return;
-
 
       if (obj instanceof SVG.TextPath)
       {
@@ -1707,80 +1703,6 @@ public class SVGAndroidRenderer
  
 
    //==============================================================================
-
-
-   private void render(SVG.TextArea obj)
-   {
-      debug("TextArea render");
-
-      updateStyleForElement(state, obj);
-
-      if (!display())
-         return;
-
-      if (obj.transform != null)
-         canvas.concat(obj.transform);
-
-      // Get the first coordinate pair from the lists in the x and y properties.
-      float  x = (obj.x == null) ? 0f : obj.x.floatValueX(this);
-      float  y = (obj.y == null) ? 0f : obj.y.floatValueY(this);
-      float  w = (obj.width == null) ? Float.MAX_VALUE : obj.width.floatValueX(this);
-      float  h = (obj.height == null) ? Float.MAX_VALUE : obj.height.floatValueY(this);
-
-      if (obj.boundingBox == null) {
-         obj.boundingBox = new Box(x, y, w, h);  // FIXEME handle width/height = auto
-      }
-      updateParentBoundingBox(obj);
-
-      checkForGradiantsAndPatterns(obj);      
-      checkForClipPath(obj);
-      
-      if (visible())
-      {
-         boolean  compositing = pushLayer();
-
-         SpannableStringBuilder  sb = new SpannableStringBuilder(); 
-         enumerateTextSpans(obj, new SpannableTextGenerator(sb));
-
-         canvas.translate(x, y);
-
-         if (state.hasFill) {
-            StaticLayout  layout = new StaticLayout(sb.subSequence(0, sb.length()), new TextPaint(state.fillPaint), (int) Math.ceil(w), Layout.Alignment.ALIGN_NORMAL, 1f, 0f, false);
-            layout.draw(canvas);
-         }
-         
-         if (state.hasStroke) {
-            StaticLayout  layout = new StaticLayout(sb.subSequence(0, sb.length()), new TextPaint(state.strokePaint), (int) Math.ceil(w), Layout.Alignment.ALIGN_NORMAL, 1f, 0f, false);
-            layout.draw(canvas);
-         }
-
-         if (compositing)
-            popLayer(obj);
-      }
-   }
-
-
-   private class  SpannableTextGenerator extends TextProcessor
-   {
-      public SpannableStringBuilder sb;
-
-      public SpannableTextGenerator(SpannableStringBuilder sb)
-      {
-         this.sb = sb;
-      }
-
-      @Override
-      public void processText(String text)
-      {
-         debug("SpannableTextGenerator processText");
-
-         int  start = sb.length();
-         sb.append(textXMLSpaceTransform(text));
-         int  end = sb.length();
-
-//         sb.setSpan(new xxx(), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-      }
-   }
 
 
    // Process the text string according to the xml:space rules

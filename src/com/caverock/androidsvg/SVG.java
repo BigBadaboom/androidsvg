@@ -1609,7 +1609,7 @@ public class SVG
    }
 
 
-   // A root text container such as <text> or <textArea>
+   // A root text container such as <text> or <textPath>
    protected interface  TextRoot
    {
    }
@@ -1711,19 +1711,6 @@ public class SVG
       public void  setTextRoot(TextRoot obj) { this.textRoot = obj; }
       @Override
       public TextRoot  getTextRoot() { return this.textRoot; }
-   }
-
-
-   protected static class  TextArea extends TextContainer implements TextRoot, HasTransform
-   {
-      public Length  x;
-      public Length  y;
-      public Length  width;
-      public Length  height;
-      public Matrix  transform;
-
-      @Override
-      public void setTransform(Matrix transform) { this.transform = transform; }
    }
 
 
