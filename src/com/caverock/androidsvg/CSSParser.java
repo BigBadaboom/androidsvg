@@ -18,6 +18,7 @@ package com.caverock.androidsvg;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import org.xml.sax.SAXException;
 
@@ -889,7 +890,7 @@ public class CSSParser
                return false;
          }
          // all other element classes should match their tag names
-         else if (!sel.tag.equals(obj.getClass().getSimpleName().toLowerCase()))
+         else if (!sel.tag.equals(obj.getClass().getSimpleName().toLowerCase(Locale.US)))
          {
             return false;
          }

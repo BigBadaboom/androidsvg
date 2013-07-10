@@ -2559,7 +2559,7 @@ public class SVGParser extends DefaultHandler2
          if (position > (input.length() - 2))
             return null;
          try {
-            Unit  result = Unit.valueOf(input.substring(position, position + 2).toLowerCase());
+            Unit  result = Unit.valueOf(input.substring(position, position + 2).toLowerCase(Locale.US));
             position +=2;
             return result;
          } catch (IllegalArgumentException e) {
@@ -3117,7 +3117,7 @@ public class SVGParser extends DefaultHandler2
          end -= 2;
          String unitStr = val.substring(end);
          try {
-            unit = Unit.valueOf(unitStr.toLowerCase());
+            unit = Unit.valueOf(unitStr.toLowerCase(Locale.US));
          } catch (IllegalArgumentException e) {
             throw new SAXException("Invalid length unit specifier: "+val);
          }
