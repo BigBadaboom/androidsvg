@@ -18,6 +18,7 @@ package com.caverock.androidsvg;
 
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -37,11 +38,6 @@ import android.graphics.RectF;
 import android.graphics.Shader;
 import android.graphics.Shader.TileMode;
 import android.graphics.Typeface;
-import android.text.Layout;
-import android.text.Spannable;
-import android.text.SpannableStringBuilder;
-import android.text.StaticLayout;
-import android.text.TextPaint;
 import android.util.Base64;
 import android.util.Log;
 
@@ -1408,24 +1404,28 @@ public class SVGAndroidRenderer
     */
    private void enumerateTextSpans(TextContainer obj, TextProcessor textprocessor)
    {
-      for (SVG.SvgObject child: obj.children) {
-         processTextChild(child, textprocessor);
+      if (!display())
+         return;
+
+      Iterator<SvgObject>  iter = obj.children.iterator();
+      boolean              isFirstChild = true;
+
+      while (iter.hasNext())
+      {
+         SvgObject  child = iter.next();
+
+         if (child instanceof SVG.TextSequence) {
+            textprocessor.processText(textXMLSpaceTransform(((SVG.TextSequence) child).text, isFirstChild, !iter.hasNext() /*isLastChild*/));
+         } else {
+            processTextChild(child, textprocessor);
+         }
+         isFirstChild = false;
       }
    }
 
 
    private void  processTextChild(SVG.SvgObject obj, TextProcessor textprocessor)
    {
-      if (!display())
-         return;
-
-      if (obj instanceof SVG.TextSequence)
-      {
-         String  text = ((SVG.TextSequence) obj).text;
-         textprocessor.processText(text);
-         return;
-      }
-
       // Ask the processor implementation if it wants to process this object
       if (!textprocessor.doTextContainer((SVG.TextContainer) obj))
          return;
@@ -1691,13 +1691,19 @@ public class SVGAndroidRenderer
     */
    private void  extractRawText(TextContainer parent, StringBuilder str)
    {
-      for (SVG.SvgObject child: parent.children)
+      Iterator<SvgObject>  iter = parent.children.iterator();
+      boolean              isFirstChild = true;
+
+      while (iter.hasNext())
       {
+         SvgObject  child = iter.next();
+
          if (child instanceof TextContainer) {
             extractRawText((TextContainer) child, str);
          } else if (child instanceof TextSequence) {
-            str.append(((TextSequence) child).text);
+            str.append(textXMLSpaceTransform(((TextSequence) child).text, isFirstChild, !iter.hasNext() /*isLastChild*/));
          }
+         isFirstChild = false;
       }
    }
  
@@ -1706,7 +1712,7 @@ public class SVGAndroidRenderer
 
 
    // Process the text string according to the xml:space rules
-   private String  textXMLSpaceTransform(String text)
+   private String  textXMLSpaceTransform(String text, boolean isFirstChild, boolean isLastChild)
    {
       if (state.spacePreserve)  // xml:space = "preserve"
          return text.replaceAll("[\\n\\t]", " ");
@@ -1714,7 +1720,11 @@ public class SVGAndroidRenderer
       // xml:space = "default"
       text = text.replaceAll("\\n", "");
       text = text.replaceAll("\\t", " ");
-      text = text.trim();
+      //text = text.trim();
+      if (isFirstChild)
+         text = text.replaceAll("^\\s+",  "");
+      if (isLastChild)
+         text = text.replaceAll("\\s+$",  "");
       return text.replaceAll("\\s{2,}", " ");
    }
 

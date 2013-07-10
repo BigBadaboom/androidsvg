@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -55,7 +54,6 @@ import com.caverock.androidsvg.SVG.Style.VectorEffect;
 import com.caverock.androidsvg.SVG.SvgElementBase;
 import com.caverock.androidsvg.SVG.SvgObject;
 import com.caverock.androidsvg.SVG.SvgPaint;
-import com.caverock.androidsvg.SVG.Text;
 import com.caverock.androidsvg.SVG.TextChild;
 import com.caverock.androidsvg.SVG.TextPositionedContainer;
 import com.caverock.androidsvg.SVG.TextRoot;
@@ -780,11 +778,7 @@ public class SVGParser extends DefaultHandler2
          return;
       }
 
-      if (localName.equals(TAG_TEXT)) {
-         collapseSpaces((SVG.Text) currentElement);
-      }
-
-      // Yes this is ugly. May switch to using tokens in the future.
+      // Yes this is ugly. May switch to faster method in the future.
       if (localName.equals(TAG_SVG) ||
           localName.equals(TAG_DEFS) ||
           localName.equals(TAG_G) ||
@@ -1442,86 +1436,6 @@ public class SVGParser extends DefaultHandler2
                break;
          }
       }
-   }
-
-
-   /*
-    * Collapse the spaces in a Text subtree using the normal HTML/XML rules.
-    */
-   private void collapseSpaces(SVG.Text textObj)
-   {
-      collapseSpaces(textObj, false,false);
-   }
-
-   private void  collapseSpaces(SVG.SvgObject obj, boolean isFirstNode, boolean isLastNode)
-   {
-      if (obj instanceof SVG.TextContainer)
-      {
-         SVG.TextContainer tspan = (SVG.TextContainer) obj; 
-
-         isFirstNode = true;
-         for (Iterator<SVG.SvgObject> iterator = tspan.children.iterator(); iterator.hasNext(); isFirstNode=false) {
-            SVG.SvgObject child = iterator.next();
-            collapseSpaces(child, isFirstNode, !iterator.hasNext());
-         }
-      }
-      else if  (obj instanceof SVG.TextSequence)
-      {
-         SVG.TextSequence tseq = (SVG.TextSequence) obj; 
-         tseq.text = trimmer(tseq.text, isFirstNode, isLastNode);
-      }
-      else if  (obj instanceof SVG.TRef)
-      {
-         // N/A
-      }
-   }
-
-   // Trim whitespace chars appropriately depending on where the node is
-   // relative to other text nodes.
-   private String trimmer(String str, boolean isFirstNode, boolean isLastNode)
-   {
-      int len = str.length();
-      int offset = 0;
-
-      if (len == 0)
-         return str;
-
-      char[] chars = str.toCharArray();
-
-      while (offset < len && chars[offset] <= ' ') {
-         offset++;
-      }
-      len -= offset;
-      while (len > 0 && chars[offset + len - 1] <= ' ') {
-         len--;
-      }
-
-      // Allow one space at the start if this wasn't the first node
-      if (len == 0)
-      {
-         if (!isFirstNode && !isLastNode)
-         {
-            chars[0] = ' ';
-            offset = 0;
-            len = 1;
-         }
-      }
-      else
-      {
-         if (offset > 0 && !isFirstNode)
-         {
-            chars[--offset] = ' ';
-            len++;
-         }
-         // Allow one space at the end if this wasn't the last node
-         if ((offset + len) < str.length() && !isLastNode)
-         {
-            chars[offset + len] = ' ';
-            len++;
-         }
-      }
-
-      return new String(chars, offset, len);
    }
 
 
