@@ -2079,7 +2079,7 @@ public class SVGParser extends DefaultHandler2
 
    
    //=========================================================================
-   // <pattern> element
+   // <mask> element
 
 
    private void mask(Attributes attributes) throws SAXException

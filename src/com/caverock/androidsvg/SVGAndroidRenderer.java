@@ -246,7 +246,7 @@ public class SVGAndroidRenderer
    /*
     * Render the whole document.
     */
-   protected void  renderDocument(SVG document, Box viewBox, boolean directRenderingMode)
+   protected void  renderDocument(SVG document, Box viewBox, SVGPositioning positioning, boolean directRenderingMode)
    {
       this.document = document;
       this.directRenderingMode = directRenderingMode;
@@ -265,7 +265,8 @@ public class SVGAndroidRenderer
 
       // Render the document
       render(rootObj, rootObj.width, rootObj.height,
-             (viewBox != null) ? viewBox : rootObj.viewBox);
+             (viewBox != null) ? viewBox : rootObj.viewBox,
+             (positioning != null) ? positioning : rootObj.positioning);
    }
 
 
@@ -524,14 +525,14 @@ public class SVGAndroidRenderer
    // When referenced by a <use> element, it's width and height take precedence over the ones in the <svg> object.
    private void render(SVG.Svg obj, SVG.Length width, SVG.Length height)
    {
-      render(obj, width, height, obj.viewBox);
+      render(obj, width, height, obj.viewBox, obj.positioning);
    }
 
 
    // When called from renderDocument, we pass in our own viewBox.
    // If rendering the whole document, it will be rootObj.viewBox.  When rendering a view
    // it will be the viewBox from the <view> element.
-   private void render(SVG.Svg obj, SVG.Length width, SVG.Length height, Box viewBox)
+   private void render(SVG.Svg obj, SVG.Length width, SVG.Length height, Box viewBox, SVGPositioning positioning)
    {
       debug("Svg render");
 
@@ -540,7 +541,8 @@ public class SVGAndroidRenderer
          return;
 
       // "If attribute 'preserveAspectRatio' is not specified, then the effect is as if a value of xMidYMid meet were specified."
-      SVGPositioning  positioning = (obj.positioning != null) ? obj.positioning : SVGPositioning.LETTERBOX;
+      if (positioning == null)
+         positioning = (obj.positioning != null) ? obj.positioning : SVGPositioning.LETTERBOX;
 
       updateStyleForElement(state, obj);
 
