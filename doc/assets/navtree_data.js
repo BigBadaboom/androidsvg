@@ -1,6 +1,6 @@
 var NAVTREE_DATA =
-[ [ "com.caverock.androidsvg", "com/caverock/androidsvg/package-summary.html", [ [ "Classes", null, [ [ "SimpleAssetResolver", "com/caverock/androidsvg/SimpleAssetResolver.html", null, "" ], [ "SVG", "com/caverock/androidsvg/SVG.html", null, "" ], [ "SVGExternalFileResolver", "com/caverock/androidsvg/SVGExternalFileResolver.html", null, "" ], [ "SVGPositioning", "com/caverock/androidsvg/SVGPositioning.html", null, "" ] ]
-, "" ], [ "Enums", null, [ [ "SVGPositioning.Alignment", "com/caverock/androidsvg/SVGPositioning.Alignment.html", null, "" ], [ "SVGPositioning.Scale", "com/caverock/androidsvg/SVGPositioning.Scale.html", null, "" ] ]
+[ [ "com.caverock.androidsvg", "com/caverock/androidsvg/package-summary.html", [ [ "Classes", null, [ [ "PreserveAspectRatio", "com/caverock/androidsvg/PreserveAspectRatio.html", null, "" ], [ "SimpleAssetResolver", "com/caverock/androidsvg/SimpleAssetResolver.html", null, "" ], [ "SVG", "com/caverock/androidsvg/SVG.html", null, "" ], [ "SVGExternalFileResolver", "com/caverock/androidsvg/SVGExternalFileResolver.html", null, "" ] ]
+, "" ], [ "Enums", null, [ [ "PreserveAspectRatio.Alignment", "com/caverock/androidsvg/PreserveAspectRatio.Alignment.html", null, "" ], [ "PreserveAspectRatio.Scale", "com/caverock/androidsvg/PreserveAspectRatio.Scale.html", null, "" ] ]
 , "" ], [ "Exceptions", null, [ [ "SVGParseException", "com/caverock/androidsvg/SVGParseException.html", null, "" ] ]
 , "" ] ]
 , "" ] ]
