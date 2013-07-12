@@ -246,7 +246,7 @@ public class SVGAndroidRenderer
    /*
     * Render the whole document.
     */
-   protected void  renderDocument(SVG document, Box viewBox, SVGPositioning positioning, boolean directRenderingMode)
+   protected void  renderDocument(SVG document, Box viewBox, PreserveAspectRatio positioning, boolean directRenderingMode)
    {
       this.document = document;
       this.directRenderingMode = directRenderingMode;
@@ -266,7 +266,7 @@ public class SVGAndroidRenderer
       // Render the document
       render(rootObj, rootObj.width, rootObj.height,
              (viewBox != null) ? viewBox : rootObj.viewBox,
-             (positioning != null) ? positioning : rootObj.positioning);
+             (positioning != null) ? positioning : rootObj.preserveAspectRatio);
    }
 
 
@@ -525,14 +525,14 @@ public class SVGAndroidRenderer
    // When referenced by a <use> element, it's width and height take precedence over the ones in the <svg> object.
    private void render(SVG.Svg obj, SVG.Length width, SVG.Length height)
    {
-      render(obj, width, height, obj.viewBox, obj.positioning);
+      render(obj, width, height, obj.viewBox, obj.preserveAspectRatio);
    }
 
 
    // When called from renderDocument, we pass in our own viewBox.
    // If rendering the whole document, it will be rootObj.viewBox.  When rendering a view
    // it will be the viewBox from the <view> element.
-   private void render(SVG.Svg obj, SVG.Length width, SVG.Length height, Box viewBox, SVGPositioning positioning)
+   private void render(SVG.Svg obj, SVG.Length width, SVG.Length height, Box viewBox, PreserveAspectRatio positioning)
    {
       debug("Svg render");
 
@@ -542,7 +542,7 @@ public class SVGAndroidRenderer
 
       // "If attribute 'preserveAspectRatio' is not specified, then the effect is as if a value of xMidYMid meet were specified."
       if (positioning == null)
-         positioning = (obj.positioning != null) ? obj.positioning : SVGPositioning.LETTERBOX;
+         positioning = (obj.preserveAspectRatio != null) ? obj.preserveAspectRatio : PreserveAspectRatio.LETTERBOX;
 
       updateStyleForElement(state, obj);
 
@@ -1743,7 +1743,7 @@ public class SVGAndroidRenderer
          return;
 
       // "If attribute 'preserveAspectRatio' is not specified, then the effect is as if a value of xMidYMid meet were specified."
-      SVGPositioning  positioning = (obj.positioning != null) ? obj.positioning : SVGPositioning.LETTERBOX;
+      PreserveAspectRatio  positioning = (obj.preserveAspectRatio != null) ? obj.preserveAspectRatio : PreserveAspectRatio.LETTERBOX;
 
       updateStyleForElement(state, obj);
 
@@ -1786,7 +1786,7 @@ public class SVGAndroidRenderer
          return;
 
       // "If attribute 'preserveAspectRatio' is not specified, then the effect is as if a value of xMidYMid meet were specified."
-      SVGPositioning  positioning = (obj.positioning != null) ? obj.positioning : SVGPositioning.LETTERBOX;
+      PreserveAspectRatio  positioning = (obj.preserveAspectRatio != null) ? obj.preserveAspectRatio : PreserveAspectRatio.LETTERBOX;
 
       // Locate the referenced image
       Bitmap  image = checkForImageDataURL(obj.href);
@@ -1894,7 +1894,7 @@ public class SVGAndroidRenderer
     * Note values in the two Box parameters whould be in user units. If you pass values
     * that are in "objectBoundingBox" space, you will get incorrect results.
     */
-   private Matrix calculateViewBoxTransform(Box viewPort, Box viewBox, SVGPositioning positioning)
+   private Matrix calculateViewBoxTransform(Box viewPort, Box viewBox, PreserveAspectRatio positioning)
    {
       Matrix m = new Matrix();
 
@@ -1907,7 +1907,7 @@ public class SVGAndroidRenderer
       float  yOffset = -viewBox.minY;
 
       // 'none' means scale both dimensions to fit the viewport
-      if (positioning.equals(SVGPositioning.STRETCH))
+      if (positioning.equals(PreserveAspectRatio.STRETCH))
       {
          m.preTranslate(viewPort.minX, viewPort.minY);
          m.preScale(xScale, yScale);
@@ -1917,7 +1917,7 @@ public class SVGAndroidRenderer
 
       // Otherwise, the aspect ratio of the image is kept.
       // What scale are we going to use?
-      float  scale = (positioning.getScale() == SVGPositioning.Scale.Slice) ? Math.max(xScale,  yScale) : Math.min(xScale,  yScale);
+      float  scale = (positioning.getScale() == PreserveAspectRatio.Scale.Slice) ? Math.max(xScale,  yScale) : Math.min(xScale,  yScale);
       // What size will the image end up being? 
       float  imageW = viewPort.width / scale;
       float  imageH = viewPort.height / scale;
@@ -2909,10 +2909,10 @@ public class SVGAndroidRenderer
       yScale = _markerHeight / _viewBox.height;
 
       // If we are keeping aspect ratio, then set both scales to the appropriate value depending on 'slice'
-      SVGPositioning  positioning = (marker.positioning != null) ? marker.positioning :  SVGPositioning.LETTERBOX;
-      if (!positioning.equals(SVGPositioning.STRETCH))
+      PreserveAspectRatio  positioning = (marker.preserveAspectRatio != null) ? marker.preserveAspectRatio :  PreserveAspectRatio.LETTERBOX;
+      if (!positioning.equals(PreserveAspectRatio.STRETCH))
       {
-         float  aspectScale = (positioning.getScale() == SVGPositioning.Scale.Slice) ? Math.max(xScale,  yScale) : Math.min(xScale,  yScale);
+         float  aspectScale = (positioning.getScale() == PreserveAspectRatio.Scale.Slice) ? Math.max(xScale,  yScale) : Math.min(xScale,  yScale);
          xScale = yScale = aspectScale;
       }
 
@@ -3915,7 +3915,7 @@ public class SVGAndroidRenderer
          return;
 
       // "If attribute 'preserveAspectRatio' is not specified, then the effect is as if a value of xMidYMid meet were specified."
-      SVGPositioning  positioning = (pattern.positioning != null) ? pattern.positioning : SVGPositioning.LETTERBOX;
+      PreserveAspectRatio  positioning = (pattern.preserveAspectRatio != null) ? pattern.preserveAspectRatio : PreserveAspectRatio.LETTERBOX;
 
       // Push the state
       statePush();
@@ -4051,8 +4051,8 @@ public class SVGAndroidRenderer
          pattern.children = pRef.children;
       if (pattern.viewBox == null)
          pattern.viewBox = pRef.viewBox;
-      if (pattern.positioning == null) {
-         pattern.positioning = pRef.positioning;
+      if (pattern.preserveAspectRatio == null) {
+         pattern.preserveAspectRatio = pRef.preserveAspectRatio;
       }
 
       if (pRef.href != null)

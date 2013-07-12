@@ -15,7 +15,7 @@ package com.caverock.androidsvg;
  * </pre>
  * 
  */
-public class SVGPositioning
+public class PreserveAspectRatio
 {
    private Alignment  alignment;
    private Scale      scale;
@@ -23,12 +23,12 @@ public class SVGPositioning
    /**
     * Draw doucment at its natural position and scale.
     */
-   public static final SVGPositioning  UNSCALED = new SVGPositioning(null, null);
+   public static final PreserveAspectRatio  UNSCALED = new PreserveAspectRatio(null, null);
 
    /**
     * Stretch horizontally and vertically to fill the viewport.
     */
-   public static final SVGPositioning  STRETCH = new SVGPositioning(Alignment.None, null);
+   public static final PreserveAspectRatio  STRETCH = new PreserveAspectRatio(Alignment.None, null);
 
    /**
     * Keep the document's aspect ratio, but scale it so that it fits neatly inside the viewport.
@@ -36,7 +36,7 @@ public class SVGPositioning
     * The document will be centred in the viewport and may have blank strips at either the top and
     * bottom of the viewport or at the sides. 
     */
-   public static final SVGPositioning  LETTERBOX = new SVGPositioning(Alignment.XMidYMid, Scale.Meet);
+   public static final PreserveAspectRatio  LETTERBOX = new PreserveAspectRatio(Alignment.XMidYMid, Scale.Meet);
 
    /**
     * Keep the document's aspect ratio, but scale it so that it fits neatly inside the viewport.
@@ -44,7 +44,7 @@ public class SVGPositioning
     * The document will be positioned at the top of tall and narrow viewports, and at the left of short
     * and wide viewports.
     */
-   public static final SVGPositioning  START = new SVGPositioning(Alignment.XMinYMin, Scale.Meet);
+   public static final PreserveAspectRatio  START = new PreserveAspectRatio(Alignment.XMinYMin, Scale.Meet);
 
    /**
     * Keep the document's aspect ratio, but scale it so that it fits neatly inside the viewport.
@@ -52,7 +52,7 @@ public class SVGPositioning
     * The document will be positioned at the bottom of tall and narrow viewports, and at the right of short
     * and wide viewports.
     */
-   public static final SVGPositioning  END = new SVGPositioning(Alignment.XMaxYMax, Scale.Meet);
+   public static final PreserveAspectRatio  END = new PreserveAspectRatio(Alignment.XMaxYMax, Scale.Meet);
 
    /**
     * Keep the document's aspect ratio, but scale it so that it fits neatly inside the viewport.
@@ -60,7 +60,7 @@ public class SVGPositioning
     * The document will be positioned at the top of tall and narrow viewports, and at the centre of
     * short and wide viewports.
     */
-   public static final SVGPositioning  TOP = new SVGPositioning(Alignment.XMidYMin, Scale.Meet);
+   public static final PreserveAspectRatio  TOP = new PreserveAspectRatio(Alignment.XMidYMin, Scale.Meet);
 
    /**
     * Keep the document's aspect ratio, but scale it so that it fits neatly inside the viewport.
@@ -68,7 +68,7 @@ public class SVGPositioning
     * The document will be positioned at the bottom of tall and narrow viewports, and at the centre of
     * short and wide viewports.
     */
-   public static final SVGPositioning  BOTTOM = new SVGPositioning(Alignment.XMidYMax, Scale.Meet);
+   public static final PreserveAspectRatio  BOTTOM = new PreserveAspectRatio(Alignment.XMidYMax, Scale.Meet);
 
    /**
     * Keep the document's aspect ratio, but scale it so that it fills the entire viewport.
@@ -77,7 +77,7 @@ public class SVGPositioning
     * The document will be positioned so that the centre of the document will always be visible,
     * but the edges of the document may not.
     */
-   public static final SVGPositioning  FULLSCREEN = new SVGPositioning(Alignment.XMidYMid, Scale.Slice);
+   public static final PreserveAspectRatio  FULLSCREEN = new PreserveAspectRatio(Alignment.XMidYMid, Scale.Slice);
 
    /**
     * Keep the document's aspect ratio, but scale it so that it fills the entire viewport.
@@ -86,7 +86,7 @@ public class SVGPositioning
     * The document will be positioned so that the top left of the document will always be visible,
     * but the right hand or bottom edge may not.
     */
-   public static final SVGPositioning  FULLSCREEN_START = new SVGPositioning(Alignment.XMinYMin, Scale.Slice);
+   public static final PreserveAspectRatio  FULLSCREEN_START = new PreserveAspectRatio(Alignment.XMinYMin, Scale.Slice);
 
 
 
@@ -141,7 +141,7 @@ public class SVGPositioning
    }
 
 
-   public SVGPositioning(Alignment alignment, Scale scale)
+   public PreserveAspectRatio(Alignment alignment, Scale scale)
    {
       this.alignment = alignment;
       this.scale = scale;
@@ -169,7 +169,7 @@ public class SVGPositioning
          return false;
       if (getClass() != obj.getClass())
          return false;
-      SVGPositioning other = (SVGPositioning) obj;
+      PreserveAspectRatio other = (PreserveAspectRatio) obj;
       if (alignment != other.alignment)
          return false;
       if (scale != other.scale)

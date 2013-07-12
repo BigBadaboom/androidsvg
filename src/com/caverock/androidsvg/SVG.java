@@ -329,7 +329,7 @@ public class SVG
 
       SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, viewPort, this.renderDPI);
 
-      renderer.renderDocument(this, view.viewBox, view.positioning, false);
+      renderer.renderDocument(this, view.viewBox, view.preserveAspectRatio, false);
 
       picture.endRecording();
       return picture;
@@ -432,7 +432,7 @@ public class SVG
 
       SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, svgViewPort, this.renderDPI);
 
-      renderer.renderDocument(this, view.viewBox, view.positioning, true);
+      renderer.renderDocument(this, view.viewBox, view.preserveAspectRatio, true);
    }
 
 
@@ -688,37 +688,37 @@ public class SVG
    /**
     * Change the document positioning by altering the "preserveAspectRatio"
     * attribute of the root {@code <svg>} element.  See the
-    * documentation for {@link SVGPositioning} for more information
+    * documentation for {@link PreserveAspectRatio} for more information
     * on how positioning works.
     * 
-    * @param positioning the positioning descriptor.
+    * @param preserveAspectRatio the new {@code preserveAspectRatio} setting for the root {@code <svg>} element.
     * @throws IllegalArgumentException if there is no current SVG document loaded.
     */
-   public void  setDocumentPositioning(SVGPositioning positioning)
+   public void  setDocumentPreserveAspectRatio(PreserveAspectRatio preserveAspectRatio)
    {
       if (this.rootElement == null)
          throw new IllegalArgumentException("SVG document is empty");
 
-      this.rootElement.positioning = positioning;
+      this.rootElement.preserveAspectRatio = preserveAspectRatio;
    }
 
 
    /**
     * Return the "preserveAspectRatio" attribute of the root {@code <svg>}
-    * element in the form of an {@link SVGPositioning} object.
+    * element in the form of an {@link PreserveAspectRatio} object.
     * 
-    * @return the document positioning, or null if not set.
+    * @return the preserveAspectRatio setting of the document's root {@code <svg>} element.
     * @throws IllegalArgumentException if there is no current SVG document loaded.
     */
-   public SVGPositioning  getDocumentPositioning()
+   public PreserveAspectRatio  getDocumentPreserveAspectRatio()
    {
       if (this.rootElement == null)
          throw new IllegalArgumentException("SVG document is empty");
 
-      if (this.rootElement.positioning == null)
+      if (this.rootElement.preserveAspectRatio == null)
          return null;
 
-      return this.rootElement.positioning;
+      return this.rootElement.preserveAspectRatio;
    }
 
 
@@ -1491,7 +1491,7 @@ public class SVG
 
    protected static class SvgPreserveAspectRatioContainer extends SvgConditionalContainer
    {
-      public SVGPositioning  positioning = null;
+      public PreserveAspectRatio  preserveAspectRatio = null;
    }
 
 
