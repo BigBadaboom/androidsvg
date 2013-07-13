@@ -1,5 +1,3 @@
-package com.caverock.androidsvg;
-
 /*
    Copyright 2013 Paul LeBeau, Cave Rock Software Ltd.
 
@@ -15,6 +13,8 @@ package com.caverock.androidsvg;
    See the License for the specific language governing permissions and
    limitations under the License.
 */
+
+package com.caverock.androidsvg;
 
 /**
  * Configure debugging on or off.
