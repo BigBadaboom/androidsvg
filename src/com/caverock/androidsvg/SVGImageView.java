@@ -38,7 +38,7 @@ import android.widget.ImageView;
  * In its present form it has one significant limitation.  It uses the {@link SVG#renderToPicture()}
  * method. That means that SVG documents that use {@code <mask>} elements will not display correctly.
  * 
- * @attr name ImageView_svg
+ * @attr ref R.styleable#SVGImageView_svg
  */
 public class SVGImageView extends ImageView
 {
