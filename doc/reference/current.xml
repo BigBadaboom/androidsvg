@@ -21,6 +21,28 @@
 <parameter name="scale" type="com.caverock.androidsvg.PreserveAspectRatio.Scale">
 </parameter>
 </constructor>
+<method name="getAlignment"
+ return="com.caverock.androidsvg.PreserveAspectRatio.Alignment"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getScale"
+ return="com.caverock.androidsvg.PreserveAspectRatio.Scale"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
 <field name="BOTTOM"
  type="com.caverock.androidsvg.PreserveAspectRatio"
  transient="false"

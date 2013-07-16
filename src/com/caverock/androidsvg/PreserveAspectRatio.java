@@ -164,13 +164,21 @@ public class PreserveAspectRatio
    }
 
 
-   protected Alignment getAlignment()
+   /**
+    * Returns the alignment value of this instance.
+    * @return the alignment
+    */
+   public Alignment  getAlignment()
    {
       return alignment;
    }
 
 
-   protected Scale getScale()
+   /**
+    * Returns the scale value of this instance.
+    * @return the scale
+    */
+   public Scale  getScale()
    {
       return scale;
    }
