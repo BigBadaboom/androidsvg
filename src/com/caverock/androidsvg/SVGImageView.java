@@ -31,8 +31,12 @@ import android.view.View;
 import android.widget.ImageView;
 
 /**
- * A thin layer over android.widget.ImageView.
- *
+ * SVGImageView is a View widget that allows users to include SVG images in their layouts.
+ * 
+ * It is implemented as a thin layer over {@code android.widget.ImageView}.
+ * <p>
+ * In its present form it has one significant limitation.  It uses the {@link SVG#renderToPicture()}
+ * method. That means that SVG documents that use {@code <mask>} elements will not display correctly.
  */
 public class SVGImageView extends ImageView
 {
