@@ -726,9 +726,7 @@ public class SVG
     * Returns the aspect ratio of the document as a width/height fraction.
     * <p>
     * If the width or height of the document are listed with a physical unit such as "cm",
-    * then the {@code dpi} parameter will be used to convert that value to pixels.  It is
-    * safe to pass a value of 0 for {@code dpi} if you know that physical units are not
-    * being used.
+    * then the current {@code renderDPI} setting will be used to convert that value to pixels.
     * <p>
     * If the width or height cannot be determined, -1 will be returned.
     * 
