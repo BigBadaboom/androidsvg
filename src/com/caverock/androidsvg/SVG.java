@@ -460,7 +460,7 @@ public class SVG
     * 
     * @return the version number in string format
     */
-   public String  getVersion()
+   public static String  getVersion()
    {
       return VERSION;
    }
