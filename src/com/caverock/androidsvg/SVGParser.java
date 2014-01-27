@@ -2232,6 +2232,20 @@ public class SVGParser extends DefaultHandler2
          return null;
       }
 
+      /*
+       * Scans for comma-whitespace sequence with a float following it.
+       * But only if the provided 'lastFloat' (representing the last coord
+       * scanned was non-null (ie parsed correctly).
+       */
+      public Float  checkedNextFloat(Object lastRead)
+      {
+         if (lastRead == null) {
+            return null;
+         }
+         skipCommaWhitespace();
+         return nextFloat();
+      }
+
       public Integer  nextInteger()
       {
          int  intEnd = scanForInteger();
@@ -2277,6 +2291,17 @@ public class SVGParser extends DefaultHandler2
          return null;
       }
 
+      /*
+       * Like checkedNextFloat, but reads a flag (see path definition parser)
+       */
+      public Boolean  checkedNextFlag(Object lastRead)
+      {
+         if (lastRead == null) {
+            return null;
+         }
+         skipCommaWhitespace();
+         return nextFlag();
+      }
 
       public boolean  consume(char ch)
       {
@@ -3613,10 +3638,9 @@ public class SVGParser extends DefaultHandler2
             case 'M':
             case 'm':
                x = scan.nextFloat();
-               scan.skipCommaWhitespace();
-               y = scan.nextFloat();
+               y = scan.checkedNextFloat(x);
                if (y == null) {
-                  Log.e(TAG, "Bad path coords for "+pathCommand+" path segment");
+                  Log.e(TAG, "Bad path coords for "+((char)pathCommand)+" path segment");
                   return path;
                }
                // Relative moveto at the start of a path is treated as an absolute moveto.
@@ -3635,10 +3659,9 @@ public class SVGParser extends DefaultHandler2
             case 'L':
             case 'l':
                x = scan.nextFloat();
-               scan.skipCommaWhitespace();
-               y = scan.nextFloat();
+               y = scan.checkedNextFloat(x);
                if (y == null) {
-                  Log.e(TAG, "Bad path coords for "+pathCommand+" path segment");
+                  Log.e(TAG, "Bad path coords for "+((char)pathCommand)+" path segment");
                   return path;
                }
                if (pathCommand=='l') {
@@ -3654,18 +3677,13 @@ public class SVGParser extends DefaultHandler2
             case 'C':
             case 'c':
                x1 = scan.nextFloat();
-               scan.skipCommaWhitespace();
-               y1 = scan.nextFloat();
-               scan.skipCommaWhitespace();
-               x2 = scan.nextFloat();
-               scan.skipCommaWhitespace();
-               y2 = scan.nextFloat();
-               scan.skipCommaWhitespace();
-               x = scan.nextFloat();
-               scan.skipCommaWhitespace();
-               y = scan.nextFloat();
+               y1 = scan.checkedNextFloat(x1);
+               x2 = scan.checkedNextFloat(y1);
+               y2 = scan.checkedNextFloat(x2);
+               x = scan.checkedNextFloat(y2);
+               y = scan.checkedNextFloat(x);
                if (y == null) {
-                  Log.e(TAG, "Bad path coords for "+pathCommand+" path segment");
+                  Log.e(TAG, "Bad path coords for "+((char)pathCommand)+" path segment");
                   return path;
                }
                if (pathCommand=='c') {
@@ -3689,14 +3707,11 @@ public class SVGParser extends DefaultHandler2
                x1 = 2 * currentX - lastControlX;
                y1 = 2 * currentY - lastControlY;
                x2 = scan.nextFloat();
-               scan.skipCommaWhitespace();
-               y2 = scan.nextFloat();
-               scan.skipCommaWhitespace();
-               x = scan.nextFloat();
-               scan.skipCommaWhitespace();
-               y = scan.nextFloat();
+               y2 = scan.checkedNextFloat(x2);
+               x = scan.checkedNextFloat(y2);
+               y = scan.checkedNextFloat(x);
                if (y == null) {
-                  Log.e(TAG, "Bad path coords for "+pathCommand+" path segment");
+                  Log.e(TAG, "Bad path coords for "+((char)pathCommand)+" path segment");
                   return path;
                }
                if (pathCommand=='s') {
@@ -3725,7 +3740,7 @@ public class SVGParser extends DefaultHandler2
             case 'h':
                x = scan.nextFloat();
                if (x == null) {
-                  Log.e(TAG, "Bad path coords for "+pathCommand+" path segment");
+                  Log.e(TAG, "Bad path coords for "+((char)pathCommand)+" path segment");
                   return path;
                }
                if (pathCommand=='h') {
@@ -3740,7 +3755,7 @@ public class SVGParser extends DefaultHandler2
             case 'v':
                y = scan.nextFloat();
                if (y == null) {
-                  Log.e(TAG, "Bad path coords for "+pathCommand+" path segment");
+                  Log.e(TAG, "Bad path coords for "+((char)pathCommand)+" path segment");
                   return path;
                }
                if (pathCommand=='v') {
@@ -3754,14 +3769,11 @@ public class SVGParser extends DefaultHandler2
             case 'Q':
             case 'q':
                x1 = scan.nextFloat();
-               scan.skipCommaWhitespace();
-               y1 = scan.nextFloat();
-               scan.skipCommaWhitespace();
-               x = scan.nextFloat();
-               scan.skipCommaWhitespace();
-               y = scan.nextFloat();
+               y1 = scan.checkedNextFloat(x1);
+               x = scan.checkedNextFloat(y1);
+               y = scan.checkedNextFloat(x);
                if (y == null) {
-                  Log.e(TAG, "Bad path coords for "+pathCommand+" path segment");
+                  Log.e(TAG, "Bad path coords for "+((char)pathCommand)+" path segment");
                   return path;
                }
                if (pathCommand=='q') {
@@ -3783,10 +3795,9 @@ public class SVGParser extends DefaultHandler2
                x1 = 2 * currentX - lastControlX;
                y1 = 2 * currentY - lastControlY;
                x = scan.nextFloat();
-               scan.skipCommaWhitespace();
-               y = scan.nextFloat();
+               y = scan.checkedNextFloat(x);
                if (y == null) {
-                  Log.e(TAG, "Bad path coords for "+pathCommand+" path segment");
+                  Log.e(TAG, "Bad path coords for "+((char)pathCommand)+" path segment");
                   return path;
                }
                if (pathCommand=='t') {
@@ -3804,20 +3815,14 @@ public class SVGParser extends DefaultHandler2
             case 'A':
             case 'a':
                rx = scan.nextFloat();
-               scan.skipCommaWhitespace();
-               ry = scan.nextFloat();
-               scan.skipCommaWhitespace();
-               xAxisRotation = scan.nextFloat();
-               scan.skipCommaWhitespace();
-               largeArcFlag = scan.nextFlag();
-               scan.skipCommaWhitespace();
-               sweepFlag = scan.nextFlag();
-               scan.skipCommaWhitespace();
-               x = scan.nextFloat();
-               scan.skipCommaWhitespace();
-               y = scan.nextFloat();
+               ry = scan.checkedNextFloat(rx);
+               xAxisRotation = scan.checkedNextFloat(ry);
+               largeArcFlag = scan.checkedNextFlag(xAxisRotation);
+               sweepFlag = scan.checkedNextFlag(largeArcFlag);
+               x = scan.checkedNextFloat(sweepFlag);
+               y = scan.checkedNextFloat(x);
                if (y == null || rx < 0 || ry < 0) {
-                  Log.e(TAG, "Bad path coords for "+pathCommand+" path segment");
+                  Log.e(TAG, "Bad path coords for "+((char)pathCommand)+" path segment");
                   return path;
                }
                if (pathCommand=='a') {
