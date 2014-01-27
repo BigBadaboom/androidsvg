@@ -105,6 +105,19 @@ public class SVGImageView extends ImageView
 
 
    /**
+    * Directly set the SVG.
+    */
+   public void  setSVG(SVG mysvg)
+   {
+      if (mysvg == null)
+         throw new IllegalArgumentException("Null value passed to setSVG()");
+
+      setSoftwareLayerType();
+      setImageDrawable(new PictureDrawable(mysvg.renderToPicture()));
+   }
+
+
+   /**
     * Load an SVG image from the given resource id.
     */
    @Override
