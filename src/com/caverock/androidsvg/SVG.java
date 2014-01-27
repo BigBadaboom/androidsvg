@@ -29,6 +29,7 @@ import org.xml.sax.SAXException;
 
 import android.content.Context;
 import android.content.res.AssetManager;
+import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Picture;
@@ -168,8 +169,22 @@ public class SVG
     */
    public static SVG  getFromResource(Context context, int resourceId) throws SVGParseException
    {
+      return getFromResource(context.getResources(), resourceId);
+   }
+
+
+   /**
+    * Read and parse an SVG from the given resource location.
+    *
+    * @param resources the set of Resources in which to locate the file.
+    * @param resourceId the resource identifier of the SVG document.
+    * @return an SVG instance on which you can call one of the render methods.
+    * @throws SVGParseException if there is an error parsing the document.
+    */
+   public static SVG  getFromResource(Resources resources, int resourceId) throws SVGParseException
+   {
       SVGParser  parser = new SVGParser();
-      return parser.parse(context.getResources().openRawResource(resourceId));
+      return parser.parse(resources.openRawResource(resourceId));
    }
 
 
