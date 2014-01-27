@@ -3838,7 +3838,7 @@ public class SVGParser extends DefaultHandler2
                return path;
          }
 
-         scan.skipWhitespace();
+         scan.skipCommaWhitespace();
          if (scan.empty())
             break;
 
