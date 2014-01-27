@@ -572,6 +572,8 @@ public class SVGAndroidRenderer
       if (viewBox != null) {
          canvas.concat(calculateViewBoxTransform(state.viewPort, viewBox, positioning));
          state.viewBox = obj.viewBox;  // Note: definitely obj.viewBox here. Not viewBox parameter.
+      } else {
+         canvas.translate(_x, _y);
       }
 
       boolean  compositing = pushLayer();
