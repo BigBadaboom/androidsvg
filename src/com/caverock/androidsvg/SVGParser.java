@@ -16,6 +16,7 @@
 
 package com.caverock.androidsvg;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -25,6 +26,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.zip.GZIPInputStream;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -566,6 +568,27 @@ public class SVGParser extends DefaultHandler2
 
    protected SVG  parse(InputStream is) throws SVGParseException
    {
+      // Transparently handle zipped files (.svgz)
+      if (!is.markSupported()) {
+         // We need a a buffered stream so we can use mark() and reset()
+         is = new BufferedInputStream(is);
+      }
+      try
+      {
+         is.mark(3);
+         int  firstTwoBytes = is.read() + (is.read() << 8);
+         is.reset();
+         if (firstTwoBytes == GZIPInputStream.GZIP_MAGIC) {
+            // Looks like a zipped file.
+            is = new GZIPInputStream(is);
+         }
+      }
+      catch (IOException ioe)
+      {
+         // Not a zipped SVG. Fall through and try parsing it normally.
+      }
+
+      // Invoke the SAX XML parser on the input.
       SAXParserFactory  spf = SAXParserFactory.newInstance();
       try
       {
@@ -586,6 +609,14 @@ public class SVGParser extends DefaultHandler2
       catch (SAXException e)
       {
          throw new SVGParseException("SVG parse error: "+e.getMessage(), e);
+      }
+      finally
+      {
+         try {
+            is.close();
+         } catch (IOException e) {
+            Log.e(TAG, "Exception thrown closing input stream");
+         }
       }
       return svgDocument;
    }
