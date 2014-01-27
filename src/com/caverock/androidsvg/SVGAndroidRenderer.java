@@ -3718,10 +3718,10 @@ public class SVGAndroidRenderer
 
    private Path  makePathAndBoundingBox(Line obj)
    {
-      float x1 = (obj.x1 == null) ? 0 : obj.x1.floatValue(this);
-      float y1 = (obj.y1 == null) ? 0 : obj.y1.floatValue(this);
-      float x2 = (obj.x2 == null) ? 0 : obj.x2.floatValue(this);
-      float y2 = (obj.y2 == null) ? 0 : obj.y2.floatValue(this);
+      float x1 = (obj.x1 == null) ? 0 : obj.x1.floatValueX(this);
+      float y1 = (obj.y1 == null) ? 0 : obj.y1.floatValueY(this);
+      float x2 = (obj.x2 == null) ? 0 : obj.x2.floatValueX(this);
+      float y2 = (obj.y2 == null) ? 0 : obj.y2.floatValueY(this);
 
       if (obj.boundingBox == null) {
          obj.boundingBox = new Box(Math.min(x1, y1), Math.min(y1, y2), Math.abs(x2-x1), Math.abs(y2-y1));
