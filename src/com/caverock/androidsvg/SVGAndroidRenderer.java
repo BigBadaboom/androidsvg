@@ -2899,32 +2899,32 @@ public class SVGAndroidRenderer
       float _markerWidth = (marker.markerWidth != null) ? marker.markerWidth.floatValueX(this) : 3f;
       float _markerHeight = (marker.markerHeight != null) ? marker.markerHeight.floatValueY(this) : 3f;
 
-      // We now do a simplified version of calculateViewBoxTransform().  For now we will
-      // ignore the alignment setting because refX and refY have to be aligned with the
-      // marker position, and alignment would complicate the calculations.
-      Box   _viewBox = (marker.viewBox != null) ? marker.viewBox : state.viewPort;
-      float xScale, yScale;
-
-      xScale = _markerWidth / _viewBox.width;
-      yScale = _markerHeight / _viewBox.height;
-
-      // If we are keeping aspect ratio, then set both scales to the appropriate value depending on 'slice'
-      PreserveAspectRatio  positioning = (marker.preserveAspectRatio != null) ? marker.preserveAspectRatio :  PreserveAspectRatio.LETTERBOX;
-      if (!positioning.equals(PreserveAspectRatio.STRETCH))
+      if (marker.viewBox != null)
       {
-         float  aspectScale = (positioning.getScale() == PreserveAspectRatio.Scale.Slice) ? Math.max(xScale,  yScale) : Math.min(xScale,  yScale);
-         xScale = yScale = aspectScale;
-      }
+         // We now do a simplified version of calculateViewBoxTransform().  For now we will
+         // ignore the alignment setting because refX and refY have to be aligned with the
+         // marker position, and alignment would complicate the calculations.
+         float xScale, yScale;
 
-      //m.preTranslate(viewPort.minX, viewPort.minY);
-      m.preTranslate(-_refX * xScale, -_refY * yScale);
-      canvas.concat(m);
+         xScale = _markerWidth / marker.viewBox.width;
+         yScale = _markerHeight / marker.viewBox.height;
 
-      if (!state.style.overflow) {
+         // If we are keeping aspect ratio, then set both scales to the appropriate value depending on 'slice'
+         PreserveAspectRatio  positioning = (marker.preserveAspectRatio != null) ? marker.preserveAspectRatio :  PreserveAspectRatio.LETTERBOX;
+         if (!positioning.equals(PreserveAspectRatio.STRETCH))
+         {
+            float  aspectScale = (positioning.getScale() == PreserveAspectRatio.Scale.Slice) ? Math.max(xScale,  yScale) : Math.min(xScale,  yScale);
+            xScale = yScale = aspectScale;
+         }
+
+         //m.preTranslate(viewPort.minX, viewPort.minY);
+         m.preTranslate(-_refX * xScale, -_refY * yScale);
+         canvas.concat(m);
+
          // Now we need to take account of alignment setting, because it affects the
          // size and position of the clip rectangle.
-         float  imageW = _viewBox.width * xScale;
-         float  imageH = _viewBox.height * yScale;
+         float  imageW = marker.viewBox.width * xScale;
+         float  imageH = marker.viewBox.height * yScale;
          float  xOffset = 0f;
          float  yOffset = 0f;
          switch (positioning.getAlignment())
@@ -2941,7 +2941,7 @@ public class SVGAndroidRenderer
                break;
             default:
                // nothing to do 
-               break;
+                  break;
          }
          // Determine final Y position
          switch (positioning.getAlignment())
@@ -2960,12 +2960,26 @@ public class SVGAndroidRenderer
                // nothing to do 
                break;
          }
-         setClipRect(xOffset, yOffset, _markerWidth, _markerHeight);
-      }
 
-      m.reset();
-      m.preScale(xScale, yScale);
-      canvas.concat(m);
+         if (!state.style.overflow) {
+            setClipRect(xOffset, yOffset, _markerWidth, _markerHeight);
+         }
+
+         m.reset();
+         m.preScale(xScale, yScale);
+         canvas.concat(m);
+      }
+      else
+      {
+         // No viewBox provided
+
+         m.preTranslate(-_refX, -_refY);
+         canvas.concat(m);
+
+         if (!state.style.overflow) {
+            setClipRect(0, 0, _markerWidth, _markerHeight);
+         }
+      }
 
       boolean  compositing = pushLayer();
 
