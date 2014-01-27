@@ -16,6 +16,7 @@
 
 package com.caverock.androidsvg;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
@@ -86,12 +87,15 @@ public class SVGImageView extends ImageView
          }
 
          String  url = a.getString(R.styleable.SVGImageView_svg);
-         Uri  uri = Uri.parse(url);
-         if (internalSetImageURI(uri))
-            return;
- 
-         // Last chance, try loading it as an asset filename
-         setImageAsset(url);
+         if (url != null)
+         {
+            Uri  uri = Uri.parse(url);
+            if (internalSetImageURI(uri, false))
+               return;
+
+            // Last chance, try loading it as an asset filename
+            setImageAsset(url);
+         }
          
       } finally {
          a.recycle();
@@ -114,7 +118,7 @@ public class SVGImageView extends ImageView
       }
       catch (SVGParseException e)
       {
-         Log.w("SVGImageView", "Unable to find resource: " + resourceId, e);
+         Log.e("SVGImageView", String.format("Error loading resource 0x%x: %s", resourceId, e.getMessage()));
       }
    }
 
@@ -125,14 +129,14 @@ public class SVGImageView extends ImageView
    @Override
    public void  setImageURI(Uri uri)
    {
-      internalSetImageURI(uri);
+      internalSetImageURI(uri, true);
    }
 
 
    /**
     * Load an SVG image from the given asset filename.
     */
-   public void setImageAsset(String filename)
+   public void  setImageAsset(String filename)
    {
       try
       {
@@ -140,9 +144,17 @@ public class SVGImageView extends ImageView
          setSoftwareLayerType();
          setImageDrawable(new PictureDrawable(svg.renderToPicture()));
       }
-      catch (Exception e)
+      catch (SVGParseException e)
       {
-         Log.w("SVGImageView", "Unable to find asset file: " + filename, e);
+         Log.e("SVGImageView", "Error loading file " + filename + ": " + e.getMessage());
+      }
+      catch (FileNotFoundException e)
+      {
+         Log.e("SVGImageView", "File not found: " + filename);
+      }
+      catch (IOException e)
+      {
+         Log.e("SVGImageView", "Unable to load asset file: " + filename, e);
       }
    }
 
@@ -150,21 +162,30 @@ public class SVGImageView extends ImageView
    /*
     * Attempt to set a picture from a Uri. Return true if it worked.
     */
-   private boolean  internalSetImageURI(Uri uri)
+   private boolean  internalSetImageURI(Uri uri, boolean isDirectRequestFromUser)
    {
       InputStream  is = null;
-      try {
+      try
+      {
          is = getContext().getContentResolver().openInputStream(uri);
          SVG  svg = SVG.getFromInputStream(is);
          setSoftwareLayerType();
          setImageDrawable(new PictureDrawable(svg.renderToPicture()));
          return true;
       }
-      catch (Exception e) {
-         Log.w("ImageView", "Unable to open content: " + uri, e);
+      catch (FileNotFoundException e)
+      {
+         if (isDirectRequestFromUser)
+            Log.e("SVGImageView", "File not found: " + uri);
          return false;
       }
-      finally {
+      catch (SVGParseException e)
+      {
+         Log.e("SVGImageView", "Error loading file " + uri + ": " + e.getMessage());
+         return false;
+      }
+      finally
+      {
          try
          {
             if (is != null)
@@ -185,6 +206,7 @@ public class SVGImageView extends ImageView
 
       try
       {
+         int  LAYER_TYPE_SOFTWARE = View.class.getField("LAYER_TYPE_SOFTWARE").getInt(new View(getContext()));
          setLayerTypeMethod.invoke(this, LAYER_TYPE_SOFTWARE, null);
       }
       catch (Exception e)
