@@ -3307,15 +3307,14 @@ public class SVGParser extends DefaultHandler2
    // Parse a colour component value (0..255 or 0%-100%)
    private static int  parseColourComponent(TextScanner scan) throws SAXException
    {
-      int  comp = scan.nextInteger();
+      // Spec says components can be <integer> or <number>%.
+      // For simplicity, we will allow <number> for both.
+      float  comp = scan.nextFloat();
       if (scan.consume('%')) {
-         // Spec says to follow CSS rules, which says out-of-range values should be clamped.
-         comp = (comp < 0) ? 0 : (comp > 100) ? 100 : comp;
-         return (comp * 255 / 100);
-      } else {
-         comp = (comp < 0) ? 0 : (comp > 255) ? 255 : comp;
-         return comp;
+         comp = (comp * 256) / 100;
       }
+      // CSS rules say that only percent values should be clamped, but we will do it for both.
+      return (comp < 0) ? 0 : (comp > 255) ? 255 : (int) comp;
    }
 
 
