@@ -6,7 +6,7 @@
                  destdir="doc"
                  sourcepath="src"
                  docletpath="D:\Users\Paul\Development\Java\doclava-1.0.6\doclava-1.0.6.jar"
-                 bootclasspath="${java.home}\lib\rt.jar,C:\Program Files (x86)\Android\android-sdk\platforms\android-16\android.jar">
+                 bootclasspath="${java.home}\lib\rt.jar,C:\Program Files (x86)\Android\android-sdk\platforms\android-18\android.jar">
             <doclet name="com.google.doclava.Doclava">
                 <param name="-public"/>
                 <!-- param name="-stubs" value="build/stubs" / -->

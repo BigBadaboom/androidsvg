@@ -347,23 +347,6 @@
 <exception name="SVGParseException" type="com.caverock.androidsvg.SVGParseException">
 </exception>
 </method>
-<method name="getFromResource"
- return="com.caverock.androidsvg.SVG"
- abstract="false"
- native="false"
- synchronized="false"
- static="true"
- final="false"
- deprecated="not deprecated"
- visibility="public"
->
-<parameter name="resources" type="android.content.res.Resources">
-</parameter>
-<parameter name="resourceId" type="int">
-</parameter>
-<exception name="SVGParseException" type="com.caverock.androidsvg.SVGParseException">
-</exception>
-</method>
 <method name="getFromString"
  return="com.caverock.androidsvg.SVG"
  abstract="false"
@@ -395,7 +378,7 @@
  abstract="false"
  native="false"
  synchronized="false"
- static="true"
+ static="false"
  final="false"
  deprecated="not deprecated"
  visibility="public"
@@ -1018,19 +1001,6 @@
  visibility="public"
 >
 <parameter name="filename" type="java.lang.String">
-</parameter>
-</method>
-<method name="setSVG"
- return="void"
- abstract="false"
- native="false"
- synchronized="false"
- static="false"
- final="false"
- deprecated="not deprecated"
- visibility="public"
->
-<parameter name="mysvg" type="com.caverock.androidsvg.SVG">
 </parameter>
 </method>
 </class>
