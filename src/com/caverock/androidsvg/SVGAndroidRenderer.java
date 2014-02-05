@@ -1837,7 +1837,7 @@ public class SVGAndroidRenderer
 
       viewportFill();
 
-      canvas.drawBitmap(image, 0, 0, state.fillPaint);
+      canvas.drawBitmap(image, 0, 0, new Paint());
 
       if (compositing)
          popLayer(obj);
