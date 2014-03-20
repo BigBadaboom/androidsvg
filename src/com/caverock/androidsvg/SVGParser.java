@@ -1883,7 +1883,7 @@ public class SVGParser extends DefaultHandler2
       }
       try
       {
-         float scalar = Float.parseFloat(val.substring(0, end));
+         float scalar = parseFloat(val, 0, end);
          if (isPercent)
             scalar /= 100f;
          return (scalar < 0) ? 0 : (scalar > 100) ? 100 : scalar;
@@ -2188,11 +2188,13 @@ public class SVGParser extends DefaultHandler2
    {
       protected String   input;
       protected int      position = 0;
+      protected int      inputLength = 0;
 
 
       public TextScanner(String input)
       {
          this.input = input.trim();
+         this.inputLength = this.input.length();
       }
 
       /**
@@ -2200,7 +2202,7 @@ public class SVGParser extends DefaultHandler2
        */
       public boolean  empty()
       {
-         return (position == input.length());
+         return (position == inputLength);
       }
 
       protected boolean  isWhitespace(int c)
@@ -2210,7 +2212,7 @@ public class SVGParser extends DefaultHandler2
 
       public void  skipWhitespace()
       {
-         while (position < input.length()) {
+         while (position < inputLength) {
             if (!isWhitespace(input.charAt(position)))
                break;
             position++;
@@ -2227,7 +2229,7 @@ public class SVGParser extends DefaultHandler2
       public boolean  skipCommaWhitespace()
       {
          skipWhitespace();
-         if (position == input.length())
+         if (position == inputLength)
             return false;
          if (!(input.charAt(position) == ','))
             return false;
@@ -2239,12 +2241,11 @@ public class SVGParser extends DefaultHandler2
 
       public Float  nextFloat()
       {
-         int  floatEnd = scanForFloat();
-         if (floatEnd == position)
+         NumberParser  np = NumberParser.parseNumber(input, position, inputLength);
+         if (np == null)
             return null;
-         Float  result = Float.parseFloat(input.substring(position, floatEnd));
-         position = floatEnd;
-         return result;
+         position = np.getEndPos();
+         return np.value();
       }
 
       /*
@@ -2254,13 +2255,12 @@ public class SVGParser extends DefaultHandler2
        */
       public Float  possibleNextFloat()
       {
-         int  start = position;
          skipCommaWhitespace();
-         Float  result = nextFloat();
-         if (result != null)
-            return result;
-         position = start;
-         return null;
+         NumberParser  np = NumberParser.parseNumber(input, position, inputLength);
+         if (np == null)
+            return null;
+         position = np.getEndPos();
+         return np.value();
       }
 
       /*
@@ -2290,7 +2290,7 @@ public class SVGParser extends DefaultHandler2
 
       public Integer  nextChar()
       {
-         if (position == input.length())
+         if (position == inputLength)
             return null;
          return Integer.valueOf(input.charAt(position++));
       }
@@ -2312,7 +2312,7 @@ public class SVGParser extends DefaultHandler2
        */
       public Boolean  nextFlag()
       {
-         if (position == input.length())
+         if (position == inputLength)
             return null;
          char  ch = input.charAt(position);
          if (ch == '0' || ch == '1') {
@@ -2336,7 +2336,7 @@ public class SVGParser extends DefaultHandler2
 
       public boolean  consume(char ch)
       {
-         boolean  found = (position < input.length() && input.charAt(position) == ch);
+         boolean  found = (position < inputLength && input.charAt(position) == ch);
          if (found)
             position++;
          return found;
@@ -2346,7 +2346,7 @@ public class SVGParser extends DefaultHandler2
       public boolean  consume(String str)
       {
          int  len = str.length();
-         boolean  found = (position <= (input.length() - len) && input.substring(position,position+len).equals(str));
+         boolean  found = (position <= (inputLength - len) && input.substring(position,position+len).equals(str));
          if (found)
             position += len;
          return found;
@@ -2355,10 +2355,10 @@ public class SVGParser extends DefaultHandler2
 
       protected int  advanceChar()
       {
-         if (position == input.length())
+         if (position == inputLength)
             return -1;
          position++;
-         if (position < input.length())
+         if (position < inputLength)
             return input.charAt(position);
          else
             return -1;
@@ -2424,58 +2424,6 @@ public class SVGParser extends DefaultHandler2
       }
 
       /*
-       * Scans the input starting immediately at 'position' for a floating point number.
-       * If one is found, the end position of the float will be returned.
-       * If the returned value is the same as 'position' then no float was found.
-       */
-      private int  scanForFloat()
-      {
-         if (empty())
-            return position;
-         int  lastValidPos = position;
-         int  start = position;
-
-         int  ch = input.charAt(position);
-         // Check whole part of mantissa
-         if (ch == '-' || ch == '+')
-            ch = advanceChar();
-         if (Character.isDigit(ch)) {
-            lastValidPos = position + 1;
-            ch = advanceChar();
-            while (Character.isDigit(ch)) {
-               lastValidPos = position + 1;
-               ch = advanceChar();
-            }
-         }
-         // Fraction or exponent starts here
-         if (ch == '.') {
-            lastValidPos = position + 1;
-            ch = advanceChar();
-            while (Character.isDigit(ch)) {
-               lastValidPos = position + 1;
-               ch = advanceChar();
-            }
-         }
-         // Exponent
-         if (ch == 'e' || ch == 'E') {
-            ch = advanceChar();
-            if (ch == '-' || ch == '+')
-               ch = advanceChar();
-            if (Character.isDigit(ch)) {
-               lastValidPos = position + 1;
-               ch = advanceChar();
-               while (Character.isDigit(ch)) {
-                  lastValidPos = position + 1;
-                  ch = advanceChar();
-               }
-            }
-         }
-
-         position = start;
-         return lastValidPos;
-      }
-
-      /*
        * Scans the input starting immediately at 'position' for an integer number.
        * If one is found, the end position of the float will be returned.
        * If the returned value is the same as 'position' then no number was found.
@@ -2526,7 +2474,7 @@ public class SVGParser extends DefaultHandler2
             position++;
             return Unit.percent;
          }
-         if (position > (input.length() - 2))
+         if (position > (inputLength - 2))
             return null;
          try {
             Unit  result = Unit.valueOf(input.substring(position, position + 2).toLowerCase(Locale.US));
@@ -2542,7 +2490,7 @@ public class SVGParser extends DefaultHandler2
        */
       public boolean  hasLetter()
       {
-         if (position == input.length())
+         if (position == inputLength)
             return false;
          char  ch = input.charAt(position);
          return ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z'));
@@ -2580,7 +2528,7 @@ public class SVGParser extends DefaultHandler2
             return null;
 
          int  start = position;
-         position = input.length();
+         position = inputLength;
          return input.substring(start);
       }
 
@@ -3094,7 +3042,7 @@ public class SVGParser extends DefaultHandler2
       }
       try
       {
-         float scalar = Float.parseFloat(val.substring(0, end));
+         float scalar = parseFloat(val, 0, end);
          return new Length(scalar, unit);
       }
       catch (NumberFormatException e)
@@ -3137,15 +3085,19 @@ public class SVGParser extends DefaultHandler2
     */
    private static float  parseFloat(String val) throws SAXException
    {
-      if (val.length() == 0)
+      int  len = val.length();;
+      if (len == 0)
          throw new SAXException("Invalid float value (empty string)");
-      try
-      {
-         return Float.parseFloat(val);
-      }
-      catch (NumberFormatException e)
-      {
-         throw new SAXException("Invalid float value: "+val, e);
+      return parseFloat(val, 0, len);
+   }
+
+   private static float  parseFloat(String val, int offset, int len) throws SAXException
+   {
+      NumberParser np = NumberParser.parseNumber(val, offset, len);
+      if (np != null) {
+         return np.value();
+      } else {
+         throw new SAXException("Invalid float value: "+val);
       }
    }
 
