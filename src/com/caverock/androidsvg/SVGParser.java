@@ -2279,13 +2279,11 @@ public class SVGParser extends DefaultHandler2
 
       public Integer  nextInteger()
       {
-         int  intEnd = scanForInteger();
-         //System.out.println("nextFloat: "+position+" "+floatEnd);
-         if (intEnd == position)
+         IntegerParser  ip = IntegerParser.parseInt(input, position, inputLength);
+         if (ip == null)
             return null;
-         Integer  result = Integer.parseInt(input.substring(position, intEnd));
-         position = intEnd;
-         return result;
+         position = ip.getEndPos();
+         return ip.value();
       }
 
       public Integer  nextChar()
@@ -2421,35 +2419,6 @@ public class SVGParser extends DefaultHandler2
          }
          position = start;
          return null;
-      }
-
-      /*
-       * Scans the input starting immediately at 'position' for an integer number.
-       * If one is found, the end position of the float will be returned.
-       * If the returned value is the same as 'position' then no number was found.
-       */
-      private int  scanForInteger()
-      {
-         if (empty())
-            return position;
-         int  lastValidPos = position;
-         int  start = position;
-
-         int  ch = input.charAt(position);
-         // Check whole part of mantissa
-         if (ch == '-' || ch == '+')
-            ch = advanceChar();
-         if (Character.isDigit(ch)) {
-            lastValidPos = position + 1;
-            ch = advanceChar();
-            while (Character.isDigit(ch)) {
-               lastValidPos = position + 1;
-               ch = advanceChar();
-            }
-         }
-
-         position = start;
-         return lastValidPos;
       }
 
       /*
@@ -3215,24 +3184,22 @@ public class SVGParser extends DefaultHandler2
    {
       if (val.charAt(0) == '#')
       {
-         try
-         {
-            if (val.length() == 7) {
-               return new Colour(Integer.parseInt(val.substring(1), 16));
-            } else if (val.length() == 4) {
-               int threehex = Integer.parseInt(val.substring(1), 16);
-               int h1 = threehex & 0xf00;
-               int h2 = threehex & 0x0f0;
-               int h3 = threehex & 0x00f;
-               return new Colour(h1<<16|h1<<12|h2<<8|h2<<4|h3<<4|h3);
-            } else {
-               throw new SAXException("Bad hex colour value: "+val);
-            }
+         IntegerParser  ip = IntegerParser.parseHex(val, 1, val.length());
+         if (ip == null) {
+            throw new SAXException("Bad hex colour value: "+val);
          }
-         catch (NumberFormatException e)
-         {
-            throw new SAXException("Bad colour value: "+val);
+         int pos = ip.getEndPos();
+         if (pos == 7) {
+            return new Colour(ip.value());
+         } else if (pos == 4) {
+            int threehex = ip.value();
+            int h1 = threehex & 0xf00;
+            int h2 = threehex & 0x0f0;
+            int h3 = threehex & 0x00f;
+            return new Colour(h1<<16|h1<<12|h2<<8|h2<<4|h3<<4|h3);
          }
+         // Hex value had bad length for a colour
+         throw new SAXException("Bad hex colour value: "+val);
       }
       if (val.toLowerCase(Locale.US).startsWith("rgb("))
       {
