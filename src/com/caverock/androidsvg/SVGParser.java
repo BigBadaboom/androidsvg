@@ -260,18 +260,33 @@ public class SVGParser extends DefaultHandler2
       visibility,
       UNSUPPORTED;
 
+      private static HashMap<String,SVGAttr>  cache = new HashMap<String,SVGAttr>();
+      
       public static SVGAttr  fromString(String str)
       {
-         if (str.equals("class"))
+         // First check cache to see if it is there
+         SVGAttr  attr = cache.get(str);
+         if (attr != null)
+            return attr;
+         // Do the (slow) Enum.valueOf()
+         if (str.equals("class")) {
+            cache.put(str, CLASS);
             return CLASS;
-         if (str.indexOf('_') != -1)
+         }
+         // Check for underscore in attribute - it could potentially confuse us
+         if (str.indexOf('_') != -1) {
+            cache.put(str, UNSUPPORTED);
             return UNSUPPORTED;
+         }
          try
          {
-            return valueOf(str.replace('-', '_'));
+            attr = valueOf(str.replace('-', '_'));
+            cache.put(str, attr);
+            return attr; 
          } 
          catch (IllegalArgumentException e)
          {
+            cache.put(str, UNSUPPORTED);
             return UNSUPPORTED;
          }
       }
