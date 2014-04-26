@@ -2394,6 +2394,8 @@ public class SVGAndroidRenderer
       
       public PathConverter(PathDefinition pathDef)
       {
+         if (pathDef == null)
+            return;
          pathDef.enumeratePath(this);
       }
 
@@ -2698,6 +2700,9 @@ public class SVGAndroidRenderer
       
       public MarkerPositionCalculator(PathDefinition pathDef)
       {
+         if (pathDef == null)
+            return;
+
          // Generate and add markers for the first N-1 points
          pathDef.enumeratePath(this);
 
