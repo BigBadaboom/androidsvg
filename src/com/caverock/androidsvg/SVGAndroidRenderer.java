@@ -957,6 +957,9 @@ public class SVGAndroidRenderer
    {
       debug("Path render");
 
+      if (obj.d == null)
+         return;
+
       updateStyleForElement(state, obj);
 
       if (!display())
