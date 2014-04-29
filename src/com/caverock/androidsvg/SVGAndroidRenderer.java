@@ -18,6 +18,7 @@ package com.caverock.androidsvg;
 
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -115,6 +116,8 @@ public class SVGAndroidRenderer
    private static final int  LUMINANCE_TO_ALPHA_BLUE = (int)(0.0721f * (1 << LUMINANCE_FACTOR_SHIFT));
 
    private static final String DEFAULT_FONT_FAMILY = "sans-serif";
+
+   private static HashSet<String>  supportedFeatures = null;
 
 
    private class RendererState implements Cloneable
@@ -848,8 +851,12 @@ public class SVGAndroidRenderer
          }
          // Check features
          Set<String>  reqfeat = condObj.getRequiredFeatures();
-         if (reqfeat != null && (reqfeat.isEmpty() || !SVGParser.supportedFeatures.containsAll(reqfeat))) {
-            continue;
+         if (reqfeat != null) {
+            if (supportedFeatures == null)
+               initialiseSupportedFeaturesMap();
+            if (reqfeat.isEmpty() || !supportedFeatures.containsAll(reqfeat)) {
+               continue;
+            }
          }
          // Check formats (MIME types)
          Set<String>  reqfmts = condObj.getRequiredFormats();
@@ -876,6 +883,80 @@ public class SVGAndroidRenderer
          render(child);
          break;
       }
+   }
+
+
+   private static synchronized void  initialiseSupportedFeaturesMap()
+   {
+      supportedFeatures = new HashSet<String>();
+
+      // SVG features this SVG implementation supports
+      // Actual feature strings have the prefix: FEATURE_STRING_PREFIX (see above)
+      // NO indicates feature will probable not ever be implemented
+      // NYI indicates support is in progress, or is planned
+      
+      // Feature sets that represent sets of other feature strings (ie a group of features strings)
+      //supportedFeatures.add("SVG");                       // NO
+      //supportedFeatures.add("SVGDOM");                    // NO
+      //supportedFeatures.add("SVG-static");                // NO
+      //supportedFeatures.add("SVGDOM-static");             // NO
+      //supportedFeatures.add("SVG-animation");             // NO
+      //supportedFeatures.add("SVGDOM-animation");          // NO 
+      //supportedFeatures.add("SVG-dynamic");               // NO
+      //supportedFeatures.add("SVGDOM-dynamic");            // NO
+
+      // Individual features
+      //supportedFeatures.add("CoreAttribute");             // NO
+      supportedFeatures.add("Structure");                   // YES (although desc title and metadata are ignored)
+      supportedFeatures.add("BasicStructure");              // YES (although desc title and metadata are ignored)
+      //supportedFeatures.add("ContainerAttribute");        // NO (filter related. NYI)
+      supportedFeatures.add("ConditionalProcessing");       // YES
+      supportedFeatures.add("Image");                       // YES (bitmaps only - not SVG files)
+      supportedFeatures.add("Style");                       // YES
+      supportedFeatures.add("ViewportAttribute");           // YES
+      supportedFeatures.add("Shape");                       // YES
+      //supportedFeatures.add("Text");                      // NO
+      supportedFeatures.add("BasicText");                   // YES
+      supportedFeatures.add("PaintAttribute");              // YES (except color-interpolation and color-rendering)
+      supportedFeatures.add("BasicPaintAttribute");         // YES (except color-rendering)
+      supportedFeatures.add("OpacityAttribute");            // YES
+      //supportedFeatures.add("GraphicsAttribute");         // NO     
+      supportedFeatures.add("BasicGraphicsAttribute");      // YES
+      supportedFeatures.add("Marker");                      // YES
+      //supportedFeatures.add("ColorProfile");              // NO
+      supportedFeatures.add("Gradient");                    // YES
+      supportedFeatures.add("Pattern");                     // YES
+      supportedFeatures.add("Clip");                        // YES
+      supportedFeatures.add("BasicClip");                   // YES
+      supportedFeatures.add("Mask");                        // YES
+      //supportedFeatures.add("Filter");                    // NO
+      //supportedFeatures.add("BasicFilter");               // NO
+      //supportedFeatures.add("DocumentEventsAttribute");   // NO
+      //supportedFeatures.add("GraphicalEventsAttribute");  // NO
+      //supportedFeatures.add("AnimationEventsAttribute");  // NO
+      //supportedFeatures.add("Cursor");                    // NO
+      //supportedFeatures.add("Hyperlinking");              // NO
+      //supportedFeatures.add("XlinkAttribute");            // NO
+      //supportedFeatures.add("ExternalResourcesRequired"); // NO
+      supportedFeatures.add("View");                        // YES
+      //supportedFeatures.add("Script");                    // NO
+      //supportedFeatures.add("Animation");                 // NO
+      //supportedFeatures.add("Font");                      // NO
+      //supportedFeatures.add("BasicFont");                 // NO
+      //supportedFeatures.add("Extensibility");             // NO
+
+      // SVG 1.0 features - all are too general and include things we are not likely to ever support.
+      // If we ever do support these, we'll need to change how FEATURE_STRING_PREFIX is used.
+      //supportedFeatures.add("org.w3c.svg");
+      //supportedFeatures.add("org.w3c.dom.svg");
+      //supportedFeatures.add("org.w3c.svg.static");
+      //supportedFeatures.add("org.w3c.dom.svg.static");
+      //supportedFeatures.add("org.w3c.svg.animation");
+      //supportedFeatures.add("org.w3c.dom.svg.animation");
+      //supportedFeatures.add("org.w3c.svg.dynamic");
+      //supportedFeatures.add("org.w3c.dom.svg.dynamic");
+      //supportedFeatures.add("org.w3c.svg.all");
+      //supportedFeatures.add("org.w3c.dom.svg.all" );
    }
 
 
