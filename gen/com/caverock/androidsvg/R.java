@@ -40,7 +40,7 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
 or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>".
 <p>May be a string value, using '\\;' to escape characters such as '\\n' or '\\uxxxx' for a unicode character.
           <p>This is a private symbol.
-          @attr name android:svg
+          @attr name com.caverock.androidsvg:svg
         */
         public static final int SVGImageView_svg = 0;
     };

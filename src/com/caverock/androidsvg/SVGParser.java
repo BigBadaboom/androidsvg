@@ -84,7 +84,7 @@ public class SVGParser extends DefaultHandler2
 
    // For handling <title> and <desc>
    private boolean        inMetadataElement = false;
-   private String         metadataTag = null;
+   private SVGElem        metadataTag = null;
    private StringBuilder  metadataElementContents = null;
 
    // For handling <style>
@@ -95,37 +95,72 @@ public class SVGParser extends DefaultHandler2
 
 
    // Define SVG tags
-   private static final String  TAG_SVG            = "svg";
-   private static final String  TAG_A              = "a";
-   private static final String  TAG_CIRCLE         = "circle";
-   private static final String  TAG_CLIPPATH       = "clipPath";
-   private static final String  TAG_DEFS           = "defs";
-   private static final String  TAG_DESC           = "desc";
-   private static final String  TAG_ELLIPSE        = "ellipse";
-   private static final String  TAG_G              = "g";
-   private static final String  TAG_IMAGE          = "image";
-   private static final String  TAG_LINE           = "line";
-   private static final String  TAG_LINEARGRADIENT = "linearGradient";
-   private static final String  TAG_MARKER         = "marker";
-   private static final String  TAG_MASK           = "mask";
-   private static final String  TAG_PATH           = "path";
-   private static final String  TAG_PATTERN        = "pattern";
-   private static final String  TAG_POLYGON        = "polygon";
-   private static final String  TAG_POLYLINE       = "polyline";
-   private static final String  TAG_RADIALGRADIENT = "radialGradient";
-   private static final String  TAG_RECT           = "rect";
-   private static final String  TAG_SOLIDCOLOR     = "solidColor";
-   private static final String  TAG_STOP           = "stop";
-   private static final String  TAG_STYLE          = "style";
-   private static final String  TAG_SWITCH         = "switch";
-   private static final String  TAG_SYMBOL         = "symbol";
-   private static final String  TAG_TEXT           = "text";
-   private static final String  TAG_TEXTPATH       = "textPath";
-   private static final String  TAG_TITLE          = "title";
-   private static final String  TAG_TREF           = "tref";
-   private static final String  TAG_TSPAN          = "tspan";
-   private static final String  TAG_USE            = "use";
-   private static final String  TAG_VIEW           = "view";
+   private enum  SVGElem
+   {
+      svg,
+      a,
+      circle,
+      clipPath,
+      defs,
+      desc,
+      ellipse,
+      g,
+      image,
+      line,
+      linearGradient,
+      marker,
+      mask,
+      path,
+      pattern,
+      polygon,
+      polyline,
+      radialGradient,
+      rect,
+      solidColor,
+      stop,
+      style,
+      SWITCH,
+      symbol,
+      text,
+      textPath,
+      title,
+      tref,
+      tspan,
+      use,
+      view,
+      UNSUPPORTED;
+      
+      private static HashMap<String,SVGElem>  cache = new HashMap<String,SVGElem>();
+      
+      public static SVGElem  fromString(String str)
+      {
+         // First check cache to see if it is there
+         SVGElem  elem = cache.get(str);
+         if (elem != null)
+            return elem;
+         // Manual check for "switch" which is in upper case because it's a Java reserved identifier
+         if (str.equals("switch")) {
+            cache.put(str, SWITCH);
+            return SWITCH;
+         }
+         // Do the (slow) Enum.valueOf()
+         try
+         {
+            elem = valueOf(str);
+            if (elem != SWITCH) {  // Don't allow matches with "SWITCH"
+               cache.put(str, elem);
+               return elem;
+            }
+         } 
+         catch (IllegalArgumentException e)
+         {
+            // Do nothing
+         }
+         // Unknown element name
+         cache.put(str, UNSUPPORTED);
+         return UNSUPPORTED;
+      }
+   }
 
    // Element types that we don't support. Those that are containers have their
    // contents ignored.
@@ -281,14 +316,18 @@ public class SVGParser extends DefaultHandler2
          try
          {
             attr = valueOf(str.replace('-', '_'));
-            cache.put(str, attr);
-            return attr; 
+            if (attr != CLASS) {
+               cache.put(str, attr);
+               return attr;
+            }
          } 
          catch (IllegalArgumentException e)
          {
-            cache.put(str, UNSUPPORTED);
-            return UNSUPPORTED;
+            // Do nothing
          }
+         // Unknown attribute name
+         cache.put(str, UNSUPPORTED);
+         return UNSUPPORTED;
       }
 
    }
@@ -660,70 +699,75 @@ public class SVGParser extends DefaultHandler2
          return;
       }
 
-      if (localName.equals(TAG_SVG)) {
-         svg(attributes);
-      } else if (localName.equals(TAG_G)) {
-         g(attributes);
-      } else if (localName.equals(TAG_DEFS)) {
-         defs(attributes);
-      } else if (localName.equals(TAG_USE)) {
-         use(attributes);
-      } else if (localName.equals(TAG_PATH)) {
-         path(attributes);
-      } else if (localName.equals(TAG_RECT)) {
-         rect(attributes);
-      } else if (localName.equals(TAG_CIRCLE)) {
-         circle(attributes);
-      } else if (localName.equals(TAG_ELLIPSE)) {
-         ellipse(attributes);
-      } else if (localName.equals(TAG_LINE)) {
-         line(attributes);
-      } else if (localName.equals(TAG_POLYLINE)) {
-         polyline(attributes);
-      } else if (localName.equals(TAG_POLYGON)) {
-         polygon(attributes);
-      } else if (localName.equals(TAG_TEXT)) {
-         text(attributes);
-      } else if (localName.equals(TAG_TSPAN)) {
-         tspan(attributes);
-      } else if (localName.equals(TAG_TREF)) {
-         tref(attributes);
-      } else if (localName.equals(TAG_SWITCH)) {
-         zwitch(attributes);
-      } else if (localName.equals(TAG_SYMBOL)) {
-         symbol(attributes);
-      } else if (localName.equals(TAG_MARKER)) {
-         marker(attributes);
-      } else if (localName.equals(TAG_LINEARGRADIENT)) {
-         linearGradient(attributes);
-      } else if (localName.equals(TAG_RADIALGRADIENT)) {
-         radialGradient(attributes);
-      } else if (localName.equals(TAG_STOP)) {
-         stop(attributes);
-      } else if (localName.equals(TAG_A)) {
-         g(attributes);    // Treat like a group element
-      } else if (localName.equals(TAG_TITLE) || localName.equals(TAG_DESC)) {
-         inMetadataElement = true;
-         metadataTag = localName;
-      } else if (localName.equals(TAG_CLIPPATH)) {
-         clipPath(attributes);
-      } else if (localName.equals(TAG_TEXTPATH)) {
-         textPath(attributes);
-      } else if (localName.equals(TAG_PATTERN)) {
-         pattern(attributes);
-      } else if (localName.equals(TAG_IMAGE)) {
-         image(attributes);
-      } else if (localName.equals(TAG_VIEW)) {
-         view(attributes);
-      } else if (localName.equals(TAG_MASK)) {
-         mask(attributes);
-      } else if (localName.equals(TAG_STYLE)) {
-         style(attributes);
-      } else if (localName.equals(TAG_SOLIDCOLOR)) {
-         solidColor(attributes);
-      } else {
-         ignoring = true;
-         ignoreDepth = 1;
+      SVGElem  elem = SVGElem.fromString(localName);
+      switch (elem)
+      {
+         case svg:
+            svg(attributes); break;
+         case g:
+         case a: // <a> treated like a group element
+            g(attributes); break;
+         case defs:
+            defs(attributes); break;
+         case use:
+            use(attributes); break;
+         case path:
+            path(attributes); break;
+         case rect:
+            rect(attributes); break;
+         case circle:
+            circle(attributes); break;
+         case ellipse:
+            ellipse(attributes); break;
+         case line:
+            line(attributes); break;
+         case polyline:
+            polyline(attributes); break;
+         case polygon:
+            polygon(attributes); break;
+         case text:
+            text(attributes); break;
+         case tspan:
+            tspan(attributes); break;
+         case tref:
+            tref(attributes); break;
+         case SWITCH:
+            zwitch(attributes); break;
+         case symbol:
+            symbol(attributes); break;
+         case marker:
+            marker(attributes); break;
+         case linearGradient:
+            linearGradient(attributes); break;
+         case radialGradient:
+            radialGradient(attributes); break;
+         case stop:
+            stop(attributes); break;
+         case title:
+         case desc:
+            inMetadataElement = true;
+            metadataTag = elem;
+            break;
+         case clipPath:
+            clipPath(attributes); break;
+         case textPath:
+            textPath(attributes); break;
+         case pattern:
+            pattern(attributes); break;
+         case image:
+            image(attributes); break;
+         case view:
+            view(attributes); break;
+         case mask:
+            mask(attributes); break;
+         case style:
+            style(attributes); break;
+         case solidColor:
+            solidColor(attributes); break;
+         default:
+            ignoring = true;
+            ignoreDepth = 1;
+            break;
       }
    }
 
@@ -802,44 +846,51 @@ public class SVGParser extends DefaultHandler2
          return;
       }
 
-      if (localName.equals(TAG_TITLE) || localName.equals(TAG_DESC)) {
-         inMetadataElement = false;
-         if (metadataTag.equals(TAG_TITLE))
-            svgDocument.setTitle(metadataElementContents.toString());
-         else if (metadataTag.equals(TAG_DESC))
-            svgDocument.setDesc(metadataElementContents.toString());
-         metadataElementContents.setLength(0);
-         return;
-      }
+      switch (SVGElem.fromString(localName))
+      {
+         case title:
+         case desc:
+            inMetadataElement = false;
+            if (metadataTag == SVGElem.title)
+               svgDocument.setTitle(metadataElementContents.toString());
+            else if (metadataTag == SVGElem.desc)
+               svgDocument.setDesc(metadataElementContents.toString());
+            metadataElementContents.setLength(0);
+            return;
 
-      if (localName.equals(TAG_STYLE) && styleElementContents != null) {
-         inStyleElement = false;
-         parseCSSStyleSheet(styleElementContents.toString());
-         styleElementContents.setLength(0);
-         return;
-      }
+         case style:
+            if (styleElementContents != null) {
+               inStyleElement = false;
+               parseCSSStyleSheet(styleElementContents.toString());
+               styleElementContents.setLength(0);
+               return;
+            }
+            break;
 
-      // Yes this is ugly. May switch to faster method in the future.
-      if (localName.equals(TAG_SVG) ||
-          localName.equals(TAG_DEFS) ||
-          localName.equals(TAG_G) ||
-          localName.equals(TAG_USE) ||
-          localName.equals(TAG_IMAGE) ||
-          localName.equals(TAG_TEXT) ||
-          localName.equals(TAG_TSPAN) ||
-          localName.equals(TAG_SWITCH) ||
-          localName.equals(TAG_SYMBOL) ||
-          localName.equals(TAG_MARKER) ||
-          localName.equals(TAG_LINEARGRADIENT) ||
-          localName.equals(TAG_RADIALGRADIENT) ||
-          localName.equals(TAG_STOP) ||
-          localName.equals(TAG_CLIPPATH) ||
-          localName.equals(TAG_TEXTPATH) ||
-          localName.equals(TAG_PATTERN) ||
-          localName.equals(TAG_VIEW) ||
-          localName.equals(TAG_MASK) ||
-          localName.equals(TAG_SOLIDCOLOR)) {
-         currentElement = ((SvgObject) currentElement).parent;
+         case svg:
+         case defs:
+         case g:
+         case use:
+         case image:
+         case text:
+         case tspan:
+         case SWITCH:
+         case symbol:
+         case marker:
+         case linearGradient:
+         case radialGradient:
+         case stop:
+         case clipPath:
+         case textPath:
+         case pattern:
+         case view:
+         case mask:
+         case solidColor:
+            currentElement = ((SvgObject) currentElement).parent;
+            break;
+            
+         default:
+            // no action
       }
 
    }
