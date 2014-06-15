@@ -76,6 +76,9 @@ public class SVGImageView extends ImageView
    
    private void  init(AttributeSet attrs, int defStyle)
    {
+      if (isInEditMode())
+         return;
+
       TypedArray a = getContext().getTheme()
                      .obtainStyledAttributes(attrs, R.styleable.SVGImageView, defStyle, 0);
       try
