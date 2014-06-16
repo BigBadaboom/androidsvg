@@ -8,7 +8,7 @@ import os, re, tempfile, subprocess   #, sys, datetime, zipfile
 VERSION_FILE = '../src/com/caverock/androidsvg/SVG.java'
 
 # Version regex
-VERSION_RE = '\sVERSION\s*=\s*"([\d.]+)"'
+VERSION_RE = '\sVERSION\s*=\s*"([\d\w.-]+)"'
 
 # Source pom file
 ORIG_POM_FILE = 'src-pom.xml'
@@ -17,7 +17,10 @@ ORIG_POM_FILE = 'src-pom.xml'
 POM_VERSION_RE = '{{VERSION}}'
 
 # The jar file to be deployed
-JAR_FILE = '../bin/androidsvg.jar'
+JAR_FILE = '../bin/androidsvg_1.2.jar'
+
+# The aar file to be deployed
+AAR_FILE = '../bin/androidsvg_1.2.aar'
 
 # The dummy sources and javadoc jars
 SOURCES_JAR_FILE = 'androidsvg-sources.jar'
@@ -46,12 +49,13 @@ def main():
 
   # Write out a new pom file with the version number set to the latest version
   srcPomFile = read(ORIG_POM_FILE)
-  tempPomFile.write(re.sub(POM_VERSION_RE, libraryVersion, srcPomFile))
+  srcPomFile = re.sub(POM_VERSION_RE, libraryVersion, srcPomFile);
+  tempPomFile.write(srcPomFile)
   tempPomFile.close()
 
 
-  # Sign and deploy the artifact
-  print '\nSigning and deploying artifact...'
+  # Sign and deploy the JAR artifact
+  print '\nSigning and deploying JAR artifact...'
   basecmd =  'mvn gpg:sign-and-deploy-file'
   basecmd += ' -DpomFile=' + tempPomFile.name
   basecmd += ' -Durl=https://oss.sonatype.org/service/local/staging/deploy/maven2/'
@@ -65,8 +69,20 @@ def main():
   os.system(cmd)
 
 
+  # Sign and deploy the AAR artifact
+  print '\n\n\nSigning and deploying AAR artifact...'
+
+  cmd = basecmd
+  cmd += ' -Dfile=' + os.path.realpath(AAR_FILE)
+  cmd += ' -Dtype=aar'
+  cmd += ' -Dpackaging=aar'
+
+  print cmd
+  os.system(cmd)
+
+
   # Sign and deploy the dummy sources
-  print '\nSigning and deploying sources jar...'
+  print '\n\n\nSigning and deploying sources jar...'
 
   cmd = basecmd
   cmd += ' -Dfile=' + os.path.realpath(SOURCES_JAR_FILE)
@@ -77,7 +93,7 @@ def main():
 
 
   # Sign and deploy the dummy javadoc
-  print '\nSigning and deploying javadoc jar...'
+  print '\n\n\nSigning and deploying javadoc jar...'
 
   cmd = basecmd
   cmd += ' -Dfile=' + os.path.realpath(JAVADOC_JAR_FILE)
