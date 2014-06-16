@@ -24,8 +24,10 @@ import java.lang.reflect.Method;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Paint;
+import android.graphics.Picture;
 import android.graphics.drawable.PictureDrawable;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
@@ -126,16 +128,7 @@ public class SVGImageView extends ImageView
    @Override
    public void setImageResource(int resourceId)
    {
-      try
-      {
-         SVG  svg = SVG.getFromResource(getContext(), resourceId);
-         setSoftwareLayerType();
-         setImageDrawable(new PictureDrawable(svg.renderToPicture()));
-      }
-      catch (SVGParseException e)
-      {
-         Log.e("SVGImageView", String.format("Error loading resource 0x%x: %s", resourceId, e.getMessage()));
-      }
+      new LoadResourceTask().execute(resourceId);
    }
 
 
@@ -154,24 +147,7 @@ public class SVGImageView extends ImageView
     */
    public void  setImageAsset(String filename)
    {
-      try
-      {
-         SVG  svg = SVG.getFromAsset(getContext().getAssets(), filename);
-         setSoftwareLayerType();
-         setImageDrawable(new PictureDrawable(svg.renderToPicture()));
-      }
-      catch (SVGParseException e)
-      {
-         Log.e("SVGImageView", "Error loading file " + filename + ": " + e.getMessage());
-      }
-      catch (FileNotFoundException e)
-      {
-         Log.e("SVGImageView", "File not found: " + filename);
-      }
-      catch (IOException e)
-      {
-         Log.e("SVGImageView", "Unable to load asset file: " + filename, e);
-      }
+      new LoadAssetTask().execute(filename);
    }
 
 
@@ -184,10 +160,6 @@ public class SVGImageView extends ImageView
       try
       {
          is = getContext().getContentResolver().openInputStream(uri);
-         SVG  svg = SVG.getFromInputStream(is);
-         setSoftwareLayerType();
-         setImageDrawable(new PictureDrawable(svg.renderToPicture()));
-         return true;
       }
       catch (FileNotFoundException e)
       {
@@ -195,21 +167,110 @@ public class SVGImageView extends ImageView
             Log.e("SVGImageView", "File not found: " + uri);
          return false;
       }
-      catch (SVGParseException e)
-      {
-         Log.e("SVGImageView", "Error loading file " + uri + ": " + e.getMessage());
-         return false;
-      }
-      finally
+
+      new LoadURITask().execute(is);
+      return true;
+   }
+
+
+   //===============================================================================================
+
+
+   private class LoadResourceTask extends AsyncTask<Integer, Integer, Picture>
+   {
+      protected Picture  doInBackground(Integer... resourceId)
       {
          try
          {
-            if (is != null)
-               is.close();
+            SVG  svg = SVG.getFromResource(getContext(), resourceId[0]);
+            return svg.renderToPicture();
          }
-         catch (IOException e) { /* do nothing */ }
+         catch (SVGParseException e)
+         {
+            Log.e("SVGImageView", String.format("Error loading resource 0x%x: %s", resourceId, e.getMessage()));
+         }
+         return null;
+      }
+
+      protected void  onPostExecute(Picture picture)
+      {
+         if (picture != null) {
+            setSoftwareLayerType();
+            setImageDrawable(new PictureDrawable(picture));
+         }
       }
    }
+
+
+   private class LoadAssetTask extends AsyncTask<String, Integer, Picture>
+   {
+      protected Picture  doInBackground(String... filename)
+      {
+         try
+         {
+            SVG  svg = SVG.getFromAsset(getContext().getAssets(), filename[0]);
+            return svg.renderToPicture();
+         }
+         catch (SVGParseException e)
+         {
+            Log.e("SVGImageView", "Error loading file " + filename + ": " + e.getMessage());
+         }
+         catch (FileNotFoundException e)
+         {
+            Log.e("SVGImageView", "File not found: " + filename);
+         }
+         catch (IOException e)
+         {
+            Log.e("SVGImageView", "Unable to load asset file: " + filename, e);
+         }
+         return null;
+      }
+
+      protected void  onPostExecute(Picture picture)
+      {
+         if (picture != null) {
+            setSoftwareLayerType();
+            setImageDrawable(new PictureDrawable(picture));
+         }
+      }
+   }
+
+
+   private class LoadURITask extends AsyncTask<InputStream, Integer, Picture>
+   {
+      protected Picture  doInBackground(InputStream... is)
+      {
+         try
+         {
+            SVG  svg = SVG.getFromInputStream(is[0]);
+            return svg.renderToPicture();
+         }
+         catch (SVGParseException e)
+         {
+            Log.e("SVGImageView", "Parse error loading URI: " + e.getMessage());
+         }
+         finally
+         {
+            try
+            {
+               is[0].close();
+            }
+            catch (IOException e) { /* do nothing */ }
+         }
+         return null;
+      }
+
+      protected void  onPostExecute(Picture picture)
+      {
+         if (picture != null) {
+            setSoftwareLayerType();
+            setImageDrawable(new PictureDrawable(picture));
+         }
+      }
+   }
+
+
+   //===============================================================================================
 
 
    /*
