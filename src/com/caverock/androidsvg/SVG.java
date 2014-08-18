@@ -20,6 +20,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -84,8 +85,6 @@ public class SVG
    private static final int     DEFAULT_PICTURE_HEIGHT = 512;
 
    private static final double  SQRT2 = 1.414213562373095;
-
-   private static final List<SvgObject>  EMPTY_CHILD_LIST = new ArrayList<SvgObject>(0);
 
 
    private Svg     rootElement = null;
@@ -1782,7 +1781,7 @@ public class SVG
       // Dummy container methods. Stop is officially a container, but we 
       // are not interested in any of its possible child elements.
       @Override
-      public List<SvgObject> getChildren() { return EMPTY_CHILD_LIST; }
+      public List<SvgObject> getChildren() { return Collections.emptyList(); }
       @Override
       public void addChild(SvgObject elem) throws SAXException { /* do nothing */ }
    }
@@ -1864,7 +1863,7 @@ public class SVG
       // Dummy container methods. Stop is officially a container, but we 
       // are not interested in any of its possible child elements.
       @Override
-      public List<SvgObject> getChildren() { return EMPTY_CHILD_LIST; }
+      public List<SvgObject> getChildren() { return Collections.emptyList(); }
       @Override
       public void addChild(SvgObject elem) throws SAXException { /* do nothing */ }
    }
