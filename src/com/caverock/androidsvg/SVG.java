@@ -1923,8 +1923,10 @@ public class SVG
 
    protected static class PathDefinition implements PathInterface
    {
-      private List<Byte>   commands = null;
-      private List<Float>  coords = null;
+      private byte[]   commands = null;
+      private int      commandsLength = 0;
+      private float[]  coords = null;
+      private int      coordsLength = 0;
 
       private static final byte  MOVETO  = 0;
       private static final byte  LINETO  = 1;
@@ -1936,56 +1938,81 @@ public class SVG
 
       public PathDefinition()
       {
-         this.commands = new ArrayList<Byte>();
-         this.coords = new ArrayList<Float>();
+         this.commands = new byte[8];
+         this.coords = new float[16];
       }
 
 
       public boolean  isEmpty()
       {
-         return commands.isEmpty();
+         return commandsLength == 0;
+      }
+
+
+      private void  addCommand(byte value)
+      {
+         if (commandsLength == commands.length) {
+            byte[]  newCommands = new byte[commands.length * 2];
+            System.arraycopy(commands, 0, newCommands, 0, commands.length);
+            commands = newCommands;
+         }
+         commands[commandsLength++] = value;
+      }
+
+
+      private void  coordsEnsure(int num)
+      {
+         if (coords.length < (coordsLength + num)) {
+            float[]  newCoords = new float[coords.length * 2];
+            System.arraycopy(coords, 0, newCoords, 0, coords.length);
+            coords = newCoords;
+         }
       }
 
 
       @Override
       public void  moveTo(float x, float y)
       {
-         commands.add(MOVETO);
-         coords.add(x);
-         coords.add(y);
+         addCommand(MOVETO);
+         coordsEnsure(2);
+         coords[coordsLength++] = x;
+         coords[coordsLength++] = y;
       }
 
 
       @Override
       public void  lineTo(float x, float y)
       {
-         commands.add(LINETO);
-         coords.add(x);
-         coords.add(y);
+         addCommand(LINETO);
+         coordsEnsure(2);
+         coords[coordsLength++] = x;
+         coords[coordsLength++] = y;
       }
 
 
       @Override
       public void  cubicTo(float x1, float y1, float x2, float y2, float x3, float y3)
       {
-         commands.add(CUBICTO);
-         coords.add(x1);
-         coords.add(y1);
-         coords.add(x2);
-         coords.add(y2);
-         coords.add(x3);
-         coords.add(y3);
+         addCommand(CUBICTO);
+         coordsEnsure(6);
+         coords[coordsLength++] = x1;
+         coords[coordsLength++] = y1;
+         coords[coordsLength++] = x2;
+         coords[coordsLength++] = y2;
+         coords[coordsLength++] = x3;
+         coords[coordsLength++] = y3;
       }
 
 
       @Override
       public void  quadTo(float x1, float y1, float x2, float y2)
       {
-         commands.add(QUADTO);
-         coords.add(x1);
-         coords.add(y1);
-         coords.add(x2);
-         coords.add(y2);
+         addCommand(QUADTO);
+         coordsEnsure(4);
+         coords[coordsLength++] = x1;
+         coords[coordsLength++] = y1;
+         coords[coordsLength++] = x2;
+         coords[coordsLength++] = y2;
       }
 
 
@@ -1993,41 +2020,43 @@ public class SVG
       public void  arcTo(float rx, float ry, float xAxisRotation, boolean largeArcFlag, boolean sweepFlag, float x, float y)
       {
          int  arc = ARCTO | (largeArcFlag?2:0) | (sweepFlag?1:0);
-         commands.add((byte) arc);
-         coords.add(rx);
-         coords.add(ry);
-         coords.add(xAxisRotation);
-         coords.add(x);
-         coords.add(y);
+         addCommand((byte) arc);
+         coordsEnsure(5);
+         coords[coordsLength++] = rx;
+         coords[coordsLength++] = ry;
+         coords[coordsLength++] = xAxisRotation;
+         coords[coordsLength++] = x;
+         coords[coordsLength++] = y;
       }
 
 
       @Override
       public void  close()
       {
-         commands.add(CLOSE);
+         addCommand(CLOSE);
       }
 
 
       public void enumeratePath(PathInterface handler)
       {
-         Iterator<Float>  coordsIter = coords.iterator();
+         int  coordsPos = 0;
 
-         for (byte command: commands)
+         for (int commandPos = 0; commandPos < commandsLength; commandPos++)
          {
+            byte  command = commands[commandPos];
             switch (command)
             {
                case MOVETO:
-                  handler.moveTo(coordsIter.next(), coordsIter.next());
+                  handler.moveTo(coords[coordsPos++], coords[coordsPos++]);
                   break;
                case LINETO:
-                  handler.lineTo(coordsIter.next(), coordsIter.next());
+                  handler.lineTo(coords[coordsPos++], coords[coordsPos++]);
                   break;
                case CUBICTO:
-                  handler.cubicTo(coordsIter.next(), coordsIter.next(), coordsIter.next(), coordsIter.next(),coordsIter.next(), coordsIter.next());
+                  handler.cubicTo(coords[coordsPos++], coords[coordsPos++], coords[coordsPos++], coords[coordsPos++],coords[coordsPos++], coords[coordsPos++]);
                   break;
                case QUADTO:
-                  handler.quadTo(coordsIter.next(), coordsIter.next(), coordsIter.next(), coordsIter.next());
+                  handler.quadTo(coords[coordsPos++], coords[coordsPos++], coords[coordsPos++], coords[coordsPos++]);
                   break;
                case CLOSE:
                   handler.close();
@@ -2035,7 +2064,7 @@ public class SVG
                default:
                   boolean  largeArcFlag = (command & 2) != 0;
                   boolean  sweepFlag = (command & 1) != 0;
-                  handler.arcTo(coordsIter.next(), coordsIter.next(), coordsIter.next(), largeArcFlag, sweepFlag, coordsIter.next(), coordsIter.next());
+                  handler.arcTo(coords[coordsPos++], coords[coordsPos++], coords[coordsPos++], largeArcFlag, sweepFlag, coords[coordsPos++], coords[coordsPos++]);
             }
          }
       }
