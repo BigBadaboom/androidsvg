@@ -21,9 +21,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.xml.sax.SAXException;
@@ -101,6 +102,9 @@ public class SVG
 
    // CSS rules
    private Ruleset  cssRules = new Ruleset();
+
+   // Map from id attribute to element
+   Map<String, SvgElementBase> idToElementMap = new HashMap<String, SvgElementBase>();
 
 
    protected enum Unit
@@ -2074,11 +2078,18 @@ public class SVG
 
    protected SvgObject  getElementById(String id)
    {
+      if (id == null || id.length() == 0)
+         return null;
       if (id.equals(rootElement.id))
          return rootElement;
 
+      if (idToElementMap.containsKey(id))
+         return idToElementMap.get(id);
+
       // Search the object tree for a node with id property that matches 'id'
-      return getElementById(rootElement, id);
+      SvgElementBase  result = getElementById(rootElement, id);
+      idToElementMap.put(id, result);
+      return result;
    }
 
 
