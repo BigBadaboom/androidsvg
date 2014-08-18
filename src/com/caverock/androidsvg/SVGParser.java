@@ -2951,7 +2951,7 @@ public class SVGParser extends DefaultHandler2
 
             if (Float.isNaN(cx)) {
                matrix.preRotate(ang);
-            } else if (Float.isNaN(cy)) {
+            } else if (!Float.isNaN(cy)) {
                matrix.preRotate(ang, cx, cy);
             } else {
                throw new SAXException("Invalid transform list: "+val);
