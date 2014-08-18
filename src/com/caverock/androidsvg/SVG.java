@@ -182,8 +182,17 @@ public class SVG
     */
    public static SVG  getFromResource(Resources resources, int resourceId) throws SVGParseException
    {
-      SVGParser  parser = new SVGParser();
-      return parser.parse(resources.openRawResource(resourceId));
+      SVGParser    parser = new SVGParser();
+      InputStream  is = resources.openRawResource(resourceId);
+      try {
+         return parser.parse(is);
+      } finally {
+         try {
+           is.close();
+         } catch (IOException e) {
+           // Do nothing
+         }
+      }
    }
 
 
@@ -198,11 +207,17 @@ public class SVG
     */
    public static SVG  getFromAsset(AssetManager assetManager, String filename) throws SVGParseException, IOException
    {
-      SVGParser  parser = new SVGParser();
+      SVGParser    parser = new SVGParser();
       InputStream  is = assetManager.open(filename);
-      SVG  svg = parser.parse(is);
-      is.close();
-      return svg;
+      try {
+         return parser.parse(is);
+      } finally {
+         try {
+           is.close();
+         } catch (IOException e) {
+           // Do nothing
+         }
+      }
    }
 
 
