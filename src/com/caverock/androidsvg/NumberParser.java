@@ -167,6 +167,7 @@ public class NumberParser
          {
             boolean  expIsNegative = false;
             int      expVal = 0;
+            boolean  abortExponent = false;
 
             pos++;
             if (pos == len) {
@@ -177,39 +178,51 @@ public class NumberParser
 
             switch (input.charAt(pos)) {
                case '-': expIsNegative = true;
-               // fall through
+                  // fall through
                case '+': pos++;
-            }
-
-            int  expStart = pos;
-
-            while (pos < len)
-            {
-               ch = input.charAt(pos);
-               if (ch >= '0' && ch <= '9')
-               {
-                  if (expVal > TOO_BIG) {
-                     // We will overflow if we continue...
-                     //Log.e("Exponent of number is too large");
-                     return Float.NaN;
-                  }
-                  expVal = expVal * 10 + ((int)ch - (int)'0');
-                  pos++;
-               }
-               else
                   break;
+               case '0': case '1': case '2': case '3': case '4':
+               case '5': case '6': case '7': case '8': case '9':
+                   break; // acceptable next char
+               default:
+                  // any other character is a failure, ie no exponent.
+                  // Could be something legal like "em" though.
+                  abortExponent = true;
+                  pos--;  // reset pos to position of 'E'/'e'
             }
 
-            // Check that at least some exponent digits were read
-            if (pos == expStart) {
-               //Log.e(""Incomplete exponent of number"");
-               return Float.NaN;
-            }
+            if (!abortExponent)
+            {
+               int  expStart = pos;
 
-            if (expIsNegative)
-               exponent -= expVal;
-            else
-               exponent += expVal; 
+               while (pos < len)
+               {
+                  ch = input.charAt(pos);
+                  if (ch >= '0' && ch <= '9')
+                  {
+                     if (expVal > TOO_BIG) {
+                        // We will overflow if we continue...
+                        //Log.e("Exponent of number is too large");
+                        return Float.NaN;
+                     }
+                     expVal = expVal * 10 + ((int)ch - (int)'0');
+                     pos++;
+                  }
+                  else
+                     break;
+               }
+
+               // Check that at least some exponent digits were read
+               if (pos == expStart) {
+                  //Log.e(""Incomplete exponent of number"");
+                  return Float.NaN;
+               }
+
+               if (expIsNegative)
+                  exponent -= expVal;
+               else
+                  exponent += expVal;
+            }
          }
       }
 
