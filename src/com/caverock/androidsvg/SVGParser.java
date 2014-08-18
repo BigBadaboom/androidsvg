@@ -3798,7 +3798,7 @@ public class SVGParser extends DefaultHandler2
                if (sweepFlag == null)
                   x = y = Float.NaN;
                else {
-                  x = scan.nextFloat();
+                  x = scan.possibleNextFloat();
                   y = scan.checkedNextFloat(x);
                }
                if (Float.isNaN(y) || rx < 0 || ry < 0) {
