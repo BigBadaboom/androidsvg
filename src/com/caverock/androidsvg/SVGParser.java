@@ -1390,12 +1390,12 @@ public class SVGParser extends DefaultHandler2
             scan.skipWhitespace();
 
             while (!scan.empty()) {
-               Float x = scan.nextFloat();
-               if (x == null)
+               float x = scan.nextFloat();
+               if (Float.isNaN(x))
                   throw new SAXException("Invalid <"+tag+"> points attribute. Non-coordinate content found in list.");
                scan.skipCommaWhitespace();
-               Float y = scan.nextFloat();
-               if (y == null)
+               float y = scan.nextFloat();
+               if (Float.isNaN(y))
                   throw new SAXException("Invalid <"+tag+"> points attribute. There should be an even number of coordinates.");
                scan.skipCommaWhitespace();
                points.add(x);
@@ -1403,7 +1403,7 @@ public class SVGParser extends DefaultHandler2
             }
             obj.points = new float[points.size()];
             int j = 0;
-            for (Float f: points) {
+            for (float f: points) {
                obj.points[j++] = f;
             }
          }
@@ -2202,6 +2202,8 @@ public class SVGParser extends DefaultHandler2
       protected int      position = 0;
       protected int      inputLength = 0;
 
+      private   NumberParser  numberParser = new NumberParser();
+
 
       public TextScanner(String input)
       {
@@ -2251,13 +2253,12 @@ public class SVGParser extends DefaultHandler2
       }
 
 
-      public Float  nextFloat()
+      public float  nextFloat()
       {
-         NumberParser  np = NumberParser.parseNumber(input, position, inputLength);
-         if (np == null)
-            return null;
-         position = np.getEndPos();
-         return np.value();
+         float  val = numberParser.parseNumber(input, position, inputLength);
+         if (!Float.isNaN(val))
+            position = numberParser.getEndPos();
+         return val;
       }
 
       /*
@@ -2265,14 +2266,13 @@ public class SVGParser extends DefaultHandler2
        * If found, the float is returned. Otherwise null is returned and
        * the scan position left as it was.
        */
-      public Float  possibleNextFloat()
+      public float  possibleNextFloat()
       {
          skipCommaWhitespace();
-         NumberParser  np = NumberParser.parseNumber(input, position, inputLength);
-         if (np == null)
-            return null;
-         position = np.getEndPos();
-         return np.value();
+         float  val = numberParser.parseNumber(input, position, inputLength);
+         if (!Float.isNaN(val))
+            position = numberParser.getEndPos();
+         return val;
       }
 
       /*
@@ -2280,10 +2280,10 @@ public class SVGParser extends DefaultHandler2
        * But only if the provided 'lastFloat' (representing the last coord
        * scanned was non-null (ie parsed correctly).
        */
-      public Float  checkedNextFloat(Object lastRead)
+      public float  checkedNextFloat(float lastRead)
       {
-         if (lastRead == null) {
-            return null;
+         if (Float.isNaN(lastRead)) {
+            return Float.NaN;
          }
          skipCommaWhitespace();
          return nextFloat();
@@ -2307,8 +2307,8 @@ public class SVGParser extends DefaultHandler2
 
       public Length  nextLength()
       {
-         Float  scalar = nextFloat();
-         if (scalar == null)
+         float  scalar = nextFloat();
+         if (Float.isNaN(scalar))
             return null;
          Unit  unit = nextUnit();
          if (unit == null)
@@ -2888,20 +2888,20 @@ public class SVGParser extends DefaultHandler2
          if (cmd.equals("matrix"))
          {
             scan.skipWhitespace();
-            Float a = scan.nextFloat();
+            float a = scan.nextFloat();
             scan.skipCommaWhitespace();
-            Float b = scan.nextFloat();
+            float b = scan.nextFloat();
             scan.skipCommaWhitespace();
-            Float c = scan.nextFloat();
+            float c = scan.nextFloat();
             scan.skipCommaWhitespace();
-            Float d = scan.nextFloat();
+            float d = scan.nextFloat();
             scan.skipCommaWhitespace();
-            Float e = scan.nextFloat();
+            float e = scan.nextFloat();
             scan.skipCommaWhitespace();
-            Float f = scan.nextFloat();
+            float f = scan.nextFloat();
             scan.skipWhitespace();
 
-            if (f == null || !scan.consume(')'))
+            if (Float.isNaN(f) || !scan.consume(')'))
                throw new SAXException("Invalid transform list: "+val);
 
             Matrix m = new Matrix();
@@ -2911,14 +2911,14 @@ public class SVGParser extends DefaultHandler2
          else if (cmd.equals("translate"))
          {
             scan.skipWhitespace();
-            Float  tx = scan.nextFloat();
-            Float  ty = scan.possibleNextFloat();
+            float  tx = scan.nextFloat();
+            float  ty = scan.possibleNextFloat();
             scan.skipWhitespace();
 
-            if (tx == null || !scan.consume(')'))
+            if (Float.isNaN(tx) || !scan.consume(')'))
                throw new SAXException("Invalid transform list: "+val);
 
-            if (ty == null)
+            if (Float.isNaN(ty))
                matrix.preTranslate(tx, 0f);
             else
                matrix.preTranslate(tx, ty);
@@ -2926,14 +2926,14 @@ public class SVGParser extends DefaultHandler2
          else if (cmd.equals("scale"))
          {
             scan.skipWhitespace();
-            Float  sx = scan.nextFloat();
-            Float  sy = scan.possibleNextFloat();
+            float  sx = scan.nextFloat();
+            float  sy = scan.possibleNextFloat();
             scan.skipWhitespace();
 
-            if (sx == null || !scan.consume(')'))
+            if (Float.isNaN(sx) || !scan.consume(')'))
                throw new SAXException("Invalid transform list: "+val);
 
-            if (sy == null)
+            if (Float.isNaN(sy))
                matrix.preScale(sx, sx);
             else
                matrix.preScale(sx, sy);
@@ -2941,17 +2941,17 @@ public class SVGParser extends DefaultHandler2
          else if (cmd.equals("rotate"))
          {
             scan.skipWhitespace();
-            Float  ang = scan.nextFloat();
-            Float  cx = scan.possibleNextFloat();
-            Float  cy = scan.possibleNextFloat();
+            float  ang = scan.nextFloat();
+            float  cx = scan.possibleNextFloat();
+            float  cy = scan.possibleNextFloat();
             scan.skipWhitespace();
 
-            if (ang == null || !scan.consume(')'))
+            if (Float.isNaN(ang) || !scan.consume(')'))
                throw new SAXException("Invalid transform list: "+val);
 
-            if (cx == null) {
+            if (Float.isNaN(cx)) {
                matrix.preRotate(ang);
-            } else if (cy != null) {
+            } else if (Float.isNaN(cy)) {
                matrix.preRotate(ang, cx, cy);
             } else {
                throw new SAXException("Invalid transform list: "+val);
@@ -2960,10 +2960,10 @@ public class SVGParser extends DefaultHandler2
          else if (cmd.equals("skewX"))
          {
             scan.skipWhitespace();
-            Float  ang = scan.nextFloat();
+            float  ang = scan.nextFloat();
             scan.skipWhitespace();
 
-            if (ang == null || !scan.consume(')'))
+            if (Float.isNaN(ang) || !scan.consume(')'))
                throw new SAXException("Invalid transform list: "+val);
 
             matrix.preSkew((float) Math.tan(Math.toRadians(ang)), 0f);
@@ -2971,10 +2971,10 @@ public class SVGParser extends DefaultHandler2
          else if (cmd.equals("skewY"))
          {
             scan.skipWhitespace();
-            Float  ang = scan.nextFloat();
+            float  ang = scan.nextFloat();
             scan.skipWhitespace();
 
-            if (ang == null || !scan.consume(')'))
+            if (Float.isNaN(ang) || !scan.consume(')'))
                throw new SAXException("Invalid transform list: "+val);
 
             matrix.preSkew(0f, (float) Math.tan(Math.toRadians(ang)));
@@ -3048,8 +3048,8 @@ public class SVGParser extends DefaultHandler2
 
       while (!scan.empty())
       {
-         Float scalar = scan.nextFloat();
-         if (scalar == null)
+         float scalar = scan.nextFloat();
+         if (Float.isNaN(scalar))
             throw new SAXException("Invalid length list value: "+scan.ahead());
          Unit  unit = scan.nextUnit();
          if (unit == null)
@@ -3074,9 +3074,10 @@ public class SVGParser extends DefaultHandler2
 
    private static float  parseFloat(String val, int offset, int len) throws SAXException
    {
-      NumberParser np = NumberParser.parseNumber(val, offset, len);
-      if (np != null) {
-         return np.value();
+      NumberParser np = new NumberParser();
+      float  num = np.parseNumber(val, offset, len);
+      if (!Float.isNaN(num)) {
+         return num;
       } else {
          throw new SAXException("Invalid float value: "+val);
       }
@@ -3101,15 +3102,15 @@ public class SVGParser extends DefaultHandler2
       TextScanner scan = new TextScanner(val);
       scan.skipWhitespace();
 
-      Float minX = scan.nextFloat();
+      float minX = scan.nextFloat();
       scan.skipCommaWhitespace();
-      Float minY = scan.nextFloat();
+      float minY = scan.nextFloat();
       scan.skipCommaWhitespace();
-      Float width = scan.nextFloat();
+      float width = scan.nextFloat();
       scan.skipCommaWhitespace();
-      Float height = scan.nextFloat();
+      float height = scan.nextFloat();
 
-      if (minX==null || minY==null || width == null || height == null)
+      if (Float.isNaN(minX) || Float.isNaN(minY) || Float.isNaN(width) || Float.isNaN(height))
          throw new SAXException("Invalid viewBox definition - should have four numbers");
       if (width < 0)
          throw new SAXException("Invalid viewBox. width cannot be negative");
@@ -3218,16 +3219,23 @@ public class SVGParser extends DefaultHandler2
          TextScanner scan = new TextScanner(val.substring(4));
          scan.skipWhitespace();
 
-         int red = parseColourComponent(scan);
-         scan.skipCommaWhitespace();
-         int green = parseColourComponent(scan);
-         scan.skipCommaWhitespace();
-         int blue = parseColourComponent(scan);
+         float red = scan.nextFloat();
+         if (!Float.isNaN(red) && scan.consume('%'))
+            red = (red * 256) / 100;
+
+         float green = scan.checkedNextFloat(red);
+         if (!Float.isNaN(green) && scan.consume('%'))
+            green = (green * 256) / 100;
+
+         float blue = scan.checkedNextFloat(green);
+         if (!Float.isNaN(blue) && scan.consume('%'))
+            blue = (blue * 256) / 100;
 
          scan.skipWhitespace();
-         if (!scan.consume(')'))
+         if (Float.isNaN(blue) || !scan.consume(')'))
             throw new SAXException("Bad rgb() colour value: "+val);
-         return new Colour(red<<16 | green<<8 | blue);
+
+         return new Colour(clamp255(red)<<16 | clamp255(green)<<8 | clamp255(blue));
       }
       // Must be a colour keyword
       else
@@ -3235,17 +3243,9 @@ public class SVGParser extends DefaultHandler2
    }
 
 
-   // Parse a colour component value (0..255 or 0%-100%)
-   private static int  parseColourComponent(TextScanner scan) throws SAXException
+   private static int clamp255(float val)
    {
-      // Spec says components can be <integer> or <number>%.
-      // For simplicity, we will allow <number> for both.
-      float  comp = scan.nextFloat();
-      if (scan.consume('%')) {
-         comp = (comp * 256) / 100;
-      }
-      // CSS rules say that only percent values should be clamped, but we will do it for both.
-      return (comp < 0) ? 0 : (comp > 255) ? 255 : (int) comp;
+      return (val < 0) ? 0 : (val > 255) ? 255 : Math.round(val);
    }
 
 
@@ -3590,8 +3590,8 @@ public class SVGParser extends DefaultHandler2
       float   currentX = 0f, currentY = 0f;    // The last point visited in the subpath
       float   lastMoveX = 0f, lastMoveY = 0f;  // The initial point of current subpath
       float   lastControlX = 0f, lastControlY = 0f;  // Last control point of the just completed bezier curve.
-      Float   x,y, x1,y1, x2,y2;
-      Float   rx,ry, xAxisRotation;
+      float   x,y, x1,y1, x2,y2;
+      float   rx,ry, xAxisRotation;
       Boolean largeArcFlag, sweepFlag;
 
       SVG.PathDefinition  path = new SVG.PathDefinition();
@@ -3615,7 +3615,7 @@ public class SVGParser extends DefaultHandler2
             case 'm':
                x = scan.nextFloat();
                y = scan.checkedNextFloat(x);
-               if (y == null) {
+               if (Float.isNaN(y)) {
                   Log.e(TAG, "Bad path coords for "+((char)pathCommand)+" path segment");
                   return path;
                }
@@ -3636,7 +3636,7 @@ public class SVGParser extends DefaultHandler2
             case 'l':
                x = scan.nextFloat();
                y = scan.checkedNextFloat(x);
-               if (y == null) {
+               if (Float.isNaN(y)) {
                   Log.e(TAG, "Bad path coords for "+((char)pathCommand)+" path segment");
                   return path;
                }
@@ -3658,7 +3658,7 @@ public class SVGParser extends DefaultHandler2
                y2 = scan.checkedNextFloat(x2);
                x = scan.checkedNextFloat(y2);
                y = scan.checkedNextFloat(x);
-               if (y == null) {
+               if (Float.isNaN(y)) {
                   Log.e(TAG, "Bad path coords for "+((char)pathCommand)+" path segment");
                   return path;
                }
@@ -3686,7 +3686,7 @@ public class SVGParser extends DefaultHandler2
                y2 = scan.checkedNextFloat(x2);
                x = scan.checkedNextFloat(y2);
                y = scan.checkedNextFloat(x);
-               if (y == null) {
+               if (Float.isNaN(y)) {
                   Log.e(TAG, "Bad path coords for "+((char)pathCommand)+" path segment");
                   return path;
                }
@@ -3715,7 +3715,7 @@ public class SVGParser extends DefaultHandler2
             case 'H':
             case 'h':
                x = scan.nextFloat();
-               if (x == null) {
+               if (Float.isNaN(x)) {
                   Log.e(TAG, "Bad path coords for "+((char)pathCommand)+" path segment");
                   return path;
                }
@@ -3730,7 +3730,7 @@ public class SVGParser extends DefaultHandler2
             case 'V':
             case 'v':
                y = scan.nextFloat();
-               if (y == null) {
+               if (Float.isNaN(y)) {
                   Log.e(TAG, "Bad path coords for "+((char)pathCommand)+" path segment");
                   return path;
                }
@@ -3748,7 +3748,7 @@ public class SVGParser extends DefaultHandler2
                y1 = scan.checkedNextFloat(x1);
                x = scan.checkedNextFloat(y1);
                y = scan.checkedNextFloat(x);
-               if (y == null) {
+               if (Float.isNaN(y)) {
                   Log.e(TAG, "Bad path coords for "+((char)pathCommand)+" path segment");
                   return path;
                }
@@ -3772,7 +3772,7 @@ public class SVGParser extends DefaultHandler2
                y1 = 2 * currentY - lastControlY;
                x = scan.nextFloat();
                y = scan.checkedNextFloat(x);
-               if (y == null) {
+               if (Float.isNaN(y)) {
                   Log.e(TAG, "Bad path coords for "+((char)pathCommand)+" path segment");
                   return path;
                }
@@ -3795,9 +3795,13 @@ public class SVGParser extends DefaultHandler2
                xAxisRotation = scan.checkedNextFloat(ry);
                largeArcFlag = scan.checkedNextFlag(xAxisRotation);
                sweepFlag = scan.checkedNextFlag(largeArcFlag);
-               x = scan.checkedNextFloat(sweepFlag);
-               y = scan.checkedNextFloat(x);
-               if (y == null || rx < 0 || ry < 0) {
+               if (sweepFlag == null)
+                  x = y = Float.NaN;
+               else {
+                  x = scan.nextFloat();
+                  y = scan.checkedNextFloat(x);
+               }
+               if (Float.isNaN(y) || rx < 0 || ry < 0) {
                   Log.e(TAG, "Bad path coords for "+((char)pathCommand)+" path segment");
                   return path;
                }
