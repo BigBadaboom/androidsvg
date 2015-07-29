@@ -6,7 +6,7 @@ correctly renders the [SVG Acid Test](http://www.codedread.com/acid/acid1.html).
 
 *AndroidSVG is licensed under the [Apache License v2.0](http://www.apache.org/licenses/LICENSE-2.0)*.
 
-[https://twitter.com/AndroidSVG http://i.imgur.com/gSGIbYP.png]
+<a href="https://twitter.com/AndroidSVG"><img src="http://i.imgur.com/gSGIbYP.png"/></a>
 
 ## Downloads
 
