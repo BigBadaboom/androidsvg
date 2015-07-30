@@ -10,3 +10,5 @@ android {
         targetCompatibility JavaVersion.VERSION_1_7
     }
 }
+
+apply from: 'maven_config.gradle'
