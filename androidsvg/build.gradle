@@ -11,4 +11,5 @@ android {
     }
 }
 
-apply from: 'maven_config.gradle'
+apply from: 'packaging_configuration.gradle'
+apply from: 'upload_configuration.gradle'
