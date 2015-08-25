@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="AndroidSVG : SVG rendering library for Android">
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>AndroidSVG</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/BigBadaboom/androidsvg">View on GitHub</a>
+
+          <a href="index.html"><img id="project_logo" src="images/AndroidSVG_logo.svg" title="AndroidSVG logo"/></a>
+          <h1 id="project_title">AndroidSVG</h1>
+          <h2 id="project_tagline">SVG rendering library for Android</h2>
+
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <div class="inner">
+        <nav>
+          <ul>
+            <li><a href="download.html">Download</a></li>
+            <li><a href="release_notes.html">Release Notes</a></li>
+            <li><a href="file:///C:/Users/Paul/git/androidsvg/doc/reference/com/caverock/androidsvg/package-summary.html">Javadoc</a></li>
+            <li><a href="documentation.html">Documentation</a></li>
+            <li><a href="svg_implementation_details.html">SVG Implementation</a></li>
+            <li><a href="faq.html">FAQ</a></li>
+            <li><a href="known_issues.html">Known Issues</a></li>
+            <li><a href="https://github.com/bigbadaboom/androidsvg/issues">Report a bug</a></li>
+            <li><a href="mailto:androidsvgfeedback@gmail.com">Contact the author</a></li>
+          </ul>
+
+          <p><em><a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License v2.0</a></em></p>
+
+          <p><a href="https://twitter.com/AndroidSVG"><img src="images/twitter.png"></a></p>
+        </nav>
+        <section id="main_content">
+        <h1><a id="androidsvg" class="anchor" href="#androidsvg" aria-hidden="true"><span class="octicon octicon-link"></span></a>Release Notes</h1>
+
+
+
+
+<h2>1.3.0 (upcoming release)</h2>
+
+<ul>
+<li>Support for SVG <a href="http://www.w3.org/TR/SVG/filters.html" rel="nofollow">Filter Effects</a> </li>
+<li>Support for external CSS (thanks to David Gileadi) </li>
+</ul>
+
+<h2>1.2.2-beta-1 (16 June 2014)</h2>
+
+<ul>
+<li>Fix <code>&lt;image&gt;</code> elements sometimes not rendering correctly (<a title="Sometimes uncorrectly loads embeded images" class="closed_ref" href="https://github.com/BigBadaboom/androidsvg/issues/25">Issue 25</a>). </li>
+<li>Fixed NPE in <code>&lt;path&gt;</code> elements with no <code>d</code> attribute (<a title="<path> elements without a d attribute throw a NPE" class="closed_ref" href="https://github.com/BigBadaboom/androidsvg/issues/35">Issue 35</a>). </li>
+<li>A number of changes to improve parsing speed. Parsing is around 2-3 times faster now. </li>
+<li>SVGImageView now works better with Graphical Layout editor. </li>
+<li>SVGImageView now loads and parses SVGs on a background thread. </li>
+<li>Experimental script to build .aar files for Android Studio. </li>
+</ul>
+
+<h2>1.2.1 (1 February 2014)</h2>
+
+<p>Apologies to everyone for taking so long to release these fixes. </p>
+
+<p>You can <a href="https://bitbucket.org/paullebeau/androidsvg/downloads" rel="nofollow">download the new release at Bitbucket</a>.
+If you are a maven user, the release is now available from the central repository. </p>
+
+<ul>
+<li>Made parsing of path definitions more robust </li>
+<li>Fixed a bug with <code>&lt;line&gt;</code> elements that used percentage coordinates. </li>
+<li>Fixed parsing of paths with commas between coordinate sets (<a title="Parser crash (file attached)" class="closed_ref" href="https://github.com/BigBadaboom/androidsvg/issues/13">&nbsp;Issue 13&nbsp;</a>). </li>
+<li>Fixed bad rendering of markers with no viewBox attribute (<a title="<marker> support incomplete/buggy?" class="closed_ref" href="https://github.com/BigBadaboom/androidsvg/issues/14">&nbsp;Issue 14&nbsp;</a>). </li>
+<li>Transparently support zipped SVG files (.svgz) (<a title="Please add SVGZ support (patch included)" class="closed_ref" href="https://github.com/BigBadaboom/androidsvg/issues/15">&nbsp;Issue 15&nbsp;</a>). </li>
+<li>Added an <code>SVG.getFromResource()</code> variant that takes a <code>Resource</code> instead of <code>Context</code> (<a title="SVG.getFromResource(Resources, int) - patch included" class="closed_ref" href="https://github.com/BigBadaboom/androidsvg/issues/16">&nbsp;Issue 16&nbsp;</a>). </li>
+<li>Several improvements to <code>SVGImageView</code> (<a title="Compiler error in SVGImageView on Android for variable LAYER_TYPE_SOFTWARE" class="closed_ref" href="https://github.com/BigBadaboom/androidsvg/issues/20">Issue 20</a>, <a title="SVGImageView throws NullPointerException if no asset is defined in layout." class="closed_ref" href="https://github.com/BigBadaboom/androidsvg/issues/21">Issue 21</a> and <a title='Code smell. SVGImageView.java uses Exception to handle multiplicity of "svg" attribute' class="closed_ref" href="https://github.com/BigBadaboom/androidsvg/issues/22">Issue 22</a>). </li>
+<li>Fixed bug with the positioning of nested <code>&lt;svg&gt;</code> elements when they don't have a viewBox. </li>
+<li>Made <code>SVG.getVersion()</code> a static method so it can be called without having to load an SVG. </li>
+<li>Added <code>setSVG()</code> method to <code>SVGImageView</code>. </li>
+<li>Allow numbers (floats) in <code>rgb()</code> colour components. </li>
+</ul>
+
+<h2>1.2.0 (16 July 2013)</h2>
+
+<ul>
+<li>This version has some significant API changes. </li>
+  <ul>
+  <li>The <code>SVG.renderToX()</code> and <code>SVG.renderViewToX()</code> methods have been simplified.  There are now fewer variants. </li>
+  <li>A number of methods have been added that allow you to read and set the attributes of the root <code>&lt;svg&gt;</code> element.
+      The attributes that can be accessed are <code>width</code>, <code>height</code>, <code>preserveAspectRatio</code> and <code>viewBox</code>.
+      So for example, if you wanted to force an SVG to stretch to fit your canvas, you can do the following: </li>
+      
+<pre>
+my_svg.setDocumentWidth("100%");
+my_svg.setDocumentHeight("100%");
+my_svg.setDocumentPreserveAspectRatio>PreserveAspectRatio.STRETCH);
+</pre>
+  </ul>
+  <li>Added support for the following SVG 1.2 Tiny features. </li>
+    <ul>
+    <li>The <code>&lt;solidColor&gt;</code> element </li>
+    <li>The <code>viewport-fill</code> and <code>viewport-fill-opacity</code> style properties. </li>
+    <li>The <code>vector-effect</code> property (non-scaling-stroke). </li>
+    <li>The <code>&lt;switch&gt;</code> conditional attributes <code>requiredFormats</code> and <code>requiredFonts</code>. </li>
+    <li><code>xml:id</code> </li>
+    </ul>
+  <li>Errors in the way <code>width</code> and <code>height</code> were handled in the root <code>&lt;svg&gt;</code> element have been fixed.
+      I have also fixed how the <code>&lt;svg&gt;</code> viewport is calculated.  This means that some SVGs will render differently
+      (ie correctly) in this version.  In particular I was being overly enthusiastic with my scaling.  Some files that used to scale
+      to fit the viewport, now will not. </li>
+  <li>The DPI value used to convert real world units such as "cm" or "pt" now always defaults to 96. This follows the recommendation
+      of the CSS specification and means that rendering will now better match the way browsers render SVG files.  You can override
+      the DPI setting using the <code>SVG.setRenderDPI()</code> method. </li>
+  <li>The <code>xml:space</code> attribute is now supported. </li>
+  <li>Switched to using Doclava to generate the Javadocs. </li>
+  <li>Added support for the <code>preserveAspectRatio</code> attribute in <code>&lt;view&gt;</code> elements. </li>
+  <li>Added a custom View class for displaying SVG images in your layouts. </li>
+</ul>
+  
+<h2>1.1.182 (8 Mar 2013)</h2>
+
+<ul>
+  <li>Added CSS support (<code>&lt;style&gt;</code> element) meaning that SVG files generated by Corel Draw are now supported. </li>
+  <li>Fixed handling of <code>&lt;title&gt;</code> and <code>&lt;desc&gt;</code> elements. The parser was not allowing for the fact that
+      the contents of these elements may be spread over multiple lines and may contain other tags. We now extract the entire
+      textual content of the element. Child tags will be stripped but their text content will be included in the returned string. </li>
+</ul>
+
+<h2>1.0.170 (3 Feb 2013)</h2>
+
+<p>Initial release. </p>
+
+
+
+
+
+        
+        </section>
+      </div>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">AndroidSVG maintained by <a href="https://github.com/BigBadaboom">Paul LeBeau</a></p>
+        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+  </body>
+</html>

@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="AndroidSVG : SVG rendering library for Android">
+
+    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+    <link rel="stylesheet" type="text/css" href="stylesheets/prettify-eclipse.css">
+
+    <title>AndroidSVG</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/BigBadaboom/androidsvg">View on GitHub</a>
+
+          <a href="index.html"><img id="project_logo" src="images/AndroidSVG_logo.svg" title="AndroidSVG logo"/></a>
+          <h1 id="project_title">AndroidSVG</h1>
+          <h2 id="project_tagline">SVG rendering library for Android</h2>
+
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <div class="inner">
+        <nav>
+          <ul>
+            <li><a href="download.html">Download</a></li>
+            <li><a href="release_notes.html">Release Notes</a></li>
+            <li><a href="file:///C:/Users/Paul/git/androidsvg/doc/reference/com/caverock/androidsvg/package-summary.html">Javadoc</a></li>
+            <li><a href="documentation.html">Documentation</a></li>
+            <li><a href="svg_implementation_details.html">SVG Implementation</a></li>
+            <li><a href="faq.html">FAQ</a></li>
+            <li><a href="known_issues.html">Known Issues</a></li>
+            <li><a href="https://github.com/bigbadaboom/androidsvg/issues">Report a bug</a></li>
+            <li><a href="mailto:androidsvgfeedback@gmail.com">Contact the author</a></li>
+          </ul>
+
+          <p><em><a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License v2.0</a></em></p>
+
+          <p><a href="https://twitter.com/AndroidSVG"><img src="images/twitter.png"></a></p>
+        </nav>
+        <section id="main_content">
+        <h1><a id="androidsvg" class="anchor" href="#androidsvg" aria-hidden="true"><span class="octicon octicon-link"></span></a>How to use the SVGImageView class</h1>
+
+
+
+
+
+
+<p>
+AndroidSVG releases from version 1.2.0 onwards include a custom View class that allows you to easily include SVG images in your layouts.
+</p>
+
+<p>
+See the <a href="doc/reference/com/caverock/androidsvg/SVGImageView.html" rel="nofollow">javadoc for SVGImageView</a>.
+</p>
+
+<p>
+There are two ways to use SVGImageView in your application.
+</p>
+
+<ol>
+<li><a href="#Option_1:_Using_SVGImageView_from_your_code">Manually add it to your layout in code, or</a></li>
+<li><a href="#Option_2:_Using_SVGImageView_in_your_XML_layouts">Use the view in an XML layout file</a>.</li>
+</ol>
+
+<hr>
+
+
+<h2><a name="Option_1:_Using_SVGImageView_from_your_code"></a>Option 1: Using SVGImageView from your code</h2>
+
+<p>
+First, make sure you have included AndroidSVG in your project.  For instance, if you are using Eclipse, copy the <code>androidsvg.jar</code> file to your <code>libs</code> folder.
+The Android plugin will do the rest.
+</p>
+
+<p>
+If you want to manually add the SVGImageView to your layout, you will need to do something like the following.
+</p>
+
+<pre class="prettyprint">
+public class MainActivity extends Activity
+{
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState)
+    {
+        super.onCreate(savedInstanceState);
+ 
+        LinearLayout layout = new LinearLayout(this);
+        SVGImageView svgImageView = new SVGImageView(this);
+        svgImageView.setImageAsset("my_svg_file.svg");
+        layout.addView(svgImageView,
+                       new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+        setContentView(layout);
+    }
+
+}
+</pre>
+
+<p>
+This example uses the <code>setImageAsset()</code> method to tell SVGImageView to load the SVG from the <code>assets</code> folder.  There are also calls
+to set the SVG from a resource (<code>setImageResource()</code>) and a resource URI (<code>setImageUri()</code>);
+</p>
+
+<hr>
+
+
+<h2><a name="Option_2:_Using_SVGImageView_in_your_XML_layouts"></a>Option 2: Using SVGImageView in your XML layouts</h2>
+
+<h3>Using Android Studio</h3>
+
+<p>
+Instructions coming soon.
+</p>
+
+
+<h3>Using Eclipse</h3>
+
+<p>
+Unfortunately (as of ADT 22) you can't just use the standard jar file (as found on the downloads page) if you want to use
+SVGImageView in your layout files.  The jars don't include the resources that the layout manager requires.  Instead you
+need to include AndroidSVG in the form of an Android Library Project.  Instructions for this are included below.
+</p>
+
+<p>
+For this approach, you will need. </p>
+
+<ol>
+<li>A recent version of the ADT plugin installed in Eclipse.  Must be at least version 17.</li>
+<li>A copy of the AndroidSVG source.  For this you can <a href="https://github.com/BigBadaboom/androidsvg" rel="nofollow">clone the repository</a> using Git,
+ or you can <a href="https://github.com/BigBadaboom/androidsvg/zipball/master" rel="nofollow">download a Zip file containing the source</a>.</li>
+</ol>
+
+<h4><a name="Creating_an_AndroidSVG_library_project"></a>Creating an AndroidSVG library project</h4>
+
+<p>
+Assuming you have downloaded the source into a directory called <code>androidsvg-src</code>, create a new Android project in Eclipse using the <code>androidsvg-src</code>
+folder as the existing source.  You can do this by going <code>File-&gt;New-&gt;Project...</code> then selecting <code>Android Project from Existing Code</code>.
+</p>
+
+<p>
+Then, in the project properties for your app, go to the 'Android' section and then under 'Library', add the new AndroidSVG project that you just created.
+</p>
+
+<p>
+<img src="images/eclipse_library.png">
+</p>
+
+<h4><a name="Adding_the_custom_view_to_your_layout_file"></a>Adding the custom view to your layout file</h4>
+
+<p>
+You will need to add the SVGImageView widget to your layout file.  If you know what you are doing, you can add it manually, but perhaps the simplest way is
+to start with an ImageView and modify it.
+</p>
+
+<p>
+In the Graphical Layout tab, go to the "Images &amp; Media" section and drag an ImageView component to your layout screen.  Position and resize it how
+you like, then switch to the XML editing tab. </p><p>The ImageView you just added, probably looks something like the following:
+</p>
+
+<pre class="prettyprint">
+&lt;ImageView
+    android:id="@+id/imageView1"
+    android:layout_width="100dp"
+    android:layout_height="100dp"
+    android:src="@drawable/ic_launcher" /&gt;
+</pre>
+
+<p>
+The next step is to let your layout know about the custom view.  Add a namespace reference for <code>svgimageview</code> to the root element of your layout
+file.  The root element will commonly be a <code>LinearLayout</code>, but may be something else.
+</p>
+
+<pre class="prettyprint">
+&lt;LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:svgimageview="http://schemas.android.com/apk/res-auto"
+    ... &gt;
+</pre>
+
+<p>
+The schema is necessary because SVGImageView has a custom attribute for specifying the SVG file (see below).
+</p>
+
+<blockquote>
+<strong>Aside:</strong>
+Note the special schema URL in the namespace.  If you were using a custom View from your own project you would use a URL based on your package name.
+For example <code>http://schemas.android.com/apk/com.example.customview</code>.  But since the custom View is in an included library you should use the
+<code>res-auto</code> short-cut. The real schema URL will be automatically inserted when your app is built.
+</blockquote>
+
+<p>
+The final step is to alter the <code>ImageView</code> entry you inserted so that it is a valid SVGImageView entry.
+</p>
+
+<ol>
+<li>Change <code>ImageView</code> to <code>com.caverock.androidsvg.SVGImageView</code>.</li>
+<li>Replace <code>android:src</code> with <code>svgimageview:svg</code></li>
+</ol>
+
+<p>
+Your entry should now look like this.</p>
+
+<pre class="prettyprint">
+&lt;com.caverock.androidsvg.SVGImageView
+    android:id="@+id/imageView1"
+    android:layout_width="100dp"
+    android:layout_height="100dp"
+    svgimageview:svg="my_svg_file.svg" /&gt;
+</pre>
+
+<p>
+The <code>svgimageview:svg</code> attribute can be either:</p>
+
+<ul>
+<li>a filename in your assets folder, as in the above example </li><li>a resource reference such as <code>@drawable/my_svg_file</code></li>
+<li>a resource URI such as <code>android.resource://com.example.myapplication/raw/my_svg_file</code></li>
+</ul>
+
+<p>
+Now build and run your application to test your changes.  The custom view won't render correctly in the graphical layout editor. All
+you will see is a grey rectangle with the SVGImageView class name. You need to deploy your app to a device or the emulator to test
+if it is working properly.
+</p>
+ 
+
+
+
+        
+        </section>
+      </div>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">AndroidSVG maintained by <a href="https://github.com/BigBadaboom">Paul LeBeau</a></p>
+        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+  </body>
+</html>

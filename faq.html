@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="AndroidSVG : SVG rendering library for Android">
+
+    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+    <link rel="stylesheet" type="text/css" href="stylesheets/prettify-eclipse.css">
+
+    <title>AndroidSVG</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/BigBadaboom/androidsvg">View on GitHub</a>
+
+          <a href="index.html"><img id="project_logo" src="images/AndroidSVG_logo.svg" title="AndroidSVG logo"/></a>
+          <h1 id="project_title">AndroidSVG</h1>
+          <h2 id="project_tagline">SVG rendering library for Android</h2>
+
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <div class="inner">
+        <nav>
+          <ul>
+            <li><a href="download.html">Download</a></li>
+            <li><a href="release_notes.html">Release Notes</a></li>
+            <li><a href="file:///C:/Users/Paul/git/androidsvg/doc/reference/com/caverock/androidsvg/package-summary.html">Javadoc</a></li>
+            <li><a href="documentation.html">Documentation</a></li>
+            <li><a href="svg_implementation_details.html">SVG Implementation</a></li>
+            <li><a href="faq.html">FAQ</a></li>
+            <li><a href="known_issues.html">Known Issues</a></li>
+            <li><a href="https://github.com/bigbadaboom/androidsvg/issues">Report a bug</a></li>
+            <li><a href="mailto:androidsvgfeedback@gmail.com">Contact the author</a></li>
+          </ul>
+
+          <p><em><a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License v2.0</a></em></p>
+
+          <p><a href="https://twitter.com/AndroidSVG"><img src="images/twitter.png"></a></p>
+        </nav>
+        <section id="main_content">
+        <h1><a id="androidsvg" class="anchor" href="#androidsvg" aria-hidden="true"><span class="octicon octicon-link"></span></a>Frequently Asked Questions</h1>
+
+        
+
+ 
+ <h2><a name="Rendering_issues"></a>Rendering issues<a href="#Rendering_issues" class="section_anchor"></a></h2>
+ 
+ <ul>
+ <li><a href="#My_SVG_doesn't_render_if_I_try_to_do_Canvas.drawPicture()_o">My SVG doesn't render if I try to do canvas.drawPicture() on the Picture returned by SVG.renderToPicture()</a> </li>
+ <li><a href="#The_clipPath_element_doesn't_work_on_newer_versions_of_Andr">The &lt;clipPath&gt; element doesn't work on newer versions of Android</a> </li>
+ <li><a href="#The_clipPath_element_doesn't_work_on_my_Android_4.3_device,">The &lt;clipPath&gt; element doesn't work on my Android 4.3 device, even with hardware acceleration disabled</a> </li>
+ </ul>
+ 
+ <h2><a name="Scaling_issues"></a>Scaling issues<a href="#Scaling_issues" class="section_anchor"></a></h2>
+ 
+ <ul>
+ <li><a href="#My_SVG_won't_scale_to_fit_the_canvas_or_my_ImageView">My SVG won't scale to fit the canvas or my ImageView</a> </li>
+ <li><a href="#My_document_has_a_viewBox,_but_it_is_still_not_scaling">My document has a viewBox, but it is still not scaling</a> </li>
+ <li><a href="#Dealing_with_Inkscape_files">Dealing with Inkscape files</a> </li>
+ <li><a href="#My_document_used_to_scale_okay_prior_to_version_1.2.0,_but_doesn">My document used to scale okay prior to version 1.2.0, but doesn't now</a> </li>
+ <li><a href="#ScaleType_.CENTER_doesn't_work_when_using_an_ImageView_or_S">ScaleType.CENTER doesn't work when using an ImageView or SVGImageView</a> </li>
+ </ul>
+ 
+ <hr>
+ 
+ <h2><a name="My_SVG_doesn't_render_if_I_try_to_do_Canvas.drawPicture()_o"></a>My SVG doesn't render if I try to do Canvas.drawPicture() on the Picture returned by SVG.renderToPicture()</h2>
+ 
+ <p>If the device you are testing on has Ice Cream Sandwich or later (API 14+), then hardware acceleration of the 2D rendering pipeline is enabled by default. </p>
+ <p>Unfortunately the hardware accelerated graphics pipeline does not support all of the drawing methods provided by <code>Canvas</code>.  One of the methods that
+  is not supported is <code>drawPicture()</code>. </p>
+ 
+ <p>For more information on which methods are not supported, see the <i>Unsupported Drawing Operations</i> section of the 
+ <a href="http://developer.android.com/guide/topics/graphics/hardware-accel.html" rel="nofollow">Hardware Acceleration</a> page
+  on the Android developers site. </p>
+  
+ <h3><a name="Solution"></a>Solution<a href="#Solution" class="section_anchor"></a></h3>
+ 
+ <p>The solution is to disable hardware acceleration for the View into which you are drawing the SVG.  If you are using the
+  supplied <code>SVGImageView</code> class in your layouts, then this is done for you.  You don't need to do anything. </p>
+  
+ <p>To switch the view back to software rendering, use the <code>View.setLayerType()</code> method. </p>
+ 
+<pre class="prettyprint">
+setLayerType(LAYER_TYPE_SOFTWARE, null);
+Picture  p = svg.renderToPicture(canvas.getWidth(), canvas.getHeight());
+canvas.drawPicture(p);
+</pre>
+ 
+ <p>Unfortunately there is one little problem with this solution.  The <code>setLayerType()</code> method was only added in API 11 (Honeycomb).
+  This means that you cannot call it directly if you want to support earlier versions of Android. </p><p>The way around this is to only
+   call the method on Honeycomb or later.  We list three possible approaches below: </p>
+   
+ <h4><a name="(1)_The_support_library_approach"></a>(1) The support library approach<a href="#(1)_The_support_library_approach" class="section_anchor"></a></h4>
+ 
+ <p>If you are using the v4 support library in your project (which is also included with the latest v7 appcompat library), you can simply
+  use: </p>
+  
+<pre class="prettyprint">
+import android.support.v4.view.ViewCompat;<br><br>ViewCompat.setLayerType(view, ViewCompat.LAYER_TYPE_SOFTWARE, null);
+</pre>
+
+<p>This method will perform all the necessary version checking for you. </p>
+
+<h4><a name="(2)_The_normal_recommended_approach"></a>(2) The normal recommended approach<a href="#(2)_The_normal_recommended_approach" class="section_anchor"></a></h4>
+
+<p>If you are targetting API 11 or later, you can use the constants in the <code>android.os.Build</code> class to prevent <code>setLayerType()</code> being
+ invoked when it is not available on the user's device. </p>
+ 
+<pre class="prettyprint">
+import android.os.Build.*;
+
+@TargetApi(VERSION_CODES.HONEYCOMB)
+public static void setSoftwareLayerType(View view)
+{
+   if (VERSION.SDK_INT &gt;= VERSION_CODES.HONEYCOMB) {
+      view.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+   }
+   // else: no layer support, so no hardware support to disable
+}
+</pre>
+
+<p>The <code>@TargetApi</code> suppresses warnings about <code>setLayerType()</code> not being available if your <code>minSdkVersion</code> is set
+lower than 11.  However <code>@TargetApi</code> is only available from API 16 on.  So if your <code>targetSdkVersion</code> is lower than that,
+you will need to remove it (and live with any lint warnings).</p>
+
+<h4><a name="(3)_The_old-style_reflection_approach"></a>(3) The old-style reflection approach<a href="#(3)_The_old-style_reflection_approach" class="section_anchor"></a></h4>
+
+<p>In almost all cases you will be able to use one of the first two approaches.  We recommend you use one of them if you can.  However
+some people may be forced for some reason to use an old build environment (before API 11).  If that is your situation, you can use Java
+reflection to check whether the <code>setLayerType()</code> method exists before calling it. </p>
+
+<p>Add the following method to your View class and call it instead of the built-in <code>setLayerType()</code> method. </p>
+
+<pre class="prettyprint">
+/*
+ * Use reflection to call setLayerType().
+ */
+private void  setSoftwareLayerType()
+{
+   try
+   {
+      Method  setLayerTypeMethod = View.class.getMethod("setLayerType", Integer.TYPE, Paint.class);
+      int     LAYER_TYPE_SOFTWARE = View.class.getField("LAYER_TYPE_SOFTWARE").getInt(null);
+      setLayerTypeMethod.invoke(this, LAYER_TYPE_SOFTWARE, null);
+   }
+   catch (NoSuchMethodException e)
+   {
+      // Android platform too old. No setLayerType.
+   }
+   catch (Exception e)
+   {
+      Log.w("MySVGView", "Unexpected failure calling setLayerType", e);
+   }
+}
+</pre>
+
+<p></p>
+
+<pre class="prettyprint">
+setSoftwareLayerType();
+Picture  p = svg.renderToPicture(canvas.getWidth(), canvas.getHeight());
+canvas.drawPicture(p);
+</pre>
+
+<p><i>Thanks to Robert Papp for contributing to this answer.</i> </p>
+
+<hr>
+
+
+
+<h2><a name="The_clipPath_element_doesn't_work_on_newer_versions_of_Andr"></a>The <code>clipPath</code> element doesn't work on newer versions of Android<a href="#The_clipPath_element_doesn't_work_on_newer_versions_of_Andr" class="section_anchor"></a></h2>
+
+<p>This is caused by the hardware accelerated rendering pipeline not supporting the <code>Canvas.clipPath()</code> method, which is used by AndroidSVG.   </p>
+
+
+<h3><a name="Solution"></a>Solution<a href="#Solution" class="section_anchor"></a></h3>
+
+<p>The fix is to disable hardware acceleration.  See the answer above for instructions. </p>
+
+<hr>
+
+
+
+<h2><a name="The_clipPath_element_doesn't_work_on_my_Android_4.3_device,"></a>The <code>clipPath</code> element doesn't work on my Android 4.3 device, even with hardware acceleration disabled<a href="#The_clipPath_element_doesn't_work_on_my_Android_4.3_device," class="section_anchor"></a></h2>
+
+<p>There is a bug in Android 4.3 which stops clip paths working.  There is no workaround unfortunately. </p>
+
+<hr>
+
+
+
+<h2><a name="My_SVG_won't_scale_to_fit_the_canvas_or_my_ImageView"></a>My SVG won't scale to fit the canvas or my ImageView<a href="#My_SVG_won't_scale_to_fit_the_canvas_or_my_ImageView" class="section_anchor"></a></h2>
+
+<p>In order for SVG documents to be scaled, the document must have a <code>viewBox</code> attribute in the root (outermost) <code>&lt;svg&gt;</code> element. </p>
+
+<p>See <a href="http://www.w3.org/TR/SVG/coords.html#ViewBoxAttribute" rel="nofollow">http://www.w3.org/TR/SVG/coords.html#ViewBoxAttribute</a> </p>
+
+<p>For example: </p>
+
+<pre class="prettyprint">
+&lt;svg xmlns:svg="http://www.w3.org/2000/svg" version="1.1"
+     viewBox="0 0 100 100"&gt;
+
+   &lt;circle cx="50" cy="50" r="50" fill="red" /&gt;
+   
+&lt;/svg&gt;
+</pre>
+
+<p>The purpose of the viewBox attribute is to describe the bounding box of the content.  Without it, the renderer has no idea how much the
+document needs to be scaled to fit the viewport. The viewport is usually the rectangular extent of your canvas. </p>
+
+<p>Most SVG editors will automatically add the correct viewBox for your file. </p>
+
+<h3><a name="Solution"></a>Solution<a href="#Solution" class="section_anchor"></a></h3>
+
+<p>Add a viewBox manually to the file, or use the <code>setDocumentViewBox()</code> method to add one at run-time. </p>
+
+<p>So, for example if the interesting part of your SVG file is in the area (0,0) to (300,200), the viewBox attribute should be: </p>
+
+<pre class="prettyprint">
+&lt;svg viewBox="0 0 300 200" ...etc...&gt;
+</pre>
+
+<p>or to set that in code, use: </p>
+
+<pre class="prettyprint">
+svg.setDocumentViewBox(0, 0, 300, 300);
+</pre>
+
+<hr>
+
+
+<h2><a name="My_document_has_a_viewBox,_but_it_is_still_not_scaling"></a>My document has a viewBox, but it is still not scaling<a href="#My_document_has_a_viewBox,_but_it_is_still_not_scaling" class="section_anchor"></a></h2>
+
+<p>If your document specifies a width and height, then those will determine the size of your viewport.  The document will be scaled to those
+dimensions, not your canvas. </p>
+
+<h3><a name="Solution"></a>Solution<a href="#Solution" class="section_anchor"></a></h3>
+
+<p>In your SVG file, set the <code>width</code> and <code>height</code> attributes to <code>"100%"</code>, or remove them entirely (if <code>width</code> or <code>height</code> are
+not specified, they default to <code>100%</code>). </p><p>So your document should look like this: </p>
+
+<pre class="prettyprint">
+&lt;svg width="100%" height="100%" ...etc...&gt;
+</pre>
+
+<p>or to set that in code, use: </p>
+
+<pre class="prettyprint">
+svg.setDocumentWidth("100%");
+svg.setDocumentHeight("100%");
+</pre>
+
+<hr>
+
+
+<h2><a name="Dealing_with_Inkscape_files"></a>Dealing with Inkscape files<a href="#Dealing_with_Inkscape_files" class="section_anchor"></a></h2>
+
+<p>Inkscape files have hard-coded width and height values but no viewBox.  So they will not automatically scale to your canvas.  To fix this,
+you need to do a combination of the above two solutions. </p>
+
+<h3><a name="Solution"></a>Solution<a href="#Solution" class="section_anchor"></a></h3>
+
+<p>The following solution should work for most Inkscape files. </p>
+
+<pre class="prettyprint">
+// Set the viewBox attribute using the document's width and height
+svg.setDocumentViewBox(0, 0, svg.getDocumentWidth(),
+                             svg.getDocumentHeight());
+
+// Now set width and height to 100% so it will scale to fit the canvas
+svg.setDocumentWidth("100%");
+svg.setDocumentHeight("100%");
+</pre>
+
+<p>You may also want to use <code>setDocumentPreserveAspectRatio()</code> to tell AndroidSVG what type of scaling to use.  However the default will usually be what you want. </p>
+
+<hr>
+
+<h2><a name="My_document_used_to_scale_okay_prior_to_version_1.2.0,_but_doesn"></a>My document used to scale okay prior to version 1.2.0, but doesn't now</h2>
+
+<p>In early versions of the library, I was being a bit over-enthusiastic and auto-scaling documents that didn't have a viewBox.  That code worked
+in some situations, but not others, and made some assumptions that meant that the scaling wouldn't necessarily be correct anyway. </p>
+
+<p>I decided to remove that code and instead provide some API methods that would allow users to have better control over how scaling happens. </p>
+
+<p>My apologies if this change broke your code, but I felt it was important that I brought AndroidSVG into line with other renderers.  These files
+ would not scale if rendered in other renderers either. </p>
+ 
+<h3><a name="Solution"></a>Solution<a href="#Solution" class="section_anchor"></a></h3>
+
+<p>Ensure you have appropriate values for <code>viewBox</code>, <code>width</code> and `height.  See previous questions for more information. </p>
+
+<hr>
+
+
+<h2><a name="ScaleType_.CENTER_doesn't_work_when_using_an_ImageView_or_S"></a>ScaleType.CENTER doesn't work when using an ImageView or SVGImageView</h2>
+
+<p><code>ScaleType.CENTER</code> doesn't work in these situations.  Use <code>ScaleType.CENTER_INSIDE</code> instead. </p>
+
+<pre class="prettyprint">
+SVGImageView &nbsp;iv = new SVGImageView(this);
+iv.setImageAsset("test.svg");
+lv.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+layout.addView(iv);
+</pre>
+         
+        
+        
+        
+        </section>
+      </div>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">AndroidSVG maintained by <a href="https://github.com/BigBadaboom">Paul LeBeau</a></p>
+        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+  </body>
+</html>
+        

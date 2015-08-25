@@ -188,6 +188,13 @@ pre code {
   box-shadow: none;
 }
 
+h1 code,
+h2 code,
+h3 code,
+h4 code {
+  font-size: 80%;
+}
+
 blockquote {
   color: #666;
   margin-bottom: 20px;
@@ -266,9 +273,20 @@ Full-Width Styles
 
 .inner {
   position: relative;
-  max-width: 640px;
+  max-width: 864px;
   padding: 20px 10px;
   margin: 0 auto;
+}
+
+nav {
+  float: left;
+  width: 160px;
+  padding-top: 114px;
+}
+
+nav ul {
+  list-style: none;
+  padding: 0;
 }
 
 #forkme_banner {
@@ -296,7 +314,19 @@ Full-Width Styles
 }
 
 #header_wrap .inner {
-  padding: 50px 10px 30px 10px;
+  padding: 50px 10px 20px 10px;
+}
+
+#project_logo {
+  width: 110px;
+  height: 110px;
+  border: 0;
+  box-shadow: none;
+  margin-left: 10px;
+  float: left;
+  padding: 0;
+  position: relative;
+  top: -8px;
 }
 
 #project_title {
@@ -305,6 +335,7 @@ Full-Width Styles
   font-size: 42px;
   font-weight: 700;
   text-shadow: #111 0px 0px 10px;
+  margin-left: 192px;
 }
 
 #project_tagline {
@@ -313,6 +344,7 @@ Full-Width Styles
   font-weight: 300;
   background: none;
   text-shadow: #111 0px 0px 10px;
+  margin-left: 192px;
 }
 
 #downloads {
@@ -358,10 +390,12 @@ Full-Width Styles
   background: #f2f2f2;
   border-top: 1px solid #111;
   border-bottom: 1px solid #111;
+  min-height: 500px;
 }
 
 #main_content {
   padding-top: 40px;
+  margin-left: 192px;
 }
 
 #footer_wrap {

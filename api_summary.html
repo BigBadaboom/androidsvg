@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="AndroidSVG : SVG rendering library for Android">
+
+    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+    <link rel="stylesheet" type="text/css" href="stylesheets/prettify-eclipse.css">
+
+    <title>AndroidSVG</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/BigBadaboom/androidsvg">View on GitHub</a>
+
+          <a href="index.html"><img id="project_logo" src="images/AndroidSVG_logo.svg" title="AndroidSVG logo"/></a>
+          <h1 id="project_title">AndroidSVG</h1>
+          <h2 id="project_tagline">SVG rendering library for Android</h2>
+
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <div class="inner">
+        <nav>
+          <ul>
+            <li><a href="download.html">Download</a></li>
+            <li><a href="release_notes.html">Release Notes</a></li>
+            <li><a href="file:///C:/Users/Paul/git/androidsvg/doc/reference/com/caverock/androidsvg/package-summary.html">Javadoc</a></li>
+            <li><a href="documentation.html">Documentation</a></li>
+            <li><a href="svg_implementation_details.html">SVG Implementation</a></li>
+            <li><a href="faq.html">FAQ</a></li>
+            <li><a href="known_issues.html">Known Issues</a></li>
+            <li><a href="https://github.com/bigbadaboom/androidsvg/issues">Report a bug</a></li>
+            <li><a href="mailto:androidsvgfeedback@gmail.com">Contact the author</a></li>
+          </ul>
+
+          <p><em><a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License v2.0</a></em></p>
+
+          <p><a href="https://twitter.com/AndroidSVG"><img src="images/twitter.png"></a></p>
+        </nav>
+        <section id="main_content">
+        <h1><a id="androidsvg" class="anchor" href="#androidsvg" aria-hidden="true"><span class="octicon octicon-link"></span></a>Using the AndroidSVG version 1.2 API</h1>
+
+
+
+
+
+
+ <p>
+ The API for AndroidSVG is fairly straightforward.  The available methods break down into three types:
+ </p>
+ 
+ <ul>
+ <li>
+   <p>Parsing SVG files</p>
+   <ul>
+   <li><a href="#Reading_in_an_SVG_file">Reading in an SVG file</a></li>
+   </ul>
+ </li>
+ <li>
+   <p>Rendering</p>
+   <ul>
+   <li><a href="#Rendering_the_file">Rendering the file</a> to either a Canvas or a Picture</li>
+   <li><a href="#Rendering_views">Rendering views</a></li>
+   <li><a href="#Resolving_references_to_external_objects">Resolving references to external objects</a></li>
+   </ul>
+ </li>
+ <li>
+   <p>Accessing SVG and library metadata</p>
+   <ul>
+   <li><a href="#SVG_file_metadata">SVG file metadata</a></li>
+   <li><a href="#Modifying_the_SVG_document_metadata">Modifying the SVG document metadata</a>,</li>
+   <li><a href="#Library_metadata">Library metadata</a></li>
+   </ul>
+</li>
+</ul>
+ 
+<p>
+Each type is summarised below.  For more information, see the <a href="doc/index.html">Javadoc</a>.
+</p>
+
+<h2><a name="Reading_in_an_SVG_file"></a>Reading in an SVG file</h2>
+
+<p>
+AndroidSVG includes methods for reading an SVG from an <code>InputStream</code>, a <code>String</code>, an Android resource, or
+from your app's assets folder.
+</p>
+
+<pre class="prettyprint">
+public static SVG getFromInputStream(java.io.InputStream is) throws SVGParseException
+ 
+public static SVG getFromString(java.lang.String svg) throws SVGParseException
+ 
+public static SVG getFromResource(android.content.Context context, int resourceId) throws SVGParseException
+ 
+public static SVG getFromAsset(AssetManager assetManager, String filename) throws SVGParseException, IOException
+</pre>
+ 
+
+<h2><a name="Rendering_the_file"></a>Rendering the file</h2>
+
+<h3><a name="renderToPicture()"></a><code>renderToPicture()</code></h3>
+
+<pre class="prettyprint">
+public Picture renderToPicture()
+ 
+public Picture renderToPicture(int widthInPixels, int heightInPixels)
+</pre>
+
+<p>
+There are two ways to render the file.  One way to to generate a <code>android.graphics.Picture</code> object.  A Picture is just a
+recording of all the Canvas 2D drawing primitives used to render the document.  Once you have the Picture instance, you can
+output it to a canvas using <code>Canvas.drawPicture(picture)</code>. </p><p>Using this method is slower than rendering directly
+to a Canvas (see <code>renderToCanvas()</code>), however if you need to draw the same document multiple times, the second and
+later draws will be substantially faster.
+</p>
+
+
+<h3><a name="renderToCanvas()"></a><code>renderToCanvas()</code></h3>
+
+<p>
+The other way to render the SVG is directly to a Canvas.  If you are just needing to render the document once, this is the
+way you will probably want to do it.
+</p>
+
+<pre class="prettyprint">
+public void renderToCanvas(Canvas canvas)
+ 
+public void renderToCanvas(Canvas canvas, RectF viewPort)
+</pre>
+
+
+<h3><a name="Rendering_views"></a>Rendering views</h3>
+
+<p>
+SVG documents have the concept of a "view".  A view describes a rectangular portion of the document that can be scaled to
+fill your drawing area.  Views are defined by <code>&lt;view&gt;</code> elements in the file. </p><p>The following example
+defines a view 100 pixels square at the top left of the SVG document.
+</p>
+
+<pre class="prettyprint">
+&lt;view id="MyView" viewBox="0 0 100 100"/&gt;
+</pre>
+
+<p>
+AndroidSVG includes methods to render views. There are both Picture and direct-to-Canvas variants.
+</p>
+
+<pre class="prettyprint">
+public Picture renderViewToPicture(String viewId, int widthInPixels, int heightInPixels)
+ 
+public void renderViewToCanvas(String viewId, Canvas canvas)
+ 
+public void renderViewToCanvas(String viewId, Canvas canvas, RectF viewPort)
+</pre>
+
+<p>
+An example of how views might be used is to imagine an SVG of an entire chess set. You could then use views to select
+and render each of the pieces.
+</p>
+
+
+<h3><a name="Rendering_DPI"></a>Rendering DPI</h3>
+
+<p>
+By default, the DPI value used to convert real world units such as "cm" or "pt" is 96.  This is the value recommended
+by the CSS spec for consistency with browsers and other renderers.
+</p>
+
+<p>
+There may be some occasions when you may want to use a different value.  As an example, you may want to render a one
+inch object at near-actual size on your device.  To achieve that, determine the real DPI of your device, then use the
+<code>SVG.setRenderDPI()</code> call to change the DPI setting that AndroidAVG will use for converting units.
+</p>
+
+<pre class="prettyprint">
+public void  setRenderDPI(float dpi)
+ 
+public float getRenderDPI()
+</pre>
+
+<p>
+To set the render DPI to the DPI value of your device's screen, you could use the following code.
+</p>
+
+<pre class="prettyprint">
+my_svg.setRenderDPI(getResources().getDisplayMetrics().xdpi);
+</pre>
+
+
+<h2><a name="Resolving_references_to_external_objects"></a>Resolving references to external objects</h2>
+
+<p>
+If your SVG file contains references to external objects, such as images, AndroidSVG needs to be told where
+to get those objects.  You do that by supplying an instance of the <code>SVGExternalFileResolver</code> class.
+
+<pre class="prettyprint">
+public void registerExternalFileResolver(SVGExternalFileResolver fileResolver)
+</pre>
+
+<p>
+For example, a very simple resolver that just looks in your assets folder might look something like the following:
+</p>
+
+<pre class="prettyprint">
+private SVGExternalFileResolver  myResolver = new SVGExternalFileResolver() {
+       
+   @Override
+   public Typeface resolveFont(String fontFamily, int fontWeight, String fontStyle)
+   {
+      return Typeface.createFromAsset(getContext().getAssets(), fontFamily + ".ttf");
+   }
+ 
+
+   @Override
+   public Bitmap resolveImage(String filename)
+   {
+      try
+      {
+         InputStream  istream = getContext().getAssets().open(filename);
+         return BitmapFactory.decodeStream(istream);
+      }
+      catch (IOException e1)
+      {
+         return null;
+      }
+   }
+};
+</pre>
+
+
+
+<h2><a name="SVG_file_metadata"></a>SVG file metadata</h2>
+
+
+<pre class="prettyprint">
+public String getDocumentTitle()
+</pre>
+
+<p>Returns the contents of the <code>&lt;title&gt;</code> element in the SVG document.  Title elements can be present throughout
+the file, but only the value in the root <code>&lt;svg&gt;</code> element is accessible through this method.
+</p>
+
+
+<pre class="prettyprint">
+public String getDocumentDescription()
+</pre>
+
+<p>Returns the contents of the <code>&lt;desc&gt;</code> element in the SVG document. Title elements can be present throughout the file, but only the value in the root <code>&lt;svg&gt;</code> element is accessible through this method.
+</p>
+
+
+<pre class="prettyprint">
+public String getDocumentSVGVersion()
+</pre>
+
+<p>
+Returns the SVG version number as provided in the root <code>&lt;svg&gt;</code> tag of the document.
+</p>
+
+
+<pre class="prettyprint">
+public Set<String> getViewList()
+</pre>
+
+<p>Returns a list of <code>id</code>s for all <code>&lt;view&gt;</code> elements in this SVG document. </p>
+
+
+<pre class="prettyprint">
+public float getDocumentWidth()
+</pre>
+
+<p>Returns the width of the document as specified in the SVG file. </p>
+
+
+<pre class="prettyprint">
+public float getDocumentHeight()
+</pre>
+
+<p>Returns the height of the document as specified in the SVG file. </p>
+
+
+<pre class="prettyprint">
+public android.graphics.RectF getDocumentViewBox()
+</pre>
+
+<p>Returns the viewBox of the document as specified in the SVG file. </p>
+
+
+<pre class="prettyprint">
+public PreserveAspectRatio getDocumentPreserveAspectRatio()
+</pre>
+
+<p>Returns the "preserveAspectRatio attribute of the document as specified in the SVG file. </p>
+
+
+<pre class="prettyprint">
+public float getDocumentAspectRatio()
+</pre>
+
+<p>Returns the aspect ratio (width/height) of the SVG document.</p>
+
+<p>
+If the width or height of the document are listed with a physical unit such as "cm", then the dpi parameter will be used to
+convert that value to pixels. It is safe to pass a value of 0 for dpi if you know that physical units are not being used.
+</p>
+
+<p>
+If the width or height cannot be determined, -1 will be returned.</p>
+
+
+
+<h2><a name="Modifying_the_SVG_document_metadata"></a>Modifying the SVG document metadata</h2>
+
+<p>
+A limited degree of modification is supported once you have loaded the SVG file. Some methods have been added in release 1.2
+to allow you to modify the root <code>&lt;svg&gt;</code> element in order to alter the way it is rendered. More specifically,
+how it is scaled and positioned.
+</p>
+
+
+<pre class="prettyprint">
+public void  setDocumentWidth(float pixels)
+
+public void  setDocumentWidth(String value)
+</pre>
+
+<p>Sets the width of the document as a pixel value, or a length value such as "100px", "50%", or "5cm". </p>
+
+
+<pre class="prettyprint">
+public void  setDocumentHeight(float pixels)
+
+public void  setDocumentHeight(String value)
+</pre>
+
+<p>Sets the height of the document as a pixel value, or a length value such as "100px", "50%", or "5cm". </p>
+
+
+<pre class="prettyprint">
+public void  setDocumentViewBox(float minX, float minY, float width, float height)
+</pre>
+
+<p>Change the document positioning by altering the "preserveAspectRatio" attribute of the root <code>&lt;svg&gt;</code> element.</p>
+
+
+
+<h3><a name="The_PreserveAspectRatio_class"></a>The PreserveAspectRatio class</h3>
+
+<p>
+The PreserveAspectRatio class represents the <code>preserveAspectRatio</code> attribute of <code>&lt;svg&gt;</code> elements.
+</p>
+
+<p>
+To create an instance you can call the constructor with an alignment and scale value.
+</p>
+
+
+<pre class="prettyprint">
+PreservAspectRatio p = new PreserveAspectRatio(PreserveAspectRatio.Alignment.XMaxYMax,
+                                               PreserveAspectRatio.Scale.Slice);
+my_svg.setDocumentPreserveAspectRatio(p);
+</pre>
+
+<p>Alternatively, you can use one of the predefined constants which represent some of the more useful combinations of alignment and scale. </p>
+
+
+<pre class="prettyprint">
+PreservAspectRatio.UNSCALED
+PreservAspectRatio.STRETCH
+PreservAspectRatio.LETTERBOX
+PreservAspectRatio.START
+PreservAspectRatio.END
+PreservAspectRatio.TOP
+PreservAspectRatio.BOTTOM
+PreservAspectRatio.FULLSCREEN
+PreservAspectRatio.FULLSCREEN_START
+</pre>
+
+<p>The definitions of each of these constants can be found in the <a href="doc/reference/com/caverock/androidsvg/PreserveAspectRatio.html" rel="nofollow">Javadoc</a>.</p>
+
+
+
+<h2><a name="Library_metadata"></a>Library metadata</h2>
+
+<pre class="prettyprint">
+public String getVersion()
+</pre>
+
+<p>Returns the version number of this library. </p>
+
+
+
+
+        
+        </section>
+      </div>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">AndroidSVG maintained by <a href="https://github.com/BigBadaboom">Paul LeBeau</a></p>
+        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+  </body>
+</html>

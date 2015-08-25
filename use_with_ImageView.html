@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="AndroidSVG : SVG rendering library for Android">
+
+    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+    <link rel="stylesheet" type="text/css" href="stylesheets/prettify-eclipse.css">
+
+    <title>AndroidSVG</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/BigBadaboom/androidsvg">View on GitHub</a>
+
+          <a href="index.html"><img id="project_logo" src="images/AndroidSVG_logo.svg" title="AndroidSVG logo"/></a>
+          <h1 id="project_title">AndroidSVG</h1>
+          <h2 id="project_tagline">SVG rendering library for Android</h2>
+
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <div class="inner">
+        <nav>
+          <ul>
+            <li><a href="download.html">Download</a></li>
+            <li><a href="release_notes.html">Release Notes</a></li>
+            <li><a href="file:///C:/Users/Paul/git/androidsvg/doc/reference/com/caverock/androidsvg/package-summary.html">Javadoc</a></li>
+            <li><a href="documentation.html">Documentation</a></li>
+            <li><a href="svg_implementation_details.html">SVG Implementation</a></li>
+            <li><a href="faq.html">FAQ</a></li>
+            <li><a href="known_issues.html">Known Issues</a></li>
+            <li><a href="https://github.com/bigbadaboom/androidsvg/issues">Report a bug</a></li>
+            <li><a href="mailto:androidsvgfeedback@gmail.com">Contact the author</a></li>
+          </ul>
+
+          <p><em><a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License v2.0</a></em></p>
+
+          <p><a href="https://twitter.com/AndroidSVG"><img src="images/twitter.png"></a></p>
+        </nav>
+        <section id="main_content">
+        <h1><a id="androidsvg" class="anchor" href="#androidsvg" aria-hidden="true"><span class="octicon octicon-link"></span></a>Using AndroidSVG with ImageView</h1>
+
+
+
+
+
+
+<p>
+The simplest way to use AndroidSVG with an ImageView is to take advantage of the <tt>renderToPicture()</tt> method and set the
+<tt>Picture</tt> as a <tt>Drawable</tt>.
+</p>
+
+<pre class="prettyprint">
+public class MainActivity extends Activity
+{
+
+   @Override
+   protected void onCreate(Bundle savedInstanceState)
+   {
+      super.onCreate(savedInstanceState);
+
+      ImageView  imageView = (ImageView) findViewById(R.id.yourImageView);
+      imageView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+      try
+      {
+         SVG svg = SVG.getFromResource(this, R.raw.my_svg_file);
+         Drawable drawable = new PictureDrawable(svg.renderToPicture());
+         imageView.setImageDrawable(drawable);
+      }
+      catch(SVGParseException e)
+      {}
+   }
+
+}
+</pre>
+
+<p>
+Note that the <tt>setLayerType(View.LAYER_TYPE_SOFTWARE)</tt> call is necessary in order to set the View into software rendering mode.
+The reason is that from ICS onwards, Android enables hardware rendering by default.  The hardware renderer does not yet support the
+<code>Canvas.drawPicture()</code> method.  See <a href="faq.html#My_SVG_doesn't_render_if_I_try_to_do_Canvas.drawPicture()_o">this FAQ question</a> for more information.
+</p>
+
+<p>
+Alternatively, versions of AndroidSVG from 1.2 on include an <a href="SVGImageView.html">implementation of <code>ImageView</code> called <code>SVGImageView</code></a>
+which handles parsing and displaying SVG documents for you and can be used directly in your layouts.
+</p>
+ 
+
+
+
+        
+        </section>
+      </div>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">AndroidSVG maintained by <a href="https://github.com/BigBadaboom">Paul LeBeau</a></p>
+        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+  </body>
+</html>

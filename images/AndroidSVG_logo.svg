@@ -1,0 +1,69 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!--Generator: Xara Xtreme (www.xara.com), SVG filter version: 1.0.0.13-->
+<svg stroke-width="0.501" stroke-linejoin="bevel" fill-rule="evenodd" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" version="1.1" overflow="visible" width="100%" height="100%t" viewBox="0 0 220.5 257.25">
+ <g id="Document" fill="none" stroke="black" font-family="Times New Roman" font-size="16" transform="scale(1 -1)">
+  <g id="Spread" transform="translate(0 -257.25)">
+   <g id="bg" display="none">
+    <rect x="-11.649" y="-18.35" width="250.501" height="291.749" rx="25.05" fill="#000000" stroke-width="0.5" stroke="#000000"/>
+    <rect x="187.851" y="162.4" width="9.751" height="64.5" rx="0.975" fill="#000000" stroke-width="0.5" stroke="#000000"/>
+   </g>
+   <g id="use-b">
+    <g id="Group" stroke="#ffffff" stroke-width="10.8" fill="#a4c639">
+     <rect x="-68" y="-68" width="136" height="136" rx="18" transform="translate(110.25 123) rotate(90)"/>
+     <ellipse rx="62.769" ry="68" transform="translate(110.25 175.481) rotate(90)"/>
+    </g>
+   </g>
+   <g id="use-a">
+    <rect x="-32.249" y="-4.874" width="64.5" height="9.75" rx="4.875" transform="translate(140.053 225.993) rotate(58.9927)" stroke-width="5.4" stroke="#ffffff" fill="#a4c639"/>
+    <rect x="3" y="75.752" width="36" height="99.75" rx="18" stroke-width="5.4" stroke="#ffffff" fill="#a4c639"/>
+    <rect x="66.752" y="3" width="36" height="99.75" rx="18" stroke="#ffffff" stroke-width="5.4" fill="#a4c639"/>
+   </g>
+   <g id="a">
+    <g id="Group_1" stroke="#ffffff" stroke-width="5.4" fill="#a4c639">
+     <rect x="-32.249" y="-4.874" width="64.5" height="9.75" rx="4.875" transform="translate(80.445 225.993) rotate(121.007)"/>
+     <rect x="-49.874" y="-17.999" width="99.75" height="36" rx="18" transform="translate(199.497 125.626) rotate(90)"/>
+     <rect x="-49.874" y="-17.999" width="99.75" height="36" rx="18" transform="translate(135.747 52.876) rotate(90)"/>
+    </g>
+   </g>
+   <g id="b">
+    <g id="Group_2" fill="#a4c639" stroke="none" stroke-width="0.498">
+     <rect x="-68" y="-68" width="136" height="136" rx="18" transform="translate(110.25 123) rotate(90)"/>
+     <ellipse rx="62.769" ry="68" transform="translate(110.25 175.481) rotate(90)"/>
+    </g>
+   </g>
+   <g id="svg">
+    <g id="Group_3" stroke="none">
+     <path d="M 42.25,174.56 L 42.25,71.442 C 42.25,62.367 49.616,55 58.691,55 L 161.811,55 C 170.886,55 178.25,62.367 178.25,71.442 L 178.25,174.56 L 42.25,174.56" fill="#424f17" stroke-width="0.498" stroke-miterlimit="79.8403193612775"/>
+     <g id="Group_4" fill="#ffb13b">
+      <g id="Group_5">
+       <ellipse rx="9.888" ry="9.889" transform="translate(110.25 156.481) rotate(-78.6742)" stroke-width="0.08"/>
+       <ellipse rx="9.888" ry="9.889" transform="translate(110.25 67.869) rotate(-78.6742)" stroke-width="0.08"/>
+       <rect x="-41.362" y="-7" width="82.725" height="14.003" transform="translate(110.215 112.31) rotate(90)" stroke-width="0.081"/>
+      </g>
+      <g id="Group_6">
+       <ellipse rx="9.889" ry="9.889" transform="translate(65.946 112.176) rotate(11.3247)" stroke-width="0.08"/>
+       <ellipse rx="9.889" ry="9.889" transform="translate(154.557 112.176) rotate(11.3247)" stroke-width="0.08"/>
+       <rect x="-41.362" y="-7" width="82.725" height="14.003" transform="translate(110.118 112.138) rotate(180)" stroke-width="0.081"/>
+      </g>
+      <g id="Group_7">
+       <ellipse rx="9.888" ry="9.888" transform="translate(78.922 80.846) rotate(56.3324)" stroke-width="0.08"/>
+       <ellipse rx="9.888" ry="9.888" transform="translate(141.58 143.504) rotate(56.3324)" stroke-width="0.08"/>
+       <rect x="-41.365" y="-7" width="82.731" height="14.004" transform="translate(110.183 112.054) rotate(-135)" stroke-width="0.081"/>
+      </g>
+      <g id="Group_8">
+       <ellipse rx="9.888" ry="9.888" transform="translate(78.923 143.504) rotate(-33.6676)" stroke-width="0.08"/>
+       <ellipse rx="9.888" ry="9.888" transform="translate(141.58 80.846) rotate(-33.6676)" stroke-width="0.08"/>
+       <rect x="-41.365" y="-7" width="82.731" height="14.004" transform="translate(110.131 112.244) rotate(135)" stroke-width="0.081"/>
+      </g>
+     </g>
+    </g>
+   </g>
+   <g id="e">
+    <path d="M 39,172.875 L 181.5,172.875 L 39,172.875 Z" stroke-width="5.4" stroke="#ffffff" marker-start="none" marker-end="none"/>
+    <ellipse cx="79" cy="203" rx="3" ry="3" stroke-width="5.4" stroke="#ffffff" fill="#ffffff"/>
+    <ellipse cx="142" cy="203" rx="3" ry="3" stroke-width="5.4" stroke="#ffffff" fill="#ffffff"/>
+   </g>
+  </g>
+ </g>
+</svg>
