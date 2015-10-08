@@ -2871,9 +2871,9 @@ public class SVGParser extends DefaultHandler2
    }
 
 
-   private Matrix  parseTransformList(String val) throws SAXException
+   private SerializableMatrix  parseTransformList(String val) throws SAXException
    {
-      Matrix  matrix = new Matrix();
+       SerializableMatrix  matrix = new SerializableMatrix();
 
       TextScanner  scan = new TextScanner(val);
       scan.skipWhitespace();
