@@ -85,7 +85,7 @@ import com.caverock.androidsvg.CSSParser.Ruleset;
 
 public class SVG implements Serializable
 {
-    private static final long serialVersionUID = 12202L; //1.2.2-beta-2
+    private static final long serialVersionUID = 12202L; //
 
     private static final String  TAG = "AndroidSVG";
 
@@ -645,7 +645,7 @@ public class SVG implements Serializable
         if (this.rootElement == null)
             throw new IllegalArgumentException("SVG document is empty");
 
-        List<SvgObject>  viewElems = (List<SvgObject>) getElementsByTagName(View.class);
+      List<SvgObject>  viewElems = getElementsByTagName(View.class);
 
         Set<String>  viewIds = new HashSet<String>(viewElems.size());
         for (SvgObject elem: viewElems)
@@ -979,7 +979,7 @@ public class SVG implements Serializable
     // Object sub-types used in the SVG object tree
 
 
-    public static class  Box implements Cloneable, Serializable
+    protected static class  Box implements Cloneable, Serializable
     {
         private static final long serialVersionUID = 12202L;
         public float  minX, minY, width, height;
@@ -1093,7 +1093,7 @@ public class SVG implements Serializable
             | SPECIFIED_SOLID_OPACITY | SPECIFIED_VIEWPORT_FILL
             | SPECIFIED_VIEWPORT_FILL_OPACITY | SPECIFIED_VECTOR_EFFECT;
 
-    public static class  Style implements Cloneable, Serializable
+    protected static class  Style implements Cloneable, Serializable
     {
         private static final long serialVersionUID = 12202L;
         // Which properties have been explicitly specified by this element
@@ -1665,7 +1665,7 @@ public class SVG implements Serializable
 
     }
 
-    public static class Colour extends SvgPaint implements Serializable
+    protected static class Colour extends SvgPaint implements Serializable
     {
         private static final long serialVersionUID = 12202L;
 
@@ -1704,7 +1704,7 @@ public class SVG implements Serializable
     }
 
     // Special version of Colour that indicates use of 'currentColor' keyword
-    public static class CurrentColor extends SvgPaint implements Serializable
+    protected static class CurrentColor extends SvgPaint implements Serializable
     {
         private static final long serialVersionUID = 12202L;
         private static CurrentColor  instance = new CurrentColor();
@@ -1739,7 +1739,7 @@ public class SVG implements Serializable
     }
 
 
-    public static class PaintReference extends SvgPaint implements Serializable
+    protected static class PaintReference extends SvgPaint implements Serializable
     {
         private static final long serialVersionUID = 12202L;
         public String    href;
@@ -1780,7 +1780,7 @@ public class SVG implements Serializable
     /**
      * @hide
      */
-    public static class Length implements Cloneable, Serializable
+    protected static class Length implements Cloneable, Serializable
     {
         private static final long serialVersionUID = 12202L;
         float  value = 0;
@@ -1939,7 +1939,7 @@ public class SVG implements Serializable
     }
 
 
-    public static class CSSClipRect implements Serializable
+    protected static class CSSClipRect implements Serializable
     {
         private static final long serialVersionUID = 12202L;
         public Length  top;
@@ -1981,7 +1981,7 @@ public class SVG implements Serializable
 
 
     // Any object that can be part of the tree
-    public static class SvgObject implements Serializable
+    protected static class SvgObject implements Serializable
     {
         private static final long serialVersionUID = 12202L;
         transient public SVG           document;
@@ -2023,7 +2023,7 @@ public class SVG implements Serializable
 
 
     // Any object in the tree that corresponds to an SVG element
-    public static class SvgElementBase extends SvgObject
+    protected static class SvgElementBase extends SvgObject
     {
         private static final long serialVersionUID = 12202L;
         public String        id = null;
@@ -2369,7 +2369,7 @@ public class SVG implements Serializable
 
 
     // An SVG element that can contain other elements.
-    public static class Group extends SvgConditionalContainer implements HasTransform
+    protected static class Group extends SvgConditionalContainer implements HasTransform
     {
         public SerializableMatrix  transform;
 
@@ -2414,7 +2414,7 @@ public class SVG implements Serializable
 
     // A <defs> object contains objects that are not rendered directly, but are instead
     // referenced from other parts of the file.
-    public static class Defs extends Group implements NotDirectlyRendered
+    protected static class Defs extends Group implements NotDirectlyRendered
     {
     }
 
@@ -2768,7 +2768,7 @@ public class SVG implements Serializable
     }
 
 
-    public static class  TextContainer extends SvgConditionalContainer
+    protected static class  TextContainer extends SvgConditionalContainer
     {
         protected Object readResolve() throws ObjectStreamException {
             return this;
@@ -2810,7 +2810,7 @@ public class SVG implements Serializable
     }
 
 
-    public static class  TextPositionedContainer extends TextContainer
+    protected static class  TextPositionedContainer extends TextContainer
     {
         public List<Length>  x;
         public List<Length>  y;
@@ -2926,7 +2926,7 @@ public class SVG implements Serializable
     }
 
 
-    public static class TextSequence extends SvgObject implements TextChild
+    protected static class TextSequence extends SvgObject implements TextChild
     {
         public String  text;
 
@@ -2978,7 +2978,7 @@ public class SVG implements Serializable
     }
 
 
-    public static class TRef extends TextContainer implements TextChild
+    protected static class TRef extends TextContainer implements TextChild
     {
         public String  href;
 
@@ -3020,7 +3020,7 @@ public class SVG implements Serializable
     }
 
 
-    public static class TextPath extends TextContainer implements TextChild
+    protected static class TextPath extends TextContainer implements TextChild
     {
         public String  href;
         public Length  startOffset;
@@ -3064,17 +3064,17 @@ public class SVG implements Serializable
 
 
     // An SVG element that can contain other elements.
-    public static class Switch extends Group
+    protected static class Switch extends Group
     {
     }
 
 
-    public static class Symbol extends SvgViewBoxContainer implements NotDirectlyRendered
+    protected static class Symbol extends SvgViewBoxContainer implements NotDirectlyRendered
     {
     }
 
 
-    public static class Marker extends SvgViewBoxContainer implements NotDirectlyRendered
+    protected static class Marker extends SvgViewBoxContainer implements NotDirectlyRendered
     {
         public boolean  markerUnitsAreUser;
         public Length   refX;
@@ -3169,7 +3169,7 @@ public class SVG implements Serializable
     }
 
 
-    public static class Stop extends SvgElementBase implements SvgContainer
+    protected static class Stop extends SvgElementBase implements SvgContainer
     {
         public Float  offset;
 
@@ -3182,7 +3182,7 @@ public class SVG implements Serializable
     }
 
 
-    public static class SvgLinearGradient extends GradientElement
+    protected static class SvgLinearGradient extends GradientElement
     {
         public Length  x1;
         public Length  y1;
@@ -3379,12 +3379,12 @@ public class SVG implements Serializable
     }
 
 
-    public static class View extends SvgViewBoxContainer implements NotDirectlyRendered
+    protected static class View extends SvgViewBoxContainer implements NotDirectlyRendered
     {
     }
 
 
-    public static class Mask extends SvgConditionalContainer implements NotDirectlyRendered
+    protected static class Mask extends SvgConditionalContainer implements NotDirectlyRendered
     {
         public Boolean  maskUnitsAreUser;
         public Boolean  maskContentUnitsAreUser;
@@ -3504,7 +3504,7 @@ public class SVG implements Serializable
     }
 
 
-    public static class PathDefinition implements PathInterface, Serializable
+    protected static class PathDefinition implements PathInterface, Serializable
     {
         private static final long serialVersionUID = 12202L;
 
