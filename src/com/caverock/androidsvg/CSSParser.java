@@ -204,7 +204,7 @@ public class CSSParser
    public static class  Rule
    {
       public Selector   selector = null;
-      public SVG.Style  style = null;
+      public SVG.Style style = null;
       
       public Rule(Selector selector, SVG.Style style)
       {
@@ -664,7 +664,7 @@ public class CSSParser
          if (!scan.consume('{'))
             throw new SAXException("Malformed rule block in <style> element: missing '{'");
          scan.skipWhitespace();
-         SVG.Style  ruleStyle = parseDeclarations(scan);
+         SVG.Style ruleStyle = parseDeclarations(scan);
          scan.skipWhitespace();
          for (Selector selector: selectors) {
             ruleset.add( new Rule(selector, ruleStyle) );
@@ -709,9 +709,9 @@ public class CSSParser
 
 
    // Parse a list of
-   private SVG.Style  parseDeclarations(CSSTextScanner scan) throws SAXException
+   private SVG.Style parseDeclarations(CSSTextScanner scan) throws SAXException
    {
-      SVG.Style  ruleStyle = new SVG.Style();
+      SVG.Style ruleStyle = new SVG.Style();
       while (true)
       {
          String  propertyName = scan.nextIdentifier();

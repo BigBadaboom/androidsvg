@@ -42,38 +42,34 @@ import android.graphics.Typeface;
 import android.util.Base64;
 import android.util.Log;
 
-import com.caverock.androidsvg.SVG.Box;
 import com.caverock.androidsvg.SVG.ClipPath;
-import com.caverock.androidsvg.SVG.Colour;
-import com.caverock.androidsvg.SVG.CurrentColor;
+import com.caverock.androidsvg.valuetype.Box;
+import com.caverock.androidsvg.valuetype.SvgPaint.Colour;
+import com.caverock.androidsvg.valuetype.SvgPaint.CurrentColor;
 import com.caverock.androidsvg.SVG.GradientElement;
-import com.caverock.androidsvg.SVG.GradientSpread;
-import com.caverock.androidsvg.SVG.Length;
+import com.caverock.androidsvg.valuetype.GradientSpread;
+import com.caverock.androidsvg.valuetype.Length;
 import com.caverock.androidsvg.SVG.Line;
 import com.caverock.androidsvg.SVG.Marker;
 import com.caverock.androidsvg.SVG.NotDirectlyRendered;
-import com.caverock.androidsvg.SVG.PaintReference;
+import com.caverock.androidsvg.valuetype.SvgPaint.PaintReference;
 import com.caverock.androidsvg.SVG.PathDefinition;
 import com.caverock.androidsvg.SVG.PathInterface;
 import com.caverock.androidsvg.SVG.Pattern;
 import com.caverock.androidsvg.SVG.Rect;
 import com.caverock.androidsvg.SVG.SolidColor;
 import com.caverock.androidsvg.SVG.Stop;
-import com.caverock.androidsvg.SVG.Style;
-import com.caverock.androidsvg.SVG.Style.FontStyle;
-import com.caverock.androidsvg.SVG.Style.TextAnchor;
-import com.caverock.androidsvg.SVG.Style.TextDecoration;
-import com.caverock.androidsvg.SVG.Style.VectorEffect;
 import com.caverock.androidsvg.SVG.SvgContainer;
 import com.caverock.androidsvg.SVG.SvgElement;
 import com.caverock.androidsvg.SVG.SvgElementBase;
 import com.caverock.androidsvg.SVG.SvgLinearGradient;
 import com.caverock.androidsvg.SVG.SvgObject;
-import com.caverock.androidsvg.SVG.SvgPaint;
+import com.caverock.androidsvg.valuetype.SvgPaint;
 import com.caverock.androidsvg.SVG.SvgRadialGradient;
 import com.caverock.androidsvg.SVG.TextContainer;
 import com.caverock.androidsvg.SVG.TextSequence;
-import com.caverock.androidsvg.SVG.Unit;
+import com.caverock.androidsvg.valuetype.Unit;
+import com.caverock.androidsvg.valuetype.PreserveAspectRatio;
 
 /**
  * The rendering part of AndroidSVG.
@@ -88,7 +84,7 @@ public class SVGAndroidRenderer
    private static final String  TAG = "SVGAndroidRenderer";
 
    private Canvas   canvas;
-   private Box      canvasViewPort;
+   private Box canvasViewPort;
    private float    dpi;    // dots per inch. Needed for accurate conversion of length values that have real world units, such as "cm".
    private boolean  directRenderingMode;
 
@@ -122,13 +118,13 @@ public class SVGAndroidRenderer
 
    private class RendererState implements Cloneable
    {
-      public Style    style;
+      public SVG.Style style;
       public boolean  hasFill;
       public boolean  hasStroke;
       public Paint    fillPaint;
       public Paint    strokePaint;
-      public SVG.Box  viewPort;
-      public SVG.Box  viewBox;
+      public Box viewPort;
+      public Box viewBox;
       public boolean  spacePreserve;
 
       // Set when we doing direct rendering.
@@ -147,7 +143,7 @@ public class SVGAndroidRenderer
          strokePaint.setStyle(Paint.Style.STROKE);
          strokePaint.setTypeface(Typeface.DEFAULT);
 
-         style = Style.getDefaultStyle();
+         style = SVG.Style.getDefaultStyle();
       }
 
       @Override
@@ -157,7 +153,7 @@ public class SVGAndroidRenderer
          try
          {
             obj = (RendererState) super.clone();
-            obj.style = (Style) style.clone();
+            obj.style = (SVG.Style) style.clone();
             obj.fillPaint = new Paint(fillPaint);
             obj.strokePaint = new Paint(strokePaint);
             return obj;
@@ -177,7 +173,7 @@ public class SVGAndroidRenderer
       stateStack = new Stack<RendererState>();
 
       // Initialise the style state properties like Paints etc using a fresh instance of Style
-      updateStyle(state, Style.getDefaultStyle());
+      updateStyle(state, SVG.Style.getDefaultStyle());
 
       state.viewPort = this.canvasViewPort;
 
@@ -206,7 +202,7 @@ public class SVGAndroidRenderer
     * @param defaultDPI the DPI setting to use when converting real-world units such as centimetres.
     */
 
-   protected SVGAndroidRenderer(Canvas canvas, SVG.Box viewPort, float defaultDPI)
+   protected SVGAndroidRenderer(Canvas canvas, Box viewPort, float defaultDPI)
    {
       this.canvas = canvas;
       this.dpi = defaultDPI;
@@ -214,19 +210,19 @@ public class SVGAndroidRenderer
    }
 
 
-   protected float  getDPI()
+   public float  getDPI()
    {
       return dpi;
    }
 
 
-   protected float  getCurrentFontSize()
+   public float  getCurrentFontSize()
    {
       return state.fillPaint.getTextSize();
    }
 
 
-   protected float  getCurrentFontXHeight()
+   public float  getCurrentFontXHeight()
    {
       // The CSS3 spec says to use 0.5em if there is no way to determine true x-height;
       return state.fillPaint.getTextSize() / 2f;
@@ -237,7 +233,7 @@ public class SVGAndroidRenderer
     * Get the current view port in user units.
     *
     */
-   protected SVG.Box  getCurrentViewPortInUserUnits()
+   public Box getCurrentViewPortInUserUnits()
    {
       if (state.viewBox != null)
          return state.viewBox;
@@ -428,9 +424,9 @@ public class SVGAndroidRenderer
    private void doFilledPath(SvgElement obj, Path path)
    {
       // First check for pattern fill. It requires special handling.
-      if (state.style.fill instanceof SVG.PaintReference)
+      if (state.style.fill instanceof PaintReference)
       {
-         SVG.SvgObject  ref = document.resolveIRI(((SVG.PaintReference) state.style.fill).href);
+         SVG.SvgObject  ref = document.resolveIRI(((PaintReference) state.style.fill).href);
          if (ref instanceof SVG.Pattern) {
             SVG.Pattern  pattern = (SVG.Pattern)ref;
             fillWithPattern(obj, path, pattern);
@@ -448,7 +444,7 @@ public class SVGAndroidRenderer
    {
       // TODO handle degenerate subpaths properly
 
-      if (state.style.vectorEffect == VectorEffect.NonScalingStroke)
+      if (state.style.vectorEffect == SVG.Style.VectorEffect.NonScalingStroke)
       {
          // For non-scaling-stroke, the stroke width is not transformed along with the path.
          // It will be rendered at the same width no matter how the document contents are transformed.
@@ -526,7 +522,7 @@ public class SVGAndroidRenderer
 
 
    // When referenced by a <use> element, it's width and height take precedence over the ones in the <svg> object.
-   private void render(SVG.Svg obj, SVG.Length width, SVG.Length height)
+   private void render(SVG.Svg obj, Length width, Length height)
    {
       render(obj, width, height, obj.viewBox, obj.preserveAspectRatio);
    }
@@ -535,7 +531,7 @@ public class SVGAndroidRenderer
    // When called from renderDocument, we pass in our own viewBox.
    // If rendering the whole document, it will be rootObj.viewBox.  When rendering a view
    // it will be the viewBox from the <view> element.
-   private void render(SVG.Svg obj, SVG.Length width, SVG.Length height, Box viewBox, PreserveAspectRatio positioning)
+   private void render(SVG.Svg obj, Length width, Length height, Box viewBox, PreserveAspectRatio positioning)
    {
       debug("Svg render");
 
@@ -564,7 +560,7 @@ public class SVGAndroidRenderer
       Box  viewPortUser = getCurrentViewPortInUserUnits();
       float  _w = (width != null) ? width.floatValueX(this) : viewPortUser.width;  // default 100%
       float  _h = (height != null) ? height.floatValueY(this) : viewPortUser.height;
-      state.viewPort = new SVG.Box(_x, _y, _w, _h);
+      state.viewPort = new Box(_x, _y, _w, _h);
 
       if (!state.style.overflow) {
          setClipRect(state.viewPort.minX, state.viewPort.minY, state.viewPort.width, state.viewPort.height);
@@ -1402,10 +1398,10 @@ public class SVGAndroidRenderer
       float  dy = (obj.dy == null || obj.dy.size() == 0) ? 0f : obj.dy.get(0).floatValueY(this);
 
       // Handle text alignment
-      Style.TextAnchor  anchor = getAnchorPosition();
-      if (anchor != Style.TextAnchor.Start) {
+      SVG.Style.TextAnchor  anchor = getAnchorPosition();
+      if (anchor != SVG.Style.TextAnchor.Start) {
          float  textWidth = calculateTextWidth(obj);
-         if (anchor == Style.TextAnchor.Middle) {
+         if (anchor == SVG.Style.TextAnchor.Middle) {
             x -= (textWidth / 2);
          } else {
             x -= textWidth;  // 'End' (right justify)
@@ -1431,13 +1427,13 @@ public class SVGAndroidRenderer
    }
 
 
-   private Style.TextAnchor  getAnchorPosition()
+   private SVG.Style.TextAnchor  getAnchorPosition()
    {
-      if (state.style.direction == Style.TextDirection.LTR || state.style.textAnchor == TextAnchor.Middle)
+      if (state.style.direction == SVG.Style.TextDirection.LTR || state.style.textAnchor == SVG.Style.TextAnchor.Middle)
          return state.style.textAnchor;
 
       // Handle RTL case where Start and End are reversed
-      return (state.style.textAnchor == TextAnchor.Start) ? TextAnchor.End : TextAnchor.Start;
+      return (state.style.textAnchor == SVG.Style.TextAnchor.Start) ? SVG.Style.TextAnchor.End : SVG.Style.TextAnchor.Start;
    }
 
 
@@ -1635,10 +1631,10 @@ public class SVGAndroidRenderer
       float  startOffset = (obj.startOffset != null) ? obj.startOffset.floatValue(this, measure.getLength()) : 0f;
 
       // Handle text alignment
-      Style.TextAnchor  anchor = getAnchorPosition();
-      if (anchor != Style.TextAnchor.Start) {
+      SVG.Style.TextAnchor  anchor = getAnchorPosition();
+      if (anchor != SVG.Style.TextAnchor.Start) {
          float  textWidth = calculateTextWidth(obj);
-         if (anchor == Style.TextAnchor.Middle) {
+         if (anchor == SVG.Style.TextAnchor.Middle) {
             startOffset -= (textWidth / 2);
          } else {
             startOffset -= textWidth;  // 'End' (right justify)
@@ -1820,7 +1816,7 @@ public class SVGAndroidRenderer
    //==============================================================================
 
 
-   private void render(SVG.Symbol obj, SVG.Length width, SVG.Length height)
+   private void render(SVG.Symbol obj, Length width, Length height)
    {
       debug("Symbol render");
 
@@ -1835,7 +1831,7 @@ public class SVGAndroidRenderer
 
       float  _w = (width != null) ? width.floatValueX(this) : state.viewPort.width;
       float  _h = (height != null) ? height.floatValueX(this) : state.viewPort.height;
-      state.viewPort = new SVG.Box(0, 0, _w, _h);
+      state.viewPort = new Box(0, 0, _w, _h);
 
       if (!state.style.overflow) {
          setClipRect(state.viewPort.minX, state.viewPort.minY, state.viewPort.width, state.viewPort.height);
@@ -1904,13 +1900,13 @@ public class SVGAndroidRenderer
       float  _y = (obj.y != null) ? obj.y.floatValueY(this) : 0f;
       float  _w = obj.width.floatValueX(this);
       float  _h = obj.height.floatValueX(this);
-      state.viewPort = new SVG.Box(_x, _y, _w, _h);
+      state.viewPort = new Box(_x, _y, _w, _h);
 
       if (!state.style.overflow) {
          setClipRect(state.viewPort.minX, state.viewPort.minY, state.viewPort.width, state.viewPort.height);
       }
 
-      obj.boundingBox = new SVG.Box(0,  0,  image.getWidth(), image.getHeight());
+      obj.boundingBox = new Box(0,  0,  image.getWidth(), image.getHeight());
       canvas.concat(calculateViewBoxTransform(state.viewPort, obj.boundingBox, positioning));
 
       updateParentBoundingBox(obj);
@@ -2049,7 +2045,7 @@ public class SVGAndroidRenderer
    }
 
 
-   private boolean  isSpecified(Style style, long flag)
+   private boolean  isSpecified(SVG.Style style, long flag)
    {
       return (style.specifiedFlags & flag) != 0;
    }
@@ -2059,70 +2055,70 @@ public class SVGAndroidRenderer
     * Updates the global style state with the style defined by the current object.
     * Will also update the current paints etc where appropriate.
     */
-   private void updateStyle(RendererState state, Style style)
+   private void updateStyle(RendererState state, SVG.Style style)
    {
       // Now update each style property we know about
-      if (isSpecified(style, SVG.SPECIFIED_COLOR))
+      if (isSpecified(style, SVG.Style.SPECIFIED_COLOR))
       {
          state.style.color = style.color;
       }
 
-      if (isSpecified(style, SVG.SPECIFIED_OPACITY))
+      if (isSpecified(style, SVG.Style.SPECIFIED_OPACITY))
       {
          state.style.opacity = style.opacity;
       }
 
-      if (isSpecified(style, SVG.SPECIFIED_FILL))
+      if (isSpecified(style, SVG.Style.SPECIFIED_FILL))
       {
          state.style.fill = style.fill;
          state.hasFill = (style.fill != null);
       }
 
-      if (isSpecified(style, SVG.SPECIFIED_FILL_OPACITY))
+      if (isSpecified(style, SVG.Style.SPECIFIED_FILL_OPACITY))
       {
          state.style.fillOpacity = style.fillOpacity;
       }
 
       // If either fill or its opacity has changed, update the fillPaint
-      if (isSpecified(style, SVG.SPECIFIED_FILL | SVG.SPECIFIED_FILL_OPACITY | SVG.SPECIFIED_COLOR | SVG.SPECIFIED_OPACITY))
+      if (isSpecified(style, SVG.Style.SPECIFIED_FILL | SVG.Style.SPECIFIED_FILL_OPACITY | SVG.Style.SPECIFIED_COLOR | SVG.Style.SPECIFIED_OPACITY))
       {
          setPaintColour(state, true, state.style.fill);
       }
 
-      if (isSpecified(style, SVG.SPECIFIED_FILL_RULE))
+      if (isSpecified(style, SVG.Style.SPECIFIED_FILL_RULE))
       {
          state.style.fillRule = style.fillRule;
       }
 
 
-      if (isSpecified(style, SVG.SPECIFIED_STROKE))
+      if (isSpecified(style, SVG.Style.SPECIFIED_STROKE))
       {
          state.style.stroke = style.stroke;
          state.hasStroke = (style.stroke != null);
       }
 
-      if (isSpecified(style, SVG.SPECIFIED_STROKE_OPACITY))
+      if (isSpecified(style, SVG.Style.SPECIFIED_STROKE_OPACITY))
       {
          state.style.strokeOpacity = style.strokeOpacity;
       }
 
-      if (isSpecified(style, SVG.SPECIFIED_STROKE | SVG.SPECIFIED_STROKE_OPACITY | SVG.SPECIFIED_COLOR | SVG.SPECIFIED_OPACITY))
+      if (isSpecified(style, SVG.Style.SPECIFIED_STROKE | SVG.Style.SPECIFIED_STROKE_OPACITY | SVG.Style.SPECIFIED_COLOR | SVG.Style.SPECIFIED_OPACITY))
       {
          setPaintColour(state, false, state.style.stroke);
       }
 
-      if (isSpecified(style, SVG.SPECIFIED_VECTOR_EFFECT))
+      if (isSpecified(style, SVG.Style.SPECIFIED_VECTOR_EFFECT))
       {
          state.style.vectorEffect = style.vectorEffect;
       }
 
-      if (isSpecified(style, SVG.SPECIFIED_STROKE_WIDTH))
+      if (isSpecified(style, SVG.Style.SPECIFIED_STROKE_WIDTH))
       {
          state.style.strokeWidth = style.strokeWidth;
          state.strokePaint.setStrokeWidth(state.style.strokeWidth.floatValue(this));
       }
 
-      if (isSpecified(style, SVG.SPECIFIED_STROKE_LINECAP))
+      if (isSpecified(style, SVG.Style.SPECIFIED_STROKE_LINECAP))
       {
          state.style.strokeLineCap = style.strokeLineCap;
          switch (style.strokeLineCap)
@@ -2141,7 +2137,7 @@ public class SVGAndroidRenderer
          }
       }
 
-      if (isSpecified(style, SVG.SPECIFIED_STROKE_LINEJOIN))
+      if (isSpecified(style, SVG.Style.SPECIFIED_STROKE_LINEJOIN))
       {
          state.style.strokeLineJoin = style.strokeLineJoin;
          switch (style.strokeLineJoin)
@@ -2160,23 +2156,23 @@ public class SVGAndroidRenderer
          }
       }
 
-      if (isSpecified(style, SVG.SPECIFIED_STROKE_MITERLIMIT))
+      if (isSpecified(style, SVG.Style.SPECIFIED_STROKE_MITERLIMIT))
       {
          state.style.strokeMiterLimit = style.strokeMiterLimit;
          state.strokePaint.setStrokeMiter(style.strokeMiterLimit);
       }
 
-      if (isSpecified(style, SVG.SPECIFIED_STROKE_DASHARRAY))
+      if (isSpecified(style, SVG.Style.SPECIFIED_STROKE_DASHARRAY))
       {
          state.style.strokeDashArray = style.strokeDashArray;
       }
 
-      if (isSpecified(style, SVG.SPECIFIED_STROKE_DASHOFFSET))
+      if (isSpecified(style, SVG.Style.SPECIFIED_STROKE_DASHOFFSET))
       {
          state.style.strokeDashOffset = style.strokeDashOffset;
       }
 
-      if (isSpecified(style, SVG.SPECIFIED_STROKE_DASHARRAY | SVG.SPECIFIED_STROKE_DASHOFFSET))
+      if (isSpecified(style, SVG.Style.SPECIFIED_STROKE_DASHARRAY | SVG.Style.SPECIFIED_STROKE_DASHOFFSET))
       {
          // Either the dash array or dash offset has changed.
          if (state.style.strokeDashArray == null)
@@ -2209,7 +2205,7 @@ public class SVGAndroidRenderer
          }
       }
 
-      if (isSpecified(style, SVG.SPECIFIED_FONT_SIZE))
+      if (isSpecified(style, SVG.Style.SPECIFIED_FONT_SIZE))
       {
          float  currentFontSize = getCurrentFontSize();
          state.style.fontSize = style.fontSize;
@@ -2217,29 +2213,29 @@ public class SVGAndroidRenderer
          state.strokePaint.setTextSize(style.fontSize.floatValue(this, currentFontSize));
       }
 
-      if (isSpecified(style, SVG.SPECIFIED_FONT_FAMILY))
+      if (isSpecified(style, SVG.Style.SPECIFIED_FONT_FAMILY))
       {
          state.style.fontFamily = style.fontFamily;
       }
 
-      if (isSpecified(style, SVG.SPECIFIED_FONT_WEIGHT))
+      if (isSpecified(style, SVG.Style.SPECIFIED_FONT_WEIGHT))
       {
          // Font weights are 100,200...900
-         if (style.fontWeight == Style.FONT_WEIGHT_LIGHTER && state.style.fontWeight > 100)
+         if (style.fontWeight == SVG.Style.FONT_WEIGHT_LIGHTER && state.style.fontWeight > 100)
             state.style.fontWeight -= 100;
-         else if (style.fontWeight == Style.FONT_WEIGHT_BOLDER && state.style.fontWeight < 900)
+         else if (style.fontWeight == SVG.Style.FONT_WEIGHT_BOLDER && state.style.fontWeight < 900)
             state.style.fontWeight += 100;
          else
             state.style.fontWeight = style.fontWeight;
       }
 
-      if (isSpecified(style, SVG.SPECIFIED_FONT_STYLE))
+      if (isSpecified(style, SVG.Style.SPECIFIED_FONT_STYLE))
       {
          state.style.fontStyle = style.fontStyle;
       }
 
       // If typeface, weight or style has changed, update the paint typeface
-      if (isSpecified(style, SVG.SPECIFIED_FONT_FAMILY | SVG.SPECIFIED_FONT_WEIGHT | SVG.SPECIFIED_FONT_STYLE))
+      if (isSpecified(style, SVG.Style.SPECIFIED_FONT_FAMILY | SVG.Style.SPECIFIED_FONT_WEIGHT | SVG.Style.SPECIFIED_FONT_STYLE))
       {
          SVGExternalFileResolver  fileResolver = null;
          Typeface  font = null;
@@ -2264,95 +2260,95 @@ public class SVGAndroidRenderer
          state.strokePaint.setTypeface(font);
       }
 
-      if (isSpecified(style, SVG.SPECIFIED_TEXT_DECORATION))
+      if (isSpecified(style, SVG.Style.SPECIFIED_TEXT_DECORATION))
       {
          state.style.textDecoration = style.textDecoration;
-         state.fillPaint.setStrikeThruText(style.textDecoration == TextDecoration.LineThrough);
-         state.fillPaint.setUnderlineText(style.textDecoration == TextDecoration.Underline);
+         state.fillPaint.setStrikeThruText(style.textDecoration == SVG.Style.TextDecoration.LineThrough);
+         state.fillPaint.setUnderlineText(style.textDecoration == SVG.Style.TextDecoration.Underline);
          // There is a bug in Android <= JELLY_BEAN (16) that causes stroked underlines to
          // not be drawn properly. See bug (39511). This has been fixed in JELLY_BEAN_MR1 (4.2)
          if (android.os.Build.VERSION.SDK_INT >= 17) {
-            state.strokePaint.setStrikeThruText(style.textDecoration == TextDecoration.LineThrough);
-            state.strokePaint.setUnderlineText(style.textDecoration == TextDecoration.Underline);
+            state.strokePaint.setStrikeThruText(style.textDecoration == SVG.Style.TextDecoration.LineThrough);
+            state.strokePaint.setUnderlineText(style.textDecoration == SVG.Style.TextDecoration.Underline);
          }
       }
 
-      if (isSpecified(style, SVG.SPECIFIED_DIRECTION))
+      if (isSpecified(style, SVG.Style.SPECIFIED_DIRECTION))
       {
          state.style.direction = style.direction;
       }
 
-      if (isSpecified(style, SVG.SPECIFIED_TEXT_ANCHOR))
+      if (isSpecified(style, SVG.Style.SPECIFIED_TEXT_ANCHOR))
       {
          state.style.textAnchor = style.textAnchor;
       }
 
-      if (isSpecified(style, SVG.SPECIFIED_OVERFLOW))
+      if (isSpecified(style, SVG.Style.SPECIFIED_OVERFLOW))
       {
          state.style.overflow = style.overflow;
       }
 
-      if (isSpecified(style, SVG.SPECIFIED_MARKER_START))
+      if (isSpecified(style, SVG.Style.SPECIFIED_MARKER_START))
       {
          state.style.markerStart = style.markerStart;
       }
 
-      if (isSpecified(style, SVG.SPECIFIED_MARKER_MID))
+      if (isSpecified(style, SVG.Style.SPECIFIED_MARKER_MID))
       {
          state.style.markerMid = style.markerMid;
       }
 
-      if (isSpecified(style, SVG.SPECIFIED_MARKER_END))
+      if (isSpecified(style, SVG.Style.SPECIFIED_MARKER_END))
       {
          state.style.markerEnd = style.markerEnd;
       }
 
-      if (isSpecified(style, SVG.SPECIFIED_DISPLAY))
+      if (isSpecified(style, SVG.Style.SPECIFIED_DISPLAY))
       {
          state.style.display = style.display;
       }
 
-      if (isSpecified(style, SVG.SPECIFIED_VISIBILITY))
+      if (isSpecified(style, SVG.Style.SPECIFIED_VISIBILITY))
       {
          state.style.visibility = style.visibility;
       }
 
-      if (isSpecified(style, SVG.SPECIFIED_CLIP))
+      if (isSpecified(style, SVG.Style.SPECIFIED_CLIP))
       {
          state.style.clip = style.clip;
       }
 
-      if (isSpecified(style, SVG.SPECIFIED_CLIP_PATH))
+      if (isSpecified(style, SVG.Style.SPECIFIED_CLIP_PATH))
       {
          state.style.clipPath = style.clipPath;
       }
 
-      if (isSpecified(style, SVG.SPECIFIED_CLIP_RULE))
+      if (isSpecified(style, SVG.Style.SPECIFIED_CLIP_RULE))
       {
          state.style.clipRule = style.clipRule;
       }
 
-      if (isSpecified(style, SVG.SPECIFIED_MASK))
+      if (isSpecified(style, SVG.Style.SPECIFIED_MASK))
       {
          state.style.mask = style.mask;
       }
 
-      if (isSpecified(style, SVG.SPECIFIED_STOP_COLOR))
+      if (isSpecified(style, SVG.Style.SPECIFIED_STOP_COLOR))
       {
          state.style.stopColor = style.stopColor;
       }
 
-      if (isSpecified(style, SVG.SPECIFIED_STOP_OPACITY))
+      if (isSpecified(style, SVG.Style.SPECIFIED_STOP_OPACITY))
       {
          state.style.stopOpacity = style.stopOpacity;
       }
 
-      if (isSpecified(style, SVG.SPECIFIED_VIEWPORT_FILL))
+      if (isSpecified(style, SVG.Style.SPECIFIED_VIEWPORT_FILL))
       {
          state.style.viewportFill = style.viewportFill;
       }
 
-      if (isSpecified(style, SVG.SPECIFIED_VIEWPORT_FILL_OPACITY))
+      if (isSpecified(style, SVG.Style.SPECIFIED_VIEWPORT_FILL_OPACITY))
       {
          state.style.viewportFillOpacity = style.viewportFillOpacity;
       }
@@ -2364,8 +2360,8 @@ public class SVGAndroidRenderer
    {
       float  paintOpacity = (isFill) ? state.style.fillOpacity : state.style.strokeOpacity;
       int    col;
-      if (paint instanceof SVG.Colour) {
-         col = ((SVG.Colour) paint).colour;
+      if (paint instanceof Colour) {
+         col = ((Colour) paint).colour;
       } else if (paint instanceof CurrentColor) {
          col = state.style.color.colour;
       } else {
@@ -2379,12 +2375,12 @@ public class SVGAndroidRenderer
    }
 
 
-   private Typeface  checkGenericFont(String fontName, Integer fontWeight, FontStyle fontStyle)
+   private Typeface  checkGenericFont(String fontName, Integer fontWeight, SVG.Style.FontStyle fontStyle)
    {
       Typeface font = null;
       int      typefaceStyle;
 
-      boolean  italic = (fontStyle == Style.FontStyle.Italic);
+      boolean  italic = (fontStyle == SVG.Style.FontStyle.Italic);
       typefaceStyle = (fontWeight > 500) ? (italic ? Typeface.BOLD_ITALIC : Typeface.BOLD)
                                          : (italic ? Typeface.ITALIC : Typeface.NORMAL);
 
@@ -2449,8 +2445,8 @@ public class SVGAndroidRenderer
    private void  viewportFill()
    {
       int    col;
-      if (state.style.viewportFill instanceof SVG.Colour) {
-         col = ((SVG.Colour) state.style.viewportFill).colour;
+      if (state.style.viewportFill instanceof Colour) {
+         col = ((Colour) state.style.viewportFill).colour;
       } else if (state.style.viewportFill instanceof CurrentColor) {
          col = state.style.color.colour;
       } else {
@@ -2472,7 +2468,7 @@ public class SVGAndroidRenderer
    {
       Path   path = new Path();
       float  lastX, lastY;
-      
+
       public PathConverter(PathDefinition pathDef)
       {
          if (pathDef == null)
@@ -2530,7 +2526,7 @@ public class SVGAndroidRenderer
       {
          path.close();
       }
-         
+
    }
 
 
@@ -2542,7 +2538,7 @@ public class SVGAndroidRenderer
     * This is to be consistent with the other path commands.  However we need to convert this to "centre point
     * parameterisation" in order to calculate the arc. Handily, the SVG spec provides all the required maths
     * in section "F.6 Elliptical arc implementation notes".
-    * 
+    *
     * Some of this code has been borrowed from the Batik library (Apache-2 license).
     */
 
@@ -2569,7 +2565,7 @@ public class SVGAndroidRenderer
       float  angleRad = (float) Math.toRadians(angle % 360.0);
       double cosAngle = Math.cos(angleRad);
       double sinAngle = Math.sin(angleRad);
-      
+
       // We simplify the calculations by transforming the arc so that the origin is at the
       // midpoint calculated above followed by a rotation to line up the coordinate axes
       // with the axes of the ellipse.
@@ -2670,27 +2666,27 @@ public class SVGAndroidRenderer
     * Generate the control points and endpoints for a set of bezier curves that match
     * a circular arc starting from angle 'angleStart' and sweep the angle 'angleExtent'.
     * The circle the arc follows will be centred on (0,0) and have a radius of 1.0.
-    * 
+    *
     * Each bezier can cover no more than 90 degrees, so the arc will be divided evenly
     * into a maximum of four curves.
-    * 
+    *
     * The resulting control points will later be scaled and rotated to match the final
     * arc required.
-    * 
+    *
     * The returned array has the format [x0,y0, x1,y1,...] and excludes the start point
     * of the arc.
     */
    private static float[]  arcToBeziers(double angleStart, double angleExtent)
    {
       int    numSegments = (int) Math.ceil(Math.abs(angleExtent) / 90.0);
-      
+
       angleStart = Math.toRadians(angleStart);
       angleExtent = Math.toRadians(angleExtent);
       float  angleIncrement = (float) (angleExtent / numSegments);
-      
+
       // The length of each control point vector is given by the following formula.
       double  controlLength = 4.0 / 3.0 * Math.sin(angleIncrement / 2.0) / (1.0 + Math.cos(angleIncrement / 2.0));
-      
+
       float[] coords = new float[numSegments * 6];
       int     pos = 0;
 
@@ -2764,7 +2760,7 @@ public class SVGAndroidRenderer
          return "("+x+","+y+" "+dx+","+dy+")";
       }
    }
-   
+
 
    /*
     *  Calculates the positions and orientations of any markers that should be placed on the given path.
@@ -2778,7 +2774,7 @@ public class SVGAndroidRenderer
       private int                 subpathStartIndex = -1;
       private boolean             closepathReAdjustPending;
 
-      
+
       public MarkerPositionCalculator(PathDefinition pathDef)
       {
          if (pathDef == null)
@@ -2881,7 +2877,7 @@ public class SVGAndroidRenderer
          // See description of "orient" attribute in section 11.6.2.
          closepathReAdjustPending = true;
       }
-         
+
    }
 
 
@@ -2925,7 +2921,7 @@ public class SVGAndroidRenderer
          markers = calculateMarkerPositions((SVG.Line) obj);
       else // PolyLine and Polygon
          markers = calculateMarkerPositions((SVG.PolyLine) obj);
-      
+
       if (markers == null)
          return;
 
@@ -2933,7 +2929,7 @@ public class SVGAndroidRenderer
       if (markerCount == 0)
          return;
 
-      // We don't want the markers to inherit themselves as markers, otherwise we get infinite recursion. 
+      // We don't want the markers to inherit themselves as markers, otherwise we get infinite recursion.
       state.style.markerStart = state.style.markerMid = state.style.markerEnd = null;
 
       if (_markerStart != null)
@@ -3031,7 +3027,7 @@ public class SVGAndroidRenderer
                xOffset -= (_markerWidth - imageW);
                break;
             default:
-               // nothing to do 
+               // nothing to do
                   break;
          }
          // Determine final Y position
@@ -3048,7 +3044,7 @@ public class SVGAndroidRenderer
                yOffset -= (_markerHeight - imageH);
                break;
             default:
-               // nothing to do 
+               // nothing to do
                break;
          }
 
@@ -3090,7 +3086,7 @@ public class SVGAndroidRenderer
    private RendererState  findInheritFromAncestorState(SvgObject obj)
    {
       RendererState newState = new RendererState();
-      updateStyle(newState, Style.getDefaultStyle());
+      updateStyle(newState, SVG.Style.getDefaultStyle());
       return findInheritFromAncestorState(obj, newState);
    }
 
@@ -3108,7 +3104,7 @@ public class SVGAndroidRenderer
             break;
          obj = (SvgObject) obj.parent;
       }
-      
+
       // Now apply the ancestor styles in reverse order to a fresh RendererState object
       for (SvgElementBase ancestor: ancestors)
          updateStyleForElement(newState, ancestor);
@@ -3253,9 +3249,9 @@ public class SVGAndroidRenderer
          statePush();
 
          updateStyleForElement(state, stop);
-         Colour col = (SVG.Colour) state.style.stopColor;
+         Colour col = (Colour) state.style.stopColor;
          if (col == null)
-            col = Colour.BLACK;
+            col = SvgPaint.Colour.BLACK;
          colours[i] = clamp255(state.style.stopOpacity) << 24 | col.colour;
          i++;
 
@@ -3278,11 +3274,11 @@ public class SVGAndroidRenderer
          else if (gradient.spreadMethod == GradientSpread.repeat)
             tileMode = TileMode.REPEAT;
       }
-      
+
       statePop();
 
       // Create shader instance
-      LinearGradient  gr = new LinearGradient(_x1, _y1, _x2, _y2, colours, positions, tileMode); 
+      LinearGradient  gr = new LinearGradient(_x1, _y1, _x2, _y2, colours, positions, tileMode);
       gr.setLocalMatrix(m);
       paint.setShader(gr);
    }
@@ -3299,7 +3295,7 @@ public class SVGAndroidRenderer
       float  _cx,_cy,_r;
       if (userUnits)
       {
-         SVG.Length  fiftyPercent = new SVG.Length(50f, Unit.percent);
+         Length fiftyPercent = new Length(50f, Unit.percent);
          _cx = (gradient.cx != null) ? gradient.cx.floatValueX(this): fiftyPercent.floatValueX(this);
          _cy = (gradient.cy != null) ? gradient.cy.floatValueY(this): fiftyPercent.floatValueY(this);
          _r = (gradient.r != null) ? gradient.r.floatValue(this): fiftyPercent.floatValue(this);
@@ -3362,9 +3358,9 @@ public class SVGAndroidRenderer
          statePush();
 
          updateStyleForElement(state, stop);
-         Colour col = (SVG.Colour) state.style.stopColor;
+         Colour col = (Colour) state.style.stopColor;
          if (col == null)
-            col = Colour.BLACK;
+            col = SvgPaint.Colour.BLACK;
          colours[i] = clamp255(state.style.stopOpacity) << 24 | col.colour;
          i++;
 
@@ -3391,7 +3387,7 @@ public class SVGAndroidRenderer
       statePop();
 
       // Create shader instance
-      RadialGradient  gr = new RadialGradient(_cx, _cy, _r, colours, positions, tileMode); 
+      RadialGradient  gr = new RadialGradient(_cx, _cy, _r, colours, positions, tileMode);
       gr.setLocalMatrix(m);
       paint.setShader(gr);
    }
@@ -3478,38 +3474,38 @@ public class SVGAndroidRenderer
       // Make a Style object that has fill or stroke color values set depending on the value of isFill.
       if (isFill)
       {
-        if (isSpecified(ref.baseStyle, SVG.SPECIFIED_SOLID_COLOR))
+        if (isSpecified(ref.baseStyle, SVG.Style.SPECIFIED_SOLID_COLOR))
         {
            state.style.fill = ref.baseStyle.solidColor;
            state.hasFill = (ref.baseStyle.solidColor != null);
         }
 
-        if (isSpecified(ref.baseStyle, SVG.SPECIFIED_SOLID_OPACITY))
+        if (isSpecified(ref.baseStyle, SVG.Style.SPECIFIED_SOLID_OPACITY))
         {
            state.style.fillOpacity = ref.baseStyle.solidOpacity;
         }
 
         // If either fill or its opacity has changed, update the fillPaint
-        if (isSpecified(ref.baseStyle, SVG.SPECIFIED_SOLID_COLOR | SVG.SPECIFIED_SOLID_OPACITY))
+        if (isSpecified(ref.baseStyle, SVG.Style.SPECIFIED_SOLID_COLOR | SVG.Style.SPECIFIED_SOLID_OPACITY))
         {
            setPaintColour(state, isFill, state.style.fill);
         }
       }
       else
       {
-        if (isSpecified(ref.baseStyle, SVG.SPECIFIED_SOLID_COLOR))
+        if (isSpecified(ref.baseStyle, SVG.Style.SPECIFIED_SOLID_COLOR))
         {
            state.style.stroke = ref.baseStyle.solidColor;
            state.hasStroke = (ref.baseStyle.solidColor != null);
         }
 
-        if (isSpecified(ref.baseStyle, SVG.SPECIFIED_SOLID_OPACITY))
+        if (isSpecified(ref.baseStyle, SVG.Style.SPECIFIED_SOLID_OPACITY))
         {
            state.style.strokeOpacity = ref.baseStyle.solidOpacity;
         }
 
         // If either fill or its opacity has changed, update the fillPaint
-        if (isSpecified(ref.baseStyle, SVG.SPECIFIED_SOLID_COLOR | SVG.SPECIFIED_SOLID_OPACITY))
+        if (isSpecified(ref.baseStyle, SVG.Style.SPECIFIED_SOLID_COLOR | SVG.Style.SPECIFIED_SOLID_OPACITY))
         {
            setPaintColour(state, isFill, state.style.stroke);
         }
@@ -3751,9 +3747,9 @@ public class SVGAndroidRenderer
       float  dy = (obj.dy == null || obj.dy.size() == 0) ? 0f : obj.dy.get(0).floatValueY(this);
 
       // Handle text alignment
-      if (state.style.textAnchor != Style.TextAnchor.Start) {
+      if (state.style.textAnchor != SVG.Style.TextAnchor.Start) {
          float  textWidth = calculateTextWidth(obj);
-         if (state.style.textAnchor == Style.TextAnchor.Middle) {
+         if (state.style.textAnchor == SVG.Style.TextAnchor.Middle) {
             x -= (textWidth / 2);
          } else {
             x -= textWidth;  // 'End' (right justify)
@@ -4029,7 +4025,7 @@ public class SVGAndroidRenderer
 
       // Set the style for the pattern (inherits from its own ancestors, not from callee's state)
       RendererState  baseState = new RendererState();
-      updateStyle(baseState, Style.getDefaultStyle());
+      updateStyle(baseState, SVG.Style.getDefaultStyle());
       baseState.style.overflow = false;    // By default patterns do not overflow
       state = findInheritFromAncestorState(pattern, baseState);
 
