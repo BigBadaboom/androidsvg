@@ -2288,7 +2288,7 @@ public class SVG implements Serializable
         public void  addChild(SvgObject object) throws SAXException
         {
             if (object instanceof TextChild)
-                children.add(object);
+                super.addChild(object);
             else
                 throw new SAXException("Text content elements cannot contain "+ object +" elements.");
         }
