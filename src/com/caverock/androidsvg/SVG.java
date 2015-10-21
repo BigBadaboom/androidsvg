@@ -3407,6 +3407,8 @@ public class SVG implements Serializable
     /**
      * Get {@code SvgObject} by the given id in this SVG.
      *
+     * <br/><br/><b>Remarks:<br/>the object returned will be discarded after calling {@code restoreSVGState()} or {@code restoreOriginalSVGState()}</b>
+     *
      * @param id the requested id.
      * @return the {@code SvgObject} with the given id in this SVG. Cast the retrieved object to the original Class by yourself.
      */
@@ -3418,6 +3420,8 @@ public class SVG implements Serializable
 
     /**
      * Get {@code SvgObject} by the given id which located in the given {@code SvgContainer}.
+     *
+     * <br/><br/><b>Remarks:<br/>the object returned will be discarded after calling {@code restoreSVGState()} or {@code restoreOriginalSVGState()}</b>
      *
      * @param obj where the {@code SvgObject} located in.
      * @param id the requested id.
@@ -3461,6 +3465,8 @@ public class SVG implements Serializable
     /**
      * Get {@code SvgObject}s by the given class name in this SVG.
      *
+     * <br/><br/><b>Remarks:<br/>the object returned will be discarded after calling {@code restoreSVGState()} or {@code restoreOriginalSVGState()}</b>
+     *
      * @param classNames the requested class name (SVG class attribute, not JAVA {@code Class}).
      * @return the list of {@code SvgObject} with the given class name in this SVG. Cast the retrieved object to the original Class by yourself.
      */
@@ -3473,6 +3479,8 @@ public class SVG implements Serializable
 
     /**
      * Get {@code SvgObject}s by the given class name which located in the given {@code SvgContainer}.
+     *
+     * <br/><br/><b>Remarks:<br/>the object returned will be discarded after calling {@code restoreSVGState()} or {@code restoreOriginalSVGState()}</b>
      *
      * @param obj where the {@code SvgObject} located in.
      * @param classNames the requested class name (SVG class attribute, not JAVA {@code Class}).
@@ -3540,6 +3548,8 @@ public class SVG implements Serializable
     /**
      * Get {@code SvgObject}s by the given tag name which located in this SVG.
      *
+     * <br/><br/><b>Remarks:<br/>the object returned will be discarded after calling {@code restoreSVGState()} or {@code restoreOriginalSVGState()}</b>
+     *
      * @param tagNameClass the {@code Class} representing the requested tag name. Abstract (non-tag) classes are not allowed.
      * @return the list of {@code SvgObject} with the given tag name in this SVG. Cast the retrieved object to the original Class by yourself.
      */
@@ -3553,6 +3563,8 @@ public class SVG implements Serializable
 
     /**
      * Get {@code SvgObject}s by the given tag name which located in the given {@code SvgContainer}.
+     *
+     * <br/><br/><b>Remarks:<br/>the object returned will be discarded after calling {@code restoreSVGState()} or {@code restoreOriginalSVGState()}</b>
      *
      * @param obj where the {@code SvgObject} located in.
      * @param tagNameClass the {@code Class} representing the requested tag name. Abstract (non-tag) classes are not allowed.
