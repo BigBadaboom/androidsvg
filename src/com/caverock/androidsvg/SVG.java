@@ -119,8 +119,8 @@ public class SVG implements Serializable
     transient private Ruleset  cssRules = new Ruleset();
 
     // Map from id attribute to element
-    transient private Map<String, SVGTag> idToElementMap = new HashMap<String, SVGTag>();
-    transient private Map<String, List<SVGTag>> classToElementMap = new HashMap<String, List<SVGTag>>();
+//    transient private Map<String, SVGTag> idToElementMap = new HashMap<String, SVGTag>();
+//    transient private Map<String, List<SVGTag>> classToElementMap = new HashMap<String, List<SVGTag>>();
 
     // Push and Pop stack
     transient private Stack<InputStream> pushPopStack = new Stack<InputStream>();
@@ -182,8 +182,8 @@ public class SVG implements Serializable
             e.printStackTrace();
         }
 
-        classToElementMap.clear();
-        idToElementMap.clear();
+//        classToElementMap.clear();
+//        idToElementMap.clear();
     }
 
     /**
@@ -209,8 +209,8 @@ public class SVG implements Serializable
             e.printStackTrace();
         }
 
-        classToElementMap.clear();
-        idToElementMap.clear();
+//        classToElementMap.clear();
+//        idToElementMap.clear();
     }
 
     /**
@@ -3412,17 +3412,8 @@ public class SVG implements Serializable
      */
     public SVGTag getElementById(String id)
     {
-        if (id == null || id.length() == 0)
-            return null;
-        if (id.equals(rootElement.id))
-            return rootElement;
-
-        if (idToElementMap.containsKey(id))
-            return idToElementMap.get(id);
-
         // Search the object tree for a node with id property that matches 'id'
-        SVGTag  result = getElementById(rootElement, id);
-        return result;
+        return getElementById(rootElement, id);
     }
 
     /**
@@ -3434,6 +3425,15 @@ public class SVG implements Serializable
      */
     public SVGTag  getElementById(SvgContainer obj, String id)
     {
+        if (id == null || id.length() == 0)
+            return null;
+
+        if (id.equals(rootElement.id))
+            return rootElement;
+
+//        if (idToElementMap.containsKey(id))
+//            return idToElementMap.get(id);
+
         SvgElementBase  elem = (SvgElementBase) obj;
         if (id.equals(elem.id))
             return elem;
@@ -3444,7 +3444,7 @@ public class SVG implements Serializable
             SvgElementBase  childElem = (SvgElementBase) child;
 
             if (id.equals(childElem.id)) {
-                idToElementMap.put(id, childElem);
+//                idToElementMap.put(id, childElem);
                 return childElem;
             }
 
@@ -3461,39 +3461,48 @@ public class SVG implements Serializable
     /**
      * Get {@code SvgObject}s by the given class name in this SVG.
      *
-     * @param className the requested class name (SVG class attribute, not JAVA {@code Class}).
+     * @param classNames the requested class name (SVG class attribute, not JAVA {@code Class}).
      * @return the list of {@code SvgObject} with the given class name in this SVG. Cast the retrieved object to the original Class by yourself.
      */
-    public List<SVGTag> getElementsByClassName(String className)
+    public List<SVGTag> getElementsByClassName(String... classNames)
     {
-        if (className == null || className.length() == 0)
-            return null;
-
-        if (classToElementMap.containsKey(className))
-            return classToElementMap.get(className);
 
         // Search the object tree for a node with id property that matches 'id'
-        return getElementsByClassName(rootElement, className);
+        return getElementsByClassName(rootElement, classNames);
     }
 
     /**
      * Get {@code SvgObject}s by the given class name which located in the given {@code SvgContainer}.
      *
      * @param obj where the {@code SvgObject} located in.
-     * @param className the requested class name (SVG class attribute, not JAVA {@code Class}).
+     * @param classNames the requested class name (SVG class attribute, not JAVA {@code Class}).
      * @return the list of {@code SvgObject} with the given class name in the given container. Cast the retrieved object to the original Class by yourself.
      */
-    public List<SVGTag> getElementsByClassName(SvgContainer obj, String className)
+    public List<SVGTag> getElementsByClassName(SvgContainer obj, String... classNames)
     {
+        if (classNames == null)
+            return null;
+
+        for (String className : classNames) {
+            if (className.length() == 0) return null;
+        }
+
+//        if (classToElementMap.containsKey(classNames))
+//            return classToElementMap.get(classNames);
+
         Set<SVGTag> elemSet = new LinkedHashSet<SVGTag>();
 
         SvgElementBase  elem = (SvgElementBase) obj;
 
-        for (String elemClassName : elem.classNames) {
-            if (className.equals(elemClassName)) {
-                elemSet.add(elem);
-            }
+        boolean elemMatch;
+
+        elemMatch = true;
+        for (String className : classNames) {
+            elemMatch &= elem.classNames.contains(className);
+            if (!elemMatch) break;
         }
+        if (elemMatch) elemSet.add(elem);
+
         for (SvgObject child: obj.getChildren())
         {
             if (!(child instanceof SvgElementBase))
@@ -3501,26 +3510,29 @@ public class SVG implements Serializable
             SvgElementBase  childElem = (SvgElementBase) child;
             if (child instanceof SvgContainer)
             {
-                List<SVGTag> foundInContainer = getElementsByClassName(SvgContainer.class.cast(child), className);
+                List<SVGTag> foundInContainer = getElementsByClassName(SvgContainer.class.cast(child), classNames);
                 elemSet.addAll(foundInContainer);
             } else {
-                for (String childElemClassName : childElem.classNames) {
-                    if (className.equals(childElemClassName))
-                        elemSet.add(childElem);
+                elemMatch = true;
+                for (String className : classNames) {
+                    elemMatch &= elem.classNames.contains(className);
+                    if (!elemMatch) break;
                 }
+                if (elemMatch) elemSet.add(elem);
             }
         }
-        if (obj == rootElement) {
-            List<SVGTag> storedElemList = classToElementMap.get(className);
-            if (storedElemList == null) storedElemList = new ArrayList<SVGTag>();
 
-            Set<SVGTag> storedElemSet = new LinkedHashSet<SVGTag>(storedElemList);
-            storedElemSet.addAll(elemSet);
-
-            storedElemList.clear();
-            storedElemList.addAll(storedElemSet);
-            classToElementMap.put(className, storedElemList);
-        }
+//        if (obj == rootElement) {
+//            List<SVGTag> storedElemList = classToElementMap.get(classNames);
+//            if (storedElemList == null) storedElemList = new ArrayList<SVGTag>();
+//
+//            Set<SVGTag> storedElemSet = new LinkedHashSet<SVGTag>(storedElemList);
+//            storedElemSet.addAll(elemSet);
+//
+//            storedElemList.clear();
+//            storedElemList.addAll(storedElemSet);
+//            classToElementMap.put(classNames, storedElemList);
+//        }
 
         return new ArrayList<SVGTag>(elemSet);
     }
