@@ -43,24 +43,20 @@ import android.graphics.Matrix;
 import android.util.Log;
 
 import com.caverock.androidsvg.CSSParser.MediaType;
-import com.caverock.androidsvg.SVG.Box;
-import com.caverock.androidsvg.SVG.CSSClipRect;
-import com.caverock.androidsvg.SVG.Colour;
-import com.caverock.androidsvg.SVG.CurrentColor;
-import com.caverock.androidsvg.SVG.GradientSpread;
-import com.caverock.androidsvg.SVG.Length;
-import com.caverock.androidsvg.SVG.PaintReference;
-import com.caverock.androidsvg.SVG.Style;
-import com.caverock.androidsvg.SVG.Style.TextDecoration;
-import com.caverock.androidsvg.SVG.Style.TextDirection;
-import com.caverock.androidsvg.SVG.Style.VectorEffect;
+import com.caverock.androidsvg.valuetype.CSSClipRect;
+import com.caverock.androidsvg.valuetype.Box;
+import com.caverock.androidsvg.valuetype.SvgPaint.Colour;
+import com.caverock.androidsvg.valuetype.GradientSpread;
+import com.caverock.androidsvg.valuetype.Length;
+import com.caverock.androidsvg.valuetype.SvgPaint.PaintReference;
 import com.caverock.androidsvg.SVG.SvgElementBase;
 import com.caverock.androidsvg.SVG.SvgObject;
-import com.caverock.androidsvg.SVG.SvgPaint;
+import com.caverock.androidsvg.valuetype.SvgPaint;
 import com.caverock.androidsvg.SVG.TextChild;
 import com.caverock.androidsvg.SVG.TextPositionedContainer;
 import com.caverock.androidsvg.SVG.TextRoot;
-import com.caverock.androidsvg.SVG.Unit;
+import com.caverock.androidsvg.valuetype.Unit;
+import com.caverock.androidsvg.valuetype.PreserveAspectRatio;
 
 /**
  * SVG parser code. Used by SVG class. Should not be called directly.
@@ -1504,9 +1500,9 @@ public class SVGParser extends DefaultHandler2
       currentElement.addChild(obj);
       currentElement = obj;
       if (obj.parent instanceof TextRoot)
-         obj.setTextRoot((TextRoot) obj.parent);
+         obj.textRoot = ((TextRoot) obj.parent);
       else
-         obj.setTextRoot(((TextChild) obj.parent).getTextRoot());
+         obj.textRoot = (((TextChild) obj.parent).getTextRoot());
    }
 
 
@@ -1531,9 +1527,9 @@ public class SVGParser extends DefaultHandler2
       parseAttributesTRef(obj, attributes);
       currentElement.addChild(obj);
       if (obj.parent instanceof TextRoot)
-         obj.setTextRoot((TextRoot) obj.parent);
+         obj.textRoot = ((TextRoot) obj.parent);
       else
-         obj.setTextRoot(((TextChild) obj.parent).getTextRoot());
+         obj.textRoot = (((TextChild) obj.parent).getTextRoot());
    }
 
 
@@ -1993,9 +1989,9 @@ public class SVGParser extends DefaultHandler2
       currentElement.addChild(obj);
       currentElement = obj;
       if (obj.parent instanceof TextRoot)
-         obj.setTextRoot((TextRoot) obj.parent);
+         obj.textRoot = ((TextRoot) obj.parent);
       else
-         obj.setTextRoot(((TextChild) obj.parent).getTextRoot());
+         obj.textRoot = (((TextChild) obj.parent).getTextRoot());
    }
 
 
@@ -2571,7 +2567,7 @@ public class SVGParser extends DefaultHandler2
 
             default:
                if (obj.baseStyle == null)
-                  obj.baseStyle = new Style();
+                  obj.baseStyle = new SVG.Style();
                processStyleProperty(obj.baseStyle, attributes.getLocalName(i), attributes.getValue(i).trim());
                break;
          }
@@ -2600,7 +2596,7 @@ public class SVGParser extends DefaultHandler2
          if (scan.empty() || scan.consume(';'))
          {
             if (obj.style == null)
-               obj.style = new Style();
+               obj.style = new SVG.Style();
             processStyleProperty(obj.style, propertyName, propertyValue);
             scan.skipWhitespace();
          }
@@ -2608,7 +2604,7 @@ public class SVGParser extends DefaultHandler2
    }
 
 
-   protected static void  processStyleProperty(Style style, String localName, String val) throws SAXException
+   protected static void  processStyleProperty(SVG.Style style, String localName, String val) throws SAXException
    {
       if (val.length() == 0) { // The spec doesn't say how to handle empty style attributes.
          return;               // Our strategy is just to ignore them.
@@ -2620,47 +2616,47 @@ public class SVGParser extends DefaultHandler2
       {
          case fill:
             style.fill = parsePaintSpecifier(val, "fill");
-            style.specifiedFlags |= SVG.SPECIFIED_FILL;
+            style.specifiedFlags |= SVG.Style.SPECIFIED_FILL;
             break;
 
          case fill_rule:
             style.fillRule = parseFillRule(val);
-            style.specifiedFlags |= SVG.SPECIFIED_FILL_RULE;
+            style.specifiedFlags |= SVG.Style.SPECIFIED_FILL_RULE;
             break;
 
          case fill_opacity:
             style.fillOpacity = parseOpacity(val);
-            style.specifiedFlags |= SVG.SPECIFIED_FILL_OPACITY;
+            style.specifiedFlags |= SVG.Style.SPECIFIED_FILL_OPACITY;
             break;
 
          case stroke:
             style.stroke = parsePaintSpecifier(val, "stroke");
-            style.specifiedFlags |= SVG.SPECIFIED_STROKE;
+            style.specifiedFlags |= SVG.Style.SPECIFIED_STROKE;
             break;
 
          case stroke_opacity:
             style.strokeOpacity = parseOpacity(val);
-            style.specifiedFlags |= SVG.SPECIFIED_STROKE_OPACITY;
+            style.specifiedFlags |= SVG.Style.SPECIFIED_STROKE_OPACITY;
             break;
 
          case stroke_width:
             style.strokeWidth = parseLength(val);
-            style.specifiedFlags |= SVG.SPECIFIED_STROKE_WIDTH;
+            style.specifiedFlags |= SVG.Style.SPECIFIED_STROKE_WIDTH;
             break;
 
          case stroke_linecap:
             style.strokeLineCap = parseStrokeLineCap(val);
-            style.specifiedFlags |= SVG.SPECIFIED_STROKE_LINECAP;
+            style.specifiedFlags |= SVG.Style.SPECIFIED_STROKE_LINECAP;
             break;
 
          case stroke_linejoin:
             style.strokeLineJoin = parseStrokeLineJoin(val);
-            style.specifiedFlags |= SVG.SPECIFIED_STROKE_LINEJOIN;
+            style.specifiedFlags |= SVG.Style.SPECIFIED_STROKE_LINEJOIN;
             break;
 
          case stroke_miterlimit:
             style.strokeMiterLimit = parseFloat(val);
-            style.specifiedFlags |= SVG.SPECIFIED_STROKE_MITERLIMIT;
+            style.specifiedFlags |= SVG.Style.SPECIFIED_STROKE_MITERLIMIT;
             break;
 
          case stroke_dasharray:
@@ -2668,22 +2664,22 @@ public class SVGParser extends DefaultHandler2
                style.strokeDashArray = null;
             else
                style.strokeDashArray = parseStrokeDashArray(val);
-            style.specifiedFlags |= SVG.SPECIFIED_STROKE_DASHARRAY;
+            style.specifiedFlags |= SVG.Style.SPECIFIED_STROKE_DASHARRAY;
             break;
 
          case stroke_dashoffset:
             style.strokeDashOffset = parseLength(val);
-            style.specifiedFlags |= SVG.SPECIFIED_STROKE_DASHOFFSET;
+            style.specifiedFlags |= SVG.Style.SPECIFIED_STROKE_DASHOFFSET;
             break;
 
          case opacity:
             style.opacity = parseOpacity(val);
-            style.specifiedFlags |= SVG.SPECIFIED_OPACITY;
+            style.specifiedFlags |= SVG.Style.SPECIFIED_OPACITY;
             break;
 
          case color:
             style.color = parseColour(val);
-            style.specifiedFlags |= SVG.SPECIFIED_COLOR;
+            style.specifiedFlags |= SVG.Style.SPECIFIED_COLOR;
             break;
 
          case font:
@@ -2692,145 +2688,145 @@ public class SVGParser extends DefaultHandler2
 
          case font_family:
             style.fontFamily = parseFontFamily(val);
-            style.specifiedFlags |= SVG.SPECIFIED_FONT_FAMILY;
+            style.specifiedFlags |= SVG.Style.SPECIFIED_FONT_FAMILY;
             break;
 
          case font_size:
             style.fontSize = parseFontSize(val);
-            style.specifiedFlags |= SVG.SPECIFIED_FONT_SIZE;
+            style.specifiedFlags |= SVG.Style.SPECIFIED_FONT_SIZE;
             break;
 
          case font_weight:
             style.fontWeight = parseFontWeight(val);
-            style.specifiedFlags |= SVG.SPECIFIED_FONT_WEIGHT;
+            style.specifiedFlags |= SVG.Style.SPECIFIED_FONT_WEIGHT;
             break;
 
          case font_style:
             style.fontStyle = parseFontStyle(val);
-            style.specifiedFlags |= SVG.SPECIFIED_FONT_STYLE;
+            style.specifiedFlags |= SVG.Style.SPECIFIED_FONT_STYLE;
             break;
 
          case text_decoration:
             style.textDecoration = parseTextDecoration(val);
-            style.specifiedFlags |= SVG.SPECIFIED_TEXT_DECORATION;
+            style.specifiedFlags |= SVG.Style.SPECIFIED_TEXT_DECORATION;
             break;
 
          case direction:
             style.direction = parseTextDirection(val);
-            style.specifiedFlags |= SVG.SPECIFIED_DIRECTION;
+            style.specifiedFlags |= SVG.Style.SPECIFIED_DIRECTION;
             break;
 
          case text_anchor:
             style.textAnchor = parseTextAnchor(val);
-            style.specifiedFlags |= SVG.SPECIFIED_TEXT_ANCHOR;
+            style.specifiedFlags |= SVG.Style.SPECIFIED_TEXT_ANCHOR;
             break;
 
          case overflow:
             style.overflow = parseOverflow(val);
-            style.specifiedFlags |= SVG.SPECIFIED_OVERFLOW;
+            style.specifiedFlags |= SVG.Style.SPECIFIED_OVERFLOW;
             break;
 
          case marker:
             style.markerStart = parseFunctionalIRI(val, localName);
             style.markerMid = style.markerStart;
             style.markerEnd = style.markerStart;
-            style.specifiedFlags |= (SVG.SPECIFIED_MARKER_START | SVG.SPECIFIED_MARKER_MID | SVG.SPECIFIED_MARKER_END);
+            style.specifiedFlags |= (SVG.Style.SPECIFIED_MARKER_START | SVG.Style.SPECIFIED_MARKER_MID | SVG.Style.SPECIFIED_MARKER_END);
             break;
 
          case marker_start:
             style.markerStart = parseFunctionalIRI(val, localName);
-            style.specifiedFlags |= SVG.SPECIFIED_MARKER_START;
+            style.specifiedFlags |= SVG.Style.SPECIFIED_MARKER_START;
             break;
 
          case marker_mid:
             style.markerMid = parseFunctionalIRI(val, localName);
-            style.specifiedFlags |= SVG.SPECIFIED_MARKER_MID;
+            style.specifiedFlags |= SVG.Style.SPECIFIED_MARKER_MID;
             break;
 
          case marker_end:
             style.markerEnd = parseFunctionalIRI(val, localName);
-            style.specifiedFlags |= SVG.SPECIFIED_MARKER_END;
+            style.specifiedFlags |= SVG.Style.SPECIFIED_MARKER_END;
             break;
 
          case display:
             if (val.indexOf('|') >= 0 || (VALID_DISPLAY_VALUES.indexOf('|'+val+'|') == -1))
                throw new SAXException("Invalid value for \"display\" attribute: "+val);
             style.display = !val.equals(NONE);
-            style.specifiedFlags |= SVG.SPECIFIED_DISPLAY;
+            style.specifiedFlags |= SVG.Style.SPECIFIED_DISPLAY;
             break;
 
          case visibility:
             if (val.indexOf('|') >= 0 || (VALID_VISIBILITY_VALUES.indexOf('|'+val+'|') == -1))
                throw new SAXException("Invalid value for \"visibility\" attribute: "+val);
             style.visibility = val.equals("visible");
-            style.specifiedFlags |= SVG.SPECIFIED_VISIBILITY;
+            style.specifiedFlags |= SVG.Style.SPECIFIED_VISIBILITY;
             break;
 
          case stop_color:
             if (val.equals(CURRENTCOLOR)) {
-               style.stopColor = CurrentColor.getInstance();
+               style.stopColor = SvgPaint.CurrentColor.getInstance();
             } else {
                style.stopColor = parseColour(val);
             }
-            style.specifiedFlags |= SVG.SPECIFIED_STOP_COLOR;
+            style.specifiedFlags |= SVG.Style.SPECIFIED_STOP_COLOR;
             break;
 
          case stop_opacity:
             style.stopOpacity = parseOpacity(val);
-            style.specifiedFlags |= SVG.SPECIFIED_STOP_OPACITY;
+            style.specifiedFlags |= SVG.Style.SPECIFIED_STOP_OPACITY;
             break;
 
          case clip:
             style.clip = parseClip(val);
-            style.specifiedFlags |= SVG.SPECIFIED_CLIP;
+            style.specifiedFlags |= SVG.Style.SPECIFIED_CLIP;
             break;
 
          case clip_path:
             style.clipPath = parseFunctionalIRI(val, localName);
-            style.specifiedFlags |= SVG.SPECIFIED_CLIP_PATH;
+            style.specifiedFlags |= SVG.Style.SPECIFIED_CLIP_PATH;
             break;
 
          case clip_rule:
             style.clipRule = parseFillRule(val);
-            style.specifiedFlags |= SVG.SPECIFIED_CLIP_RULE;
+            style.specifiedFlags |= SVG.Style.SPECIFIED_CLIP_RULE;
             break;
 
          case mask:
             style.mask = parseFunctionalIRI(val, localName);
-            style.specifiedFlags |= SVG.SPECIFIED_MASK;
+            style.specifiedFlags |= SVG.Style.SPECIFIED_MASK;
             break;
 
          case solid_color:
             if (val.equals(CURRENTCOLOR)) {
-               style.solidColor = CurrentColor.getInstance();
+               style.solidColor = SvgPaint.CurrentColor.getInstance();
             } else {
                style.solidColor = parseColour(val);
             }
-            style.specifiedFlags |= SVG.SPECIFIED_SOLID_COLOR;
+            style.specifiedFlags |= SVG.Style.SPECIFIED_SOLID_COLOR;
             break;
 
          case solid_opacity:
             style.solidOpacity = parseOpacity(val);
-            style.specifiedFlags |= SVG.SPECIFIED_SOLID_OPACITY;
+            style.specifiedFlags |= SVG.Style.SPECIFIED_SOLID_OPACITY;
             break;
 
          case viewport_fill:
             if (val.equals(CURRENTCOLOR)) {
-               style.viewportFill = CurrentColor.getInstance();
+               style.viewportFill = SvgPaint.CurrentColor.getInstance();
             } else {
                style.viewportFill = parseColour(val);
             }
-            style.specifiedFlags |= SVG.SPECIFIED_VIEWPORT_FILL;
+            style.specifiedFlags |= SVG.Style.SPECIFIED_VIEWPORT_FILL;
             break;
 
          case viewport_fill_opacity:
             style.viewportFillOpacity = parseOpacity(val);
-            style.specifiedFlags |= SVG.SPECIFIED_VIEWPORT_FILL_OPACITY;
+            style.specifiedFlags |= SVG.Style.SPECIFIED_VIEWPORT_FILL_OPACITY;
             break;
 
          case vector_effect:
             style.vectorEffect = parseVectorEffect(val);
-            style.specifiedFlags |= SVG.SPECIFIED_VECTOR_EFFECT;
+            style.specifiedFlags |= SVG.Style.SPECIFIED_VECTOR_EFFECT;
             break;
 
          default:
@@ -2871,9 +2867,9 @@ public class SVGParser extends DefaultHandler2
    }
 
 
-   private Matrix  parseTransformList(String val) throws SAXException
+   private SerializableMatrix  parseTransformList(String val) throws SAXException
    {
-      Matrix  matrix = new Matrix();
+       SerializableMatrix  matrix = new SerializableMatrix();
 
       TextScanner  scan = new TextScanner(val);
       scan.skipWhitespace();
@@ -3097,7 +3093,7 @@ public class SVGParser extends DefaultHandler2
    /*
     * Parse a viewBox attribute.
     */
-   private static Box  parseViewBox(String val) throws SAXException
+   private static Box parseViewBox(String val) throws SAXException
    {
       TextScanner scan = new TextScanner(val);
       scan.skipWhitespace();
@@ -3117,7 +3113,7 @@ public class SVGParser extends DefaultHandler2
       if (height < 0)
          throw new SAXException("Invalid viewBox. height cannot be negative");
 
-      return new SVG.Box(minX, minY, width, height);
+      return new Box(minX, minY, width, height);
    }
 
 
@@ -3183,7 +3179,7 @@ public class SVGParser extends DefaultHandler2
       if (val.equals(NONE)) {
          return null;
       } else if (val.equals(CURRENTCOLOR)) {
-         return CurrentColor.getInstance();
+         return SvgPaint.CurrentColor.getInstance();
       } else {
          return parseColour(val);
       }
@@ -3262,12 +3258,12 @@ public class SVGParser extends DefaultHandler2
 
    // Parse a font attribute
    // [ [ <'font-style'> || <'font-variant'> || <'font-weight'> ]? <'font-size'> [ / <'line-height'> ]? <'font-family'> ] | caption | icon | menu | message-box | small-caption | status-bar | inherit
-   private static void  parseFont(Style style, String val) throws SAXException
+   private static void  parseFont(SVG.Style style, String val) throws SAXException
    {
       List<String>     fontFamily = null;
       Length           fontSize = null;
       Integer          fontWeight = null;
-      Style.FontStyle  fontStyle = null;
+      SVG.Style.FontStyle  fontStyle = null;
       String           fontVariant = null;
 
       // Start by checking for the fixed size standard system font names (which we don't support)
@@ -3325,9 +3321,9 @@ public class SVGParser extends DefaultHandler2
 
       style.fontFamily = fontFamily;
       style.fontSize = fontSize;
-      style.fontWeight = (fontWeight == null) ? Style.FONT_WEIGHT_NORMAL : fontWeight;
-      style.fontStyle = (fontStyle == null) ? Style.FontStyle.Normal : fontStyle;
-      style.specifiedFlags |= (SVG.SPECIFIED_FONT_FAMILY | SVG.SPECIFIED_FONT_SIZE | SVG.SPECIFIED_FONT_WEIGHT | SVG.SPECIFIED_FONT_STYLE);
+      style.fontWeight = (fontWeight == null) ? SVG.Style.FONT_WEIGHT_NORMAL : fontWeight;
+      style.fontStyle = (fontStyle == null) ? SVG.Style.FontStyle.Normal : fontStyle;
+      style.specifiedFlags |= (SVG.Style.SPECIFIED_FONT_FAMILY | SVG.Style.SPECIFIED_FONT_SIZE | SVG.Style.SPECIFIED_FONT_WEIGHT | SVG.Style.SPECIFIED_FONT_STYLE);
    }
 
 
@@ -3377,9 +3373,9 @@ public class SVGParser extends DefaultHandler2
 
 
    // Parse a font style keyword
-   private static Style.FontStyle  parseFontStyle(String val) throws SAXException
+   private static SVG.Style.FontStyle  parseFontStyle(String val) throws SAXException
    {
-      Style.FontStyle  fs = fontStyleKeyword(val);
+      SVG.Style.FontStyle  fs = fontStyleKeyword(val);
       if (fs != null)
          return fs;
       else
@@ -3388,81 +3384,81 @@ public class SVGParser extends DefaultHandler2
 
 
    // Parse a font style keyword
-   private static Style.FontStyle  fontStyleKeyword(String val)
+   private static SVG.Style.FontStyle  fontStyleKeyword(String val)
    {
       // Italic is probably the most common, so test that first :)
       if ("italic".equals(val))
-         return Style.FontStyle.Italic;
+         return SVG.Style.FontStyle.Italic;
       else if ("normal".equals(val))
-         return Style.FontStyle.Normal;
+         return SVG.Style.FontStyle.Normal;
       else if ("oblique".equals(val))
-         return Style.FontStyle.Oblique;
+         return SVG.Style.FontStyle.Oblique;
       else
          return null;
    }
 
 
    // Parse a text decoration keyword
-   private static TextDecoration  parseTextDecoration(String val) throws SAXException
+   private static SVG.Style.TextDecoration parseTextDecoration(String val) throws SAXException
    {
       if ("none".equals(val))
-         return Style.TextDecoration.None;
+         return SVG.Style.TextDecoration.None;
       if ("underline".equals(val))
-         return Style.TextDecoration.Underline;
+         return SVG.Style.TextDecoration.Underline;
       if ("overline".equals(val))
-         return Style.TextDecoration.Overline;
+         return SVG.Style.TextDecoration.Overline;
       if ("line-through".equals(val))
-         return Style.TextDecoration.LineThrough;
+         return SVG.Style.TextDecoration.LineThrough;
       if ("blink".equals(val))
-         return Style.TextDecoration.Blink;
+         return SVG.Style.TextDecoration.Blink;
       throw new SAXException("Invalid text-decoration property: "+val);
    }
 
 
    // Parse a text decoration keyword
-   private static TextDirection  parseTextDirection(String val) throws SAXException
+   private static SVG.Style.TextDirection parseTextDirection(String val) throws SAXException
    {
       if ("ltr".equals(val))
-         return Style.TextDirection.LTR;
+         return SVG.Style.TextDirection.LTR;
       if ("rtl".equals(val))
-         return Style.TextDirection.RTL;
+         return SVG.Style.TextDirection.RTL;
       throw new SAXException("Invalid direction property: "+val);
    }
 
 
    // Parse fill rule
-   private static Style.FillRule  parseFillRule(String val) throws SAXException
+   private static SVG.Style.FillRule  parseFillRule(String val) throws SAXException
    {
       if ("nonzero".equals(val))
-         return Style.FillRule.NonZero;
+         return SVG.Style.FillRule.NonZero;
       if ("evenodd".equals(val))
-         return Style.FillRule.EvenOdd;
+         return SVG.Style.FillRule.EvenOdd;
       throw new SAXException("Invalid fill-rule property: "+val);
    }
 
 
    // Parse stroke-linecap
-   private static Style.LineCaps  parseStrokeLineCap(String val) throws SAXException
+   private static SVG.Style.LineCaps  parseStrokeLineCap(String val) throws SAXException
    {
       if ("butt".equals(val))
-         return Style.LineCaps.Butt;
+         return SVG.Style.LineCaps.Butt;
       if ("round".equals(val))
-         return Style.LineCaps.Round;
+         return SVG.Style.LineCaps.Round;
       if ("square".equals(val))
-         return Style.LineCaps.Square;
+         return SVG.Style.LineCaps.Square;
       throw new SAXException("Invalid stroke-linecap property: "+val);
    }
 
 
    // Parse stroke-linejoin
-   private static Style.LineJoin  parseStrokeLineJoin(String val) throws SAXException
+   private static SVG.Style.LineJoin  parseStrokeLineJoin(String val) throws SAXException
    {
       if ("miter".equals(val))
-         return Style.LineJoin.Miter;
+         return SVG.Style.LineJoin.Miter;
       if ("round".equals(val))
-         return Style.LineJoin.Round;
+         return SVG.Style.LineJoin.Round;
       if ("bevel".equals(val))
-         return Style.LineJoin.Bevel;
+         return SVG.Style.LineJoin.Bevel;
       throw new SAXException("Invalid stroke-linejoin property: "+val);
    }
 
@@ -3508,14 +3504,14 @@ public class SVGParser extends DefaultHandler2
 
 
    // Parse a text anchor keyword
-   private static Style.TextAnchor  parseTextAnchor(String val) throws SAXException
+   private static SVG.Style.TextAnchor  parseTextAnchor(String val) throws SAXException
    {
       if ("start".equals(val))
-         return Style.TextAnchor.Start;
+         return SVG.Style.TextAnchor.Start;
       if ("middle".equals(val))
-         return Style.TextAnchor.Middle;
+         return SVG.Style.TextAnchor.Middle;
       if ("end".equals(val))
-         return Style.TextAnchor.End;
+         return SVG.Style.TextAnchor.End;
       throw new SAXException("Invalid text-anchor property: "+val);
    }
 
@@ -3568,12 +3564,12 @@ public class SVGParser extends DefaultHandler2
 
 
    // Parse a vector effect keyword
-   private static VectorEffect  parseVectorEffect(String val) throws SAXException
+   private static SVG.Style.VectorEffect parseVectorEffect(String val) throws SAXException
    {
       if ("none".equals(val))
-         return Style.VectorEffect.None;
+         return SVG.Style.VectorEffect.None;
       if ("non-scaling-stroke".equals(val))
-         return Style.VectorEffect.NonScalingStroke;
+         return SVG.Style.VectorEffect.NonScalingStroke;
       throw new SAXException("Invalid vector-effect property: "+val);
    }
 
@@ -3582,7 +3578,7 @@ public class SVGParser extends DefaultHandler2
 
 
    // Parse the string that defines a path.
-   private static SVG.PathDefinition  parsePath(String val) throws SAXException
+   static SVG.PathDefinition  parsePath(String val) throws SAXException
    {
       TextScanner  scan = new TextScanner(val);
 

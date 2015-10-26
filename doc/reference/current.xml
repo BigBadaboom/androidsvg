@@ -10,19 +10,19 @@
  visibility="public"
 >
 <constructor name="PreserveAspectRatio"
- type="com.caverock.androidsvg.PreserveAspectRatio"
+ type="com.caverock.androidsvg.valuetype.PreserveAspectRatio"
  static="false"
  final="false"
  deprecated="not deprecated"
  visibility="public"
 >
-<parameter name="alignment" type="com.caverock.androidsvg.PreserveAspectRatio.Alignment">
+<parameter name="alignment" type="com.caverock.androidsvg.valuetype.PreserveAspectRatio.Alignment">
 </parameter>
-<parameter name="scale" type="com.caverock.androidsvg.PreserveAspectRatio.Scale">
+<parameter name="scale" type="com.caverock.androidsvg.valuetype.PreserveAspectRatio.Scale">
 </parameter>
 </constructor>
 <method name="getAlignment"
- return="com.caverock.androidsvg.PreserveAspectRatio.Alignment"
+ return="com.caverock.androidsvg.valuetype.PreserveAspectRatio.Alignment"
  abstract="false"
  native="false"
  synchronized="false"
@@ -33,7 +33,7 @@
 >
 </method>
 <method name="getScale"
- return="com.caverock.androidsvg.PreserveAspectRatio.Scale"
+ return="com.caverock.androidsvg.valuetype.PreserveAspectRatio.Scale"
  abstract="false"
  native="false"
  synchronized="false"
@@ -44,7 +44,7 @@
 >
 </method>
 <field name="BOTTOM"
- type="com.caverock.androidsvg.PreserveAspectRatio"
+ type="com.caverock.androidsvg.valuetype.PreserveAspectRatio"
  transient="false"
  volatile="false"
  static="true"
@@ -54,7 +54,7 @@
 >
 </field>
 <field name="END"
- type="com.caverock.androidsvg.PreserveAspectRatio"
+ type="com.caverock.androidsvg.valuetype.PreserveAspectRatio"
  transient="false"
  volatile="false"
  static="true"
@@ -64,7 +64,7 @@
 >
 </field>
 <field name="FULLSCREEN"
- type="com.caverock.androidsvg.PreserveAspectRatio"
+ type="com.caverock.androidsvg.valuetype.PreserveAspectRatio"
  transient="false"
  volatile="false"
  static="true"
@@ -74,7 +74,7 @@
 >
 </field>
 <field name="FULLSCREEN_START"
- type="com.caverock.androidsvg.PreserveAspectRatio"
+ type="com.caverock.androidsvg.valuetype.PreserveAspectRatio"
  transient="false"
  volatile="false"
  static="true"
@@ -84,7 +84,7 @@
 >
 </field>
 <field name="LETTERBOX"
- type="com.caverock.androidsvg.PreserveAspectRatio"
+ type="com.caverock.androidsvg.valuetype.PreserveAspectRatio"
  transient="false"
  volatile="false"
  static="true"
@@ -94,7 +94,7 @@
 >
 </field>
 <field name="START"
- type="com.caverock.androidsvg.PreserveAspectRatio"
+ type="com.caverock.androidsvg.valuetype.PreserveAspectRatio"
  transient="false"
  volatile="false"
  static="true"
@@ -104,7 +104,7 @@
 >
 </field>
 <field name="STRETCH"
- type="com.caverock.androidsvg.PreserveAspectRatio"
+ type="com.caverock.androidsvg.valuetype.PreserveAspectRatio"
  transient="false"
  volatile="false"
  static="true"
@@ -114,7 +114,7 @@
 >
 </field>
 <field name="TOP"
- type="com.caverock.androidsvg.PreserveAspectRatio"
+ type="com.caverock.androidsvg.valuetype.PreserveAspectRatio"
  transient="false"
  volatile="false"
  static="true"
@@ -124,7 +124,7 @@
 >
 </field>
 <field name="UNSCALED"
- type="com.caverock.androidsvg.PreserveAspectRatio"
+ type="com.caverock.androidsvg.valuetype.PreserveAspectRatio"
  transient="false"
  volatile="false"
  static="true"
@@ -143,7 +143,7 @@
  visibility="public"
 >
 <method name="valueOf"
- return="com.caverock.androidsvg.PreserveAspectRatio.Alignment"
+ return="com.caverock.androidsvg.valuetype.PreserveAspectRatio.Alignment"
  abstract="false"
  native="false"
  synchronized="false"
@@ -156,7 +156,7 @@
 </parameter>
 </method>
 <method name="values"
- return="com.caverock.androidsvg.PreserveAspectRatio.Alignment[]"
+ return="com.caverock.androidsvg.valuetype.PreserveAspectRatio.Alignment[]"
  abstract="false"
  native="false"
  synchronized="false"
@@ -176,7 +176,7 @@
  visibility="public"
 >
 <method name="valueOf"
- return="com.caverock.androidsvg.PreserveAspectRatio.Scale"
+ return="com.caverock.androidsvg.valuetype.PreserveAspectRatio.Scale"
  abstract="false"
  native="false"
  synchronized="false"
@@ -189,7 +189,7 @@
 </parameter>
 </method>
 <method name="values"
- return="com.caverock.androidsvg.PreserveAspectRatio.Scale[]"
+ return="com.caverock.androidsvg.valuetype.PreserveAspectRatio.Scale[]"
  abstract="false"
  native="false"
  synchronized="false"
@@ -242,7 +242,7 @@
 >
 </method>
 <method name="getDocumentPreserveAspectRatio"
- return="com.caverock.androidsvg.PreserveAspectRatio"
+ return="com.caverock.androidsvg.valuetype.PreserveAspectRatio"
  abstract="false"
  native="false"
  synchronized="false"
@@ -566,7 +566,7 @@
  deprecated="not deprecated"
  visibility="public"
 >
-<parameter name="preserveAspectRatio" type="com.caverock.androidsvg.PreserveAspectRatio">
+<parameter name="preserveAspectRatio" type="com.caverock.androidsvg.valuetype.PreserveAspectRatio">
 </parameter>
 </method>
 <method name="setDocumentViewBox"
