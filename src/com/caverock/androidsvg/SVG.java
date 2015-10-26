@@ -1299,6 +1299,8 @@ public class SVG implements Serializable
 
             in.defaultReadObject();
 
+            idToElementMap = new HashMap<String, SVGTag>();
+            classNameToElementMap = new HashMap<String, List<SVGTag>>();
             for (SvgObject object : children) {
                 if (object instanceof SvgElementBase) {
                     prepareLookupMapForChild((SvgElementBase) object);
@@ -1328,12 +1330,14 @@ public class SVG implements Serializable
                 this.idToElementMap.put(elem.id, elem);
             }
 
-            for (String className : elem.classNames) {
-                List<SVGTag> list = classNameToElementMap.get(className);
-                if (list == null) list = new ArrayList<SVGTag>();
+            if (elem.classNames != null) {
+                for (String className : elem.classNames) {
+                    List<SVGTag> list = classNameToElementMap.get(className);
+                    if (list == null) list = new ArrayList<SVGTag>();
 
-                list.add(elem);
-                classNameToElementMap.put(className, list);
+                    list.add(elem);
+                    classNameToElementMap.put(className, list);
+                }
             }
         }
 
@@ -1373,7 +1377,11 @@ public class SVG implements Serializable
             boolean elemMatch = true;
             List<SVGTag> elemChildMatch = null;
             for (String className : classNames) {
-                elemMatch &= this.classNames.contains(className);
+                if (this.classNames != null) {
+                    elemMatch &= this.classNames.contains(className);
+                } else {
+                    elemMatch = false;
+                }
 
                 List<SVGTag> cached = classNameToElementMap.get(className);
                 if (cached != null) {
