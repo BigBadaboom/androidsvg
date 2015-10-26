@@ -1639,7 +1639,7 @@ public class SVG implements Serializable
 
 
     // An SVG element that can contain other elements.
-    protected static class Group extends SvgConditionalContainer implements HasTransform
+    public static class Group extends SvgConditionalContainer implements HasTransform
     {
         SerializableMatrix  transform;
 
@@ -1684,7 +1684,7 @@ public class SVG implements Serializable
 
     // A <defs> object contains objects that are not rendered directly, but are instead
     // referenced from other parts of the file.
-    protected static class Defs extends Group implements NotDirectlyRendered
+    public static class Defs extends Group implements NotDirectlyRendered
     {
     }
 
