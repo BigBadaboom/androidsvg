@@ -1,4 +1,5 @@
 # AndroidSVG
+[![Badge](http://www.libtastic.com/static/osbadges/308.png)](http://www.libtastic.com/technology/308/)
 
 AndroidSVG is a SVG parser and renderer for Android.  It has almost complete support for the static
 visual elements of the SVG 1.1 and SVG 1.2 Tiny specifications (except for filters).
