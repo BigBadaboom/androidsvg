@@ -71,6 +71,15 @@ when using <code>renderToPicture()</code></strong>.  Any SVG files that use a <c
 See <a href="https://code.google.com/p/android/issues/detail?id=58737" rel="nofollow">Android issue 58737</a>.  If you are
 using <code>renderToCanvas()</code>, you will not be affected.</li>
 </p>
+
+
+<h4>Android 6.0</h4>
+
+<p>
+The problem with clip paths is back again due to two regressions in <strong>Android 6.0</strong>.  Any SVG files that use a <code>&lt;clipPath&gt;</code> will not render correctly.
+See <a href="https://code.google.com/p/android/issues/detail?id=58737" rel="nofollow">Android issue 200128</a>.  Unfortunately,
+this time, this bug affects both <code>renderToPicture()</code> and <code>renderToCanvas()</code>.</li>
+</p>
  
 
 
