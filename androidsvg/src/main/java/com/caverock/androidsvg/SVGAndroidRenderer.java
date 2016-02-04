@@ -1060,7 +1060,7 @@ public class SVGAndroidRenderer
       }
       updateParentBoundingBox(obj);
 
-      checkForGradiantsAndPatterns(obj);      
+      checkForGradientsAndPatterns(obj);
       checkForClipPath(obj);
       
       boolean  compositing = pushLayer();
@@ -1110,7 +1110,7 @@ public class SVGAndroidRenderer
       Path  path = makePathAndBoundingBox(obj);
       updateParentBoundingBox(obj);
 
-      checkForGradiantsAndPatterns(obj);      
+      checkForGradientsAndPatterns(obj);
       checkForClipPath(obj);
 
       boolean  compositing = pushLayer();
@@ -1149,7 +1149,7 @@ public class SVGAndroidRenderer
       Path  path = makePathAndBoundingBox(obj);
       updateParentBoundingBox(obj);
 
-      checkForGradiantsAndPatterns(obj);      
+      checkForGradientsAndPatterns(obj);
       checkForClipPath(obj);
 
       boolean  compositing = pushLayer();
@@ -1187,7 +1187,7 @@ public class SVGAndroidRenderer
       Path  path = makePathAndBoundingBox(obj);
       updateParentBoundingBox(obj);
 
-      checkForGradiantsAndPatterns(obj);      
+      checkForGradientsAndPatterns(obj);
       checkForClipPath(obj);
 
       boolean  compositing = pushLayer();
@@ -1224,7 +1224,7 @@ public class SVGAndroidRenderer
       Path  path = makePathAndBoundingBox(obj);
       updateParentBoundingBox(obj);
 
-      checkForGradiantsAndPatterns(obj);      
+      checkForGradientsAndPatterns(obj);
       checkForClipPath(obj);
 
       boolean  compositing = pushLayer();
@@ -1279,7 +1279,7 @@ public class SVGAndroidRenderer
       Path  path = makePathAndBoundingBox(obj);
       updateParentBoundingBox(obj);
 
-      checkForGradiantsAndPatterns(obj);      
+      checkForGradientsAndPatterns(obj);
       checkForClipPath(obj);
       
       boolean  compositing = pushLayer();
@@ -1363,7 +1363,7 @@ public class SVGAndroidRenderer
       Path  path = makePathAndBoundingBox(obj);
       updateParentBoundingBox(obj);
 
-      checkForGradiantsAndPatterns(obj);      
+      checkForGradientsAndPatterns(obj);
       checkForClipPath(obj);
       
       boolean  compositing = pushLayer();
@@ -1419,7 +1419,7 @@ public class SVGAndroidRenderer
       }
       updateParentBoundingBox(obj);
 
-      checkForGradiantsAndPatterns(obj);      
+      checkForGradientsAndPatterns(obj);
       checkForClipPath(obj);
       
       boolean  compositing = pushLayer();
@@ -1550,7 +1550,7 @@ public class SVGAndroidRenderer
                dy = (tspan.dy == null || tspan.dy.size() == 0) ? 0f : tspan.dy.get(0).floatValueY(this);
             }
 
-            checkForGradiantsAndPatterns((SvgElement) tspan.getTextRoot());
+            checkForGradientsAndPatterns((SvgElement) tspan.getTextRoot());
 
             if (textprocessor instanceof PlainTextDrawer) {
                ((PlainTextDrawer) textprocessor).x = x + dx;
@@ -1579,7 +1579,7 @@ public class SVGAndroidRenderer
 
          if (display())
          {
-            checkForGradiantsAndPatterns((SvgElement) tref.getTextRoot());      
+            checkForGradientsAndPatterns((SvgElement) tref.getTextRoot());
 
             // Locate the referenced object
             SVG.SvgObject  ref = obj.document.resolveIRI(tref.href);
@@ -1645,7 +1645,7 @@ public class SVGAndroidRenderer
          }
       }
 
-      checkForGradiantsAndPatterns((SvgElement) obj.getTextRoot());      
+      checkForGradientsAndPatterns((SvgElement) obj.getTextRoot());
       
       boolean  compositing = pushLayer();
 
@@ -3135,11 +3135,11 @@ public class SVGAndroidRenderer
 
 
    /*
-    * Check for gradiant fills or strokes on this object.  These are always relative
+    * Check for gradient fills or strokes on this object.  These are always relative
     * to the object, so can't be preconfigured. They have to be initialised at the
     * time each object is rendered.
     */
-   private void  checkForGradiantsAndPatterns(SvgElement obj)
+   private void  checkForGradientsAndPatterns(SvgElement obj)
    {
       if (state.style.fill instanceof PaintReference) {
          decodePaintReference(true, obj.boundingBox, (PaintReference) state.style.fill);
@@ -3170,16 +3170,16 @@ public class SVGAndroidRenderer
          return;
       }
       if (ref instanceof SvgLinearGradient)
-         makeLinearGradiant(isFill, boundingBox, (SvgLinearGradient) ref);
+         makeLinearGradient(isFill, boundingBox, (SvgLinearGradient) ref);
       if (ref instanceof SvgRadialGradient)
-         makeRadialGradiant(isFill, boundingBox, (SvgRadialGradient) ref);
+         makeRadialGradient(isFill, boundingBox, (SvgRadialGradient) ref);
       if (ref instanceof SolidColor)
          setSolidColor(isFill, (SolidColor) ref);
       //if (ref instanceof SVG.Pattern) {}  // May be needed later if/when we do direct rendering
    }
 
 
-   private void  makeLinearGradiant(boolean isFill, Box boundingBox, SvgLinearGradient gradient)
+   private void  makeLinearGradient(boolean isFill, Box boundingBox, SvgLinearGradient gradient)
    {
       if (gradient.href != null)
          fillInChainedGradientFields(gradient, gradient.href);
@@ -3288,7 +3288,7 @@ public class SVGAndroidRenderer
    }
 
 
-   private void makeRadialGradiant(boolean isFill, Box boundingBox, SvgRadialGradient gradient)
+   private void  makeRadialGradient(boolean isFill, Box boundingBox, SvgRadialGradient gradient)
    {
       if (gradient.href != null)
          fillInChainedGradientFields(gradient, gradient.href);
