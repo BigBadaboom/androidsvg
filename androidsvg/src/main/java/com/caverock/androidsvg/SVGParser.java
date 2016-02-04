@@ -804,11 +804,14 @@ public class SVGParser extends DefaultHandler2
          case title:
          case desc:
             inMetadataElement = false;
-            if (metadataTag == SVGElem.title)
-               svgDocument.setTitle(metadataElementContents.toString());
-            else if (metadataTag == SVGElem.desc)
-               svgDocument.setDesc(metadataElementContents.toString());
-            metadataElementContents.setLength(0);
+            if (metadataElementContents != null)
+            {
+               if (metadataTag == SVGElem.title)
+                  svgDocument.setTitle(metadataElementContents.toString());
+               else if (metadataTag == SVGElem.desc)
+                  svgDocument.setDesc(metadataElementContents.toString());
+               metadataElementContents.setLength(0);
+            }
             return;
 
          case style:

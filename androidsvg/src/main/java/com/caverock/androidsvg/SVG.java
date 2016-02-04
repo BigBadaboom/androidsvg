@@ -78,7 +78,7 @@ public class SVG
 {
    private static final String  TAG = "AndroidSVG";
 
-   private static final String  VERSION = "1.2.2-beta-2";
+   private static final String  VERSION = "1.2.3-beta-1";
 
    protected static final String  SUPPORTED_SVG_VERSION = "1.2";
 
