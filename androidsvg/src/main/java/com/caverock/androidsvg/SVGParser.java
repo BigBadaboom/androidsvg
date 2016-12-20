@@ -3212,7 +3212,7 @@ public class SVGParser extends DefaultHandler2
             int h1 = threehex & 0xf00;
             int h2 = threehex & 0x0f0;
             int h3 = threehex & 0x00f;
-            return new Colour(h1<<16|h1<<12|h2<<8|h2<<4|h3<<4|h3);
+            return new Colour(h1<<12|h1<<8|h2<<8|h2<<4|h3<<4|h3);
          }
          // Hex value had bad length for a colour
          throw new SAXException("Bad hex colour value: "+val);
