@@ -62,6 +62,8 @@ import com.caverock.androidsvg.SVG.TextPositionedContainer;
 import com.caverock.androidsvg.SVG.TextRoot;
 import com.caverock.androidsvg.SVG.Unit;
 
+import static android.R.attr.propertyName;
+
 /**
  * SVG parser code. Used by SVG class. Should not be called directly.
  * 
@@ -2386,7 +2388,7 @@ public class SVGParser extends DefaultHandler2
        */
       public String  nextToken()
       {
-         return nextToken(' ');
+         return nextToken(' ', false);
       }
 
       /*
@@ -2396,16 +2398,40 @@ public class SVGParser extends DefaultHandler2
        */
       public String  nextToken(char terminator)
       {
+         return nextToken(terminator, false);
+      }
+
+      /*
+       * Scans the input starting immediately at 'position' for the next token.
+       * A token is a sequence of characters terminating at either a the supplied terminating
+       * character.  Whitespaces are allowed.
+       */
+      public String  nextTokenWithWhitespace(char terminator)
+      {
+         return nextToken(terminator, true);
+      }
+
+      /*
+       * Scans the input starting immediately at 'position' for the next token.
+       * A token is a sequence of characters terminating at either the supplied terminating
+       * character, or (optionally) a whitespace character.
+       */
+      public String  nextToken(char terminator, boolean allowWhitespace)
+      {
          if (empty())
             return null;
 
          int  ch = input.charAt(position);
-         if (isWhitespace(ch) || ch == terminator)
+         if ((!allowWhitespace && isWhitespace(ch)) || ch == terminator)
             return null;
          
          int  start = position;
          ch = advanceChar();
-         while (ch != -1 && ch != terminator && !isWhitespace(ch)) {
+         while (ch != -1) {
+            if (ch == terminator)
+               break;
+            if (!allowWhitespace && isWhitespace(ch))
+               break;
             ch = advanceChar();
          }
          return input.substring(start, position);
@@ -2596,7 +2622,7 @@ public class SVGParser extends DefaultHandler2
          if (!scan.consume(':'))
             break;  // Syntax error. Stop processing CSS rules.
          scan.skipWhitespace();
-         String  propertyValue = scan.nextToken(';');
+         String  propertyValue = scan.nextTokenWithWhitespace(';');
          if (propertyValue == null)
             break;  // Syntax error
          scan.skipWhitespace();
@@ -3343,7 +3369,7 @@ public class SVGParser extends DefaultHandler2
       {
          String item = scan.nextQuotedString();
          if (item == null)
-            item = scan.nextToken(',');
+            item = scan.nextTokenWithWhitespace(',');
          if (item == null)
             break;
          if (fonts == null)
