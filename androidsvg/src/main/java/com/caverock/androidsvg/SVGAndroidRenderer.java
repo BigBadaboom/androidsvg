@@ -505,7 +505,7 @@ class SVGAndroidRenderer
 
    private static void  debug(String format, Object... args)
    {
-      if (LibConfig.DEBUG)
+      if (SVG.logging)
          Log.d(TAG, String.format(format, args));
    }
 

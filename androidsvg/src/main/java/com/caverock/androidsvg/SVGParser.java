@@ -73,7 +73,7 @@ class SVGParser extends DefaultHandler2
    private static final String  SVG_NAMESPACE = "http://www.w3.org/2000/svg";
    private static final String  XLINK_NAMESPACE = "http://www.w3.org/1999/xlink";
    private static final String  FEATURE_STRING_PREFIX = "http://www.w3.org/TR/SVG11/feature#";
-   
+
    // SVG parser
    private SVG               svgDocument = null;
    private SVG.SvgContainer  currentElement = null;
@@ -645,7 +645,9 @@ class SVGParser extends DefaultHandler2
          return;
       }
 
-      SVGElem  elem = SVGElem.fromString(localName);
+      String tag = (localName.length() > 0) ? localName : qName;
+
+      SVGElem  elem = SVGElem.fromString(tag);
       switch (elem)
       {
          case svg:
@@ -790,7 +792,8 @@ class SVGParser extends DefaultHandler2
          return;
       }
 
-      switch (SVGElem.fromString(localName))
+      String tag = (localName.length() > 0) ? localName : qName;
+      switch (SVGElem.fromString(tag))
       {
          case title:
          case desc:
@@ -847,7 +850,7 @@ class SVGParser extends DefaultHandler2
    public void endDocument() throws SAXException
    {
       // Dump document
-      if (LibConfig.DEBUG)
+      if (SVG.logging)
          dumpNode(svgDocument.getRootElement(), "");
    }
 
@@ -869,7 +872,7 @@ class SVGParser extends DefaultHandler2
 
    private void  debug(String format, Object... args)
    {
-      if (LibConfig.DEBUG)
+      if (SVG.logging)
          Log.d(TAG, String.format(format, args));
    }
 

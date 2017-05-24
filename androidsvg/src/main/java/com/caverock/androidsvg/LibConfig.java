@@ -18,10 +18,8 @@ package com.caverock.androidsvg;
 
 /**
  * Configure debugging on or off.
- * 
- * @hide
  */
-public class LibConfig
+class LibConfig
 {
-   public static final boolean DEBUG = false;
+   static final boolean DEBUG = true;
 }
