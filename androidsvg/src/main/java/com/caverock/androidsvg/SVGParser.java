@@ -497,6 +497,7 @@ class SVGParser extends DefaultHandler2
          return colourKeywords.get(colourName);
       }
    }
+
    private static class FontSizeKeywords {
       private static final Map<String, Length> fontSizeKeywords = new HashMap<>(9);
       static {
@@ -515,6 +516,7 @@ class SVGParser extends DefaultHandler2
          return fontSizeKeywords.get(fontSize);
       }
    }
+
    private static class FontWeightKeywords {
       private static final Map<String, Integer> fontWeightKeywords = new HashMap<>(13);
       static {
@@ -537,6 +539,7 @@ class SVGParser extends DefaultHandler2
          return fontWeightKeywords.get(fontWeight);
       }
    }
+
    private static class AspectRatioKeywords {
       private static final Map<String, PreserveAspectRatio.Alignment> aspectRatioKeywords = new HashMap<>(10);
       static {
@@ -1020,9 +1023,8 @@ class SVGParser extends DefaultHandler2
                   throw new SAXException("Invalid <use> element. height cannot be negative");
                break;
             case href:
-               if (!XLINK_NAMESPACE.equals(attributes.getURI(i)))
-                  break;
-               obj.href = val;
+               if ("".equals(attributes.getURI(i)) || XLINK_NAMESPACE.equals(attributes.getURI(i)))
+                  obj.href = val;
                break;
             default:
                break;
@@ -1078,9 +1080,8 @@ class SVGParser extends DefaultHandler2
                   throw new SAXException("Invalid <use> element. height cannot be negative");
                break;
             case href:
-               if (!XLINK_NAMESPACE.equals(attributes.getURI(i)))
-                  break;
-               obj.href = val;
+               if ("".equals(attributes.getURI(i)) || XLINK_NAMESPACE.equals(attributes.getURI(i)))
+                  obj.href = val;
                break;
             case preserveAspectRatio:
                parsePreserveAspectRatio(obj, val);
@@ -1536,9 +1537,8 @@ class SVGParser extends DefaultHandler2
          switch (SVGAttr.fromString(attributes.getLocalName(i)))
          {
             case href:
-               if (!XLINK_NAMESPACE.equals(attributes.getURI(i)))
-                  break;
-               obj.href = val;
+               if ("".equals(attributes.getURI(i)) || XLINK_NAMESPACE.equals(attributes.getURI(i)))
+                  obj.href = val;
                break;
             default:
                break;
@@ -1743,9 +1743,8 @@ class SVGParser extends DefaultHandler2
                }
                break;
             case href:
-               if (!XLINK_NAMESPACE.equals(attributes.getURI(i)))
-                  break;
-               obj.href = val;
+               if ("".equals(attributes.getURI(i)) || XLINK_NAMESPACE.equals(attributes.getURI(i)))
+                  obj.href = val;
                break;
             default:
                break;
@@ -1998,9 +1997,8 @@ class SVGParser extends DefaultHandler2
          switch (SVGAttr.fromString(attributes.getLocalName(i)))
          {
             case href:
-               if (!XLINK_NAMESPACE.equals(attributes.getURI(i)))
-                  break;
-               obj.href = val;
+               if ("".equals(attributes.getURI(i)) || XLINK_NAMESPACE.equals(attributes.getURI(i)))
+                  obj.href = val;
                break;
             case startOffset:
                obj.startOffset = parseLength(val);
@@ -2080,9 +2078,8 @@ class SVGParser extends DefaultHandler2
                   throw new SAXException("Invalid <pattern> element. height cannot be negative");
                break;
             case href:
-               if (!XLINK_NAMESPACE.equals(attributes.getURI(i)))
-                  break;
-               obj.href = val;
+               if ("".equals(attributes.getURI(i)) || XLINK_NAMESPACE.equals(attributes.getURI(i)))
+                  obj.href = val;
                break;
             default:
                break;
