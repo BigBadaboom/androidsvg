@@ -39,11 +39,13 @@ public class PreserveAspectRatio
    /**
     * Draw doucment at its natural position and scale.
     */
+   @SuppressWarnings("unused")
    public static final PreserveAspectRatio  UNSCALED = new PreserveAspectRatio(null, null);
 
    /**
     * Stretch horizontally and vertically to fill the viewport.
     */
+   @SuppressWarnings("WeakerAccess")
    public static final PreserveAspectRatio  STRETCH = new PreserveAspectRatio(Alignment.None, null);
 
    /**
@@ -52,6 +54,7 @@ public class PreserveAspectRatio
     * The document will be centred in the viewport and may have blank strips at either the top and
     * bottom of the viewport or at the sides. 
     */
+   @SuppressWarnings("WeakerAccess")
    public static final PreserveAspectRatio  LETTERBOX = new PreserveAspectRatio(Alignment.XMidYMid, Scale.Meet);
 
    /**
@@ -60,6 +63,7 @@ public class PreserveAspectRatio
     * The document will be positioned at the top of tall and narrow viewports, and at the left of short
     * and wide viewports.
     */
+   @SuppressWarnings("unused")
    public static final PreserveAspectRatio  START = new PreserveAspectRatio(Alignment.XMinYMin, Scale.Meet);
 
    /**
@@ -68,6 +72,7 @@ public class PreserveAspectRatio
     * The document will be positioned at the bottom of tall and narrow viewports, and at the right of short
     * and wide viewports.
     */
+   @SuppressWarnings("unused")
    public static final PreserveAspectRatio  END = new PreserveAspectRatio(Alignment.XMaxYMax, Scale.Meet);
 
    /**
@@ -76,6 +81,7 @@ public class PreserveAspectRatio
     * The document will be positioned at the top of tall and narrow viewports, and at the centre of
     * short and wide viewports.
     */
+   @SuppressWarnings("unused")
    public static final PreserveAspectRatio  TOP = new PreserveAspectRatio(Alignment.XMidYMin, Scale.Meet);
 
    /**
@@ -84,6 +90,7 @@ public class PreserveAspectRatio
     * The document will be positioned at the bottom of tall and narrow viewports, and at the centre of
     * short and wide viewports.
     */
+   @SuppressWarnings("unused")
    public static final PreserveAspectRatio  BOTTOM = new PreserveAspectRatio(Alignment.XMidYMax, Scale.Meet);
 
    /**
@@ -93,6 +100,7 @@ public class PreserveAspectRatio
     * The document will be positioned so that the centre of the document will always be visible,
     * but the edges of the document may not.
     */
+   @SuppressWarnings("unused")
    public static final PreserveAspectRatio  FULLSCREEN = new PreserveAspectRatio(Alignment.XMidYMid, Scale.Slice);
 
    /**
@@ -102,6 +110,7 @@ public class PreserveAspectRatio
     * The document will be positioned so that the top left of the document will always be visible,
     * but the right hand or bottom edge may not.
     */
+   @SuppressWarnings("unused")
    public static final PreserveAspectRatio  FULLSCREEN_START = new PreserveAspectRatio(Alignment.XMinYMin, Scale.Slice);
 
 
@@ -157,7 +166,7 @@ public class PreserveAspectRatio
    }
 
 
-   public PreserveAspectRatio(Alignment alignment, Scale scale)
+   PreserveAspectRatio(Alignment alignment, Scale scale)
    {
       this.alignment = alignment;
       this.scale = scale;
@@ -168,6 +177,7 @@ public class PreserveAspectRatio
     * Returns the alignment value of this instance.
     * @return the alignment
     */
+   @SuppressWarnings("WeakerAccess")
    public Alignment  getAlignment()
    {
       return alignment;
@@ -178,6 +188,7 @@ public class PreserveAspectRatio
     * Returns the scale value of this instance.
     * @return the scale
     */
+   @SuppressWarnings("WeakerAccess")
    public Scale  getScale()
    {
       return scale;
@@ -194,11 +205,7 @@ public class PreserveAspectRatio
       if (getClass() != obj.getClass())
          return false;
       PreserveAspectRatio other = (PreserveAspectRatio) obj;
-      if (alignment != other.alignment)
-         return false;
-      if (scale != other.scale)
-         return false;
-      return true;
+      return (alignment == other.alignment && scale == other.scale);
    }
 
 }

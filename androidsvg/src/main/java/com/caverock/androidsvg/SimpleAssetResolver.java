@@ -47,10 +47,10 @@ public class SimpleAssetResolver extends SVGExternalFileResolver
    }
 
 
-   private static final Set<String>  supportedFormats = new HashSet<String>(8);
+   private static final Set<String>  supportedFormats = new HashSet<>(8);
 
    // Static initialiser
-   {
+   static {
       // PNG, JPEG and SVG are required by the SVG 1.2 spec
       supportedFormats.add("image/svg+xml");
       supportedFormats.add("image/jpeg");
@@ -81,14 +81,14 @@ public class SimpleAssetResolver extends SVGExternalFileResolver
       {
          return Typeface.createFromAsset(assetManager, fontFamily + ".ttf");
       }
-      catch (Exception e) {}
+      catch (RuntimeException ignored) {}
 
       // That failed, so try ".otf"
       try
       {
          return Typeface.createFromAsset(assetManager, fontFamily + ".otf");
       }
-      catch (Exception e)
+      catch (RuntimeException e)
       {
          return null;
       }

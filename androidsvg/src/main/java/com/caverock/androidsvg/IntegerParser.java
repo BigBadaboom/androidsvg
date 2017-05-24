@@ -21,19 +21,16 @@ package com.caverock.androidsvg;
  * 
  * We use our own parser to gain a bit of speed.  This routine is
  * around twice as fast as the system one.
- * 
  */
 
-public class IntegerParser
+class IntegerParser
 {
-   int      pos;
-   boolean  isNegative;
-   long     value;
+   private int      pos;
+   private long     value;
 
 
-   public  IntegerParser(boolean isNegative, long value, int pos)
+   private IntegerParser(long value, int pos)
    {
-      this.isNegative = isNegative;
       this.value = value;
       this.pos = pos;
    }
@@ -42,7 +39,7 @@ public class IntegerParser
    /*
     * Return the value of pos after the parse.
     */
-   public int  getEndPos()
+   int  getEndPos()
    {
       return this.pos;
    }
@@ -50,23 +47,14 @@ public class IntegerParser
 
    /*
     * Scan the string for an SVG integer.
-    */
-   public static IntegerParser  parseInt(String str)
-   {
-      return parseInt(str, 0, str.length());
-   }
-
-
-   /*
-    * Scan the string for an SVG integer.
     * Assumes maxPos will not be greater than input.length().
     */
-   public static IntegerParser  parseInt(String input, int startpos, int len)
+   /*
+   private static IntegerParser  parseInt(String input, int startpos, int len)
    {
       int      pos = startpos;
       boolean  isNegative = false;
       long     value = 0;
-      int      sigStart = 0;
 
 
       if (pos >= len)
@@ -79,7 +67,7 @@ public class IntegerParser
          case '+': pos++;
       }
 
-      sigStart = pos;
+      int  sigStart = pos;
 
       while (pos < len)
       {
@@ -108,6 +96,7 @@ public class IntegerParser
 
       return new IntegerParser(isNegative, value, pos);
    }
+   */
 
 
    /*
@@ -121,18 +110,9 @@ public class IntegerParser
 
    /*
     * Scan the string for an SVG hex integer.
-    */
-   public static IntegerParser  parseHex(String str)
-   {
-      return parseHex(str, 0, str.length());
-   }
-
-
-   /*
-    * Scan the string for an SVG hex integer.
     * Assumes maxPos will not be greater than input.length().
     */
-   public static IntegerParser  parseHex(String input, int startpos, int len)
+   static IntegerParser  parseHex(String input, int startpos, int len)
    {
       int   pos = startpos;
       long  value = 0;
@@ -171,7 +151,7 @@ public class IntegerParser
          return null;
       }
 
-      return new IntegerParser(false, value, pos);
+      return new IntegerParser(value, pos);
    }
 
 }

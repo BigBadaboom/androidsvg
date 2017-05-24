@@ -43,11 +43,12 @@ import android.widget.ImageView;
  * 
  * @attr ref R.styleable#SVGImageView_svg
  */
+@SuppressWarnings("JavaDoc")
 public class SVGImageView extends ImageView
 {
    private static Method  setLayerTypeMethod = null;
 
-   {
+   static {
       try
       {
          setLayerTypeMethod = View.class.getMethod("setLayerType", Integer.TYPE, Paint.class);
@@ -128,7 +129,7 @@ public class SVGImageView extends ImageView
    @Override
    public void setImageResource(int resourceId)
    {
-      new LoadResourceTask().execute(resourceId);
+      new LoadResourceTask(getContext(), resourceId).execute();
    }
 
 
@@ -147,7 +148,7 @@ public class SVGImageView extends ImageView
     */
    public void  setImageAsset(String filename)
    {
-      new LoadAssetTask().execute(filename);
+      new LoadAssetTask(getContext(), filename).execute();
    }
 
 
@@ -156,7 +157,7 @@ public class SVGImageView extends ImageView
     */
    private boolean  internalSetImageURI(Uri uri, boolean isDirectRequestFromUser)
    {
-      InputStream  is = null;
+      InputStream  is;
       try
       {
          is = getContext().getContentResolver().openInputStream(uri);
@@ -178,11 +179,20 @@ public class SVGImageView extends ImageView
 
    private class LoadResourceTask extends AsyncTask<Integer, Integer, Picture>
    {
-      protected Picture  doInBackground(Integer... resourceId)
+      private Context  context;
+      private int      resourceId;
+
+      LoadResourceTask(Context context, int resourceId)
+      {
+         this.context = context;
+         this.resourceId = resourceId;
+      }
+
+      protected Picture  doInBackground(Integer... params)
       {
          try
          {
-            SVG  svg = SVG.getFromResource(getContext(), resourceId[0]);
+            SVG  svg = SVG.getFromResource(context, resourceId);
             return svg.renderToPicture();
          }
          catch (SVGParseException e)
@@ -204,11 +214,20 @@ public class SVGImageView extends ImageView
 
    private class LoadAssetTask extends AsyncTask<String, Integer, Picture>
    {
-      protected Picture  doInBackground(String... filename)
+      private Context  context;
+      private String   filename;
+
+      LoadAssetTask(Context context, String filename)
+      {
+         this.context = context;
+         this.filename = filename;
+      }
+
+      protected Picture  doInBackground(String... params)
       {
          try
          {
-            SVG  svg = SVG.getFromAsset(getContext().getAssets(), filename[0]);
+            SVG  svg = SVG.getFromAsset(context.getAssets(), filename);
             return svg.renderToPicture();
          }
          catch (SVGParseException e)

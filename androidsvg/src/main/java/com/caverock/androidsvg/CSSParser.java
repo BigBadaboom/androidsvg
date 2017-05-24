@@ -33,10 +33,8 @@ import com.caverock.androidsvg.SVGParser.TextScanner;
  * A very simple CSS parser that is not very compliant with the CSS spec but
  * hopefully parses almost all the CSS we are likely to strike in an SVG file.
  * The main goals are to (a) be small, and (b) parse the CSS in a Corel Draw SVG file.
- * 
- * @hide
  */
-public class CSSParser
+class CSSParser
 {
    private static final String  TAG = "AndroidSVG CSSParser";
 
@@ -48,7 +46,8 @@ public class CSSParser
    private boolean  inMediaRule = false;
 
 
-   public enum MediaType
+   @SuppressWarnings("unused")
+   enum MediaType
    {
       all,
       aural,
@@ -77,13 +76,13 @@ public class CSSParser
       DASHMATCH,  // *[foo|=bar]
    }
 
-   public static class Attrib
+   private static class Attrib
    {
-      public String    name = null;
-      public AttribOp  operation;
-      public String    value = null;
+      final public String    name;
+      final        AttribOp  operation;
+      final public String    value;
       
-      public Attrib(String name, AttribOp op, String value)
+      Attrib(String name, AttribOp op, String value)
       {
          this.name = name;
          this.operation = op;
@@ -93,28 +92,28 @@ public class CSSParser
 
    private static class SimpleSelector
    {
-      public Combinator    combinator = null;
-      public String        tag = null;       // null means "*"
-      public List<Attrib>  attribs = null;
-      public List<String>  pseudos = null;
+      Combinator    combinator = null;
+      String        tag = null;       // null means "*"
+      List<Attrib>  attribs = null;
+      List<String>  pseudos = null;
 
-      public SimpleSelector(Combinator combinator, String tag)
+      SimpleSelector(Combinator combinator, String tag)
       {
          this.combinator = (combinator != null) ? combinator : Combinator.DESCENDANT;
          this.tag = tag;
       }
 
-      public void  addAttrib(String attrName, AttribOp op, String attrValue)
+      void  addAttrib(String attrName, AttribOp op, String attrValue)
       {
          if (attribs == null)
-            attribs = new ArrayList<Attrib>();
+            attribs = new ArrayList<>();
          attribs.add(new Attrib(attrName, op, attrValue));
       }
 
-      public void  addPseudo(String pseudo)
+      void  addPseudo(String pseudo)
       {
          if (pseudos == null)
-            pseudos = new ArrayList<String>();
+            pseudos = new ArrayList<>();
          pseudos.add(pseudo);
       }
 
@@ -147,15 +146,15 @@ public class CSSParser
       }
    }
 
-   public static class  Ruleset
+   static class  Ruleset
    {
       private List<Rule>  rules = null;
 
       // Add a rule to the ruleset. The position at which it is inserted is determined by its specificity value.
-      public void  add(Rule rule)
+      void  add(Rule rule)
       {
          if (this.rules == null)
-            this.rules = new ArrayList<Rule>();
+            this.rules = new ArrayList<>();
          for (int i = 0; i < rules.size(); i++)
          {
             Rule  nextRule = rules.get(i);
@@ -167,23 +166,23 @@ public class CSSParser
          rules.add(rule);
       }
 
-      public void  addAll(Ruleset rules)
+      void  addAll(Ruleset rules)
       {
          if (rules.rules == null)
             return;
          if (this.rules == null)
-            this.rules = new ArrayList<Rule>(rules.rules.size());
+            this.rules = new ArrayList<>(rules.rules.size());
          for (Rule rule: rules.rules) {
             this.rules.add(rule);
          }
       }
 
-      public List<Rule>  getRules()
+      List<Rule>  getRules()
       {
          return this.rules;
       }
 
-      public boolean  isEmpty()
+      boolean  isEmpty()
       {
          return this.rules == null || this.rules.isEmpty();
       }
@@ -201,12 +200,12 @@ public class CSSParser
    }
 
 
-   public static class  Rule
+   static class  Rule
    {
-      public Selector   selector = null;
-      public SVG.Style  style = null;
+      Selector   selector = null;
+      SVG.Style  style = null;
       
-      public Rule(Selector selector, SVG.Style style)
+      Rule(Selector selector, SVG.Style style)
       {
          this.selector = selector;
          this.style = style;
@@ -215,51 +214,50 @@ public class CSSParser
       @Override
       public String toString()
       {
-         StringBuilder sb = new StringBuilder();
-         return sb.append(selector).append(" {}").toString();
+         return String.valueOf(selector) + " {}";
       }
    }
 
 
-   public static class Selector
+   private static class Selector
    {
-      public List<SimpleSelector>  selector = null;
-      public int                   specificity = 0;
+      List<SimpleSelector>  selector = null;
+      int                   specificity = 0;
       
-      public void  add(SimpleSelector part)
+      void  add(SimpleSelector part)
       {
          if (this.selector == null)
-            this.selector = new ArrayList<SimpleSelector>();
+            this.selector = new ArrayList<>();
          this.selector.add(part);
       }
 
-      public int size()
+      int size()
       {
          return (this.selector == null) ? 0 : this.selector.size();
       }
 
-      public SimpleSelector get(int i)
+      SimpleSelector get(int i)
       {
          return this.selector.get(i);
       }
 
-      public boolean isEmpty()
+      boolean isEmpty()
       {
-         return (this.selector == null) ? true : this.selector.isEmpty();
+         return (this.selector == null) || this.selector.isEmpty();
       }
 
       // Methods for accumulating a specificity value as SimpleSelector entries are added.
-      public void  addedIdAttribute()
+      void  addedIdAttribute()
       {
          specificity += 10000;
       }
 
-      public void  addedAttributeOrPseudo()
+      void  addedAttributeOrPseudo()
       {
          specificity += 100;
       }
 
-      public void  addedElement()
+      void  addedElement()
       {
          specificity += 1;
       }
@@ -279,13 +277,13 @@ public class CSSParser
 
 
    
-   public CSSParser(MediaType rendererMediaType)
+   CSSParser(MediaType rendererMediaType)
    {
       this.rendererMediaType = rendererMediaType;
    }
 
 
-   public Ruleset  parse(String sheet) throws SAXException
+   Ruleset  parse(String sheet) throws SAXException
    {
       CSSTextScanner  scan = new CSSTextScanner(sheet);
       scan.skipWhitespace();
@@ -294,7 +292,7 @@ public class CSSParser
    }
 
 
-   public static boolean mediaMatches(String mediaListStr, MediaType rendererMediaType) throws SAXException
+   static boolean mediaMatches(String mediaListStr, MediaType rendererMediaType) throws SAXException
    {
       CSSTextScanner  scan = new CSSTextScanner(mediaListStr);
       scan.skipWhitespace();
@@ -334,7 +332,7 @@ public class CSSParser
    
    private static class CSSTextScanner extends TextScanner
    {
-      public CSSTextScanner(String input)
+      CSSTextScanner(String input)
       {
          super(input.replaceAll("(?s)/\\*.*?\\*/", ""));  // strip all block comments
       }
@@ -342,7 +340,7 @@ public class CSSParser
       /*
        * Scans for a CSS 'ident' identifier.
        */
-      public String  nextIdentifier()
+      String  nextIdentifier()
       {
          int  end = scanForIdentifier();
          if (end == position)
@@ -381,7 +379,7 @@ public class CSSParser
        * Returns true if it found one.
        * Returns false if there was an error or the input is empty.
        */
-      public boolean  nextSimpleSelector(Selector selector) throws SAXException
+      boolean  nextSimpleSelector(Selector selector) throws SAXException
       {
          if (empty())
             return false;
@@ -522,7 +520,7 @@ public class CSSParser
       /*
        * Scans for a CSS property value.
        */
-      public String  nextPropertyValue()
+      String  nextPropertyValue()
       {
          if (empty())
             return null;
@@ -560,7 +558,7 @@ public class CSSParser
 
    private static List<MediaType> parseMediaList(CSSTextScanner scan) throws SAXException
    {
-      ArrayList<MediaType>  typeList = new ArrayList<MediaType>();
+      ArrayList<MediaType>  typeList = new ArrayList<>();
       while (!scan.empty()) {
          String  type = scan.nextToken(',');
          try {
@@ -686,7 +684,7 @@ public class CSSParser
       if (scan.empty())
          return null;
 
-      ArrayList<Selector>  selectorGroup = new ArrayList<Selector>(1);
+      ArrayList<Selector>  selectorGroup = new ArrayList<>(1);
       Selector             selector = new Selector();
 
       while (!scan.empty())
@@ -747,7 +745,7 @@ public class CSSParser
    /*
     * Used by SVGParser to parse the "class" attribute.
     */
-   protected static List<String>  parseClassAttribute(String val) throws SAXException
+   static List<String>  parseClassAttribute(String val) throws SAXException
    {
       CSSTextScanner  scan = new CSSTextScanner(val);
       List<String>    classNameList = null;
@@ -758,7 +756,7 @@ public class CSSParser
          if (className == null)
             throw new SAXException("Invalid value for \"class\" attribute: "+val);
          if (classNameList == null)
-            classNameList = new ArrayList<String>();
+            classNameList = new ArrayList<>();
          classNameList.add(className);
          scan.skipWhitespace();
       }
@@ -769,10 +767,10 @@ public class CSSParser
    /*
     * Used by renderer to check if a CSS rule matches the current element.
     */
-   protected static boolean  ruleMatch(Selector selector, SvgElementBase obj)
+   static boolean  ruleMatch(Selector selector, SvgElementBase obj)
    {
       // Build the list of ancestor objects
-      List<SvgContainer> ancestors = new ArrayList<SvgContainer>();
+      List<SvgContainer> ancestors = new ArrayList<>();
       SvgContainer  parent = obj.parent;
       while (parent != null) {
          ancestors.add(0, parent);
@@ -902,22 +900,20 @@ public class CSSParser
       {
          for (Attrib attr: sel.attribs)
          {
-            if (attr.name == ID)
-            {
-               if (!attr.value.equals(obj.id))
+            switch (attr.name) {
+               case ID:
+                  if (!attr.value.equals(obj.id))
+                     return false;
+                  break;
+               case CLASS:
+                  if (obj.classNames == null)
+                     return false;
+                  if (!obj.classNames.contains(attr.value))
+                     return false;
+                  break;
+               default:
+                  // Other attribute selector not yet supported
                   return false;
-            }
-            else if (attr.name == CLASS)
-            {
-               if (obj.classNames == null)
-                  return false;
-               if (!obj.classNames.contains(attr.value))
-                  return false;
-            }
-            else
-            {
-               // Other attribute selector not yet supported
-               return false;
             }
          }
       }

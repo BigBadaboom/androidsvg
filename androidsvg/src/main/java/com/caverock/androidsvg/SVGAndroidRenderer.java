@@ -75,15 +75,11 @@ import com.caverock.androidsvg.SVG.TextContainer;
 import com.caverock.androidsvg.SVG.TextSequence;
 import com.caverock.androidsvg.SVG.Unit;
 
-/**
+/*
  * The rendering part of AndroidSVG.
- * <p>
- * All interaction with AndroidSVG is via the SVG class.  You may ignore this class.
- * 
- * @hide
  */
 
-public class SVGAndroidRenderer
+class SVGAndroidRenderer
 {
    private static final String  TAG = "SVGAndroidRenderer";
 
@@ -120,22 +116,22 @@ public class SVGAndroidRenderer
    private static HashSet<String>  supportedFeatures = null;
 
 
-   private class RendererState implements Cloneable
+   private class RendererState
    {
-      public Style    style;
-      public boolean  hasFill;
-      public boolean  hasStroke;
-      public Paint    fillPaint;
-      public Paint    strokePaint;
-      public SVG.Box  viewPort;
-      public SVG.Box  viewBox;
-      public boolean  spacePreserve;
+      Style    style;
+      boolean  hasFill;
+      boolean  hasStroke;
+      Paint    fillPaint;
+      Paint    strokePaint;
+      SVG.Box  viewPort;
+      SVG.Box  viewBox;
+      boolean  spacePreserve;
 
       // Set when we doing direct rendering.
-      public boolean  directRendering;
+      boolean  directRendering;
 
 
-      public RendererState()
+      RendererState()
       {
          fillPaint = new Paint();
          fillPaint.setFlags(Paint.ANTI_ALIAS_FLAG | Paint.DEV_KERN_TEXT_FLAG | Paint.SUBPIXEL_TEXT_FLAG);
@@ -150,31 +146,36 @@ public class SVGAndroidRenderer
          style = Style.getDefaultStyle();
       }
 
-      @Override
-      protected Object  clone()
+      RendererState(RendererState copy)
       {
-         RendererState obj;
+         hasFill = copy.hasFill;
+         hasStroke = copy.hasStroke;
+         fillPaint = new Paint(copy.fillPaint);
+         strokePaint = new Paint(copy.strokePaint);
+         if (copy.viewPort != null)
+            viewPort = new Box(copy.viewPort);
+         if (copy.viewBox != null)
+            viewBox = new Box(copy.viewBox);
+         spacePreserve = copy.spacePreserve;
+         directRendering = copy.directRendering;
          try
          {
-            obj = (RendererState) super.clone();
-            obj.style = (Style) style.clone();
-            obj.fillPaint = new Paint(fillPaint);
-            obj.strokePaint = new Paint(strokePaint);
-            return obj;
+            style = (Style) copy.style.clone();
          }
          catch (CloneNotSupportedException e)
          {
-            throw new InternalError(e.toString());
+            // Should never happen
+            Log.e(TAG, "Unexpected clone error", e);
+            style = Style.getDefaultStyle();
          }
       }
-
    }
 
 
    private void  resetState()
    {
       state = new RendererState();
-      stateStack = new Stack<RendererState>();
+      stateStack = new Stack<>();
 
       // Initialise the style state properties like Paints etc using a fresh instance of Style
       updateStyle(state, Style.getDefaultStyle());
@@ -185,16 +186,16 @@ public class SVGAndroidRenderer
       state.directRendering = this.directRenderingMode;
 
       // Push a copy of the state with 'default' style, so that inherit works for top level objects
-      stateStack.push((RendererState) state.clone());   // Manual push here - don't use statePush();
+      stateStack.push(new RendererState(state));   // Manual push here - don't use statePush();
 
       // Initialise the stacks used for mask handling
-      canvasStack = new Stack<Canvas>();
-      bitmapStack = new Stack<Bitmap>();
+      canvasStack = new Stack<>();
+      bitmapStack = new Stack<>();
 
       // Keep track of element stack while rendering.
       // The 'render parent' for some elements (eg <use> references) is different from its DOM parent.
-      matrixStack = new Stack<Matrix>();
-      parentStack = new Stack<SvgContainer>();
+      matrixStack = new Stack<>();
+      parentStack = new Stack<>();
    }
 
 
@@ -206,7 +207,7 @@ public class SVGAndroidRenderer
     * @param defaultDPI the DPI setting to use when converting real-world units such as centimetres.
     */
 
-   protected SVGAndroidRenderer(Canvas canvas, SVG.Box viewPort, float defaultDPI)
+   SVGAndroidRenderer(Canvas canvas, SVG.Box viewPort, float defaultDPI)
    {
       this.canvas = canvas;
       this.dpi = defaultDPI;
@@ -214,19 +215,19 @@ public class SVGAndroidRenderer
    }
 
 
-   protected float  getDPI()
+   float  getDPI()
    {
       return dpi;
    }
 
 
-   protected float  getCurrentFontSize()
+   float  getCurrentFontSize()
    {
       return state.fillPaint.getTextSize();
    }
 
 
-   protected float  getCurrentFontXHeight()
+   float  getCurrentFontXHeight()
    {
       // The CSS3 spec says to use 0.5em if there is no way to determine true x-height;
       return state.fillPaint.getTextSize() / 2f;
@@ -237,7 +238,7 @@ public class SVGAndroidRenderer
     * Get the current view port in user units.
     *
     */
-   protected SVG.Box  getCurrentViewPortInUserUnits()
+   SVG.Box  getCurrentViewPortInUserUnits()
    {
       if (state.viewBox != null)
          return state.viewBox;
@@ -249,7 +250,7 @@ public class SVGAndroidRenderer
    /*
     * Render the whole document.
     */
-   protected void  renderDocument(SVG document, Box viewBox, PreserveAspectRatio positioning, boolean directRenderingMode)
+   void  renderDocument(SVG document, Box viewBox, PreserveAspectRatio positioning, boolean directRenderingMode)
    {
       this.document = document;
       this.directRenderingMode = directRenderingMode;
@@ -348,7 +349,7 @@ public class SVGAndroidRenderer
       canvas.save();
       // Save style state
       stateStack.push(state);
-      state = (RendererState) state.clone();
+      state = new RendererState(state);
    }
 
 
@@ -509,10 +510,12 @@ public class SVGAndroidRenderer
    }
 
 
+   /*
    private static void  info(String format, Object... args)
    {
       Log.i(TAG, String.format(format, args));
    }
+   */
 
 
    //==============================================================================
@@ -681,7 +684,7 @@ public class SVGAndroidRenderer
 
       // Save style state
       stateStack.push(state);
-      state = (RendererState) state.clone();
+      state = new RendererState(state);
 
       if (state.style.mask != null && state.directRendering) {
          SVG.SvgObject  ref = document.resolveIRI(state.style.mask);
@@ -888,7 +891,7 @@ public class SVGAndroidRenderer
 
    private static synchronized void  initialiseSupportedFeaturesMap()
    {
-      supportedFeatures = new HashSet<String>();
+      supportedFeatures = new HashSet<>();
 
       // SVG features this SVG implementation supports
       // Actual feature strings have the prefix: FEATURE_STRING_PREFIX (see above)
@@ -1246,7 +1249,7 @@ public class SVGAndroidRenderer
       _x2 = (obj.x2 != null) ? obj.x2.floatValueX(this) : 0f;
       _y2 = (obj.y2 != null) ? obj.y2.floatValueY(this) : 0f;
 
-      List<MarkerVector>  markers = new ArrayList<MarkerVector>(2);
+      List<MarkerVector>  markers = new ArrayList<>(2);
       markers.add(new MarkerVector(_x1, _y1, (_x2-_x1), (_y2-_y1)));
       markers.add(new MarkerVector(_x2, _y2, (_x2-_x1), (_y2-_y1)));
       return markers;
@@ -1303,7 +1306,7 @@ public class SVGAndroidRenderer
       if (numPoints < 2)
          return null;
 
-      List<MarkerVector>  markers = new ArrayList<MarkerVector>();
+      List<MarkerVector>  markers = new ArrayList<>();
       MarkerVector        lastPos = new MarkerVector(obj.points[0], obj.points[1], 0, 0);
       float               x = 0, y = 0;
 
@@ -1312,8 +1315,7 @@ public class SVGAndroidRenderer
          y = obj.points[i+1];
          lastPos.add(x, y);
          markers.add(lastPos);
-         MarkerVector  newPos = new MarkerVector(x, y, x-lastPos.x, y-lastPos.y);
-         lastPos = newPos;
+         lastPos = new MarkerVector(x, y, x-lastPos.x, y-lastPos.y);
       }
 
       // Deal with last point
@@ -1443,10 +1445,10 @@ public class SVGAndroidRenderer
 
    private class  PlainTextDrawer extends TextProcessor
    {
-      public float x;
-      public float y;
+      float x;
+      float y;
 
-      public PlainTextDrawer(float x, float y)
+      PlainTextDrawer(float x, float y)
       {
          this.x = x;
          this.y = y;
@@ -1660,7 +1662,7 @@ public class SVGAndroidRenderer
    {
       private Path   path;
 
-      public PathTextDrawer(Path path, float x, float y)
+      PathTextDrawer(Path path, float x, float y)
       {
          super(x, y);
          this.path = path;
@@ -1700,7 +1702,7 @@ public class SVGAndroidRenderer
 
    private class  TextWidthCalculator extends TextProcessor
    {
-      public float x = 0;
+      float x = 0;
 
       @Override
       public void processText(String text)
@@ -1722,7 +1724,7 @@ public class SVGAndroidRenderer
       float  y;
       RectF  bbox = new RectF();
 
-      public TextBoundsCalculator(float x, float y)
+      TextBoundsCalculator(float x, float y)
       {
          this.x = x;
          this.y = y;
@@ -2241,11 +2243,10 @@ public class SVGAndroidRenderer
       // If typeface, weight or style has changed, update the paint typeface
       if (isSpecified(style, SVG.SPECIFIED_FONT_FAMILY | SVG.SPECIFIED_FONT_WEIGHT | SVG.SPECIFIED_FONT_STYLE))
       {
-         SVGExternalFileResolver  fileResolver = null;
          Typeface  font = null;
 
          if (state.style.fontFamily != null && document != null) {
-            fileResolver = document.getFileResolver();
+            SVGExternalFileResolver  fileResolver = document.getFileResolver();
 
             for (String fontName: state.style.fontFamily) {
                font = checkGenericFont(fontName, state.style.fontWeight, state.style.fontStyle);
@@ -2388,16 +2389,17 @@ public class SVGAndroidRenderer
       typefaceStyle = (fontWeight > 500) ? (italic ? Typeface.BOLD_ITALIC : Typeface.BOLD)
                                          : (italic ? Typeface.ITALIC : Typeface.NORMAL);
 
-      if (fontName.equals("serif")) {
-         font = Typeface.create(Typeface.SERIF, typefaceStyle);
-      } else if (fontName.equals("sans-serif")) {
-         font = Typeface.create(Typeface.SANS_SERIF, typefaceStyle);
-      } else if (fontName.equals("monospace")) {
-         font = Typeface.create(Typeface.MONOSPACE, typefaceStyle);
-      } else if (fontName.equals("cursive")) {
-         font = Typeface.create(Typeface.SANS_SERIF, typefaceStyle);
-      } else if (fontName.equals("fantasy")) {
-         font = Typeface.create(Typeface.SANS_SERIF, typefaceStyle);
+      switch (fontName) {
+         case "serif":
+            font = Typeface.create(Typeface.SERIF, typefaceStyle); break;
+         case "sans-serif":
+            font = Typeface.create(Typeface.SANS_SERIF, typefaceStyle); break;
+         case "monospace":
+            font = Typeface.create(Typeface.MONOSPACE, typefaceStyle); break;
+         case "cursive":
+            font = Typeface.create(Typeface.SANS_SERIF, typefaceStyle); break;
+         case "fantasy":
+            font = Typeface.create(Typeface.SANS_SERIF, typefaceStyle); break;
       }
       return font;
    }
@@ -2473,14 +2475,14 @@ public class SVGAndroidRenderer
       Path   path = new Path();
       float  lastX, lastY;
       
-      public PathConverter(PathDefinition pathDef)
+      PathConverter(PathDefinition pathDef)
       {
          if (pathDef == null)
             return;
          pathDef.enumeratePath(this);
       }
 
-      public Path  getPath()
+      Path  getPath()
       {
          return path;
       }
@@ -2727,9 +2729,9 @@ public class SVGAndroidRenderer
 
    private class MarkerVector
    {
-      public float x, y, dx=0f, dy=0f;
+      float x, y, dx=0f, dy=0f;
 
-      public MarkerVector(float x, float y, float dx, float dy)
+      MarkerVector(float x, float y, float dx, float dy)
       {
          this.x = x;
          this.y = y;
@@ -2741,7 +2743,7 @@ public class SVGAndroidRenderer
          }
       }
 
-      public void add(float x, float y)
+      void add(float x, float y)
       {
          // In order to get accurate angles, we have to normalise
          // all vectors before we add them.  As long as they are
@@ -2755,7 +2757,7 @@ public class SVGAndroidRenderer
          }
       }
 
-      public void add(MarkerVector v2)
+      void add(MarkerVector v2)
       {
          this.dx += v2.dx;
          this.dy += v2.dy;
@@ -2774,7 +2776,7 @@ public class SVGAndroidRenderer
     */
    private class  MarkerPositionCalculator implements PathInterface
    {
-      private List<MarkerVector>  markers = new ArrayList<MarkerVector>();
+      private List<MarkerVector>  markers = new ArrayList<>();
       private float               startX, startY;
       private MarkerVector        lastPos = null;
       private boolean             startArc = false, normalCubic = true;
@@ -2782,7 +2784,7 @@ public class SVGAndroidRenderer
       private boolean             closepathReAdjustPending;
 
       
-      public MarkerPositionCalculator(PathDefinition pathDef)
+      MarkerPositionCalculator(PathDefinition pathDef)
       {
          if (pathDef == null)
             return;
@@ -2804,7 +2806,7 @@ public class SVGAndroidRenderer
          }
       }
 
-      public List<MarkerVector>  getMarkers()
+      List<MarkerVector>  getMarkers()
       {
          return markers;
       }
@@ -2834,8 +2836,7 @@ public class SVGAndroidRenderer
       {
          lastPos.add(x, y);
          markers.add(lastPos);
-         MarkerVector  newPos = new MarkerVector(x, y, x-lastPos.x, y-lastPos.y);
-         lastPos = newPos;
+         lastPos = new MarkerVector(x, y, x-lastPos.x, y-lastPos.y);
          closepathReAdjustPending = false;
       }
 
@@ -2847,8 +2848,7 @@ public class SVGAndroidRenderer
             markers.add(lastPos);
             startArc = false;
          }
-         MarkerVector  newPos = new MarkerVector(x3, y3, x3-x2, y3-y2);
-         lastPos = newPos;
+         lastPos = new MarkerVector(x3, y3, x3-x2, y3-y2);
          closepathReAdjustPending = false;
       }
 
@@ -2857,8 +2857,7 @@ public class SVGAndroidRenderer
       {
          lastPos.add(x1, y1);
          markers.add(lastPos);
-         MarkerVector  newPos = new MarkerVector(x2, y2, x2-x1, y2-y1);
-         lastPos = newPos;
+         lastPos = new MarkerVector(x2, y2, x2-x1, y2-y1);
          closepathReAdjustPending = false;
       }
 
@@ -2921,7 +2920,7 @@ public class SVGAndroidRenderer
             error("Marker reference '%s' not found", state.style.markerEnd);
       }
 
-      List<MarkerVector>  markers = null;
+      List<MarkerVector>  markers;
       if (obj instanceof SVG.Path)
          markers = (new MarkerPositionCalculator(((SVG.Path) obj).d)).getMarkers();
       else if (obj instanceof SVG.Line)
@@ -3100,7 +3099,7 @@ public class SVGAndroidRenderer
 
    private RendererState  findInheritFromAncestorState(SvgObject obj, RendererState newState)
    {
-      List<SvgElementBase>    ancestors = new ArrayList<SvgElementBase>();
+      List<SvgElementBase>    ancestors = new ArrayList<>();
 
       // Traverse up the document tree adding element styles to a list.
       while (true) {
@@ -3495,6 +3494,7 @@ public class SVGAndroidRenderer
         // If either fill or its opacity has changed, update the fillPaint
         if (isSpecified(ref.baseStyle, SVG.SPECIFIED_SOLID_COLOR | SVG.SPECIFIED_SOLID_OPACITY))
         {
+           //noinspection ConstantConditions
            setPaintColour(state, isFill, state.style.fill);
         }
       }
@@ -3514,6 +3514,7 @@ public class SVGAndroidRenderer
         // If either fill or its opacity has changed, update the fillPaint
         if (isSpecified(ref.baseStyle, SVG.SPECIFIED_SOLID_COLOR | SVG.SPECIFIED_SOLID_OPACITY))
         {
+           //noinspection ConstantConditions
            setPaintColour(state, isFill, state.style.stroke);
         }
       }
@@ -3628,7 +3629,7 @@ public class SVGAndroidRenderer
       canvas.save(Canvas.MATRIX_SAVE_FLAG);
       // Save style state
       stateStack.push(state);
-      state = (RendererState) state.clone();
+      state = new RendererState(state);
    }
 
 
@@ -3780,11 +3781,11 @@ public class SVGAndroidRenderer
 
    private class  PlainTextToPath extends TextProcessor
    {
-      public float   x;
-      public float   y;
-      public Path    textAsPath;
+      float   x;
+      float   y;
+      Path    textAsPath;
 
-      public PlainTextToPath(float x, float y, Path textAsPath)
+      PlainTextToPath(float x, float y, Path textAsPath)
       {
          this.x = x;
          this.y = y;
@@ -4181,24 +4182,24 @@ public class SVGAndroidRenderer
       debug("Mask render");
 
       boolean      maskUnitsAreUser = (mask.maskUnitsAreUser != null && mask.maskUnitsAreUser);
-      float        x, y, w, h;
+      float        w, h;
 
       if (maskUnitsAreUser)
       {
          w = (mask.width != null) ? mask.width.floatValueX(this): obj.boundingBox.width;
          h = (mask.height != null) ? mask.height.floatValueY(this): obj.boundingBox.height;
-         x = (mask.x != null) ? mask.x.floatValueX(this): (float)(obj.boundingBox.minX - 0.1 * obj.boundingBox.width);
-         y = (mask.y != null) ? mask.y.floatValueY(this): (float)(obj.boundingBox.minY - 0.1 * obj.boundingBox.height);
+         //x = (mask.x != null) ? mask.x.floatValueX(this): (float)(obj.boundingBox.minX - 0.1 * obj.boundingBox.width);
+         //y = (mask.y != null) ? mask.y.floatValueY(this): (float)(obj.boundingBox.minY - 0.1 * obj.boundingBox.height);
       }
       else
       {
          // Convert objectBoundingBox space to user space
-         x = (mask.x != null) ? mask.x.floatValue(this, 1f): -0.1f;
-         y = (mask.y != null) ? mask.y.floatValue(this, 1f): -0.1f;
+         //x = (mask.x != null) ? mask.x.floatValue(this, 1f): -0.1f;
+         //y = (mask.y != null) ? mask.y.floatValue(this, 1f): -0.1f;
          w = (mask.width != null) ? mask.width.floatValue(this, 1f): 1.2f;
          h = (mask.height != null) ? mask.height.floatValue(this, 1f): 1.2f;
-         x = obj.boundingBox.minX + x * obj.boundingBox.width;
-         y = obj.boundingBox.minY + y * obj.boundingBox.height;
+         //x = obj.boundingBox.minX + x * obj.boundingBox.width;
+         //y = obj.boundingBox.minY + y * obj.boundingBox.height;
          w *= obj.boundingBox.width;
          h *= obj.boundingBox.height;
       }

@@ -16,19 +16,6 @@
 
 package com.caverock.androidsvg;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.xml.sax.SAXException;
-
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
@@ -39,6 +26,19 @@ import android.graphics.RectF;
 import android.util.Log;
 
 import com.caverock.androidsvg.CSSParser.Ruleset;
+
+import org.xml.sax.SAXException;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * AndroidSVG is a library for reading, parsing and rendering SVG documents on Android devices.
@@ -80,8 +80,6 @@ public class SVG
 
    private static final String  VERSION = "1.2.3-beta-1";
 
-   protected static final String  SUPPORTED_SVG_VERSION = "1.2";
-
    private static final int     DEFAULT_PICTURE_WIDTH = 512;
    private static final int     DEFAULT_PICTURE_HEIGHT = 512;
 
@@ -104,10 +102,10 @@ public class SVG
    private Ruleset  cssRules = new Ruleset();
 
    // Map from id attribute to element
-   Map<String, SvgElementBase> idToElementMap = new HashMap<String, SvgElementBase>();
+   private Map<String, SvgElementBase> idToElementMap = new HashMap<>();
 
 
-   protected enum Unit
+   enum Unit
    {
       px,
       em,
@@ -121,7 +119,8 @@ public class SVG
    }
 
 
-   protected enum GradientSpread
+   @SuppressWarnings("unused")
+   enum GradientSpread
    {
       pad,
       reflect,
@@ -129,7 +128,7 @@ public class SVG
    }
 
 
-   protected SVG()
+   SVG()
    {
    }
 
@@ -141,6 +140,7 @@ public class SVG
     * @return an SVG instance on which you can call one of the render methods.
     * @throws SVGParseException if there is an error parsing the document.
     */
+   @SuppressWarnings("WeakerAccess")
    public static SVG  getFromInputStream(InputStream is) throws SVGParseException
    {
       SVGParser  parser = new SVGParser();
@@ -155,6 +155,7 @@ public class SVG
     * @return an SVG instance on which you can call one of the render methods.
     * @throws SVGParseException if there is an error parsing the document.
     */
+   @SuppressWarnings({"WeakerAccess", "unused"})
    public static SVG  getFromString(String svg) throws SVGParseException
    {
       SVGParser  parser = new SVGParser();
@@ -170,6 +171,7 @@ public class SVG
     * @return an SVG instance on which you can call one of the render methods.
     * @throws SVGParseException if there is an error parsing the document.
     */
+   @SuppressWarnings("WeakerAccess")
    public static SVG  getFromResource(Context context, int resourceId) throws SVGParseException
    {
       return getFromResource(context.getResources(), resourceId);
@@ -184,6 +186,7 @@ public class SVG
     * @return an SVG instance on which you can call one of the render methods.
     * @throws SVGParseException if there is an error parsing the document.
     */
+   @SuppressWarnings("WeakerAccess")
    public static SVG  getFromResource(Resources resources, int resourceId) throws SVGParseException
    {
       SVGParser    parser = new SVGParser();
@@ -209,6 +212,7 @@ public class SVG
     * @throws SVGParseException if there is an error parsing the document.
     * @throws IOException if there is some IO error while reading the file.
     */
+   @SuppressWarnings("WeakerAccess")
    public static SVG  getFromAsset(AssetManager assetManager, String filename) throws SVGParseException, IOException
    {
       SVGParser    parser = new SVGParser();
@@ -234,6 +238,7 @@ public class SVG
     * 
     * @param fileResolver the resolver to use.
     */
+   @SuppressWarnings({"WeakerAccess", "unused"})
    public void  registerExternalFileResolver(SVGExternalFileResolver fileResolver)
    {
       this.fileResolver = fileResolver;
@@ -249,6 +254,7 @@ public class SVG
     *  
     * @param dpi the DPI value that the renderer should use.
     */
+   @SuppressWarnings({"WeakerAccess", "unused"})
    public void  setRenderDPI(float dpi)
    {
       this.renderDPI = dpi;
@@ -259,6 +265,7 @@ public class SVG
     * Get the current render DPI setting.
     * @return the DPI value
     */
+   @SuppressWarnings({"WeakerAccess", "unused"})
    public float  getRenderDPI()
    {
       return renderDPI;
@@ -277,6 +284,7 @@ public class SVG
     * 
     * @return a Picture object suitable for later rendering using {@code Canvas.drawPicture()}
     */
+   @SuppressWarnings("WeakerAccess")
    public Picture  renderToPicture()
    {
       // Determine the initial viewport. See SVG spec section 7.2.
@@ -313,6 +321,7 @@ public class SVG
     * @param heightInPixels the height of the initial viewport
     * @return a Picture object suitable for later rendering using {@code Canvas.darwPicture()}
     */
+   @SuppressWarnings({"WeakerAccess", "unused"})
    public Picture  renderToPicture(int widthInPixels, int heightInPixels)
    {
       Picture  picture = new Picture();
@@ -341,6 +350,7 @@ public class SVG
     * @param heightInPixels the height of the initial viewport
     * @return a Picture object suitable for later rendering using {@code Canvas.drawPicture()}, or null if the viewId was not found.
     */
+   @SuppressWarnings({"WeakerAccess", "unused"})
    public Picture  renderViewToPicture(String viewId, int widthInPixels, int heightInPixels)
    {
       SvgObject  obj = this.getElementById(viewId);
@@ -379,6 +389,7 @@ public class SVG
     * 
     * @param canvas the canvas to which the document should be rendered.
     */
+   @SuppressWarnings({"WeakerAccess", "unused"})
    public void  renderToCanvas(Canvas canvas)
    {
       renderToCanvas(canvas, null);
@@ -391,6 +402,7 @@ public class SVG
     * @param canvas the canvas to which the document should be rendered.
     * @param viewPort the bounds of the area on the canvas you want the SVG rendered, or null for the whole canvas.
     */
+   @SuppressWarnings({"WeakerAccess", "unused"})
    public void  renderToCanvas(Canvas canvas, RectF viewPort)
    {
       Box  svgViewPort;
@@ -420,6 +432,7 @@ public class SVG
     * @param viewId the id of a view element in the document that defines which section of the document is to be visible.
     * @param canvas the canvas to which the document should be rendered.
     */
+   @SuppressWarnings({"WeakerAccess", "unused"})
    public void  renderViewToCanvas(String viewId, Canvas canvas)
    {
       renderViewToCanvas(viewId, canvas, null);
@@ -440,6 +453,7 @@ public class SVG
     * @param canvas the canvas to which the document should be rendered.
     * @param viewPort the bounds of the area on the canvas you want the SVG rendered, or null for the whole canvas.
     */
+   @SuppressWarnings({"WeakerAccess", "unused"})
    public void  renderViewToCanvas(String viewId, Canvas canvas, RectF viewPort)
    {
       SvgObject  obj = this.getElementById(viewId);
@@ -478,6 +492,7 @@ public class SVG
     * 
     * @return the version number in string format
     */
+   @SuppressWarnings({"WeakerAccess", "unused"})
    public static String  getVersion()
    {
       return VERSION;
@@ -490,6 +505,7 @@ public class SVG
     * @return title contents if available, otherwise an empty string.
     * @throws IllegalArgumentException if there is no current SVG document loaded.
     */
+   @SuppressWarnings({"WeakerAccess", "unused"})
    public String getDocumentTitle()
    {
       if (this.rootElement == null)
@@ -505,6 +521,7 @@ public class SVG
     * @return desc contents if available, otherwise an empty string.
     * @throws IllegalArgumentException if there is no current SVG document loaded.
     */
+   @SuppressWarnings({"WeakerAccess", "unused"})
    public String getDocumentDescription()
    {
       if (this.rootElement == null)
@@ -520,6 +537,7 @@ public class SVG
     * @return the version string if declared, otherwise an empty string.
     * @throws IllegalArgumentException if there is no current SVG document loaded.
     */
+   @SuppressWarnings({"WeakerAccess", "unused"})
    public String getDocumentSVGVersion()
    {
       if (this.rootElement == null)
@@ -537,6 +555,7 @@ public class SVG
     * @return the list of id strings.
     * @throws IllegalArgumentException if there is no current SVG document loaded.
     */
+   @SuppressWarnings({"WeakerAccess", "unused"})
    public Set<String> getViewList()
    {
       if (this.rootElement == null)
@@ -544,7 +563,7 @@ public class SVG
 
       List<SvgObject>  viewElems = getElementsByTagName(View.class);
 
-      Set<String>  viewIds = new HashSet<String>(viewElems.size());
+      Set<String>  viewIds = new HashSet<>(viewElems.size());
       for (SvgObject elem: viewElems)
       {
          View  view = (View) elem;
@@ -569,6 +588,7 @@ public class SVG
     * @return the width in pixels, or -1 if there is no width available.
     * @throws IllegalArgumentException if there is no current SVG document loaded.
     */
+   @SuppressWarnings({"WeakerAccess", "unused"})
    public float  getDocumentWidth()
    {
       if (this.rootElement == null)
@@ -585,6 +605,7 @@ public class SVG
     * @param pixels The new value of width in pixels.
     * @throws IllegalArgumentException if there is no current SVG document loaded.
     */
+   @SuppressWarnings({"WeakerAccess", "unused"})
    public void  setDocumentWidth(float pixels)
    {
       if (this.rootElement == null)
@@ -602,6 +623,7 @@ public class SVG
     * @throws SVGParseException if {@code value} cannot be parsed successfully.
     * @throws IllegalArgumentException if there is no current SVG document loaded.
     */
+   @SuppressWarnings({"WeakerAccess", "unused"})
    public void  setDocumentWidth(String value) throws SVGParseException
    {
       if (this.rootElement == null)
@@ -627,6 +649,7 @@ public class SVG
     * @return the height in pixels, or -1 if there is no height available.
     * @throws IllegalArgumentException if there is no current SVG document loaded.
     */
+   @SuppressWarnings({"WeakerAccess", "unused"})
    public float  getDocumentHeight()
    {
       if (this.rootElement == null)
@@ -643,6 +666,7 @@ public class SVG
     * @param pixels The new value of height in pixels.
     * @throws IllegalArgumentException if there is no current SVG document loaded.
     */
+   @SuppressWarnings({"WeakerAccess", "unused"})
    public void  setDocumentHeight(float pixels)
    {
       if (this.rootElement == null)
@@ -660,6 +684,7 @@ public class SVG
     * @throws SVGParseException if {@code value} cannot be parsed successfully.
     * @throws IllegalArgumentException if there is no current SVG document loaded.
     */
+   @SuppressWarnings({"WeakerAccess", "unused"})
    public void  setDocumentHeight(String value) throws SVGParseException
    {
       if (this.rootElement == null)
@@ -691,6 +716,7 @@ public class SVG
     * @param height the height of the viewBox in pixels
     * @throws IllegalArgumentException if there is no current SVG document loaded.
     */
+   @SuppressWarnings({"WeakerAccess", "unused"})
    public void  setDocumentViewBox(float minX, float minY, float width, float height)
    {
       if (this.rootElement == null)
@@ -706,6 +732,7 @@ public class SVG
     * @return the document's viewBox attribute as a {@code android.graphics.RectF} object, or null if not set.
     * @throws IllegalArgumentException if there is no current SVG document loaded.
     */
+   @SuppressWarnings({"WeakerAccess", "unused"})
    public RectF  getDocumentViewBox()
    {
       if (this.rootElement == null)
@@ -727,6 +754,7 @@ public class SVG
     * @param preserveAspectRatio the new {@code preserveAspectRatio} setting for the root {@code <svg>} element.
     * @throws IllegalArgumentException if there is no current SVG document loaded.
     */
+   @SuppressWarnings({"WeakerAccess", "unused"})
    public void  setDocumentPreserveAspectRatio(PreserveAspectRatio preserveAspectRatio)
    {
       if (this.rootElement == null)
@@ -743,6 +771,7 @@ public class SVG
     * @return the preserveAspectRatio setting of the document's root {@code <svg>} element.
     * @throws IllegalArgumentException if there is no current SVG document loaded.
     */
+   @SuppressWarnings({"WeakerAccess", "unused"})
    public PreserveAspectRatio  getDocumentPreserveAspectRatio()
    {
       if (this.rootElement == null)
@@ -766,6 +795,7 @@ public class SVG
     * @return the aspect ratio as a width/height fraction, or -1 if the ratio cannot be determined.
     * @throws IllegalArgumentException if there is no current SVG document loaded.
     */
+   @SuppressWarnings({"WeakerAccess", "unused"})
    public float  getDocumentAspectRatio()
    {
       if (this.rootElement == null)
@@ -796,19 +826,19 @@ public class SVG
    //===============================================================================
 
 
-   protected SVG.Svg  getRootElement()
+   SVG.Svg  getRootElement()
    {
       return rootElement;
    }
 
 
-   protected void setRootElement(SVG.Svg rootElement)
+   void setRootElement(SVG.Svg rootElement)
    {
       this.rootElement = rootElement;
    }
 
 
-   protected SvgObject  resolveIRI(String iri)
+   SvgObject  resolveIRI(String iri)
    {
       if (iri == null)
          return null;
@@ -854,19 +884,19 @@ public class SVG
    // CSS support methods
 
 
-   protected void  addCSSRules(Ruleset ruleset)
+   void  addCSSRules(Ruleset ruleset)
    {
       this.cssRules.addAll(ruleset);
    }
 
 
-   protected List<CSSParser.Rule>  getCSSRules()
+   List<CSSParser.Rule>  getCSSRules()
    {
       return this.cssRules.getRules();
    }
 
 
-   protected boolean  hasCSSRules()
+   boolean  hasCSSRules()
    {
       return !this.cssRules.isEmpty();
    }
@@ -876,11 +906,11 @@ public class SVG
    // Object sub-types used in the SVG object tree
 
 
-   protected static class  Box implements Cloneable
+   static class  Box implements Cloneable
    {
-      public float  minX, minY, width, height;
+      float  minX, minY, width, height;
 
-      public Box(float minX, float minY, float width, float height)
+      Box(float minX, float minY, float width, float height)
       {
          this.minX = minX;
          this.minY = minY;
@@ -888,20 +918,28 @@ public class SVG
          this.height = height;
       }
 
-      public static Box  fromLimits(float minX, float minY, float maxX, float maxY)
+      Box(Box copy)
+      {
+         this.minX = copy.minX;
+         this.minY = copy.minY;
+         this.width = copy.width;
+         this.height = copy.height;
+      }
+
+      static Box  fromLimits(float minX, float minY, float maxX, float maxY)
       {
          return new Box(minX, minY, maxX-minX, maxY-minY);
       }
 
-      public RectF  toRectF()
+      RectF  toRectF()
       {
          return new RectF(minX, minY, maxX(), maxY());
       }
 
-      public float  maxX() { return minX + width; }
-      public float  maxY() { return minY + height; }
+      float  maxX() { return minX + width; }
+      float  maxY() { return minY + height; }
 
-      public void  union(Box other)
+      void  union(Box other)
       {
          if (other.minX < minX) minX = other.minX;
          if (other.minY < minY) minY = other.minY;
@@ -913,114 +951,116 @@ public class SVG
    }
 
 
-   protected static final long SPECIFIED_FILL                  = (1<<0);
-   protected static final long SPECIFIED_FILL_RULE             = (1<<1);
-   protected static final long SPECIFIED_FILL_OPACITY          = (1<<2);
-   protected static final long SPECIFIED_STROKE                = (1<<3);
-   protected static final long SPECIFIED_STROKE_OPACITY        = (1<<4);
-   protected static final long SPECIFIED_STROKE_WIDTH          = (1<<5);
-   protected static final long SPECIFIED_STROKE_LINECAP        = (1<<6);
-   protected static final long SPECIFIED_STROKE_LINEJOIN       = (1<<7);
-   protected static final long SPECIFIED_STROKE_MITERLIMIT     = (1<<8);
-   protected static final long SPECIFIED_STROKE_DASHARRAY      = (1<<9);
-   protected static final long SPECIFIED_STROKE_DASHOFFSET     = (1<<10);
-   protected static final long SPECIFIED_OPACITY               = (1<<11);
-   protected static final long SPECIFIED_COLOR                 = (1<<12);
-   protected static final long SPECIFIED_FONT_FAMILY           = (1<<13);
-   protected static final long SPECIFIED_FONT_SIZE             = (1<<14);
-   protected static final long SPECIFIED_FONT_WEIGHT           = (1<<15);
-   protected static final long SPECIFIED_FONT_STYLE            = (1<<16);
-   protected static final long SPECIFIED_TEXT_DECORATION       = (1<<17);
-   protected static final long SPECIFIED_TEXT_ANCHOR           = (1<<18);
-   protected static final long SPECIFIED_OVERFLOW              = (1<<19);
-   protected static final long SPECIFIED_CLIP                  = (1<<20);
-   protected static final long SPECIFIED_MARKER_START          = (1<<21);
-   protected static final long SPECIFIED_MARKER_MID            = (1<<22);
-   protected static final long SPECIFIED_MARKER_END            = (1<<23);
-   protected static final long SPECIFIED_DISPLAY               = (1<<24);
-   protected static final long SPECIFIED_VISIBILITY            = (1<<25);
-   protected static final long SPECIFIED_STOP_COLOR            = (1<<26);
-   protected static final long SPECIFIED_STOP_OPACITY          = (1<<27);
-   protected static final long SPECIFIED_CLIP_PATH             = (1<<28);
-   protected static final long SPECIFIED_CLIP_RULE             = (1<<29);
-   protected static final long SPECIFIED_MASK                  = (1<<30);
-   protected static final long SPECIFIED_SOLID_COLOR           = (1L<<31);
-   protected static final long SPECIFIED_SOLID_OPACITY         = (1L<<32);
-   protected static final long SPECIFIED_VIEWPORT_FILL         = (1L<<33);
-   protected static final long SPECIFIED_VIEWPORT_FILL_OPACITY = (1L<<34);
-   protected static final long SPECIFIED_VECTOR_EFFECT         = (1L<<35);
-   protected static final long SPECIFIED_DIRECTION             = (1L<<36);
+   static final long SPECIFIED_FILL                  = 1;
+   static final long SPECIFIED_FILL_RULE             = (1<<1);
+   static final long SPECIFIED_FILL_OPACITY          = (1<<2);
+   static final long SPECIFIED_STROKE                = (1<<3);
+   static final long SPECIFIED_STROKE_OPACITY        = (1<<4);
+   static final long SPECIFIED_STROKE_WIDTH          = (1<<5);
+   static final long SPECIFIED_STROKE_LINECAP        = (1<<6);
+   static final long SPECIFIED_STROKE_LINEJOIN       = (1<<7);
+   static final long SPECIFIED_STROKE_MITERLIMIT     = (1<<8);
+   static final long SPECIFIED_STROKE_DASHARRAY      = (1<<9);
+   static final long SPECIFIED_STROKE_DASHOFFSET     = (1<<10);
+   static final long SPECIFIED_OPACITY               = (1<<11);
+   static final long SPECIFIED_COLOR                 = (1<<12);
+   static final long SPECIFIED_FONT_FAMILY           = (1<<13);
+   static final long SPECIFIED_FONT_SIZE             = (1<<14);
+   static final long SPECIFIED_FONT_WEIGHT           = (1<<15);
+   static final long SPECIFIED_FONT_STYLE            = (1<<16);
+   static final long SPECIFIED_TEXT_DECORATION       = (1<<17);
+   static final long SPECIFIED_TEXT_ANCHOR           = (1<<18);
+   static final long SPECIFIED_OVERFLOW              = (1<<19);
+   static final long SPECIFIED_CLIP                  = (1<<20);
+   static final long SPECIFIED_MARKER_START          = (1<<21);
+   static final long SPECIFIED_MARKER_MID            = (1<<22);
+   static final long SPECIFIED_MARKER_END            = (1<<23);
+   static final long SPECIFIED_DISPLAY               = (1<<24);
+   static final long SPECIFIED_VISIBILITY            = (1<<25);
+   static final long SPECIFIED_STOP_COLOR            = (1<<26);
+   static final long SPECIFIED_STOP_OPACITY          = (1<<27);
+   static final long SPECIFIED_CLIP_PATH             = (1<<28);
+   static final long SPECIFIED_CLIP_RULE             = (1<<29);
+   static final long SPECIFIED_MASK                  = (1<<30);
+   static final long SPECIFIED_SOLID_COLOR           = (1L<<31);
+   static final long SPECIFIED_SOLID_OPACITY         = (1L<<32);
+   static final long SPECIFIED_VIEWPORT_FILL         = (1L<<33);
+   static final long SPECIFIED_VIEWPORT_FILL_OPACITY = (1L<<34);
+   static final long SPECIFIED_VECTOR_EFFECT         = (1L<<35);
+   static final long SPECIFIED_DIRECTION             = (1L<<36);
 
-   protected static final long SPECIFIED_ALL = 0xffffffff;
+   private static final long SPECIFIED_ALL = 0xffffffff;
 
+   /*
    protected static final long SPECIFIED_NON_INHERITING = SPECIFIED_DISPLAY | SPECIFIED_OVERFLOW | SPECIFIED_CLIP
                                                           | SPECIFIED_CLIP_PATH | SPECIFIED_OPACITY | SPECIFIED_STOP_COLOR
                                                           | SPECIFIED_STOP_OPACITY | SPECIFIED_MASK | SPECIFIED_SOLID_COLOR
                                                           | SPECIFIED_SOLID_OPACITY | SPECIFIED_VIEWPORT_FILL
                                                           | SPECIFIED_VIEWPORT_FILL_OPACITY | SPECIFIED_VECTOR_EFFECT;
+   */
 
    protected static class  Style implements Cloneable
    {
       // Which properties have been explicitly specified by this element
-      public long       specifiedFlags = 0;
+      long       specifiedFlags = 0;
 
-      public SvgPaint   fill;
-      public FillRule   fillRule;
-      public Float      fillOpacity;
+      SvgPaint   fill;
+      FillRule   fillRule;
+      Float      fillOpacity;
 
-      public SvgPaint   stroke;
-      public Float      strokeOpacity;
-      public Length     strokeWidth;
-      public LineCaps   strokeLineCap;
-      public LineJoin   strokeLineJoin;
-      public Float      strokeMiterLimit;
-      public Length[]   strokeDashArray;
-      public Length     strokeDashOffset;
+      SvgPaint   stroke;
+      Float      strokeOpacity;
+      Length     strokeWidth;
+      LineCaps   strokeLineCap;
+      LineJoin   strokeLineJoin;
+      Float      strokeMiterLimit;
+      Length[]   strokeDashArray;
+      Length     strokeDashOffset;
 
-      public Float      opacity; // master opacity of both stroke and fill
+      Float      opacity; // master opacity of both stroke and fill
 
-      public Colour     color;
+      Colour     color;
 
-      public List<String>    fontFamily;
-      public Length          fontSize;
-      public Integer         fontWeight;
-      public FontStyle       fontStyle;
-      public TextDecoration  textDecoration;
-      public TextDirection   direction;
+      List<String>    fontFamily;
+      Length          fontSize;
+      Integer         fontWeight;
+      FontStyle       fontStyle;
+      TextDecoration  textDecoration;
+      TextDirection   direction;
 
-      public TextAnchor   textAnchor;
+      TextAnchor   textAnchor;
 
-      public Boolean      overflow;  // true if overflow visible
-      public CSSClipRect  clip;
+      Boolean      overflow;  // true if overflow visible
+      CSSClipRect  clip;
 
-      public String     markerStart;
-      public String     markerMid;
-      public String     markerEnd;
+      String     markerStart;
+      String     markerMid;
+      String     markerEnd;
       
-      public Boolean    display;    // true if we should display
-      public Boolean    visibility; // true if visible
+      Boolean    display;    // true if we should display
+      Boolean    visibility; // true if visible
 
-      public SvgPaint   stopColor;
-      public Float      stopOpacity;
+      SvgPaint   stopColor;
+      Float      stopOpacity;
 
-      public String     clipPath;
-      public FillRule   clipRule;
+      String     clipPath;
+      FillRule   clipRule;
 
-      public String     mask;
+      String     mask;
 
-      public SvgPaint   solidColor;
-      public Float      solidOpacity;
+      SvgPaint   solidColor;
+      Float      solidOpacity;
 
-      public SvgPaint   viewportFill;
-      public Float      viewportFillOpacity;
+      SvgPaint   viewportFill;
+      Float      viewportFillOpacity;
       
-      public VectorEffect  vectorEffect;
+      VectorEffect  vectorEffect;
       
 
-      public static final int  FONT_WEIGHT_NORMAL = 400;
-      public static final int  FONT_WEIGHT_BOLD = 700;
-      public static final int  FONT_WEIGHT_LIGHTER = -1;
-      public static final int  FONT_WEIGHT_BOLDER = +1;
+      static final int  FONT_WEIGHT_NORMAL = 400;
+      static final int  FONT_WEIGHT_BOLD = 700;
+      static final int  FONT_WEIGHT_LIGHTER = -1;
+      static final int  FONT_WEIGHT_BOLDER = +1;
 
 
       public enum FillRule
@@ -1078,7 +1118,7 @@ public class SVG
          NonScalingStroke
       }
       
-      public static Style  getDefaultStyle()
+      static Style  getDefaultStyle()
       {
          Style  def = new Style();
          def.specifiedFlags = SPECIFIED_ALL;
@@ -1126,12 +1166,7 @@ public class SVG
 
       // Called on the state.style object to reset the properties that don't inherit
       // from the parent style.
-      public void  resetNonInheritingProperties()
-      {
-         resetNonInheritingProperties(false);
-      }
-
-      public void  resetNonInheritingProperties(boolean isRootSVG)
+      void  resetNonInheritingProperties(boolean isRootSVG)
       {
          this.display = Boolean.TRUE;
          this.overflow = isRootSVG ? Boolean.TRUE : Boolean.FALSE;
@@ -1150,37 +1185,29 @@ public class SVG
 
 
       @Override
-      protected Object  clone()
+      protected Object  clone() throws CloneNotSupportedException
       {
-         Style obj;
-         try
-         {
-            obj = (Style) super.clone();
-            if (strokeDashArray != null) {
-               obj.strokeDashArray = (Length[]) strokeDashArray.clone();
-            }
-            return obj;
+         Style obj = (Style) super.clone();
+         if (strokeDashArray != null) {
+            obj.strokeDashArray = strokeDashArray.clone();
          }
-         catch (CloneNotSupportedException e)
-         {
-            throw new InternalError(e.toString());
-         }
+         return obj;
       }
    }
 
 
    // What fill or stroke is
-   protected abstract static class SvgPaint implements Cloneable
+   abstract static class SvgPaint implements Cloneable
    {
    }
 
-   protected static class Colour extends SvgPaint
+   static class Colour extends SvgPaint
    {
-      public int colour;
+      int colour;
       
-      public static final Colour BLACK = new Colour(0);  // Black singleton - a common default value.
+      static final Colour BLACK = new Colour(0);  // Black singleton - a common default value.
       
-      public Colour(int val)
+      Colour(int val)
       {
          this.colour = val;
       }
@@ -1192,7 +1219,7 @@ public class SVG
    }
 
    // Special version of Colour that indicates use of 'currentColor' keyword
-   protected static class CurrentColor extends SvgPaint
+   static class CurrentColor extends SvgPaint
    {
       private static CurrentColor  instance = new CurrentColor();
       
@@ -1200,19 +1227,19 @@ public class SVG
       {
       }
       
-      public static CurrentColor  getInstance()
+      static CurrentColor  getInstance()
       {
          return instance;
       }
    }
 
 
-   protected static class PaintReference extends SvgPaint
+   static class PaintReference extends SvgPaint
    {
-      public String    href;
-      public SvgPaint  fallback;
+      String    href;
+      SvgPaint  fallback;
       
-      public PaintReference(String href, SvgPaint fallback)
+      PaintReference(String href, SvgPaint fallback)
       {
          this.href = href;
          this.fallback = fallback;
@@ -1225,33 +1252,30 @@ public class SVG
    }
 
 
-   /**
-    * @hide
-    */
-   protected static class Length implements Cloneable
+   static class Length implements Cloneable
    {
       float  value = 0;
       Unit   unit = Unit.px;
 
-      public Length(float value, Unit unit)
+      Length(float value, Unit unit)
       {
          this.value = value;
          this.unit = unit;
       }
 
-      public Length(float value)
+      Length(float value)
       {
          this.value = value;
          this.unit = Unit.px;
       }
 
-      public float floatValue()
+      float floatValue()
       {
          return value;
       }
 
       // Convert length to user units for a horizontally-related context.
-      public float floatValueX(SVGAndroidRenderer renderer)
+      float floatValueX(SVGAndroidRenderer renderer)
       {
          switch (unit)
          {
@@ -1282,7 +1306,7 @@ public class SVG
       }
 
       // Convert length to user units for a vertically-related context.
-      public float floatValueY(SVGAndroidRenderer renderer)
+      float floatValueY(SVGAndroidRenderer renderer)
       {
          if (unit == Unit.percent) {
             Box  viewPortUser = renderer.getCurrentViewPortInUserUnits();
@@ -1295,7 +1319,7 @@ public class SVG
 
       // Convert length to user units for a context that is not orientation specific.
       // For example, stroke width.
-      public float floatValue(SVGAndroidRenderer renderer)
+      float floatValue(SVGAndroidRenderer renderer)
       {
          if (unit == Unit.percent)
          {
@@ -1314,7 +1338,7 @@ public class SVG
 
       // Convert length to user units for a context that is not orientation specific.
       // For percentage values, use the given 'max' parameter to represent the 100% value.
-      public float floatValue(SVGAndroidRenderer renderer, float max)
+      float floatValue(SVGAndroidRenderer renderer, float max)
       {
          if (unit == Unit.percent)
          {
@@ -1325,7 +1349,7 @@ public class SVG
 
       // For situations (like calculating the initial viewport) when we can only rely on
       // physical real world units.
-      public float floatValue(float dpi)
+      float floatValue(float dpi)
       {
          switch (unit)
          {
@@ -1349,12 +1373,12 @@ public class SVG
          }
       }
 
-      public boolean isZero()
+      boolean isZero()
       {
          return value == 0f;
       }
 
-      public boolean isNegative()
+      boolean isNegative()
       {
          return value < 0f;
       }
@@ -1367,14 +1391,14 @@ public class SVG
    }
 
 
-   protected static class CSSClipRect
+   static class CSSClipRect
    {
-      public Length  top;
-      public Length  right;
-      public Length  bottom;
-      public Length  left;
+      Length  top;
+      Length  right;
+      Length  bottom;
+      Length  left;
       
-      public CSSClipRect(Length top, Length right, Length bottom, Length left)
+      CSSClipRect(Length top, Length right, Length bottom, Length left)
       {
          this.top = top;
          this.right = right;
@@ -1390,10 +1414,10 @@ public class SVG
 
 
    // Any object that can be part of the tree
-   protected static class SvgObject
+   static class SvgObject
    {
-      public SVG           document;
-      public SvgContainer  parent;
+      SVG           document;
+      SvgContainer  parent;
 
       public String  toString()
       {
@@ -1404,47 +1428,47 @@ public class SVG
 
 
    // Any object in the tree that corresponds to an SVG element
-   protected static class SvgElementBase extends SvgObject
+   static class SvgElementBase extends SvgObject
    {
-      public String        id = null;
-      public Boolean       spacePreserve = null;
-      public Style         baseStyle = null;   // style defined by explicit style attributes in the element (eg. fill="black")  
-      public Style         style = null;       // style expressed in a 'style' attribute (eg. style="fill:black")
-      public List<String>  classNames = null;  // contents of the 'class' attribute
+      String        id = null;
+      Boolean       spacePreserve = null;
+      Style         baseStyle = null;   // style defined by explicit style attributes in the element (eg. fill="black")
+      Style         style = null;       // style expressed in a 'style' attribute (eg. style="fill:black")
+      List<String>  classNames = null;  // contents of the 'class' attribute
    }
 
 
    // Any object in the tree that corresponds to an SVG element
-   protected static class SvgElement extends SvgElementBase
+   static class SvgElement extends SvgElementBase
    {
-      public Box     boundingBox = null;
+      Box     boundingBox = null;
    }
 
 
    // Any element that can appear inside a <switch> element.
-   protected interface SvgConditional
+   interface SvgConditional
    {
-      public void         setRequiredFeatures(Set<String> features);
-      public Set<String>  getRequiredFeatures();
-      public void         setRequiredExtensions(String extensions);
-      public String       getRequiredExtensions();
-      public void         setSystemLanguage(Set<String> languages);
-      public Set<String>  getSystemLanguage();
-      public void         setRequiredFormats(Set<String> mimeTypes);
-      public Set<String>  getRequiredFormats();
-      public void         setRequiredFonts(Set<String> fontNames);
-      public Set<String>  getRequiredFonts();
+      void         setRequiredFeatures(Set<String> features);
+      Set<String>  getRequiredFeatures();
+      void         setRequiredExtensions(String extensions);
+      String       getRequiredExtensions();
+      void         setSystemLanguage(Set<String> languages);
+      Set<String>  getSystemLanguage();
+      void         setRequiredFormats(Set<String> mimeTypes);
+      Set<String>  getRequiredFormats();
+      void         setRequiredFonts(Set<String> fontNames);
+      Set<String>  getRequiredFonts();
    }
 
 
    // Any element that can appear inside a <switch> element.
-   protected static class  SvgConditionalElement extends SvgElement implements SvgConditional
+   static class  SvgConditionalElement extends SvgElement implements SvgConditional
    {
-      public Set<String>  requiredFeatures = null;
-      public String       requiredExtensions = null;
-      public Set<String>  systemLanguage = null;
-      public Set<String>  requiredFormats = null;
-      public Set<String>  requiredFonts = null;
+      Set<String>  requiredFeatures = null;
+      String       requiredExtensions = null;
+      Set<String>  systemLanguage = null;
+      Set<String>  requiredFormats = null;
+      Set<String>  requiredFonts = null;
 
       @Override
       public void setRequiredFeatures(Set<String> features) { this.requiredFeatures = features; }
@@ -1469,22 +1493,22 @@ public class SVG
    }
 
 
-   protected interface SvgContainer
+   interface SvgContainer
    {
-      public List<SvgObject>  getChildren();
-      public void             addChild(SvgObject elem) throws SAXException;
+      List<SvgObject>  getChildren();
+      void             addChild(SvgObject elem) throws SAXException;
    }
 
 
-   protected static class SvgConditionalContainer extends SvgElement implements SvgContainer, SvgConditional
+   static class SvgConditionalContainer extends SvgElement implements SvgContainer, SvgConditional
    {
-      public List<SvgObject> children = new ArrayList<SvgObject>();
+      List<SvgObject> children = new ArrayList<>();
 
-      public Set<String>  requiredFeatures = null;
-      public String       requiredExtensions = null;
-      public Set<String>  systemLanguage = null;
-      public Set<String>  requiredFormats = null;
-      public Set<String>  requiredFonts = null;
+      Set<String>  requiredFeatures = null;
+      String       requiredExtensions = null;
+      Set<String>  systemLanguage = null;
+      Set<String>  requiredFormats = null;
+      Set<String>  requiredFonts = null;
 
       @Override
       public List<SvgObject>  getChildren() { return children; }
@@ -1514,61 +1538,61 @@ public class SVG
    }
 
 
-   protected interface HasTransform
+   interface HasTransform
    {
-      public void setTransform(Matrix matrix);
+      void setTransform(Matrix matrix);
    }
 
 
-   protected static class SvgPreserveAspectRatioContainer extends SvgConditionalContainer
+   static class SvgPreserveAspectRatioContainer extends SvgConditionalContainer
    {
-      public PreserveAspectRatio  preserveAspectRatio = null;
+      PreserveAspectRatio  preserveAspectRatio = null;
    }
 
 
-   protected static class SvgViewBoxContainer extends SvgPreserveAspectRatioContainer
+   static class SvgViewBoxContainer extends SvgPreserveAspectRatioContainer
    {
-      public Box  viewBox;
+      Box  viewBox;
    }
 
 
-   protected static class Svg extends SvgViewBoxContainer
+   static class Svg extends SvgViewBoxContainer
    {
-      public Length  x;
-      public Length  y;
-      public Length  width;
-      public Length  height;
+      Length  x;
+      Length  y;
+      Length  width;
+      Length  height;
       public String  version;
    }
 
 
    // An SVG element that can contain other elements.
-   protected static class Group extends SvgConditionalContainer implements HasTransform
+   static class Group extends SvgConditionalContainer implements HasTransform
    {
-      public Matrix  transform;
+      Matrix  transform;
 
       @Override
       public void setTransform(Matrix transform) { this.transform = transform; }
    }
 
 
-   protected interface NotDirectlyRendered
+   interface NotDirectlyRendered
    {
    }
 
 
    // A <defs> object contains objects that are not rendered directly, but are instead
    // referenced from other parts of the file.
-   protected static class Defs extends Group implements NotDirectlyRendered
+   static class Defs extends Group implements NotDirectlyRendered
    {
    }
 
 
    // One of the element types that can cause graphics to be drawn onto the target canvas.
    // Specifically: 'circle', 'ellipse', 'image', 'line', 'path', 'polygon', 'polyline', 'rect', 'text' and 'use'.
-   protected static abstract class GraphicsElement extends SvgConditionalElement implements HasTransform
+   static abstract class GraphicsElement extends SvgConditionalElement implements HasTransform
    {
-      public Matrix  transform;
+      Matrix  transform;
 
       @Override
       public void setTransform(Matrix transform) { this.transform = transform; }
@@ -1577,83 +1601,83 @@ public class SVG
 
    protected static class Use extends Group
    {
-      public String  href;
-      public Length  x;
-      public Length  y;
-      public Length  width;
-      public Length  height;
+      String  href;
+      Length  x;
+      Length  y;
+      Length  width;
+      Length  height;
    }
 
 
-   protected static class Path extends GraphicsElement
+   static class Path extends GraphicsElement
    {
-      public PathDefinition  d;
-      public Float           pathLength;
+      PathDefinition  d;
+      Float           pathLength;
    }
 
 
-   protected static class Rect extends GraphicsElement
+   static class Rect extends GraphicsElement
    {
-      public Length  x;
-      public Length  y;
-      public Length  width;
-      public Length  height;
-      public Length  rx;
-      public Length  ry;
+      Length  x;
+      Length  y;
+      Length  width;
+      Length  height;
+      Length  rx;
+      Length  ry;
    }
 
 
-   protected static class Circle extends GraphicsElement
+   static class Circle extends GraphicsElement
    {
-      public Length  cx;
-      public Length  cy;
-      public Length  r;
+      Length  cx;
+      Length  cy;
+      Length  r;
    }
 
 
-   protected static class Ellipse extends GraphicsElement
+   static class Ellipse extends GraphicsElement
    {
-      public Length  cx;
-      public Length  cy;
-      public Length  rx;
-      public Length  ry;
+      Length  cx;
+      Length  cy;
+      Length  rx;
+      Length  ry;
    }
 
 
-   protected static class Line extends GraphicsElement
+   static class Line extends GraphicsElement
    {
-      public Length  x1;
-      public Length  y1;
-      public Length  x2;
-      public Length  y2;
+      Length  x1;
+      Length  y1;
+      Length  x2;
+      Length  y2;
    }
 
 
-   protected static class PolyLine extends GraphicsElement
+   static class PolyLine extends GraphicsElement
    {
-      public float[]  points;
+      float[]  points;
    }
 
 
-   protected static class Polygon extends PolyLine
+   static class Polygon extends PolyLine
    {
    }
 
 
    // A root text container such as <text> or <textPath>
-   protected interface  TextRoot
+   interface  TextRoot
    {
    }
    
 
-   protected interface  TextChild
+   interface  TextChild
    {
-      public void      setTextRoot(TextRoot obj);
-      public TextRoot  getTextRoot();
+      void      setTextRoot(TextRoot obj);
+      TextRoot  getTextRoot();
    }
    
 
-   protected static class  TextContainer extends SvgConditionalContainer
+   static class  TextContainer extends SvgConditionalContainer
    {
       @Override
       public void  addChild(SvgObject elem) throws SAXException
@@ -1666,25 +1690,25 @@ public class SVG
    }
 
 
-   protected static class  TextPositionedContainer extends TextContainer
+   static class  TextPositionedContainer extends TextContainer
    {
-      public List<Length>  x;
-      public List<Length>  y;
-      public List<Length>  dx;
-      public List<Length>  dy;
+      List<Length>  x;
+      List<Length>  y;
+      List<Length>  dx;
+      List<Length>  dy;
    }
 
 
    protected static class Text extends TextPositionedContainer implements TextRoot, HasTransform
    {
-      public Matrix  transform;
+      Matrix  transform;
 
       @Override
       public void setTransform(Matrix transform) { this.transform = transform; }
    }
 
 
-   protected static class TSpan extends TextPositionedContainer implements TextChild
+   static class TSpan extends TextPositionedContainer implements TextChild
    {
       private TextRoot  textRoot;
 
@@ -1695,13 +1719,13 @@ public class SVG
    }
 
 
-   protected static class TextSequence extends SvgObject implements TextChild
+   static class TextSequence extends SvgObject implements TextChild
    {
-      public String  text;
+      String  text;
 
       private TextRoot   textRoot;
       
-      public TextSequence(String text)
+      TextSequence(String text)
       {
          this.text = text;
       }
@@ -1718,9 +1742,9 @@ public class SVG
    }
 
 
-   protected static class TRef extends TextContainer implements TextChild
+   static class TRef extends TextContainer implements TextChild
    {
-      public String  href;
+      String  href;
 
       private TextRoot   textRoot;
 
@@ -1731,10 +1755,10 @@ public class SVG
    }
 
 
-   protected static class TextPath extends TextContainer implements TextChild
+   static class TextPath extends TextContainer implements TextChild
    {
-      public String  href;
-      public Length  startOffset;
+      String  href;
+      Length  startOffset;
 
       private TextRoot  textRoot;
 
@@ -1746,35 +1770,35 @@ public class SVG
 
 
    // An SVG element that can contain other elements.
-   protected static class Switch extends Group
+   static class Switch extends Group
    {
    }
 
 
-   protected static class Symbol extends SvgViewBoxContainer implements NotDirectlyRendered
+   static class Symbol extends SvgViewBoxContainer implements NotDirectlyRendered
    {
    }
 
 
-   protected static class Marker extends SvgViewBoxContainer implements NotDirectlyRendered
+   static class Marker extends SvgViewBoxContainer implements NotDirectlyRendered
    {
-      public boolean  markerUnitsAreUser;
-      public Length   refX;
-      public Length   refY;
-      public Length   markerWidth;
-      public Length   markerHeight;
-      public Float    orient;
+      boolean  markerUnitsAreUser;
+      Length   refX;
+      Length   refY;
+      Length   markerWidth;
+      Length   markerHeight;
+      Float    orient;
    }
 
 
-   protected static class GradientElement extends SvgElementBase implements SvgContainer
+   static class GradientElement extends SvgElementBase implements SvgContainer
    {
-      public List<SvgObject> children = new ArrayList<SvgObject>();
+      List<SvgObject> children = new ArrayList<>();
 
-      public Boolean         gradientUnitsAreUser;
-      public Matrix          gradientTransform;
-      public GradientSpread  spreadMethod;
-      public String          href;
+      Boolean         gradientUnitsAreUser;
+      Matrix          gradientTransform;
+      GradientSpread  spreadMethod;
+      String          href;
 
       @Override
       public List<SvgObject> getChildren()
@@ -1793,9 +1817,9 @@ public class SVG
    }
 
 
-   protected static class Stop extends SvgElementBase implements SvgContainer
+   static class Stop extends SvgElementBase implements SvgContainer
    {
-      public Float  offset;
+      Float  offset;
 
       // Dummy container methods. Stop is officially a container, but we 
       // are not interested in any of its possible child elements.
@@ -1806,52 +1830,52 @@ public class SVG
    }
 
 
-   protected static class SvgLinearGradient extends GradientElement
+   static class SvgLinearGradient extends GradientElement
    {
-      public Length  x1;
-      public Length  y1;
-      public Length  x2;
-      public Length  y2;
+      Length  x1;
+      Length  y1;
+      Length  x2;
+      Length  y2;
    }
 
 
-   protected static class SvgRadialGradient extends GradientElement
+   static class SvgRadialGradient extends GradientElement
    {
-      public Length  cx;
-      public Length  cy;
-      public Length  r;
-      public Length  fx;
-      public Length  fy;
+      Length  cx;
+      Length  cy;
+      Length  r;
+      Length  fx;
+      Length  fy;
    }
 
 
-   protected static class ClipPath extends Group implements NotDirectlyRendered
+   static class ClipPath extends Group implements NotDirectlyRendered
    {
-      public Boolean  clipPathUnitsAreUser;
+      Boolean  clipPathUnitsAreUser;
    }
 
 
-   protected static class Pattern extends SvgViewBoxContainer implements NotDirectlyRendered
+   static class Pattern extends SvgViewBoxContainer implements NotDirectlyRendered
    {
-      public Boolean  patternUnitsAreUser;
-      public Boolean  patternContentUnitsAreUser;
-      public Matrix   patternTransform;
-      public Length   x;
-      public Length   y;
-      public Length   width;
-      public Length   height;
-      public String   href;
+      Boolean  patternUnitsAreUser;
+      Boolean  patternContentUnitsAreUser;
+      Matrix   patternTransform;
+      Length   x;
+      Length   y;
+      Length   width;
+      Length   height;
+      String   href;
    }
 
 
    protected static class Image extends SvgPreserveAspectRatioContainer implements HasTransform
    {
-      public String  href;
-      public Length  x;
-      public Length  y;
-      public Length  width;
-      public Length  height;
-      public Matrix  transform;
+      String  href;
+      Length  x;
+      Length  y;
+      Length  width;
+      Length  height;
+      Matrix  transform;
 
       @Override
       public void setTransform(Matrix transform) { this.transform = transform; }
@@ -1863,21 +1887,22 @@ public class SVG
    }
 
 
-   protected static class Mask extends SvgConditionalContainer implements NotDirectlyRendered
+   static class Mask extends SvgConditionalContainer implements NotDirectlyRendered
    {
-      public Boolean  maskUnitsAreUser;
-      public Boolean  maskContentUnitsAreUser;
-      public Length   x;
-      public Length   y;
-      public Length   width;
-      public Length   height;
+      Boolean  maskUnitsAreUser;
+      Boolean  maskContentUnitsAreUser;
+      Length   x;
+      Length   y;
+      Length   width;
+      Length   height;
    }
 
 
-   protected static class SolidColor extends SvgElementBase implements SvgContainer
+   static class SolidColor extends SvgElementBase implements SvgContainer
    {
-      public Length  solidColor;
-      public Length  solidOpacity;
+      // Not needed right now. Colour is set in this.baseStyle.
+      //public Length  solidColor;
+      //public Length  solidOpacity;
 
       // Dummy container methods. Stop is officially a container, but we 
       // are not interested in any of its possible child elements.
@@ -1892,19 +1917,19 @@ public class SVG
    // Protected setters for internal use
 
 
-   protected void setTitle(String title)
+   void setTitle(String title)
    {
       this.title = title;
    }
 
 
-   protected void setDesc(String desc)
+   void setDesc(String desc)
    {
       this.desc = desc;
    }
 
 
-   protected SVGExternalFileResolver  getFileResolver()
+   SVGExternalFileResolver  getFileResolver()
    {
       return fileResolver;
    }
@@ -1914,18 +1939,18 @@ public class SVG
    // Path definition
 
 
-   protected interface PathInterface
+   interface PathInterface
    {
-      public void  moveTo(float x, float y);
-      public void  lineTo(float x, float y);
-      public void  cubicTo(float x1, float y1, float x2, float y2, float x3, float y3);
-      public void  quadTo(float x1, float y1, float x2, float y2);
-      public void  arcTo(float rx, float ry, float xAxisRotation, boolean largeArcFlag, boolean sweepFlag, float x, float y);
-      public void  close();
+      void  moveTo(float x, float y);
+      void  lineTo(float x, float y);
+      void  cubicTo(float x1, float y1, float x2, float y2, float x3, float y3);
+      void  quadTo(float x1, float y1, float x2, float y2);
+      void  arcTo(float rx, float ry, float xAxisRotation, boolean largeArcFlag, boolean sweepFlag, float x, float y);
+      void  close();
    }
 
 
-   protected static class PathDefinition implements PathInterface
+   static class PathDefinition implements PathInterface
    {
       private byte[]   commands = null;
       private int      commandsLength = 0;
@@ -1940,14 +1965,14 @@ public class SVG
       private static final byte  CLOSE   = 8;
 
 
-      public PathDefinition()
+      PathDefinition()
       {
          this.commands = new byte[8];
          this.coords = new float[16];
       }
 
 
-      public boolean  isEmpty()
+      boolean  isEmpty()
       {
          return commandsLength == 0;
       }
@@ -2041,7 +2066,7 @@ public class SVG
       }
 
 
-      public void enumeratePath(PathInterface handler)
+      void enumeratePath(PathInterface handler)
       {
          int  coordsPos = 0;
 
@@ -2076,7 +2101,7 @@ public class SVG
    }
 
 
-   protected SvgObject  getElementById(String id)
+   private SvgObject  getElementById(String id)
    {
       if (id == null || id.length() == 0)
          return null;
@@ -2117,7 +2142,7 @@ public class SVG
 
 
    @SuppressWarnings("rawtypes")
-   protected List<SvgObject>  getElementsByTagName(Class clazz)
+   private List<SvgObject>  getElementsByTagName(Class clazz)
    {
        // Search the object tree for nodes with the give element class
       return getElementsByTagName(rootElement, clazz);
@@ -2127,7 +2152,7 @@ public class SVG
    @SuppressWarnings("rawtypes")
    private List<SvgObject>  getElementsByTagName(SvgContainer obj, Class clazz)
    {
-      List<SvgObject>  result = new ArrayList<SvgObject>();
+      List<SvgObject>  result = new ArrayList<>();
 
       if (obj.getClass() == clazz)
          result.add((SvgObject) obj);

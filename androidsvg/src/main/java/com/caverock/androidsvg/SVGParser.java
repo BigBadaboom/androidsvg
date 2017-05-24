@@ -16,29 +16,6 @@
 
 package com.caverock.androidsvg;
 
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.zip.GZIPInputStream;
-
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-
-import org.xml.sax.Attributes;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.XMLReader;
-import org.xml.sax.ext.DefaultHandler2;
-
 import android.graphics.Matrix;
 import android.util.Log;
 
@@ -62,14 +39,34 @@ import com.caverock.androidsvg.SVG.TextPositionedContainer;
 import com.caverock.androidsvg.SVG.TextRoot;
 import com.caverock.androidsvg.SVG.Unit;
 
-import static android.R.attr.propertyName;
+import org.xml.sax.Attributes;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
+import org.xml.sax.ext.DefaultHandler2;
 
-/**
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.zip.GZIPInputStream;
+
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+
+
+/*
  * SVG parser code. Used by SVG class. Should not be called directly.
- * 
- * @hide
  */
-public class SVGParser extends DefaultHandler2
+
+class SVGParser extends DefaultHandler2
 {
    private static final String  TAG = "SVGParser";
 
@@ -93,8 +90,6 @@ public class SVGParser extends DefaultHandler2
    // For handling <style>
    private boolean        inStyleElement = false;
    private StringBuilder  styleElementContents = null;
-
-   private Set<String> supportedFormats = null;
 
 
    // Define SVG tags
@@ -133,7 +128,7 @@ public class SVGParser extends DefaultHandler2
       view,
       UNSUPPORTED;
       
-      private static final Map<String,SVGElem>  cache = new HashMap<String,SVGElem>();
+      private static final Map<String,SVGElem>  cache = new HashMap<>();
       
       public static SVGElem  fromString(String str)
       {
@@ -249,7 +244,7 @@ public class SVGParser extends DefaultHandler2
       gradientUnits,
       height,
       href,
-      id,
+      // id,
       marker,
       marker_start, marker_mid, marker_end,
       markerHeight, markerUnits, markerWidth,
@@ -298,7 +293,7 @@ public class SVGParser extends DefaultHandler2
       visibility,
       UNSUPPORTED;
 
-      private static final Map<String,SVGAttr>  cache = new HashMap<String,SVGAttr>();
+      private static final Map<String,SVGAttr>  cache = new HashMap<>();
       
       public static SVGAttr  fromString(String str)
       {
@@ -347,7 +342,7 @@ public class SVGParser extends DefaultHandler2
 
    // These static inner classes are only loaded/initialized when first used and are thread safe
    private static class ColourKeywords {
-      private static final Map<String, Integer> colourKeywords = new HashMap<String, Integer>(47);
+      private static final Map<String, Integer> colourKeywords = new HashMap<>(47);
       static {
          colourKeywords.put("aliceblue", 0xf0f8ff);
          colourKeywords.put("antiquewhite", 0xfaebd7);
@@ -498,12 +493,12 @@ public class SVGParser extends DefaultHandler2
          colourKeywords.put("yellowgreen", 0x9acd32);
       }
 
-      public static Integer get(String colourName) {
+      static Integer get(String colourName) {
          return colourKeywords.get(colourName);
       }
    }
    private static class FontSizeKeywords {
-      private static final Map<String, Length> fontSizeKeywords = new HashMap<String, Length>(9);
+      private static final Map<String, Length> fontSizeKeywords = new HashMap<>(9);
       static {
          fontSizeKeywords.put("xx-small", new Length(0.694f, Unit.pt));
          fontSizeKeywords.put("x-small", new Length(0.833f, Unit.pt));
@@ -516,12 +511,12 @@ public class SVGParser extends DefaultHandler2
          fontSizeKeywords.put("larger", new Length(120f, Unit.percent));
       }
 
-      public static Length get(String fontSize) {
+      static Length get(String fontSize) {
          return fontSizeKeywords.get(fontSize);
       }
    }
    private static class FontWeightKeywords {
-      private static final Map<String, Integer> fontWeightKeywords = new HashMap<String, Integer>(13);
+      private static final Map<String, Integer> fontWeightKeywords = new HashMap<>(13);
       static {
          fontWeightKeywords.put("normal", SVG.Style.FONT_WEIGHT_NORMAL);
          fontWeightKeywords.put("bold", SVG.Style.FONT_WEIGHT_BOLD);
@@ -538,13 +533,12 @@ public class SVGParser extends DefaultHandler2
          fontWeightKeywords.put("900", 900);
       }
 
-      public static Integer get(String fontWeight) {
+      static Integer get(String fontWeight) {
          return fontWeightKeywords.get(fontWeight);
       }
    }
    private static class AspectRatioKeywords {
-      private static final Map<String, PreserveAspectRatio.Alignment> aspectRatioKeywords
-            = new HashMap<String, PreserveAspectRatio.Alignment>(10);
+      private static final Map<String, PreserveAspectRatio.Alignment> aspectRatioKeywords = new HashMap<>(10);
       static {
          aspectRatioKeywords.put(NONE, PreserveAspectRatio.Alignment.None);
          aspectRatioKeywords.put("xMinYMin", PreserveAspectRatio.Alignment.XMinYMin);
@@ -558,15 +552,9 @@ public class SVGParser extends DefaultHandler2
          aspectRatioKeywords.put("xMaxYMax", PreserveAspectRatio.Alignment.XMaxYMax);
       }
 
-      public static PreserveAspectRatio.Alignment get(String aspectRatio) {
+      static PreserveAspectRatio.Alignment get(String aspectRatio) {
          return aspectRatioKeywords.get(aspectRatio);
       }
-   }
-
-   protected void  setSupportedFormats(String[] mimeTypes)
-   {
-      this.supportedFormats = new HashSet<String>(mimeTypes.length);
-      Collections.addAll(this.supportedFormats, mimeTypes);
    }
 
 
@@ -575,7 +563,7 @@ public class SVGParser extends DefaultHandler2
    //=========================================================================
 
 
-   protected SVG  parse(InputStream is) throws SVGParseException
+   SVG  parse(InputStream is) throws SVGParseException
    {
       // Transparently handle zipped files (.svgz)
       if (!is.markSupported()) {
@@ -761,7 +749,7 @@ public class SVGParser extends DefaultHandler2
             ((SVG.TextSequence) previousSibling).text += new String(ch, start, length);
          } else {
             // Add a new TextSequence to the child node list
-            ((SVG.SvgConditionalContainer) currentElement).addChild(new SVG.TextSequence( new String(ch, start, length) ));
+            currentElement.addChild(new SVG.TextSequence( new String(ch, start, length) ));
          }
       }
 
@@ -781,9 +769,7 @@ public class SVGParser extends DefaultHandler2
          if (styleElementContents == null)
             styleElementContents = new StringBuilder(length);
          styleElementContents.append(ch, start, length);
-         return;
       }
-
    }
 
 
@@ -1391,7 +1377,7 @@ public class SVGParser extends DefaultHandler2
          if (SVGAttr.fromString(attributes.getLocalName(i)) == SVGAttr.points)
          {
             TextScanner scan = new TextScanner(attributes.getValue(i));
-            List<Float> points = new ArrayList<Float>();
+            List<Float> points = new ArrayList<>();
             scan.skipWhitespace();
 
             while (!scan.empty()) {
@@ -1604,7 +1590,7 @@ public class SVGParser extends DefaultHandler2
                break;
             case requiredFonts:
                List<String>  fonts = parseFontFamily(val);
-               Set<String>  fontSet = (fonts != null) ? new HashSet<String>(fonts) : new HashSet<String>(0);
+               Set<String>  fontSet = (fonts != null) ? new HashSet<>(fonts) : new HashSet<String>(0);
                obj.setRequiredFonts(fontSet);
                break;
             default:
@@ -2201,16 +2187,16 @@ public class SVGParser extends DefaultHandler2
    //=========================================================================
 
 
-   protected static class TextScanner
+   static class TextScanner
    {
-      protected String   input;
-      protected int      position = 0;
-      protected int      inputLength = 0;
+      String   input;
+      int      position = 0;
+      int      inputLength = 0;
 
       private   NumberParser  numberParser = new NumberParser();
 
 
-      public TextScanner(String input)
+      TextScanner(String input)
       {
          this.input = input.trim();
          this.inputLength = this.input.length();
@@ -2219,17 +2205,17 @@ public class SVGParser extends DefaultHandler2
       /**
        * Returns true if we have reached the end of the input.
        */
-      public boolean  empty()
+      boolean  empty()
       {
          return (position == inputLength);
       }
 
-      protected boolean  isWhitespace(int c)
+      boolean  isWhitespace(int c)
       {
          return (c==' ' || c=='\n' || c=='\r' || c =='\t');
       }
 
-      public void  skipWhitespace()
+      void  skipWhitespace()
       {
          while (position < inputLength) {
             if (!isWhitespace(input.charAt(position)))
@@ -2238,14 +2224,14 @@ public class SVGParser extends DefaultHandler2
          }
       }
 
-      protected boolean  isEOL(int c)
+      boolean  isEOL(int c)
       {
          return (c=='\n' || c=='\r');
       }
 
       // Skip the sequence: <space>*(<comma><space>)?
       // Returns true if we found a comma in there.
-      public boolean  skipCommaWhitespace()
+      boolean  skipCommaWhitespace()
       {
          skipWhitespace();
          if (position == inputLength)
@@ -2258,7 +2244,7 @@ public class SVGParser extends DefaultHandler2
       }
 
 
-      public float  nextFloat()
+      float  nextFloat()
       {
          float  val = numberParser.parseNumber(input, position, inputLength);
          if (!Float.isNaN(val))
@@ -2271,7 +2257,7 @@ public class SVGParser extends DefaultHandler2
        * If found, the float is returned. Otherwise null is returned and
        * the scan position left as it was.
        */
-      public float  possibleNextFloat()
+      float  possibleNextFloat()
       {
          skipCommaWhitespace();
          float  val = numberParser.parseNumber(input, position, inputLength);
@@ -2285,7 +2271,7 @@ public class SVGParser extends DefaultHandler2
        * But only if the provided 'lastFloat' (representing the last coord
        * scanned was non-null (ie parsed correctly).
        */
-      public float  checkedNextFloat(float lastRead)
+      float  checkedNextFloat(float lastRead)
       {
          if (Float.isNaN(lastRead)) {
             return Float.NaN;
@@ -2294,6 +2280,16 @@ public class SVGParser extends DefaultHandler2
          return nextFloat();
       }
 
+      float  checkedNextFloat(Boolean lastRead)
+      {
+         if (lastRead == null) {
+            return Float.NaN;
+         }
+         skipCommaWhitespace();
+         return nextFloat();
+      }
+
+      /*
       public Integer  nextInteger()
       {
          IntegerParser  ip = IntegerParser.parseInt(input, position, inputLength);
@@ -2302,15 +2298,16 @@ public class SVGParser extends DefaultHandler2
          position = ip.getEndPos();
          return ip.value();
       }
+      */
 
-      public Integer  nextChar()
+      Integer  nextChar()
       {
          if (position == inputLength)
             return null;
-         return Integer.valueOf(input.charAt(position++));
+         return (int) input.charAt(position++);
       }
 
-      public Length  nextLength()
+      Length  nextLength()
       {
          float  scalar = nextFloat();
          if (Float.isNaN(scalar))
@@ -2325,14 +2322,14 @@ public class SVGParser extends DefaultHandler2
       /*
        * Scan for a 'flag'. A flag is a '0' or '1' digit character.
        */
-      public Boolean  nextFlag()
+      Boolean  nextFlag()
       {
          if (position == inputLength)
             return null;
          char  ch = input.charAt(position);
          if (ch == '0' || ch == '1') {
             position++;
-            return Boolean.valueOf(ch == '1');
+            return (ch == '1');
          }
          return null;
       }
@@ -2340,7 +2337,7 @@ public class SVGParser extends DefaultHandler2
       /*
        * Like checkedNextFloat, but reads a flag (see path definition parser)
        */
-      public Boolean  checkedNextFlag(Object lastRead)
+      Boolean  checkedNextFlag(Object lastRead)
       {
          if (lastRead == null) {
             return null;
@@ -2349,7 +2346,7 @@ public class SVGParser extends DefaultHandler2
          return nextFlag();
       }
 
-      public boolean  consume(char ch)
+      boolean  consume(char ch)
       {
          boolean  found = (position < inputLength && input.charAt(position) == ch);
          if (found)
@@ -2358,7 +2355,7 @@ public class SVGParser extends DefaultHandler2
       }
 
 
-      public boolean  consume(String str)
+      boolean  consume(String str)
       {
          int  len = str.length();
          boolean  found = (position <= (inputLength - len) && input.substring(position,position+len).equals(str));
@@ -2368,7 +2365,7 @@ public class SVGParser extends DefaultHandler2
       }
 
 
-      protected int  advanceChar()
+      int  advanceChar()
       {
          if (position == inputLength)
             return -1;
@@ -2386,7 +2383,7 @@ public class SVGParser extends DefaultHandler2
        * Note that this routine only checks for whitespace characters.  Use nextToken(char)
        * if token might end with another character.
        */
-      public String  nextToken()
+      String  nextToken()
       {
          return nextToken(' ', false);
       }
@@ -2396,7 +2393,7 @@ public class SVGParser extends DefaultHandler2
        * A token is a sequence of characters terminating at either a whitespace character
        * or the supplied terminating character.
        */
-      public String  nextToken(char terminator)
+      String  nextToken(char terminator)
       {
          return nextToken(terminator, false);
       }
@@ -2406,7 +2403,7 @@ public class SVGParser extends DefaultHandler2
        * A token is a sequence of characters terminating at either a the supplied terminating
        * character.  Whitespaces are allowed.
        */
-      public String  nextTokenWithWhitespace(char terminator)
+      String  nextTokenWithWhitespace(char terminator)
       {
          return nextToken(terminator, true);
       }
@@ -2416,7 +2413,7 @@ public class SVGParser extends DefaultHandler2
        * A token is a sequence of characters terminating at either the supplied terminating
        * character, or (optionally) a whitespace character.
        */
-      public String  nextToken(char terminator, boolean allowWhitespace)
+      String  nextToken(char terminator, boolean allowWhitespace)
       {
          if (empty())
             return null;
@@ -2442,7 +2439,7 @@ public class SVGParser extends DefaultHandler2
        * of letter characters terminated by an open bracket.  The function
        * name is returned.
        */
-      public String  nextFunction()
+      String  nextFunction()
       {
          if (empty())
             return null;
@@ -2465,7 +2462,7 @@ public class SVGParser extends DefaultHandler2
       /*
        * Get the next few chars. Mainly used for error messages.
        */
-      public String  ahead()
+      String  ahead()
       {
          int start = position;
          while (!empty() && !isWhitespace(input.charAt(position)))
@@ -2475,7 +2472,7 @@ public class SVGParser extends DefaultHandler2
          return str;
       }
 
-      public Unit  nextUnit()
+      Unit  nextUnit()
       {
          if (empty())
             return null;
@@ -2498,7 +2495,7 @@ public class SVGParser extends DefaultHandler2
       /*
        * Check whether the next character is a letter.
        */
-      public boolean  hasLetter()
+      boolean  hasLetter()
       {
          if (position == inputLength)
             return false;
@@ -2509,7 +2506,7 @@ public class SVGParser extends DefaultHandler2
       /*
        * Extract a quoted string from the input.
        */
-      public String  nextQuotedString()
+      String  nextQuotedString()
       {
          if (empty())
             return null;
@@ -2532,7 +2529,7 @@ public class SVGParser extends DefaultHandler2
       /*
        * Return the remaining input as a string.
        */
-      public String  restOfText()
+      String  restOfText()
       {
          if (empty())
             return null;
@@ -2637,7 +2634,7 @@ public class SVGParser extends DefaultHandler2
    }
 
 
-   protected static void  processStyleProperty(Style style, String localName, String val) throws SAXException
+   static void  processStyleProperty(Style style, String localName, String val) throws SAXException
    {
       if (val.length() == 0) { // The spec doesn't say how to handle empty style attributes.
          return;               // Our strategy is just to ignore them.
@@ -2782,14 +2779,14 @@ public class SVGParser extends DefaultHandler2
             break;
 
          case display:
-            if (val.indexOf('|') >= 0 || (VALID_DISPLAY_VALUES.indexOf('|'+val+'|') == -1))
+            if (val.indexOf('|') >= 0 || !VALID_DISPLAY_VALUES.contains('|'+val+'|'))
                throw new SAXException("Invalid value for \"display\" attribute: "+val);
             style.display = !val.equals(NONE);
             style.specifiedFlags |= SVG.SPECIFIED_DISPLAY;
             break;
 
          case visibility:
-            if (val.indexOf('|') >= 0 || (VALID_VISIBILITY_VALUES.indexOf('|'+val+'|') == -1))
+            if (val.indexOf('|') >= 0 || !VALID_VISIBILITY_VALUES.contains('|'+val+'|'))
                throw new SAXException("Invalid value for \"visibility\" attribute: "+val);
             style.visibility = val.equals("visible");
             style.specifiedFlags |= SVG.SPECIFIED_VISIBILITY;
@@ -2914,102 +2911,106 @@ public class SVGParser extends DefaultHandler2
          if (cmd == null)
             throw new SAXException("Bad transform function encountered in transform list: "+val);
 
-         if (cmd.equals("matrix"))
-         {
-            scan.skipWhitespace();
-            float a = scan.nextFloat();
-            scan.skipCommaWhitespace();
-            float b = scan.nextFloat();
-            scan.skipCommaWhitespace();
-            float c = scan.nextFloat();
-            scan.skipCommaWhitespace();
-            float d = scan.nextFloat();
-            scan.skipCommaWhitespace();
-            float e = scan.nextFloat();
-            scan.skipCommaWhitespace();
-            float f = scan.nextFloat();
-            scan.skipWhitespace();
+         switch (cmd) {
+            case "matrix":
+               scan.skipWhitespace();
+               float a = scan.nextFloat();
+               scan.skipCommaWhitespace();
+               float b = scan.nextFloat();
+               scan.skipCommaWhitespace();
+               float c = scan.nextFloat();
+               scan.skipCommaWhitespace();
+               float d = scan.nextFloat();
+               scan.skipCommaWhitespace();
+               float e = scan.nextFloat();
+               scan.skipCommaWhitespace();
+               float f = scan.nextFloat();
+               scan.skipWhitespace();
 
-            if (Float.isNaN(f) || !scan.consume(')'))
-               throw new SAXException("Invalid transform list: "+val);
+               if (Float.isNaN(f) || !scan.consume(')'))
+                  throw new SAXException("Invalid transform list: " + val);
 
-            Matrix m = new Matrix();
-            m.setValues(new float[] {a, c, e, b, d, f, 0, 0, 1});
-            matrix.preConcat(m);
-         }
-         else if (cmd.equals("translate"))
-         {
-            scan.skipWhitespace();
-            float  tx = scan.nextFloat();
-            float  ty = scan.possibleNextFloat();
-            scan.skipWhitespace();
+               Matrix m = new Matrix();
+               m.setValues(new float[]{a, c, e, b, d, f, 0, 0, 1});
+               matrix.preConcat(m);
+               break;
 
-            if (Float.isNaN(tx) || !scan.consume(')'))
-               throw new SAXException("Invalid transform list: "+val);
+            case "translate":
+               scan.skipWhitespace();
+               float tx = scan.nextFloat();
+               float ty = scan.possibleNextFloat();
+               scan.skipWhitespace();
 
-            if (Float.isNaN(ty))
-               matrix.preTranslate(tx, 0f);
-            else
-               matrix.preTranslate(tx, ty);
-         }
-         else if (cmd.equals("scale"))
-         {
-            scan.skipWhitespace();
-            float  sx = scan.nextFloat();
-            float  sy = scan.possibleNextFloat();
-            scan.skipWhitespace();
+               if (Float.isNaN(tx) || !scan.consume(')'))
+                  throw new SAXException("Invalid transform list: " + val);
 
-            if (Float.isNaN(sx) || !scan.consume(')'))
-               throw new SAXException("Invalid transform list: "+val);
+               if (Float.isNaN(ty))
+                  matrix.preTranslate(tx, 0f);
+               else
+                  matrix.preTranslate(tx, ty);
+               break;
 
-            if (Float.isNaN(sy))
-               matrix.preScale(sx, sx);
-            else
-               matrix.preScale(sx, sy);
-         }
-         else if (cmd.equals("rotate"))
-         {
-            scan.skipWhitespace();
-            float  ang = scan.nextFloat();
-            float  cx = scan.possibleNextFloat();
-            float  cy = scan.possibleNextFloat();
-            scan.skipWhitespace();
+            case "scale":
+               scan.skipWhitespace();
+               float sx = scan.nextFloat();
+               float sy = scan.possibleNextFloat();
+               scan.skipWhitespace();
 
-            if (Float.isNaN(ang) || !scan.consume(')'))
-               throw new SAXException("Invalid transform list: "+val);
+               if (Float.isNaN(sx) || !scan.consume(')'))
+                  throw new SAXException("Invalid transform list: " + val);
 
-            if (Float.isNaN(cx)) {
-               matrix.preRotate(ang);
-            } else if (!Float.isNaN(cy)) {
-               matrix.preRotate(ang, cx, cy);
-            } else {
-               throw new SAXException("Invalid transform list: "+val);
+               if (Float.isNaN(sy))
+                  matrix.preScale(sx, sx);
+               else
+                  matrix.preScale(sx, sy);
+               break;
+
+            case "rotate": {
+               scan.skipWhitespace();
+               float ang = scan.nextFloat();
+               float cx = scan.possibleNextFloat();
+               float cy = scan.possibleNextFloat();
+               scan.skipWhitespace();
+
+               if (Float.isNaN(ang) || !scan.consume(')'))
+                  throw new SAXException("Invalid transform list: " + val);
+
+               if (Float.isNaN(cx)) {
+                  matrix.preRotate(ang);
+               } else if (!Float.isNaN(cy)) {
+                  matrix.preRotate(ang, cx, cy);
+               } else {
+                  throw new SAXException("Invalid transform list: " + val);
+               }
+               break;
             }
-         }
-         else if (cmd.equals("skewX"))
-         {
-            scan.skipWhitespace();
-            float  ang = scan.nextFloat();
-            scan.skipWhitespace();
 
-            if (Float.isNaN(ang) || !scan.consume(')'))
-               throw new SAXException("Invalid transform list: "+val);
+            case "skewX": {
+               scan.skipWhitespace();
+               float ang = scan.nextFloat();
+               scan.skipWhitespace();
 
-            matrix.preSkew((float) Math.tan(Math.toRadians(ang)), 0f);
-         }
-         else if (cmd.equals("skewY"))
-         {
-            scan.skipWhitespace();
-            float  ang = scan.nextFloat();
-            scan.skipWhitespace();
+               if (Float.isNaN(ang) || !scan.consume(')'))
+                  throw new SAXException("Invalid transform list: " + val);
 
-            if (Float.isNaN(ang) || !scan.consume(')'))
-               throw new SAXException("Invalid transform list: "+val);
+               matrix.preSkew((float) Math.tan(Math.toRadians(ang)), 0f);
+               break;
+            }
 
-            matrix.preSkew(0f, (float) Math.tan(Math.toRadians(ang)));
-         }
-         else if (cmd != null) {
-            throw new SAXException("Invalid transform list fn: "+cmd+")");
+            case "skewY": {
+               scan.skipWhitespace();
+               float ang = scan.nextFloat();
+               scan.skipWhitespace();
+
+               if (Float.isNaN(ang) || !scan.consume(')'))
+                  throw new SAXException("Invalid transform list: " + val);
+
+               matrix.preSkew(0f, (float) Math.tan(Math.toRadians(ang)));
+               break;
+            }
+
+            default:
+               throw new SAXException("Invalid transform list fn: " + cmd + ")");
          }
 
          if (scan.empty())
@@ -3030,7 +3031,7 @@ public class SVGParser extends DefaultHandler2
     * Parse an SVG 'Length' value (usually a coordinate).
     * Spec says: length ::= number ("em" | "ex" | "px" | "in" | "cm" | "mm" | "pt" | "pc" | "%")?
     */
-   protected static Length  parseLength(String val) throws SAXException
+   static Length  parseLength(String val) throws SAXException
    {
       if (val.length() == 0)
          throw new SAXException("Invalid length value (empty string)");
@@ -3070,7 +3071,7 @@ public class SVGParser extends DefaultHandler2
       if (val.length() == 0)
          throw new SAXException("Invalid length list (empty string)");
 
-      List<Length>  coords = new ArrayList<Length>(1);
+      List<Length>  coords = new ArrayList<>(1);
 
       TextScanner scan = new TextScanner(val);
       scan.skipWhitespace();
@@ -3158,25 +3159,26 @@ public class SVGParser extends DefaultHandler2
       TextScanner scan = new TextScanner(val);
       scan.skipWhitespace();
 
-      PreserveAspectRatio.Alignment  align = null;
-      PreserveAspectRatio.Scale      scale = null;
-
       String  word = scan.nextToken();
       if ("defer".equals(word)) {    // Ignore defer keyword
          scan.skipWhitespace();
          word = scan.nextToken();
       }
-      align = AspectRatioKeywords.get(word);
+
+      PreserveAspectRatio.Alignment  align = AspectRatioKeywords.get(word);
+      PreserveAspectRatio.Scale      scale = null;
+
       scan.skipWhitespace();
 
       if (!scan.empty()) {
          String meetOrSlice = scan.nextToken();
-         if (meetOrSlice.equals("meet")) {
-            scale = PreserveAspectRatio.Scale.Meet;
-         } else if (meetOrSlice.equals("slice")) {
-            scale = PreserveAspectRatio.Scale.Slice;
-         } else {
-            throw new SAXException("Invalid preserveAspectRatio definition: "+val);
+         switch (meetOrSlice) {
+            case "meet":
+               scale = PreserveAspectRatio.Scale.Meet; break;
+            case "slice":
+               scale = PreserveAspectRatio.Scale.Slice; break;
+            default:
+               throw new SAXException("Invalid preserveAspectRatio definition: " + val);
          }
       }
       obj.preserveAspectRatio = new PreserveAspectRatio(align, scale);
@@ -3209,12 +3211,13 @@ public class SVGParser extends DefaultHandler2
 
    private static SvgPaint parseColourSpecifer(String val) throws SAXException
    {
-      if (val.equals(NONE)) {
-         return null;
-      } else if (val.equals(CURRENTCOLOR)) {
-         return CurrentColor.getInstance();
-      } else {
-         return parseColour(val);
+      switch (val) {
+         case NONE:
+            return null;
+         case CURRENTCOLOR:
+            return CurrentColor.getInstance();
+         default:
+            return parseColour(val);
       }
    }
 
@@ -3285,7 +3288,7 @@ public class SVGParser extends DefaultHandler2
       if (col == null) {
          throw new SAXException("Invalid colour keyword: "+name);
       }
-      return new Colour(col.intValue());
+      return new Colour(col);
    }
 
 
@@ -3293,19 +3296,17 @@ public class SVGParser extends DefaultHandler2
    // [ [ <'font-style'> || <'font-variant'> || <'font-weight'> ]? <'font-size'> [ / <'line-height'> ]? <'font-family'> ] | caption | icon | menu | message-box | small-caption | status-bar | inherit
    private static void  parseFont(Style style, String val) throws SAXException
    {
-      List<String>     fontFamily = null;
-      Length           fontSize = null;
       Integer          fontWeight = null;
       Style.FontStyle  fontStyle = null;
       String           fontVariant = null;
 
       // Start by checking for the fixed size standard system font names (which we don't support)
-      if ("|caption|icon|menu|message-box|small-caption|status-bar|".indexOf('|'+val+'|') != -1)
+      if (!"|caption|icon|menu|message-box|small-caption|status-bar|".contains('|'+val+'|'))
          return;
          
       // Fist part: style/variant/weight (opt - one or more)
       TextScanner  scan = new TextScanner(val);
-      String item = null;
+      String       item;
       while (true)
       {
          item = scan.nextToken('/');
@@ -3336,7 +3337,7 @@ public class SVGParser extends DefaultHandler2
       }
       
       // Second part: font size (reqd) and line-height (opt)
-      fontSize = parseFontSize(item);
+      Length  fontSize = parseFontSize(item);
 
       // Check for line-height (which we don't support)
       if (scan.consume('/'))
@@ -3350,9 +3351,7 @@ public class SVGParser extends DefaultHandler2
       }
       
       // Third part: font family
-      fontFamily = parseFontFamily(scan.restOfText());
-
-      style.fontFamily = fontFamily;
+      style.fontFamily = parseFontFamily(scan.restOfText());
       style.fontSize = fontSize;
       style.fontWeight = (fontWeight == null) ? Style.FONT_WEIGHT_NORMAL : fontWeight;
       style.fontStyle = (fontStyle == null) ? Style.FontStyle.Normal : fontStyle;
@@ -3373,7 +3372,7 @@ public class SVGParser extends DefaultHandler2
          if (item == null)
             break;
          if (fonts == null)
-            fonts = new ArrayList<String>();
+            fonts = new ArrayList<>();
          fonts.add(item);
          scan.skipCommaWhitespace();
          if (scan.empty())
@@ -3513,7 +3512,7 @@ public class SVGParser extends DefaultHandler2
 
       float sum = dash.floatValue();
 
-      List<Length> dashes = new ArrayList<Length>();
+      List<Length> dashes = new ArrayList<>();
       dashes.add(dash);
       while (!scan.empty())
       {
@@ -3615,7 +3614,6 @@ public class SVGParser extends DefaultHandler2
    {
       TextScanner  scan = new TextScanner(val);
 
-      int     pathCommand = '?';
       float   currentX = 0f, currentY = 0f;    // The last point visited in the subpath
       float   lastMoveX = 0f, lastMoveY = 0f;  // The initial point of current subpath
       float   lastControlX = 0f, lastControlY = 0f;  // Last control point of the just completed bezier curve.
@@ -3628,7 +3626,7 @@ public class SVGParser extends DefaultHandler2
       if (scan.empty())
          return path;
 
-      pathCommand = scan.nextChar();
+      int  pathCommand = scan.nextChar();
 
       if (pathCommand != 'M' && pathCommand != 'm')
          return path;  // Invalid path - doesn't start with a move
@@ -3824,12 +3822,8 @@ public class SVGParser extends DefaultHandler2
                xAxisRotation = scan.checkedNextFloat(ry);
                largeArcFlag = scan.checkedNextFlag(xAxisRotation);
                sweepFlag = scan.checkedNextFlag(largeArcFlag);
-               if (sweepFlag == null)
-                  x = y = Float.NaN;
-               else {
-                  x = scan.possibleNextFloat();
-                  y = scan.checkedNextFloat(x);
-               }
+               x = scan.checkedNextFloat(sweepFlag);
+               y = scan.checkedNextFloat(x);
                if (Float.isNaN(y) || rx < 0 || ry < 0) {
                   Log.e(TAG, "Bad path coords for "+((char)pathCommand)+" path segment");
                   return path;
@@ -3870,7 +3864,7 @@ public class SVGParser extends DefaultHandler2
    private static Set<String>  parseRequiredFeatures(String val) throws SAXException
    {
       TextScanner      scan = new TextScanner(val);
-      HashSet<String>  result = new HashSet<String>();
+      HashSet<String>  result = new HashSet<>();
 
       while (!scan.empty())
       {
@@ -3894,7 +3888,7 @@ public class SVGParser extends DefaultHandler2
    private static Set<String>  parseSystemLanguage(String val) throws SAXException
    {
       TextScanner      scan = new TextScanner(val);
-      HashSet<String>  result = new HashSet<String>();
+      HashSet<String>  result = new HashSet<>();
 
       while (!scan.empty())
       {
@@ -3917,7 +3911,7 @@ public class SVGParser extends DefaultHandler2
    private static Set<String>  parseRequiredFormats(String val) throws SAXException
    {
       TextScanner      scan = new TextScanner(val);
-      HashSet<String>  result = new HashSet<String>();
+      HashSet<String>  result = new HashSet<>();
 
       while (!scan.empty())
       {

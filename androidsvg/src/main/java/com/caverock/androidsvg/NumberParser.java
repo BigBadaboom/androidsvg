@@ -31,17 +31,15 @@ package com.caverock.androidsvg;
  * 
  */
 
-public class NumberParser
+class NumberParser
 {
-   int      pos;
-
-   static long  TOO_BIG = Long.MAX_VALUE / 10;
+   private int  pos;
 
 
    /*
     * Return the value of pos after the parse.
     */
-   public int  getEndPos()
+   int  getEndPos()
    {
       return this.pos;
    }
@@ -49,18 +47,9 @@ public class NumberParser
 
    /*
     * Scan the string for an SVG number.
-    */
-   public float  parseNumber(String str)
-   {
-      return parseNumber(str, 0, str.length());
-   }
-
-
-   /*
-    * Scan the string for an SVG number.
     * Assumes maxPos will not be greater than str.length().
     */
-   public float  parseNumber(String input, int startpos, int len)
+   float  parseNumber(String input, int startpos, int len)
    {
       boolean  isNegative = false;
       long     significand = 0;
@@ -68,9 +57,11 @@ public class NumberParser
       int      numLeadingZeroes = 0;
       int      numTrailingZeroes = 0;
       boolean  decimalSeen = false;
-      int      sigStart = 0;
+      int      sigStart;
       int      decimalPos = 0;
-      int      exponent = 0;
+      int      exponent;
+
+      long     TOO_BIG = Long.MAX_VALUE / 10;
 
       pos = startpos;
 
