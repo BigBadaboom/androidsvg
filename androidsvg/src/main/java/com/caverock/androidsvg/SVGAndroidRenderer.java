@@ -3833,7 +3833,7 @@ class SVGAndroidRenderer
       float y2 = (obj.y2 == null) ? 0 : obj.y2.floatValueY(this);
 
       if (obj.boundingBox == null) {
-         obj.boundingBox = new Box(Math.min(x1, y1), Math.min(y1, y2), Math.abs(x2-x1), Math.abs(y2-y1));
+         obj.boundingBox = new Box(Math.min(x1, x2), Math.min(y1, y2), Math.abs(x2-x1), Math.abs(y2-y1));
       }
 
       Path  p = new Path();
