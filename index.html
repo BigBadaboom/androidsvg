@@ -134,8 +134,8 @@ SVG  svg = SVG.getFromAsset(getContext().getAssets(), filename);
 
 // Create a canvas to draw onto
 if (svg.getDocumentWidth() != -1) {
-   Bitmap  newBM = Bitmap.createBitmap(Math.ceil(svg.getDocumentWidth()),
-                                       Math.ceil(svg.getDocumentHeight()),
+   Bitmap  newBM = Bitmap.createBitmap((int) Math.ceil(svg.getDocumentWidth()),
+                                       (int) Math.ceil(svg.getDocumentHeight()),
                                        Bitmap.Config.ARGB_8888);
    Canvas  bmcanvas = new Canvas(newBM);
 
