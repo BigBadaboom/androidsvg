@@ -990,6 +990,7 @@ public class SVG
    static final long SPECIFIED_VIEWPORT_FILL_OPACITY = (1L<<34);
    static final long SPECIFIED_VECTOR_EFFECT         = (1L<<35);
    static final long SPECIFIED_DIRECTION             = (1L<<36);
+   static final long SPECIFIED_IMAGE_RENDERING       = (1L<<37);
 
    private static final long SPECIFIED_ALL = 0xffffffff;
 
@@ -1057,7 +1058,9 @@ public class SVG
       Float      viewportFillOpacity;
       
       VectorEffect  vectorEffect;
-      
+
+      RenderQuality  imageRendering;
+
 
       static final int  FONT_WEIGHT_NORMAL = 400;
       static final int  FONT_WEIGHT_BOLD = 700;
@@ -1070,14 +1073,14 @@ public class SVG
          NonZero,
          EvenOdd
       }
-      
+
       public enum LineCaps
       {
          Butt,
          Round,
          Square
       }
-      
+
       public enum LineJoin
       {
          Miter,
@@ -1098,7 +1101,7 @@ public class SVG
          Middle,
          End
       }
-      
+
       public enum TextDecoration
       {
          None,
@@ -1107,19 +1110,26 @@ public class SVG
          LineThrough,
          Blink
       }
-      
+
       public enum TextDirection
       {
          LTR,
          RTL
       }
-      
+
       public enum VectorEffect
       {
          None,
          NonScalingStroke
       }
-      
+
+      public enum RenderQuality
+      {
+         auto,
+         optimizeQuality,
+         optimizeSpeed
+      }
+
       static Style  getDefaultStyle()
       {
          Style  def = new Style();
@@ -1162,6 +1172,7 @@ public class SVG
          def.viewportFill = null;
          def.viewportFillOpacity = 1f;
          def.vectorEffect = VectorEffect.None;
+         def.imageRendering = RenderQuality.auto;
          return def;
       }
 

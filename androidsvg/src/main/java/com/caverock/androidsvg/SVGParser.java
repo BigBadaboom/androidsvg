@@ -28,6 +28,7 @@ import com.caverock.androidsvg.SVG.GradientSpread;
 import com.caverock.androidsvg.SVG.Length;
 import com.caverock.androidsvg.SVG.PaintReference;
 import com.caverock.androidsvg.SVG.Style;
+import com.caverock.androidsvg.SVG.Style.RenderQuality;
 import com.caverock.androidsvg.SVG.Style.TextDecoration;
 import com.caverock.androidsvg.SVG.Style.TextDirection;
 import com.caverock.androidsvg.SVG.Style.VectorEffect;
@@ -245,6 +246,7 @@ class SVGParser extends DefaultHandler2
       height,
       href,
       // id,
+      image_rendering,
       marker,
       marker_start, marker_mid, marker_end,
       markerHeight, markerUnits, markerWidth,
@@ -2859,6 +2861,11 @@ class SVGParser extends DefaultHandler2
             style.specifiedFlags |= SVG.SPECIFIED_VECTOR_EFFECT;
             break;
 
+         case image_rendering:
+            style.imageRendering = parseRenderQuality(val, localName);
+            style.specifiedFlags |= SVG.SPECIFIED_IMAGE_RENDERING;
+            break;
+
          default:
             break;
       }
@@ -3603,6 +3610,19 @@ class SVGParser extends DefaultHandler2
       if ("non-scaling-stroke".equals(val))
          return Style.VectorEffect.NonScalingStroke;
       throw new SAXException("Invalid vector-effect property: "+val);
+   }
+
+
+   // Parse a rendering quality property
+   private static RenderQuality  parseRenderQuality(String val, String attrName) throws SAXException
+   {
+      if ("auto".equals(val))
+         return RenderQuality.auto;
+      if ("optimizeQuality".equals(val))
+         return RenderQuality.optimizeQuality;
+      if ("optimizeSpeed".equals(val))
+         return RenderQuality.optimizeSpeed;
+      throw new SAXException("Invalid " + attrName + " property: "+val);
    }
 
 

@@ -17,14 +17,6 @@
 package com.caverock.androidsvg;
 
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
-import java.util.Stack;
-
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -61,6 +53,7 @@ import com.caverock.androidsvg.SVG.SolidColor;
 import com.caverock.androidsvg.SVG.Stop;
 import com.caverock.androidsvg.SVG.Style;
 import com.caverock.androidsvg.SVG.Style.FontStyle;
+import com.caverock.androidsvg.SVG.Style.RenderQuality;
 import com.caverock.androidsvg.SVG.Style.TextAnchor;
 import com.caverock.androidsvg.SVG.Style.TextDecoration;
 import com.caverock.androidsvg.SVG.Style.VectorEffect;
@@ -74,6 +67,14 @@ import com.caverock.androidsvg.SVG.SvgRadialGradient;
 import com.caverock.androidsvg.SVG.TextContainer;
 import com.caverock.androidsvg.SVG.TextSequence;
 import com.caverock.androidsvg.SVG.Unit;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+import java.util.Stack;
 
 /*
  * The rendering part of AndroidSVG.
@@ -1923,7 +1924,8 @@ class SVGAndroidRenderer
 
       viewportFill();
 
-      canvas.drawBitmap(image, 0, 0, new Paint());
+      Paint  bmPaint = new Paint((state.style.imageRendering == RenderQuality.optimizeSpeed) ? 0 : Paint.FILTER_BITMAP_FLAG);
+      canvas.drawBitmap(image, 0, 0, bmPaint);
 
       if (compositing)
          popLayer(obj);
@@ -2358,6 +2360,10 @@ class SVGAndroidRenderer
          state.style.viewportFillOpacity = style.viewportFillOpacity;
       }
 
+      if (isSpecified(style, SVG.SPECIFIED_IMAGE_RENDERING))
+      {
+         state.style.imageRendering = style.imageRendering;
+      }
    }
 
 
