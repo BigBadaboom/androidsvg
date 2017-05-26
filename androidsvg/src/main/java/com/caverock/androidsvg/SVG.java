@@ -85,8 +85,6 @@ public class SVG
 
    private static final double  SQRT2 = 1.414213562373095;
 
-   static boolean  logging = LibConfig.DEBUG;
-
 
    private Svg     rootElement = null;
 

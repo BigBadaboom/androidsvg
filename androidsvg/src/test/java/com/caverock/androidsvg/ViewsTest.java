@@ -16,7 +16,12 @@
 
 package com.caverock.androidsvg;
 
+import android.os.Build;
+
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
+import org.robolectric.annotation.Config;
 
 import java.lang.reflect.Field;
 import java.util.Set;
@@ -24,26 +29,13 @@ import java.util.Set;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+@Config(manifest=Config.NONE, sdk = Build.VERSION_CODES.JELLY_BEAN)
+@RunWith(RobolectricTestRunner.class)
 public class ViewsTest
 {
-   private void  disableLogging()
-   {
-      // Use reflection to call the package-private setLogging() method to ensure logging is off.
-      // Tests failed if Android logging methods are  called.
-      try {
-         Field  field = SVG.class.getDeclaredField("logging");
-         field.setAccessible(true);
-         field.setBoolean(null, false);
-      } catch (Exception e) {
-         throw new RuntimeException("Could not disable logging", e);
-      }
-   }
-
-
    @Test
    public void getViewList() throws SVGParseException
    {
-      disableLogging();
       String  test = "<?xml version=\"1.0\" standalone=\"no\"?>\n" +
                      "<svg xmlns=\"http://www.w3.org/2000/svg\">" +
                      "  <view id=\"normalView\" viewBox=\"0 0 100 100\"/>" +

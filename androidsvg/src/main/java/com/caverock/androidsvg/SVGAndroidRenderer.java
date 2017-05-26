@@ -268,10 +268,16 @@ class SVGAndroidRenderer
 
       checkXMLSpaceAttribute(rootObj);
 
+      // Save state
+      statePush();
+
       // Render the document
       render(rootObj, rootObj.width, rootObj.height,
              (viewBox != null) ? viewBox : rootObj.viewBox,
              (positioning != null) ? positioning : rootObj.preserveAspectRatio);
+
+      // Restore state
+      statePop();
    }
 
 
@@ -506,7 +512,7 @@ class SVGAndroidRenderer
 
    private static void  debug(String format, Object... args)
    {
-      if (SVG.logging)
+      if (LibConfig.DEBUG)
          Log.d(TAG, String.format(format, args));
    }
 
@@ -525,7 +531,7 @@ class SVGAndroidRenderer
 
    private void render(SVG.Svg obj)
    {
-      render(obj, obj.width, obj.height);
+      render(obj, obj.width, obj.height, obj.viewBox, obj.preserveAspectRatio);
    }
 
 
@@ -721,7 +727,7 @@ class SVGAndroidRenderer
          canvas.save();
          // Reset the canvas matrix so that we can draw the maskedContent exactly over the top of the root bitmap
          canvas.setMatrix(new Matrix());
-         canvas.drawBitmap(maskedContent, 0, 0, state.fillPaint);
+         canvas.drawBitmap(maskedContent, 0, 0, state.fillPaint);  // FIXME paint
          maskedContent.recycle();
          canvas.restore();
       }
