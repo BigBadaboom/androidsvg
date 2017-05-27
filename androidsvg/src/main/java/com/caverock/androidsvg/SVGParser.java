@@ -852,7 +852,7 @@ class SVGParser extends DefaultHandler2
    public void endDocument() throws SAXException
    {
       // Dump document
-      if (SVG.logging)
+      if (LibConfig.DEBUG)
          dumpNode(svgDocument.getRootElement(), "");
    }
 
@@ -874,7 +874,7 @@ class SVGParser extends DefaultHandler2
 
    private void  debug(String format, Object... args)
    {
-      if (SVG.logging)
+      if (LibConfig.DEBUG)
          Log.d(TAG, String.format(format, args));
    }
 
