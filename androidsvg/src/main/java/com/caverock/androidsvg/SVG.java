@@ -1216,7 +1216,7 @@ public class SVG
    {
       int colour;
       
-      static final Colour BLACK = new Colour(0);  // Black singleton - a common default value.
+      static final Colour BLACK = new Colour(0xff000000);  // Black singleton - a common default value.
       
       Colour(int val)
       {
@@ -1225,7 +1225,7 @@ public class SVG
       
       public String toString()
       {
-         return String.format("#%06x", colour);
+         return String.format("#%08x", colour);
       }
    }
 

@@ -62,6 +62,9 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import static android.R.attr.alpha;
+import static com.caverock.androidsvg.SVGAndroidRenderer.colourWithOpacity;
+
 
 /*
  * SVG parser code. Used by SVG class. Should not be called directly.
@@ -346,153 +349,155 @@ class SVGParser extends DefaultHandler2
    private static class ColourKeywords {
       private static final Map<String, Integer> colourKeywords = new HashMap<>(47);
       static {
-         colourKeywords.put("aliceblue", 0xf0f8ff);
-         colourKeywords.put("antiquewhite", 0xfaebd7);
-         colourKeywords.put("aqua", 0x00ffff);
-         colourKeywords.put("aquamarine", 0x7fffd4);
-         colourKeywords.put("azure", 0xf0ffff);
-         colourKeywords.put("beige", 0xf5f5dc);
-         colourKeywords.put("bisque", 0xffe4c4);
-         colourKeywords.put("black", 0x000000);
-         colourKeywords.put("blanchedalmond", 0xffebcd);
-         colourKeywords.put("blue", 0x0000ff);
-         colourKeywords.put("blueviolet", 0x8a2be2);
-         colourKeywords.put("brown", 0xa52a2a);
-         colourKeywords.put("burlywood", 0xdeb887);
-         colourKeywords.put("cadetblue", 0x5f9ea0);
-         colourKeywords.put("chartreuse", 0x7fff00);
-         colourKeywords.put("chocolate", 0xd2691e);
-         colourKeywords.put("coral", 0xff7f50);
-         colourKeywords.put("cornflowerblue", 0x6495ed);
-         colourKeywords.put("cornsilk", 0xfff8dc);
-         colourKeywords.put("crimson", 0xdc143c);
-         colourKeywords.put("cyan", 0x00ffff);
-         colourKeywords.put("darkblue", 0x00008b);
-         colourKeywords.put("darkcyan", 0x008b8b);
-         colourKeywords.put("darkgoldenrod", 0xb8860b);
-         colourKeywords.put("darkgray", 0xa9a9a9);
-         colourKeywords.put("darkgreen", 0x006400);
-         colourKeywords.put("darkgrey", 0xa9a9a9);
-         colourKeywords.put("darkkhaki", 0xbdb76b);
-         colourKeywords.put("darkmagenta", 0x8b008b);
-         colourKeywords.put("darkolivegreen", 0x556b2f);
-         colourKeywords.put("darkorange", 0xff8c00);
-         colourKeywords.put("darkorchid", 0x9932cc);
-         colourKeywords.put("darkred", 0x8b0000);
-         colourKeywords.put("darksalmon", 0xe9967a);
-         colourKeywords.put("darkseagreen", 0x8fbc8f);
-         colourKeywords.put("darkslateblue", 0x483d8b);
-         colourKeywords.put("darkslategray", 0x2f4f4f);
-         colourKeywords.put("darkslategrey", 0x2f4f4f);
-         colourKeywords.put("darkturquoise", 0x00ced1);
-         colourKeywords.put("darkviolet", 0x9400d3);
-         colourKeywords.put("deeppink", 0xff1493);
-         colourKeywords.put("deepskyblue", 0x00bfff);
-         colourKeywords.put("dimgray", 0x696969);
-         colourKeywords.put("dimgrey", 0x696969);
-         colourKeywords.put("dodgerblue", 0x1e90ff);
-         colourKeywords.put("firebrick", 0xb22222);
-         colourKeywords.put("floralwhite", 0xfffaf0);
-         colourKeywords.put("forestgreen", 0x228b22);
-         colourKeywords.put("fuchsia", 0xff00ff);
-         colourKeywords.put("gainsboro", 0xdcdcdc);
-         colourKeywords.put("ghostwhite", 0xf8f8ff);
-         colourKeywords.put("gold", 0xffd700);
-         colourKeywords.put("goldenrod", 0xdaa520);
-         colourKeywords.put("gray", 0x808080);
-         colourKeywords.put("green", 0x008000);
-         colourKeywords.put("greenyellow", 0xadff2f);
-         colourKeywords.put("grey", 0x808080);
-         colourKeywords.put("honeydew", 0xf0fff0);
-         colourKeywords.put("hotpink", 0xff69b4);
-         colourKeywords.put("indianred", 0xcd5c5c);
-         colourKeywords.put("indigo", 0x4b0082);
-         colourKeywords.put("ivory", 0xfffff0);
-         colourKeywords.put("khaki", 0xf0e68c);
-         colourKeywords.put("lavender", 0xe6e6fa);
-         colourKeywords.put("lavenderblush", 0xfff0f5);
-         colourKeywords.put("lawngreen", 0x7cfc00);
-         colourKeywords.put("lemonchiffon", 0xfffacd);
-         colourKeywords.put("lightblue", 0xadd8e6);
-         colourKeywords.put("lightcoral", 0xf08080);
-         colourKeywords.put("lightcyan", 0xe0ffff);
-         colourKeywords.put("lightgoldenrodyellow", 0xfafad2);
-         colourKeywords.put("lightgray", 0xd3d3d3);
-         colourKeywords.put("lightgreen", 0x90ee90);
-         colourKeywords.put("lightgrey", 0xd3d3d3);
-         colourKeywords.put("lightpink", 0xffb6c1);
-         colourKeywords.put("lightsalmon", 0xffa07a);
-         colourKeywords.put("lightseagreen", 0x20b2aa);
-         colourKeywords.put("lightskyblue", 0x87cefa);
-         colourKeywords.put("lightslategray", 0x778899);
-         colourKeywords.put("lightslategrey", 0x778899);
-         colourKeywords.put("lightsteelblue", 0xb0c4de);
-         colourKeywords.put("lightyellow", 0xffffe0);
-         colourKeywords.put("lime", 0x00ff00);
-         colourKeywords.put("limegreen", 0x32cd32);
-         colourKeywords.put("linen", 0xfaf0e6);
-         colourKeywords.put("magenta", 0xff00ff);
-         colourKeywords.put("maroon", 0x800000);
-         colourKeywords.put("mediumaquamarine", 0x66cdaa);
-         colourKeywords.put("mediumblue", 0x0000cd);
-         colourKeywords.put("mediumorchid", 0xba55d3);
-         colourKeywords.put("mediumpurple", 0x9370db);
-         colourKeywords.put("mediumseagreen", 0x3cb371);
-         colourKeywords.put("mediumslateblue", 0x7b68ee);
-         colourKeywords.put("mediumspringgreen", 0x00fa9a);
-         colourKeywords.put("mediumturquoise", 0x48d1cc);
-         colourKeywords.put("mediumvioletred", 0xc71585);
-         colourKeywords.put("midnightblue", 0x191970);
-         colourKeywords.put("mintcream", 0xf5fffa);
-         colourKeywords.put("mistyrose", 0xffe4e1);
-         colourKeywords.put("moccasin", 0xffe4b5);
-         colourKeywords.put("navajowhite", 0xffdead);
-         colourKeywords.put("navy", 0x000080);
-         colourKeywords.put("oldlace", 0xfdf5e6);
-         colourKeywords.put("olive", 0x808000);
-         colourKeywords.put("olivedrab", 0x6b8e23);
-         colourKeywords.put("orange", 0xffa500);
-         colourKeywords.put("orangered", 0xff4500);
-         colourKeywords.put("orchid", 0xda70d6);
-         colourKeywords.put("palegoldenrod", 0xeee8aa);
-         colourKeywords.put("palegreen", 0x98fb98);
-         colourKeywords.put("paleturquoise", 0xafeeee);
-         colourKeywords.put("palevioletred", 0xdb7093);
-         colourKeywords.put("papayawhip", 0xffefd5);
-         colourKeywords.put("peachpuff", 0xffdab9);
-         colourKeywords.put("peru", 0xcd853f);
-         colourKeywords.put("pink", 0xffc0cb);
-         colourKeywords.put("plum", 0xdda0dd);
-         colourKeywords.put("powderblue", 0xb0e0e6);
-         colourKeywords.put("purple", 0x800080);
-         colourKeywords.put("red", 0xff0000);
-         colourKeywords.put("rosybrown", 0xbc8f8f);
-         colourKeywords.put("royalblue", 0x4169e1);
-         colourKeywords.put("saddlebrown", 0x8b4513);
-         colourKeywords.put("salmon", 0xfa8072);
-         colourKeywords.put("sandybrown", 0xf4a460);
-         colourKeywords.put("seagreen", 0x2e8b57);
-         colourKeywords.put("seashell", 0xfff5ee);
-         colourKeywords.put("sienna", 0xa0522d);
-         colourKeywords.put("silver", 0xc0c0c0);
-         colourKeywords.put("skyblue", 0x87ceeb);
-         colourKeywords.put("slateblue", 0x6a5acd);
-         colourKeywords.put("slategray", 0x708090);
-         colourKeywords.put("slategrey", 0x708090);
-         colourKeywords.put("snow", 0xfffafa);
-         colourKeywords.put("springgreen", 0x00ff7f);
-         colourKeywords.put("steelblue", 0x4682b4);
-         colourKeywords.put("tan", 0xd2b48c);
-         colourKeywords.put("teal", 0x008080);
-         colourKeywords.put("thistle", 0xd8bfd8);
-         colourKeywords.put("tomato", 0xff6347);
-         colourKeywords.put("turquoise", 0x40e0d0);
-         colourKeywords.put("violet", 0xee82ee);
-         colourKeywords.put("wheat", 0xf5deb3);
-         colourKeywords.put("white", 0xffffff);
-         colourKeywords.put("whitesmoke", 0xf5f5f5);
-         colourKeywords.put("yellow", 0xffff00);
-         colourKeywords.put("yellowgreen", 0x9acd32);
+         colourKeywords.put("aliceblue", 0xfff0f8ff);
+         colourKeywords.put("antiquewhite", 0xfffaebd7);
+         colourKeywords.put("aqua", 0xff00ffff);
+         colourKeywords.put("aquamarine", 0xff7fffd4);
+         colourKeywords.put("azure", 0xfff0ffff);
+         colourKeywords.put("beige", 0xfff5f5dc);
+         colourKeywords.put("bisque", 0xffffe4c4);
+         colourKeywords.put("black", 0xff000000);
+         colourKeywords.put("blanchedalmond", 0xffffebcd);
+         colourKeywords.put("blue", 0xff0000ff);
+         colourKeywords.put("blueviolet", 0xff8a2be2);
+         colourKeywords.put("brown", 0xffa52a2a);
+         colourKeywords.put("burlywood", 0xffdeb887);
+         colourKeywords.put("cadetblue", 0xff5f9ea0);
+         colourKeywords.put("chartreuse", 0xff7fff00);
+         colourKeywords.put("chocolate", 0xffd2691e);
+         colourKeywords.put("coral", 0xffff7f50);
+         colourKeywords.put("cornflowerblue", 0xff6495ed);
+         colourKeywords.put("cornsilk", 0xfffff8dc);
+         colourKeywords.put("crimson", 0xffdc143c);
+         colourKeywords.put("cyan", 0xff00ffff);
+         colourKeywords.put("darkblue", 0xff00008b);
+         colourKeywords.put("darkcyan", 0xff008b8b);
+         colourKeywords.put("darkgoldenrod", 0xffb8860b);
+         colourKeywords.put("darkgray", 0xffa9a9a9);
+         colourKeywords.put("darkgreen", 0xff006400);
+         colourKeywords.put("darkgrey", 0xffa9a9a9);
+         colourKeywords.put("darkkhaki", 0xffbdb76b);
+         colourKeywords.put("darkmagenta", 0xff8b008b);
+         colourKeywords.put("darkolivegreen", 0xff556b2f);
+         colourKeywords.put("darkorange", 0xffff8c00);
+         colourKeywords.put("darkorchid", 0xff9932cc);
+         colourKeywords.put("darkred", 0xff8b0000);
+         colourKeywords.put("darksalmon", 0xffe9967a);
+         colourKeywords.put("darkseagreen", 0xff8fbc8f);
+         colourKeywords.put("darkslateblue", 0xff483d8b);
+         colourKeywords.put("darkslategray", 0xff2f4f4f);
+         colourKeywords.put("darkslategrey", 0xff2f4f4f);
+         colourKeywords.put("darkturquoise", 0xff00ced1);
+         colourKeywords.put("darkviolet", 0xff9400d3);
+         colourKeywords.put("deeppink", 0xffff1493);
+         colourKeywords.put("deepskyblue", 0xff00bfff);
+         colourKeywords.put("dimgray", 0xff696969);
+         colourKeywords.put("dimgrey", 0xff696969);
+         colourKeywords.put("dodgerblue", 0xff1e90ff);
+         colourKeywords.put("firebrick", 0xffb22222);
+         colourKeywords.put("floralwhite", 0xfffffaf0);
+         colourKeywords.put("forestgreen", 0xff228b22);
+         colourKeywords.put("fuchsia", 0xffff00ff);
+         colourKeywords.put("gainsboro", 0xffdcdcdc);
+         colourKeywords.put("ghostwhite", 0xfff8f8ff);
+         colourKeywords.put("gold", 0xffffd700);
+         colourKeywords.put("goldenrod", 0xffdaa520);
+         colourKeywords.put("gray", 0xff808080);
+         colourKeywords.put("green", 0xff008000);
+         colourKeywords.put("greenyellow", 0xffadff2f);
+         colourKeywords.put("grey", 0xff808080);
+         colourKeywords.put("honeydew", 0xfff0fff0);
+         colourKeywords.put("hotpink", 0xffff69b4);
+         colourKeywords.put("indianred", 0xffcd5c5c);
+         colourKeywords.put("indigo", 0xff4b0082);
+         colourKeywords.put("ivory", 0xfffffff0);
+         colourKeywords.put("khaki", 0xfff0e68c);
+         colourKeywords.put("lavender", 0xffe6e6fa);
+         colourKeywords.put("lavenderblush", 0xfffff0f5);
+         colourKeywords.put("lawngreen", 0xff7cfc00);
+         colourKeywords.put("lemonchiffon", 0xfffffacd);
+         colourKeywords.put("lightblue", 0xffadd8e6);
+         colourKeywords.put("lightcoral", 0xfff08080);
+         colourKeywords.put("lightcyan", 0xffe0ffff);
+         colourKeywords.put("lightgoldenrodyellow", 0xfffafad2);
+         colourKeywords.put("lightgray", 0xffd3d3d3);
+         colourKeywords.put("lightgreen", 0xff90ee90);
+         colourKeywords.put("lightgrey", 0xffd3d3d3);
+         colourKeywords.put("lightpink", 0xffffb6c1);
+         colourKeywords.put("lightsalmon", 0xffffa07a);
+         colourKeywords.put("lightseagreen", 0xff20b2aa);
+         colourKeywords.put("lightskyblue", 0xff87cefa);
+         colourKeywords.put("lightslategray", 0xff778899);
+         colourKeywords.put("lightslategrey", 0xff778899);
+         colourKeywords.put("lightsteelblue", 0xffb0c4de);
+         colourKeywords.put("lightyellow", 0xffffffe0);
+         colourKeywords.put("lime", 0xff00ff00);
+         colourKeywords.put("limegreen", 0xff32cd32);
+         colourKeywords.put("linen", 0xfffaf0e6);
+         colourKeywords.put("magenta", 0xffff00ff);
+         colourKeywords.put("maroon", 0xff800000);
+         colourKeywords.put("mediumaquamarine", 0xff66cdaa);
+         colourKeywords.put("mediumblue", 0xff0000cd);
+         colourKeywords.put("mediumorchid", 0xffba55d3);
+         colourKeywords.put("mediumpurple", 0xff9370db);
+         colourKeywords.put("mediumseagreen", 0xff3cb371);
+         colourKeywords.put("mediumslateblue", 0xff7b68ee);
+         colourKeywords.put("mediumspringgreen", 0xff00fa9a);
+         colourKeywords.put("mediumturquoise", 0xff48d1cc);
+         colourKeywords.put("mediumvioletred", 0xffc71585);
+         colourKeywords.put("midnightblue", 0xff191970);
+         colourKeywords.put("mintcream", 0xfff5fffa);
+         colourKeywords.put("mistyrose", 0xffffe4e1);
+         colourKeywords.put("moccasin", 0xffffe4b5);
+         colourKeywords.put("navajowhite", 0xffffdead);
+         colourKeywords.put("navy", 0xff000080);
+         colourKeywords.put("oldlace", 0xfffdf5e6);
+         colourKeywords.put("olive", 0xff808000);
+         colourKeywords.put("olivedrab", 0xff6b8e23);
+         colourKeywords.put("orange", 0xffffa500);
+         colourKeywords.put("orangered", 0xffff4500);
+         colourKeywords.put("orchid", 0xffda70d6);
+         colourKeywords.put("palegoldenrod", 0xffeee8aa);
+         colourKeywords.put("palegreen", 0xff98fb98);
+         colourKeywords.put("paleturquoise", 0xffafeeee);
+         colourKeywords.put("palevioletred", 0xffdb7093);
+         colourKeywords.put("papayawhip", 0xffffefd5);
+         colourKeywords.put("peachpuff", 0xffffdab9);
+         colourKeywords.put("peru", 0xffcd853f);
+         colourKeywords.put("pink", 0xffffc0cb);
+         colourKeywords.put("plum", 0xffdda0dd);
+         colourKeywords.put("powderblue", 0xffb0e0e6);
+         colourKeywords.put("purple", 0xff800080);
+         colourKeywords.put("rebeccapurple", 0xff663399);
+         colourKeywords.put("red", 0xffff0000);
+         colourKeywords.put("rosybrown", 0xffbc8f8f);
+         colourKeywords.put("royalblue", 0xff4169e1);
+         colourKeywords.put("saddlebrown", 0xff8b4513);
+         colourKeywords.put("salmon", 0xfffa8072);
+         colourKeywords.put("sandybrown", 0xfff4a460);
+         colourKeywords.put("seagreen", 0xff2e8b57);
+         colourKeywords.put("seashell", 0xfffff5ee);
+         colourKeywords.put("sienna", 0xffa0522d);
+         colourKeywords.put("silver", 0xffc0c0c0);
+         colourKeywords.put("skyblue", 0xff87ceeb);
+         colourKeywords.put("slateblue", 0xff6a5acd);
+         colourKeywords.put("slategray", 0xff708090);
+         colourKeywords.put("slategrey", 0xff708090);
+         colourKeywords.put("snow", 0xfffffafa);
+         colourKeywords.put("springgreen", 0xff00ff7f);
+         colourKeywords.put("steelblue", 0xff4682b4);
+         colourKeywords.put("tan", 0xffd2b48c);
+         colourKeywords.put("teal", 0xff008080);
+         colourKeywords.put("thistle", 0xffd8bfd8);
+         colourKeywords.put("tomato", 0xffff6347);
+         colourKeywords.put("turquoise", 0xff40e0d0);
+         colourKeywords.put("violet", 0xffee82ee);
+         colourKeywords.put("wheat", 0xfff5deb3);
+         colourKeywords.put("white", 0xffffffff);
+         colourKeywords.put("whitesmoke", 0xfff5f5f5);
+         colourKeywords.put("yellow", 0xffffff00);
+         colourKeywords.put("yellowgreen", 0xff9acd32);
+         colourKeywords.put("transparent", 0x00000000);
       }
 
       static Integer get(String colourName) {
@@ -2647,8 +2652,13 @@ class SVGParser extends DefaultHandler2
       switch (SVGAttr.fromString(localName))
       {
          case fill:
-            style.fill = parsePaintSpecifier(val, "fill");
-            style.specifiedFlags |= SVG.SPECIFIED_FILL;
+            try {
+               style.fill = parsePaintSpecifier(val, "fill");
+               style.specifiedFlags |= SVG.SPECIFIED_FILL;
+            } catch (SVGParseException e) {
+               // Error: Ignore property
+               Log.w(TAG, e.getMessage());
+            }
             break;
 
          case fill_rule:
@@ -2662,8 +2672,13 @@ class SVGParser extends DefaultHandler2
             break;
 
          case stroke:
-            style.stroke = parsePaintSpecifier(val, "stroke");
-            style.specifiedFlags |= SVG.SPECIFIED_STROKE;
+            try {
+               style.stroke = parsePaintSpecifier(val, "stroke");
+               style.specifiedFlags |= SVG.SPECIFIED_STROKE;
+            } catch (SVGParseException e) {
+               // Error: Ignore property
+               Log.w(TAG, e.getMessage());
+            }
             break;
 
          case stroke_opacity:
@@ -2710,8 +2725,13 @@ class SVGParser extends DefaultHandler2
             break;
 
          case color:
-            style.color = parseColour(val);
-            style.specifiedFlags |= SVG.SPECIFIED_COLOR;
+            try {
+               style.color = parseColour(val);
+               style.specifiedFlags |= SVG.SPECIFIED_COLOR;
+            } catch (SVGParseException e) {
+               // Error: Ignore property
+               Log.w(TAG, e.getMessage());
+            }
             break;
 
          case font:
@@ -2798,7 +2818,13 @@ class SVGParser extends DefaultHandler2
             if (val.equals(CURRENTCOLOR)) {
                style.stopColor = CurrentColor.getInstance();
             } else {
-               style.stopColor = parseColour(val);
+               try {
+                  style.stopColor = parseColour(val);
+               } catch (SVGParseException e) {
+                  // Error: Ignore property
+                  Log.w(TAG, e.getMessage());
+                  break;
+               }
             }
             style.specifiedFlags |= SVG.SPECIFIED_STOP_COLOR;
             break;
@@ -2832,7 +2858,13 @@ class SVGParser extends DefaultHandler2
             if (val.equals(CURRENTCOLOR)) {
                style.solidColor = CurrentColor.getInstance();
             } else {
-               style.solidColor = parseColour(val);
+               try {
+                  style.solidColor = parseColour(val);
+               } catch (SVGParseException e) {
+                  // Error: Ignore property
+                  Log.w(TAG, e.getMessage());
+                  break;
+               }
             }
             style.specifiedFlags |= SVG.SPECIFIED_SOLID_COLOR;
             break;
@@ -2846,7 +2878,13 @@ class SVGParser extends DefaultHandler2
             if (val.equals(CURRENTCOLOR)) {
                style.viewportFill = CurrentColor.getInstance();
             } else {
-               style.viewportFill = parseColour(val);
+               try {
+                  style.viewportFill = parseColour(val);
+               } catch (SVGParseException e) {
+                  // Error: Ignore property
+                  Log.w(TAG, e.getMessage());
+                  break;
+               }
             }
             style.specifiedFlags |= SVG.SPECIFIED_VIEWPORT_FILL;
             break;
@@ -3195,13 +3233,13 @@ class SVGParser extends DefaultHandler2
    /*
     * Parse a paint specifier such as in the fill and stroke attributes.
     */
-   private static SvgPaint parsePaintSpecifier(String val, String attrName) throws SAXException
+   private static SvgPaint parsePaintSpecifier(String val, String attrName) throws SVGParseException
    {
       if (val.startsWith("url("))
       {
          int  closeBracket = val.indexOf(")"); 
          if (closeBracket == -1)
-            throw new SAXException("Bad "+attrName+" attribute. Unterminated url() reference");
+            throw new SVGParseException("Bad "+attrName+" attribute. Unterminated url() reference");
 
          String    href = val.substring(4, closeBracket).trim();
          SvgPaint  fallback = null;
@@ -3216,7 +3254,7 @@ class SVGParser extends DefaultHandler2
    }
 
 
-   private static SvgPaint parseColourSpecifer(String val) throws SAXException
+   private static SvgPaint parseColourSpecifer(String val) throws SVGParseException
    {
       switch (val) {
          case NONE:
@@ -3232,68 +3270,156 @@ class SVGParser extends DefaultHandler2
    /*
     * Parse a colour definition.
     */
-   private static Colour  parseColour(String val) throws SAXException
+   private static Colour  parseColour(String val) throws SVGParseException
    {
       if (val.charAt(0) == '#')
       {
          IntegerParser  ip = IntegerParser.parseHex(val, 1, val.length());
          if (ip == null) {
-            throw new SAXException("Bad hex colour value: "+val);
+            throw new SVGParseException("Bad hex colour value: "+val);
          }
-         int pos = ip.getEndPos();
-         if (pos == 7) {
-            return new Colour(ip.value());
-         } else if (pos == 4) {
-            int threehex = ip.value();
-            int h1 = threehex & 0xf00;
-            int h2 = threehex & 0x0f0;
-            int h3 = threehex & 0x00f;
-            return new Colour(h1<<12|h1<<8|h2<<8|h2<<4|h3<<4|h3);
+         int  pos = ip.getEndPos();
+         int  h1, h2, h3, h4;
+         switch (pos) {
+            case 4:
+               int threehex = ip.value();
+               h1 = threehex & 0xf00;  // r
+               h2 = threehex & 0x0f0;  // g
+               h3 = threehex & 0x00f;  // b
+               return new Colour(0xff000000|h1<<12|h1<<8|h2<<8|h2<<4|h3<<4|h3);
+            case 5:
+               int fourhex = ip.value();
+               h1 = fourhex & 0xf000;  // r
+               h2 = fourhex & 0x0f00;  // g
+               h3 = fourhex & 0x00f0;  // b
+               h4 = fourhex & 0x000f;  // alpha
+               return new Colour(h4<<28|h4<<24 | h1<<8|h1<<4 | h2<<4|h2 | h3|h3>>4);
+            case 7:
+               return new Colour(0xff000000 | ip.value());
+            case 9:
+               return new Colour(ip.value() << 24 | ip.value() >>> 8);
+            default:
+               // Hex value had bad length for a colour
+               throw new SVGParseException("Bad hex colour value: "+val);
          }
-         // Hex value had bad length for a colour
-         throw new SAXException("Bad hex colour value: "+val);
       }
-      if (val.toLowerCase(Locale.US).startsWith("rgb("))
+
+      String   valLowerCase = val.toLowerCase(Locale.US);
+      boolean  isRGBA = valLowerCase.startsWith("rgba(");
+      if (isRGBA || valLowerCase.startsWith("rgb("))
       {
-         TextScanner scan = new TextScanner(val.substring(4));
+         TextScanner  scan = new TextScanner(val.substring(isRGBA ? 5 : 4));
          scan.skipWhitespace();
 
-         float red = scan.nextFloat();
+         float  red = scan.nextFloat();
          if (!Float.isNaN(red) && scan.consume('%'))
             red = (red * 256) / 100;
 
-         float green = scan.checkedNextFloat(red);
+         float  green = scan.checkedNextFloat(red);
          if (!Float.isNaN(green) && scan.consume('%'))
             green = (green * 256) / 100;
 
-         float blue = scan.checkedNextFloat(green);
+         float  blue = scan.checkedNextFloat(green);
          if (!Float.isNaN(blue) && scan.consume('%'))
             blue = (blue * 256) / 100;
 
-         scan.skipWhitespace();
-         if (Float.isNaN(blue) || !scan.consume(')'))
-            throw new SAXException("Bad rgb() colour value: "+val);
-
-         return new Colour(clamp255(red)<<16 | clamp255(green)<<8 | clamp255(blue));
+         if (isRGBA) {
+            float  alpha = scan.checkedNextFloat(blue);
+            scan.skipWhitespace();
+            if (Float.isNaN(alpha) || !scan.consume(')'))
+               throw new SVGParseException("Bad rgba() colour value: "+val);
+            return new Colour( clamp255(alpha * 256)<<24 | clamp255(red)<<16 | clamp255(green)<<8 | clamp255(blue) );
+         } else {
+            scan.skipWhitespace();
+            if (Float.isNaN(blue) || !scan.consume(')'))
+               throw new SVGParseException("Bad rgb() colour value: "+val);
+            return new Colour( 0xff000000 | clamp255(red)<<16 | clamp255(green)<<8 | clamp255(blue) );
+         }
       }
-      // Must be a colour keyword
       else
-         return parseColourKeyword(val);
+      {
+         boolean  isHSLA = valLowerCase.startsWith("hsla(");
+         if (isHSLA || valLowerCase.startsWith("hsl("))
+         {
+            TextScanner  scan = new TextScanner(val.substring(isHSLA ? 5 : 4));
+            scan.skipWhitespace();
+
+            float  hue = scan.nextFloat();
+
+            float  saturation = scan.checkedNextFloat(hue);
+            if (!Float.isNaN(saturation))
+               scan.consume('%');
+
+            float  lightness = scan.checkedNextFloat(saturation);
+            if (!Float.isNaN(lightness))
+               scan.consume('%');
+
+            if (isHSLA) {
+               float alpha = scan.checkedNextFloat(lightness);
+               scan.skipWhitespace();
+               if (Float.isNaN(alpha) || !scan.consume(')'))
+                  throw new SVGParseException("Bad hsla() colour value: "+val);
+               return new Colour( clamp255(alpha * 256)<<24 | hslToRgb(hue, saturation, lightness) );
+            } else {
+               scan.skipWhitespace();
+               if (Float.isNaN(lightness) || !scan.consume(')'))
+                  throw new SVGParseException("Bad hsl() colour value: "+val);
+               return new Colour( 0xff000000 | hslToRgb(hue, saturation, lightness) );
+            }
+         }
+      }
+
+      // Must be a colour keyword
+      return parseColourKeyword(valLowerCase);
    }
 
 
-   private static int clamp255(float val)
+   // Clamp a float to the range 0..255
+   private static int  clamp255(float val)
    {
       return (val < 0) ? 0 : (val > 255) ? 255 : Math.round(val);
    }
 
 
-   // Parse a colour component value (0..255 or 0%-100%)
-   private static Colour  parseColourKeyword(String name) throws SAXException
+   // Hue (degrees), saturation [0, 100], lightness [0, 100]
+   private static int  hslToRgb(float hue, float sat, float light)
    {
-      Integer  col = ColourKeywords.get(name.toLowerCase(Locale.US));
+      hue = (hue >= 0f) ? hue % 360f : (hue % 360f) + 360f;  // positive modulo (ie. -10 => 350)
+      hue /= 60f;    // [0, 360] -> [0, 6]
+      sat /= 100;   // [0, 100] -> [0, 1]
+      light /= 100; // [0, 100] -> [0, 1]
+      sat = (sat < 0f) ? 0f : (sat > 1f) ? 1f : sat;
+      light = (light < 0f) ? 0f : (light > 1f) ? 1f : light;
+      float  t1, t2;
+      if (light <= 0.5f) {
+         t2 = light * (sat + 1f);
+      } else {
+         t2 = light + sat - (light * sat);
+      }
+      t1 = light * 2f - t2;
+      float  r = hueToRgb(t1, t2, hue + 2f);
+      float  g = hueToRgb(t1, t2, hue);
+      float  b = hueToRgb(t1, t2, hue - 2f);
+      return clamp255(r * 256f)<<16 | clamp255(g * 256f)<<8 | clamp255(b * 256f);
+   }
+
+   private static float  hueToRgb(float t1, float t2, float hue) {
+      if (hue < 0f) hue += 6f;
+      if (hue >= 6f) hue -= 6f;
+
+      if (hue < 1) return (t2 - t1) * hue + t1;
+      else if (hue < 3f) return t2;
+      else if (hue < 4f) return (t2 - t1) * (4f - hue) + t1;
+      else return t1;
+   }
+
+
+   // Parse a colour component value (0..255 or 0%-100%)
+   private static Colour  parseColourKeyword(String nameLowerCase) throws SVGParseException
+   {
+      Integer  col = ColourKeywords.get(nameLowerCase);
       if (col == null) {
-         throw new SAXException("Invalid colour keyword: "+name);
+         throw new SVGParseException("Invalid colour keyword: "+nameLowerCase);
       }
       return new Colour(col);
    }
@@ -3440,7 +3566,7 @@ class SVGParser extends DefaultHandler2
    // Parse a text decoration keyword
    private static TextDecoration  parseTextDecoration(String val) throws SAXException
    {
-      if ("none".equals(val))
+      if (NONE.equals(val))
          return Style.TextDecoration.None;
       if ("underline".equals(val))
          return Style.TextDecoration.Underline;
@@ -3605,7 +3731,7 @@ class SVGParser extends DefaultHandler2
    // Parse a vector effect keyword
    private static VectorEffect  parseVectorEffect(String val) throws SAXException
    {
-      if ("none".equals(val))
+      if (NONE.equals(val))
          return Style.VectorEffect.None;
       if ("non-scaling-stroke".equals(val))
          return Style.VectorEffect.NonScalingStroke;

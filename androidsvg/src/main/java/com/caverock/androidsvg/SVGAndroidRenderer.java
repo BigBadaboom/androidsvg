@@ -2384,7 +2384,7 @@ class SVGAndroidRenderer
       } else {
          return;
       }
-      col = clamp255(paintOpacity) << 24 | col;
+      col = colourWithOpacity(col, paintOpacity);
       if (isFill)
          state.fillPaint.setColor(col);
       else
@@ -2417,10 +2417,20 @@ class SVGAndroidRenderer
    }
 
 
-   private int  clamp255(float val)
+   // Convert a float in range 0..1 to an int in range 0..255.
+   private static int  clamp255(float val)
    {
       int  i = (int)(val * 256f);
       return (i<0) ? 0 : (i>255) ? 255 : i;
+   }
+
+
+   static int  colourWithOpacity(int colour, float opacity)
+   {
+      int  alpha = (colour >> 24) & 0xff;
+      alpha = Math.round(alpha * opacity);
+      alpha = (alpha<0) ? 0 : (alpha>255) ? 255 : alpha;
+      return (alpha << 24) | (colour & 0xffffff);
    }
 
 
@@ -2471,7 +2481,7 @@ class SVGAndroidRenderer
          return;
       }
       if (state.style.viewportFillOpacity != null)
-         col = clamp255(state.style.viewportFillOpacity) << 24 | col;
+         col = colourWithOpacity(col, state.style.viewportFillOpacity);
 
       canvas.drawColor(col);
    }
@@ -3271,7 +3281,7 @@ class SVGAndroidRenderer
          Colour col = (SVG.Colour) state.style.stopColor;
          if (col == null)
             col = Colour.BLACK;
-         colours[i] = clamp255(state.style.stopOpacity) << 24 | col.colour;
+         colours[i] = colourWithOpacity(col.colour, state.style.stopOpacity);
          i++;
 
          statePop();
@@ -3381,7 +3391,7 @@ class SVGAndroidRenderer
          Colour col = (SVG.Colour) state.style.stopColor;
          if (col == null)
             col = Colour.BLACK;
-         colours[i] = clamp255(state.style.stopOpacity) << 24 | col.colour;
+         colours[i] = colourWithOpacity(col.colour, state.style.stopOpacity);
          i++;
 
          statePop();
