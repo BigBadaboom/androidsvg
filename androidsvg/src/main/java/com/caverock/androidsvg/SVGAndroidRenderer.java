@@ -76,6 +76,8 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.Stack;
 
+import static android.R.attr.y;
+
 /*
  * The rendering part of AndroidSVG.
  */
@@ -85,7 +87,6 @@ class SVGAndroidRenderer
    private static final String  TAG = "SVGAndroidRenderer";
 
    private Canvas   canvas;
-   private Box      canvasViewPort;
    private float    dpi;    // dots per inch. Needed for accurate conversion of length values that have real world units, such as "cm".
    private boolean  directRenderingMode;
 
@@ -181,7 +182,7 @@ class SVGAndroidRenderer
       // Initialise the style state properties like Paints etc using a fresh instance of Style
       updateStyle(state, Style.getDefaultStyle());
 
-      state.viewPort = this.canvasViewPort;
+      state.viewPort = null;  // Get filled in later
 
       state.spacePreserve = false;
       state.directRendering = this.directRenderingMode;
@@ -208,11 +209,10 @@ class SVGAndroidRenderer
     * @param defaultDPI the DPI setting to use when converting real-world units such as centimetres.
     */
 
-   SVGAndroidRenderer(Canvas canvas, SVG.Box viewPort, float defaultDPI)
+   SVGAndroidRenderer(Canvas canvas, float defaultDPI)
    {
       this.canvas = canvas;
       this.dpi = defaultDPI;
-      this.canvasViewPort = viewPort;
    }
 
 
@@ -251,7 +251,7 @@ class SVGAndroidRenderer
    /*
     * Render the whole document.
     */
-   void  renderDocument(SVG document, Box viewBox, PreserveAspectRatio positioning, boolean directRenderingMode)
+   void  renderDocument(SVG document, Box canvasViewPort, Box viewBox, PreserveAspectRatio positioning, boolean directRenderingMode)
    {
       this.document = document;
       this.directRenderingMode = directRenderingMode;
@@ -272,7 +272,7 @@ class SVGAndroidRenderer
       statePush();
 
       // Render the document
-      render(rootObj, rootObj.width, rootObj.height,
+      render(rootObj, canvasViewPort,
              (viewBox != null) ? viewBox : rootObj.viewBox,
              (positioning != null) ? positioning : rootObj.preserveAspectRatio);
 
@@ -531,26 +531,28 @@ class SVGAndroidRenderer
 
    private void render(SVG.Svg obj)
    {
-      render(obj, obj.width, obj.height, obj.viewBox, obj.preserveAspectRatio);
+      // <svg> elements establish a new viewport.
+      Box viewPort = makeViewPort(obj.x, obj.y, obj.width, obj.height);
+
+      render(obj, viewPort, obj.viewBox, obj.preserveAspectRatio);
    }
 
 
    // When referenced by a <use> element, it's width and height take precedence over the ones in the <svg> object.
-   private void render(SVG.Svg obj, SVG.Length width, SVG.Length height)
+   private void render(SVG.Svg obj, Box viewPort)
    {
-      render(obj, width, height, obj.viewBox, obj.preserveAspectRatio);
+      render(obj, viewPort, obj.viewBox, obj.preserveAspectRatio);
    }
 
 
    // When called from renderDocument, we pass in our own viewBox.
    // If rendering the whole document, it will be rootObj.viewBox.  When rendering a view
    // it will be the viewBox from the <view> element.
-   private void render(SVG.Svg obj, SVG.Length width, SVG.Length height, Box viewBox, PreserveAspectRatio positioning)
+   private void render(SVG.Svg obj, Box viewPort, Box viewBox, PreserveAspectRatio positioning)
    {
       debug("Svg render");
 
-      if ((width != null && width.isZero()) ||
-          (height != null && height.isZero()))
+      if (viewPort.width == 0f || viewPort.height == 0f)
          return;
 
       // "If attribute 'preserveAspectRatio' is not specified, then the effect is as if a value of xMidYMid meet were specified."
@@ -562,19 +564,7 @@ class SVGAndroidRenderer
       if (!display())
          return;
 
-      // <svg> elements establish a new viewport.
-      float  _x = 0f;
-      float  _y = 0f;
-      if (obj.parent != null)  // Ignore x,y for root <svg> element
-      {
-         _x = (obj.x != null) ? obj.x.floatValueX(this) : 0f;
-         _y = (obj.y != null) ? obj.y.floatValueY(this) : 0f;
-      }
-         
-      Box  viewPortUser = getCurrentViewPortInUserUnits();
-      float  _w = (width != null) ? width.floatValueX(this) : viewPortUser.width;  // default 100%
-      float  _h = (height != null) ? height.floatValueY(this) : viewPortUser.height;
-      state.viewPort = new SVG.Box(_x, _y, _w, _h);
+      state.viewPort = viewPort;
 
       if (!state.style.overflow) {
          setClipRect(state.viewPort.minX, state.viewPort.minY, state.viewPort.width, state.viewPort.height);
@@ -586,7 +576,7 @@ class SVGAndroidRenderer
          canvas.concat(calculateViewBoxTransform(state.viewPort, viewBox, positioning));
          state.viewBox = obj.viewBox;  // Note: definitely obj.viewBox here. Not viewBox parameter.
       } else {
-         canvas.translate(_x, _y);
+         canvas.translate(state.viewPort.minX, state.viewPort.minY);
       }
 
       boolean  compositing = pushLayer();
@@ -600,6 +590,20 @@ class SVGAndroidRenderer
          popLayer(obj);
 
       updateParentBoundingBox(obj);
+   }
+
+
+   // Derive the viewport from the x, y, width and height attributes of an object
+   private Box makeViewPort(Length x, Length y, Length width, Length height)
+   {
+      float  _x = (x != null) ? x.floatValueX(this) : 0f;
+      float  _y = (y != null) ? y.floatValueY(this) : 0f;
+
+      Box viewPortUser = getCurrentViewPortInUserUnits();
+      float  _w = (width != null) ? width.floatValueX(this) : viewPortUser.width;  // default 100%
+      float  _h = (height != null) ? height.floatValueY(this) : viewPortUser.height;
+
+      return new Box(_x, _y, _w, _h);
    }
 
 
@@ -1012,19 +1016,21 @@ class SVGAndroidRenderer
 
       if (ref instanceof SVG.Svg)
       {
-         statePush();
          SVG.Svg  svgElem = (SVG.Svg) ref;
-         Length _w = (obj.width != null) ? obj.width : svgElem.width;
-         Length _h = (obj.height != null) ? obj.height : svgElem.height;
-         render(svgElem, _w, _h);
+         Box viewPort = makeViewPort(obj.x, obj.y, obj.width, obj.height);
+
+         statePush();
+         render(svgElem, viewPort);
          statePop();
       }
       else if (ref instanceof SVG.Symbol)
       {
          Length _w = (obj.width != null) ? obj.width : new Length(100, Unit.percent);
          Length _h = (obj.height != null) ? obj.height : new Length(100, Unit.percent);
+         Box viewPort = makeViewPort(obj.x, obj.y, _w, _h);
+
          statePush();
-         render((SVG.Symbol) ref, _w, _h);
+         render((SVG.Symbol) ref, viewPort);
          statePop();
       }
       else
@@ -1829,12 +1835,11 @@ class SVGAndroidRenderer
    //==============================================================================
 
 
-   private void render(SVG.Symbol obj, SVG.Length width, SVG.Length height)
+   private void render(SVG.Symbol obj, Box viewPort)
    {
       debug("Symbol render");
 
-      if ((width != null && width.isZero()) ||
-          (height != null && height.isZero()))
+      if (viewPort.width == 0f || viewPort.height == 0f)
          return;
 
       // "If attribute 'preserveAspectRatio' is not specified, then the effect is as if a value of xMidYMid meet were specified."
@@ -1842,9 +1847,7 @@ class SVGAndroidRenderer
 
       updateStyleForElement(state, obj);
 
-      float  _w = (width != null) ? width.floatValueX(this) : state.viewPort.width;
-      float  _h = (height != null) ? height.floatValueX(this) : state.viewPort.height;
-      state.viewPort = new SVG.Box(0, 0, _w, _h);
+      state.viewPort = viewPort;
 
       if (!state.style.overflow) {
          setClipRect(state.viewPort.minX, state.viewPort.minY, state.viewPort.width, state.viewPort.height);
@@ -1853,6 +1856,8 @@ class SVGAndroidRenderer
       if (obj.viewBox != null) {
          canvas.concat(calculateViewBoxTransform(state.viewPort, obj.viewBox, positioning));
          state.viewBox = obj.viewBox;
+      } else {
+         canvas.translate(state.viewPort.minX, state.viewPort.minY);
       }
       
       boolean  compositing = pushLayer();
@@ -1958,7 +1963,7 @@ class SVGAndroidRenderer
       if (!";base64".equals(url.substring(comma-7, comma)))
          return null;
       byte[]  imageData = Base64.decode(url.substring(comma+1), Base64.DEFAULT);
-      return BitmapFactory.decodeByteArray(imageData, 0,  imageData.length);
+      return BitmapFactory.decodeByteArray(imageData, 0, imageData.length);
    }
 
 
@@ -3138,13 +3143,8 @@ class SVGAndroidRenderer
          updateStyleForElement(newState, ancestor);
 
       // Caller may also need a valid viewBox in order to calculate percentages
-      newState.viewBox = document.getRootElement().viewBox;
-      if (newState.viewBox == null) {
-         newState.viewBox = this.canvasViewPort;
-      }
-
-      // May also need a base viewport
-      newState.viewPort = this.canvasViewPort;
+      newState.viewBox = state.viewBox;
+      newState.viewPort = state.viewPort;
 
       // Set the directRendering mode based on what the current state has set
       newState.directRendering = state.directRendering;

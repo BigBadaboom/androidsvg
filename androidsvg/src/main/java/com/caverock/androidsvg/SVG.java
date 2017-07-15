@@ -328,9 +328,9 @@ public class SVG
       Canvas   canvas = picture.beginRecording(widthInPixels, heightInPixels);
       Box      viewPort = new Box(0f, 0f, (float) widthInPixels, (float) heightInPixels);
 
-      SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, viewPort, this.renderDPI);
+      SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, this.renderDPI);
 
-      renderer.renderDocument(this, null, null, false);
+      renderer.renderDocument(this, viewPort, null, null, false);
 
       picture.endRecording();
       return picture;
@@ -370,9 +370,9 @@ public class SVG
       Canvas   canvas = picture.beginRecording(widthInPixels, heightInPixels);
       Box      viewPort = new Box(0f, 0f, (float) widthInPixels, (float) heightInPixels);
 
-      SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, viewPort, this.renderDPI);
+      SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, this.renderDPI);
 
-      renderer.renderDocument(this, view.viewBox, view.preserveAspectRatio, false);
+      renderer.renderDocument(this, viewPort, view.viewBox, view.preserveAspectRatio, false);
 
       picture.endRecording();
       return picture;
@@ -405,17 +405,17 @@ public class SVG
    @SuppressWarnings({"WeakerAccess", "unused"})
    public void  renderToCanvas(Canvas canvas, RectF viewPort)
    {
-      Box  svgViewPort;
+      Box  canvasViewPort;
 
       if (viewPort != null) {
-         svgViewPort = Box.fromLimits(viewPort.left, viewPort.top, viewPort.right, viewPort.bottom);
+         canvasViewPort = Box.fromLimits(viewPort.left, viewPort.top, viewPort.right, viewPort.bottom);
       } else {
-         svgViewPort = new Box(0f, 0f, (float) canvas.getWidth(), (float) canvas.getHeight());
+         canvasViewPort = new Box(0f, 0f, (float) canvas.getWidth(), (float) canvas.getHeight());
       }
 
-      SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, svgViewPort, this.renderDPI);
+      SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, this.renderDPI);
 
-      renderer.renderDocument(this, null, null, true);
+      renderer.renderDocument(this, canvasViewPort, null, null, true);
    }
 
 
@@ -469,17 +469,17 @@ public class SVG
          return;
       }
 
-      Box  svgViewPort;
+      Box  canvasViewPort;
 
       if (viewPort != null) {
-         svgViewPort = Box.fromLimits(viewPort.left, viewPort.top, viewPort.right, viewPort.bottom);
+         canvasViewPort = Box.fromLimits(viewPort.left, viewPort.top, viewPort.right, viewPort.bottom);
       } else {
-         svgViewPort = new Box(0f, 0f, (float) canvas.getWidth(), (float) canvas.getHeight());
+         canvasViewPort = new Box(0f, 0f, (float) canvas.getWidth(), (float) canvas.getHeight());
       }
 
-      SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, svgViewPort, this.renderDPI);
+      SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, this.renderDPI);
 
-      renderer.renderDocument(this, view.viewBox, view.preserveAspectRatio, true);
+      renderer.renderDocument(this, canvasViewPort, view.viewBox, view.preserveAspectRatio, true);
    }
 
 
