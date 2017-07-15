@@ -843,11 +843,29 @@ public class SVG
       if (iri == null)
          return null;
 
+      iri = cssQuotedString(iri);
       if (iri.length() > 1 && iri.startsWith("#"))
       {
          return getElementById(iri.substring(1));
       }
       return null;
+   }
+
+
+   private String  cssQuotedString(String str)
+   {
+      if (str.startsWith("\"") && str.endsWith("\""))
+      {
+         // Remove quotes and replace escaped double-quote
+         str = str.substring(1, str.length()-1).replace("\\\"", "\"");
+      }
+      else if (str.startsWith("'") && str.endsWith("'"))
+      {
+         // Remove quotes and replace escaped single-quote
+         str = str.substring(1, str.length()-1).replace("\\'", "'");
+      }
+      // Remove escaped newline. Replace escape seq representing newline
+      return str.replace("\\\n", "").replace("\\A", "\n");
    }
 
 

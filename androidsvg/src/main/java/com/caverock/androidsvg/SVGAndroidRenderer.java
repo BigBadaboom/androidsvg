@@ -2954,7 +2954,7 @@ class SVGAndroidRenderer
          markers = calculateMarkerPositions((SVG.Line) obj);
       else // PolyLine and Polygon
          markers = calculateMarkerPositions((SVG.PolyLine) obj);
-      
+
       if (markers == null)
          return;
 
