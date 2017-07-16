@@ -113,7 +113,7 @@ class SVGAndroidRenderer
    private static final int  LUMINANCE_TO_ALPHA_GREEN = (int)(0.7154f * (1 << LUMINANCE_FACTOR_SHIFT));
    private static final int  LUMINANCE_TO_ALPHA_BLUE = (int)(0.0721f * (1 << LUMINANCE_FACTOR_SHIFT));
 
-   private static final String DEFAULT_FONT_FAMILY = "sans-serif";
+   private static final String DEFAULT_FONT_FAMILY = "serif";
 
    private static HashSet<String>  supportedFeatures = null;
 
