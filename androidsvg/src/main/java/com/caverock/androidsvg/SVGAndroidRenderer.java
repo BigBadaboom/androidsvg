@@ -1001,12 +1001,10 @@ class SVGAndroidRenderer
          canvas.concat(obj.transform);
       }
 
-      // We handle the x,y,width,height attributes by adjusting the transform
-      Matrix m = new Matrix();
+      // Handle the x,y attributes
       float _x = (obj.x != null) ? obj.x.floatValueX(this) : 0f;
       float _y = (obj.y != null) ? obj.y.floatValueY(this) : 0f;
-      m.preTranslate(_x, _y);
-      canvas.concat(m);
+      canvas.translate(_x, _y);
 
       checkForClipPath(obj);
 
@@ -1017,7 +1015,7 @@ class SVGAndroidRenderer
       if (ref instanceof SVG.Svg)
       {
          SVG.Svg  svgElem = (SVG.Svg) ref;
-         Box viewPort = makeViewPort(obj.x, obj.y, obj.width, obj.height);
+         Box viewPort = makeViewPort(null, null, obj.width, obj.height);
 
          statePush();
          render(svgElem, viewPort);
@@ -1027,7 +1025,7 @@ class SVGAndroidRenderer
       {
          Length _w = (obj.width != null) ? obj.width : new Length(100, Unit.percent);
          Length _h = (obj.height != null) ? obj.height : new Length(100, Unit.percent);
-         Box viewPort = makeViewPort(obj.x, obj.y, _w, _h);
+         Box viewPort = makeViewPort(null, null, _w, _h);
 
          statePush();
          render((SVG.Symbol) ref, viewPort);
