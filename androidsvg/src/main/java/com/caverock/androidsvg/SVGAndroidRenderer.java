@@ -76,8 +76,6 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.Stack;
 
-import static android.R.attr.y;
-
 /*
  * The rendering part of AndroidSVG.
  */
@@ -2777,15 +2775,33 @@ class SVGAndroidRenderer
          float dy = (y - this.y);
          double  len = Math.sqrt( dx*dx + dy*dy );
          if (len != 0) {
-            this.dx += (float) (dx / len);
-            this.dy += (float) (dy / len);
+            dx = (float) (dx / len);
+            dy = (float) (dy / len);
+         }
+         // Check for degenerate result where the two unit vectors cancelled each other out
+         if (dx == -this.dx && dy == -this.dy) {
+            // Use one of the two perpendicular vectors (-dy,x) or (dy,-dx).
+            // TODO: Work out a way to chose the best option of the two based on path direction.
+            this.dx = -dy;
+            this.dy = dx;
+         } else {
+            this.dx += dx;
+            this.dy += dy;
          }
       }
 
       void add(MarkerVector v2)
       {
-         this.dx += v2.dx;
-         this.dy += v2.dy;
+         // Check for degenerate result where the two unit vectors cancelled each other out
+         if (v2.dx == -this.dx && v2.dy == -this.dy) {
+            // Use one of the two perpendicular vectors (-dy,x) or (dy,-dx).
+            // TODO: Work out a way to chose the best option of the two based on path direction.
+            this.dx = -v2.dy;
+            this.dy = v2.dx;
+         } else {
+            this.dx += v2.dx;
+            this.dy += v2.dy;
+         }
       }
 
       @Override
