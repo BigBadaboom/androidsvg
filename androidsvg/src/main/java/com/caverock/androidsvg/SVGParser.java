@@ -607,11 +607,11 @@ class SVGParser extends DefaultHandler2
       }
       catch (IOException e)
       {
-         throw new SVGParseException("File error", e);
+         throw new SVGParseException("Stream error", e);
       }
       catch (ParserConfigurationException e)
       {
-         throw new SVGParseException("XML Parser problem", e);
+         throw new SVGParseException("XML parser problem", e);
       }
       catch (SAXException e)
       {
