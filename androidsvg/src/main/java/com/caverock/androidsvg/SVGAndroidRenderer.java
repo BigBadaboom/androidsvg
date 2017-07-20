@@ -2752,7 +2752,8 @@ class SVGAndroidRenderer
 
    private class MarkerVector
    {
-      float x, y, dx=0f, dy=0f;
+      float    x, y, dx=0f, dy=0f;
+      boolean  isAmbiguous = false;
 
       MarkerVector(float x, float y, float dx, float dy)
       {
@@ -2780,8 +2781,8 @@ class SVGAndroidRenderer
          }
          // Check for degenerate result where the two unit vectors cancelled each other out
          if (dx == -this.dx && dy == -this.dy) {
-            // Use one of the two perpendicular vectors (-dy,x) or (dy,-dx).
-            // TODO: Work out a way to chose the best option of the two based on path direction.
+            this.isAmbiguous = true;
+            // Choose one of the perpendiculars now. We will get a chance to switch it later.
             this.dx = -dy;
             this.dy = dx;
          } else {
@@ -2794,8 +2795,8 @@ class SVGAndroidRenderer
       {
          // Check for degenerate result where the two unit vectors cancelled each other out
          if (v2.dx == -this.dx && v2.dy == -this.dy) {
-            // Use one of the two perpendicular vectors (-dy,x) or (dy,-dx).
-            // TODO: Work out a way to chose the best option of the two based on path direction.
+            this.isAmbiguous = true;
+            // Choose one of the perpendiculars now. We will get a chance to switch it later.
             this.dx = -v2.dy;
             this.dy = v2.dx;
          } else {
@@ -2803,6 +2804,7 @@ class SVGAndroidRenderer
             this.dy += v2.dy;
          }
       }
+
 
       @Override
       public String toString()
@@ -2982,15 +2984,60 @@ class SVGAndroidRenderer
       if (_markerStart != null)
          renderMarker(_markerStart, markers.get(0));
 
-      if (_markerMid != null)
+      if (_markerMid != null && markers.size() > 2)
       {
-         for (int i=1; i<(markerCount-1); i++) {
-            renderMarker(_markerMid, markers.get(i));
+         MarkerVector  lastPos = markers.get(0);
+         MarkerVector  thisPos = markers.get(1);
+
+         for (int i=1; i<(markerCount-1); i++)
+         {
+            MarkerVector  nextPos = markers.get(i + 1);
+            if (thisPos.isAmbiguous)
+               thisPos = realignMarkerMid(lastPos, thisPos, nextPos);
+            renderMarker(_markerMid, thisPos);
+            lastPos = thisPos;
+            thisPos = nextPos;
          }
       }
 
       if (_markerEnd != null)
-         renderMarker(_markerEnd, markers.get(markerCount-1));
+         renderMarker(_markerEnd, markers.get(markerCount - 1));
+   }
+
+
+   /*
+    * This was one of the ambiguous markers. Try to see if we can find a better direction for
+    * it, now that we have more info available on the neighbouring marker positions.
+    */
+   private MarkerVector  realignMarkerMid(MarkerVector lastPos, MarkerVector thisPos, MarkerVector nextPos)
+   {
+      // Check the temporary marker vector against the incoming vector
+      float  dot = dotProduct(thisPos.dx, thisPos.dy, (thisPos.x - lastPos.x), (thisPos.y - lastPos.y));
+      if (dot == 0f) {
+         // Those two were perpendicular, so instead try the outgoing vector
+         dot = dotProduct(thisPos.dx, thisPos.dy, (nextPos.x - thisPos.x), (nextPos.y - thisPos.y));
+      }
+      if (dot > 0)
+         return thisPos;
+      if (dot == 0f) {
+         // If that was perpendicular also, then give up.
+         // Else use the one that points in the same direction as 0deg (1,0) or has non-negative y.
+         if (thisPos.dx > 0f || thisPos.dy >= 0)
+            return thisPos;
+      }
+      // Reverse this vector and point the marker in the opposite direction.
+      thisPos.dx = -thisPos.dx;
+      thisPos.dy = -thisPos.dy;
+      return thisPos;
+   }
+
+
+   /*
+    * Calculate the dot product of two vectors.
+    */
+   private float  dotProduct(float x1, float y1, float x2, float y2)
+   {
+      return x1 * x2 + y1 * y2;
    }
 
 
