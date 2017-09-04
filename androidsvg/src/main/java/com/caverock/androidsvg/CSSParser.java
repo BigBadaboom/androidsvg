@@ -34,7 +34,7 @@ import com.caverock.androidsvg.SVGParser.TextScanner;
  * hopefully parses almost all the CSS we are likely to strike in an SVG file.
  * The main goals are to (a) be small, and (b) parse the CSS in a Corel Draw SVG file.
  */
-class CSSParser
+public class CSSParser
 {
    private static final String  TAG = "AndroidSVG CSSParser";
 
@@ -744,17 +744,18 @@ class CSSParser
 
    /*
     * Used by SVGParser to parse the "class" attribute.
+    * Follows ordered set parser algorithm: https://dom.spec.whatwg.org/#concept-ordered-set-parser
     */
-   static List<String>  parseClassAttribute(String val) throws SAXException
+   public static List<String>  parseClassAttribute(String val)
    {
       CSSTextScanner  scan = new CSSTextScanner(val);
       List<String>    classNameList = null;
 
       while (!scan.empty())
       {
-         String  className = scan.nextIdentifier();
+         String  className = scan.nextToken();
          if (className == null)
-            throw new SAXException("Invalid value for \"class\" attribute: "+val);
+            continue;
          if (classNameList == null)
             classNameList = new ArrayList<>();
          classNameList.add(className);
