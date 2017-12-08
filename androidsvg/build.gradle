@@ -2,7 +2,6 @@ apply plugin: 'com.android.library'
 
 android {
     compileSdkVersion 23
-    buildToolsVersion "25.0.3"
 
     defaultConfig {
         minSdkVersion 8
@@ -24,3 +23,7 @@ android {
 
 apply from: 'packaging_configuration.gradle'
 apply from: 'upload_configuration.gradle'
+
+dependencies {
+    compile 'org.jetbrains:annotations-java5:15.0'
+}
