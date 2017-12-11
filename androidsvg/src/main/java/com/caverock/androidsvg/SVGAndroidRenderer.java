@@ -1898,6 +1898,7 @@ class SVGAndroidRenderer
          error("Could not locate image '%s'", obj.href);
          return;
       }
+      SVG.Box  imageNaturalSize = new SVG.Box(0,  0,  image.getWidth(), image.getHeight());
 
       updateStyleForElement(state, obj);
 
@@ -1920,9 +1921,7 @@ class SVGAndroidRenderer
          setClipRect(state.viewPort.minX, state.viewPort.minY, state.viewPort.width, state.viewPort.height);
       }
 
-      obj.boundingBox = new SVG.Box(0,  0,  image.getWidth(), image.getHeight());
-      canvas.concat(calculateViewBoxTransform(state.viewPort, obj.boundingBox, positioning));
-
+      obj.boundingBox = state.viewPort;
       updateParentBoundingBox(obj);
 
       checkForClipPath(obj);
@@ -1931,8 +1930,15 @@ class SVGAndroidRenderer
 
       viewportFill();
 
+      canvas.save();
+
+      // Local transform from image's natural dimensions to the specified SVG dimensions
+      canvas.concat(calculateViewBoxTransform(state.viewPort, imageNaturalSize, positioning));
+
       Paint  bmPaint = new Paint((state.style.imageRendering == RenderQuality.optimizeSpeed) ? 0 : Paint.FILTER_BITMAP_FLAG);
       canvas.drawBitmap(image, 0, 0, bmPaint);
+
+      canvas.restore();
 
       if (compositing)
          popLayer(obj);
@@ -4295,7 +4301,7 @@ class SVGAndroidRenderer
       statePush();
 
       state = findInheritFromAncestorState(mask);
-      // Set the style for the pattern (inherits from its own ancestors, not from callee's state)
+      // Set the style for the mask (inherits from its own ancestors, not from callee's state)
       // The 'opacity', 'filter' and 'display' properties do not apply to the 'mask' element" (sect 14.4)
       // Next line is not actually needed since we aren't calling pushLayer() here. Kept for future reference.
       state.style.opacity = 1f;
