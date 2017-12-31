@@ -20,12 +20,16 @@ package com.caverock.androidsvg;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.ColorMatrix;
+import android.graphics.ColorMatrixColorFilter;
 import android.graphics.DashPathEffect;
 import android.graphics.LinearGradient;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PathMeasure;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
 import android.graphics.RadialGradient;
 import android.graphics.RectF;
 import android.graphics.Shader;
@@ -86,7 +90,6 @@ class SVGAndroidRenderer
 
    private Canvas   canvas;
    private float    dpi;    // dots per inch. Needed for accurate conversion of length values that have real world units, such as "cm".
-   private boolean  directRenderingMode;
 
    // Renderer state
    private SVG                  document;
@@ -96,11 +99,6 @@ class SVGAndroidRenderer
    // Keep track of element stack while rendering.
    private Stack<SvgContainer>  parentStack; // The 'render parent' for elements like Symbol cf. file parent
    private Stack<Matrix>        matrixStack; // Keeps track of current transform as we descend into element tree
-
-   // Canvas stack for when we are processing mask elements
-   private Stack<Canvas>  canvasStack;
-   private Stack<Bitmap>  bitmapStack;
-
 
    private static final float  BEZIER_ARC_FACTOR = 0.5522847498f;
 
@@ -126,10 +124,6 @@ class SVGAndroidRenderer
       SVG.Box  viewPort;
       SVG.Box  viewBox;
       boolean  spacePreserve;
-
-      // Set when we doing direct rendering.
-      boolean  directRendering;
-
 
       RendererState()
       {
@@ -157,7 +151,6 @@ class SVGAndroidRenderer
          if (copy.viewBox != null)
             viewBox = new Box(copy.viewBox);
          spacePreserve = copy.spacePreserve;
-         directRendering = copy.directRendering;
          try
          {
             style = (Style) copy.style.clone();
@@ -183,14 +176,9 @@ class SVGAndroidRenderer
       state.viewPort = null;  // Get filled in later
 
       state.spacePreserve = false;
-      state.directRendering = this.directRenderingMode;
 
       // Push a copy of the state with 'default' style, so that inherit works for top level objects
       stateStack.push(new RendererState(state));   // Manual push here - don't use statePush();
-
-      // Initialise the stacks used for mask handling
-      canvasStack = new Stack<>();
-      bitmapStack = new Stack<>();
 
       // Keep track of element stack while rendering.
       // The 'render parent' for some elements (eg <use> references) is different from its DOM parent.
@@ -249,10 +237,9 @@ class SVGAndroidRenderer
    /*
     * Render the whole document.
     */
-   void  renderDocument(SVG document, Box canvasViewPort, Box viewBox, PreserveAspectRatio positioning, boolean directRenderingMode)
+   void  renderDocument(SVG document, Box canvasViewPort, Box viewBox, PreserveAspectRatio positioning)
    {
       this.document = document;
-      this.directRenderingMode = directRenderingMode;
 
       SVG.Svg  rootObj = document.getRootElement();
 
@@ -689,13 +676,13 @@ class SVGAndroidRenderer
          return false;
 
       // Custom version of statePush() that also saves the layer
-      canvas.saveLayerAlpha(null, clamp255(state.style.opacity), Canvas.HAS_ALPHA_LAYER_SAVE_FLAG);
+      canvas.saveLayerAlpha(null, clamp255(state.style.opacity), Canvas.ALL_SAVE_FLAG);
 
       // Save style state
       stateStack.push(state);
       state = new RendererState(state);
 
-      if (state.style.mask != null && state.directRendering) {
+      if (state.style.mask != null) {
          SVG.SvgObject  ref = document.resolveIRI(state.style.mask);
          // Check the we are referencing a mask element
          if (ref == null || !(ref instanceof SVG.Mask)) {
@@ -704,9 +691,9 @@ class SVGAndroidRenderer
             state.style.mask = null;
             return true;
          }
-         // We now need to replace the canvas with one onto which we draw the content that is getting masked
-         canvasStack.push(canvas);
-         duplicateCanvas();
+
+         // After this method completes, the caller will draw the masked object to it's own layer.
+         // That will later be composited together with our mask layer (in popLayer())
       }
 
       return true;
@@ -716,21 +703,44 @@ class SVGAndroidRenderer
    private void  popLayer(SvgElement obj)
    {
       // If this is masked content, apply the mask now
-      if (state.style.mask != null && state.directRendering) {
-         // The masked content has been drawn, now we have to render the mask to a separate canvas
-         SVG.SvgObject  ref = document.resolveIRI(state.style.mask);
-         duplicateCanvas();
-         renderMask((SVG.Mask) ref, obj);
-         
-         Bitmap  maskedContent = processMaskBitmaps();
-         
-         // Retrieve the real canvas
-         canvas = canvasStack.pop();
-         canvas.save();
-         // Reset the canvas matrix so that we can draw the maskedContent exactly over the top of the root bitmap
-         canvas.setMatrix(new Matrix());
-         canvas.drawBitmap(maskedContent, 0, 0, state.fillPaint);  // FIXME paint
-         maskedContent.recycle();
+      if (state.style.mask != null) {
+         // The masked content has been drawn, now we have to composite it with our mask layer.
+         // The mask has to be built from two parts:
+         // Step 1: Apply a luminanceToAlpha conversion to the mask content.
+         // Step 2: Multiply the mask's alpha to the alpha channel generated in step 1.
+
+         // Final mask gets composited using Porter Duff mode DST_IN
+         Paint  maskPaintCombined = new Paint();
+         maskPaintCombined.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_IN));
+         canvas.saveLayer(null, maskPaintCombined, Canvas.ALL_SAVE_FLAG);
+
+           // Step 1
+           Paint  maskPaint1 = new Paint();
+           // ColorFilter that does the SVG luminanceToAlpha conversion
+           // Note we are using the CSS/SVG2 version of the coefficients here, rather than the older SVG1.1 coefficients.
+           ColorMatrix  luminanceToAlpha = new ColorMatrix(new float[] {0,       0,       0,       0, 0,
+                                                                        0,       0,       0,       0, 0,
+                                                                        0,       0,       0,       0, 0,
+                                                                        0.2127f, 0.7151f, 0.0722f, 0, 0});
+           maskPaint1.setColorFilter(new ColorMatrixColorFilter(luminanceToAlpha));
+           canvas.saveLayer(null, maskPaint1, Canvas.ALL_SAVE_FLAG);   // TODO use real mask bounds
+
+             // Render the mask content into the step 1 part
+             SVG.SvgObject  ref = document.resolveIRI(state.style.mask);
+             renderMask((SVG.Mask) ref, obj);
+
+           canvas.restore();
+
+           // Step 2
+           Paint  maskPaint2 = new Paint();
+           maskPaint2.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_IN));
+           canvas.saveLayer(null, maskPaint2, Canvas.ALL_SAVE_FLAG);
+
+             // Render the mask content (again) into the step 2 part
+             renderMask((SVG.Mask) ref, obj);
+
+           canvas.restore();
+
          canvas.restore();
       }
 
@@ -740,69 +750,8 @@ class SVGAndroidRenderer
 
    private boolean requiresCompositing()
    {
-      if (state.style.mask != null && !state.directRendering)
-         warn("Masks are not supported when using getPicture()");
-
       return (state.style.opacity < 1.0f) ||
-             (state.style.mask != null && state.directRendering);
-   }
-
-
-   @SuppressWarnings("deprecation")
-   private void duplicateCanvas()
-   {
-      try {
-         Bitmap  newBM = Bitmap.createBitmap(canvas.getWidth(), canvas.getHeight(), Bitmap.Config.ARGB_8888);
-         bitmapStack.push(newBM);
-         Canvas  newCanvas = new Canvas(newBM);
-         newCanvas.setMatrix(canvas.getMatrix());
-         canvas = newCanvas;
-      } catch (OutOfMemoryError e) {
-         error("Not enough memory to create temporary bitmaps for mask processing");
-         throw e;
-      }
-   }
-
-
-   private Bitmap  processMaskBitmaps()
-   {
-      // Retrieve the rendered mask
-      Bitmap  mask = bitmapStack.pop();
-      // Retrieve the rendered content to which the mask is to be applied
-      Bitmap  maskedContent = bitmapStack.pop();
-      // Convert the mask bitmap to an alpha channel and multiply it to the content
-      // We will process the bitmaps in a row-wise fashion to save memory.
-      // It doesn't seem to be be significantly slower than doing it all at once.
-      int    w = mask.getWidth();
-      int    h = mask.getHeight();
-      int[]  maskBuf = new int[w];
-      int[]  maskedContentBuf = new int[w];
-      for (int y=0; y<h; y++)
-      {
-         mask.getPixels(maskBuf, 0, w, 0, y, w, 1);
-         maskedContent.getPixels(maskedContentBuf, 0, w, 0, y, w, 1);
-         for (int x=0; x<w; x++)
-         {
-            int  px = maskBuf[x];
-            int  b = px & 0xff;
-            int  g = (px >> 8) & 0xff;
-            int  r = (px >> 16) & 0xff;
-            int  a = (px >> 24) & 0xff;
-            if (a == 0) {
-               // Shortcut for transparent mask pixels
-               maskedContentBuf[x] = 0;
-               continue;
-            }
-            int  maskAlpha = (r * LUMINANCE_TO_ALPHA_RED + g * LUMINANCE_TO_ALPHA_GREEN + b * LUMINANCE_TO_ALPHA_BLUE) * a / (255 << LUMINANCE_FACTOR_SHIFT);
-            int  content = maskedContentBuf[x];
-            int  contentAlpha = (content >> 24) & 0xff;
-            contentAlpha = (contentAlpha * maskAlpha) / 255;
-            maskedContentBuf[x] = (content & 0x00ffffff) | (contentAlpha << 24);
-         }
-         maskedContent.setPixels(maskedContentBuf, 0, w, 0, y, w, 1);
-      }
-      mask.recycle();
-      return maskedContent;
+             (state.style.mask != null);
    }
 
 
@@ -3212,9 +3161,6 @@ class SVGAndroidRenderer
       // Caller may also need a valid viewBox in order to calculate percentages
       newState.viewBox = state.viewBox;
       newState.viewPort = state.viewPort;
-
-      // Set the directRendering mode based on what the current state has set
-      newState.directRendering = state.directRendering;
 
       return newState;
    }

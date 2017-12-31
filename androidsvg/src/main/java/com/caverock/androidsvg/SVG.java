@@ -330,7 +330,7 @@ public class SVG
 
       SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, this.renderDPI);
 
-      renderer.renderDocument(this, viewPort, null, null, false);
+      renderer.renderDocument(this, viewPort, null, null);
 
       picture.endRecording();
       return picture;
@@ -372,7 +372,7 @@ public class SVG
 
       SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, this.renderDPI);
 
-      renderer.renderDocument(this, viewPort, view.viewBox, view.preserveAspectRatio, false);
+      renderer.renderDocument(this, viewPort, view.viewBox, view.preserveAspectRatio);
 
       picture.endRecording();
       return picture;
@@ -415,7 +415,7 @@ public class SVG
 
       SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, this.renderDPI);
 
-      renderer.renderDocument(this, canvasViewPort, null, null, true);
+      renderer.renderDocument(this, canvasViewPort, null, null);
    }
 
 
@@ -479,7 +479,7 @@ public class SVG
 
       SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, this.renderDPI);
 
-      renderer.renderDocument(this, canvasViewPort, view.viewBox, view.preserveAspectRatio, true);
+      renderer.renderDocument(this, canvasViewPort, view.viewBox, view.preserveAspectRatio);
    }
 
 
