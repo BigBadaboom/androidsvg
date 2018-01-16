@@ -17,6 +17,8 @@
 package com.caverock.androidsvg;
 
 
+import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -35,6 +37,7 @@ import android.graphics.RectF;
 import android.graphics.Shader;
 import android.graphics.Shader.TileMode;
 import android.graphics.Typeface;
+import android.os.Build;
 import android.util.Base64;
 import android.util.Log;
 
@@ -1240,6 +1243,8 @@ class SVGAndroidRenderer
       Path  path = makePathAndBoundingBox(obj);
       updateParentBoundingBox(obj);
 
+      path.setFillType(getFillTypeFromState());
+
       checkForGradientsAndPatterns(obj);
       checkForClipPath(obj);
       
@@ -2392,16 +2397,10 @@ class SVGAndroidRenderer
 
    private Path.FillType  getFillTypeFromState()
    {
-      if (state.style.fillRule == null)
+      if (state.style.fillRule != null && state.style.fillRule == Style.FillRule.EvenOdd)
+         return Path.FillType.EVEN_ODD;
+      else
          return Path.FillType.WINDING;
-      switch (state.style.fillRule)
-      {
-         case EvenOdd:
-            return Path.FillType.EVEN_ODD;
-         case NonZero:
-         default:
-            return Path.FillType.WINDING;
-      }
    }
 
 
@@ -3575,14 +3574,209 @@ class SVGAndroidRenderer
       if (state.style.clipPath == null)
          return;
 
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT)
+      {
+         // KitKat introduced Path.Op which allows us to do boolean operations on Paths
+         Path  combinedPath = calculateClipPath(obj, boundingBox);
+         if (combinedPath != null)
+           canvas.clipPath(combinedPath);
+      }
+      else
+      {
+         checkForClipPath_OldStyle(obj, boundingBox);
+      }
+   }
+
+
+   //-----------------------------------------------------------------------------------------------
+   // New-style clippath handling (KitKat onwards).
+   // Used Path.op(Path, Path.Op) methods.
+   //
+
+   @TargetApi(Build.VERSION_CODES.KITKAT)
+   private Path  calculateClipPath(SvgElement obj, Box boundingBox)
+   {
       // Locate the referenced object
       SVG.SvgObject  ref = obj.document.resolveIRI(state.style.clipPath);
+      if (ref == null) {
+         error("ClipPath reference '%s' not found", state.style.clipPath);
+         return null;
+      }
+
+      ClipPath  clipPath = (ClipPath) ref;
+
+      // Save style state
+      stateStack.push(state);
+
+      // "Properties inherit into the <clipPath> element from its ancestors; properties do not
+      // inherit from the element referencing the <clipPath> element." (sect 14.3.5)
+      state = findInheritFromAncestorState(clipPath);
+
+      boolean  userUnits = (clipPath.clipPathUnitsAreUser == null || clipPath.clipPathUnitsAreUser);
+      Matrix   m = new Matrix();
+      if (!userUnits)
+      {
+         m.preTranslate(boundingBox.minX, boundingBox.minY);
+         m.preScale(boundingBox.width, boundingBox.height);
+      }
+      if (clipPath.transform != null)
+      {
+         m.preConcat(clipPath.transform);
+      }
+
+      Path  combinedPath = new Path();
+      for (SvgObject child: clipPath.children)
+      {
+         if (!(child instanceof SvgElement))
+            continue;
+         Path part = objectToPath((SvgElement) child, true);
+         if (part != null)
+            combinedPath.op(part, Path.Op.UNION);
+      }
+
+      // Does the clippath also have a clippath?
+      if (state.style.clipPath != null)
+      {
+         if (clipPath.boundingBox == null)
+            clipPath.boundingBox = calculatePathBounds(combinedPath);
+         Path clipClipPath = calculateClipPath(clipPath, clipPath.boundingBox);
+         if (clipClipPath != null)
+            combinedPath.op(clipClipPath, Path.Op.INTERSECT);
+      }
+
+      combinedPath.transform(m);
+
+      // Restore style state
+      state = stateStack.pop();
+
+      return combinedPath;
+   }
+
+
+   /*
+    * Convert the clipPath child element to a path. Transformed if need be, and clipped also if it has its own clippath.
+    */
+   @TargetApi(Build.VERSION_CODES.KITKAT)
+   private Path objectToPath(SvgElement obj, boolean allowUse)
+   {
+      // Save style state
+      stateStack.push(state);
+      state = new RendererState(state);
+
+      updateStyleForElement(state, obj);
+
+      if (!display() || !visible()) {
+         state = stateStack.pop();
+         return null;
+      }
+
+      Path  path = null;
+
+      if (obj instanceof SVG.Use)
+      {
+         if (!allowUse) {
+            error("<use> elements inside a <clipPath> cannot reference another <use>");
+         }
+
+         // Locate the referenced object
+         SVG.Use  useElement = (SVG.Use) obj;
+         SVG.SvgObject  ref = obj.document.resolveIRI(useElement.href);
+         if (ref == null) {
+            error("Use reference '%s' not found", useElement.href);
+            state = stateStack.pop();
+            return null;
+         }
+         if (!(ref instanceof SvgElement)) {
+            state = stateStack.pop();
+            return null;
+         }
+
+         path = objectToPath((SvgElement) ref, false);
+
+         if (useElement.boundingBox == null) {
+            useElement.boundingBox = calculatePathBounds(path);
+         }
+
+         if (useElement.transform != null)
+            path.transform(useElement.transform);
+      }
+      else if (obj instanceof SVG.GraphicsElement)
+      {
+         SVG.GraphicsElement  elem = (SVG.GraphicsElement) obj;
+
+         if (obj instanceof SVG.Path)
+         {
+            SVG.Path  pathElem = (SVG.Path) obj;
+            path = (new PathConverter(pathElem.d)).getPath();
+            if (obj.boundingBox == null)
+               obj.boundingBox = calculatePathBounds(path);
+         }
+         else if (obj instanceof SVG.Rect)
+            path = makePathAndBoundingBox((SVG.Rect) obj);
+         else if (obj instanceof SVG.Circle)
+            path = makePathAndBoundingBox((SVG.Circle) obj);
+         else if (obj instanceof SVG.Ellipse)
+            path = makePathAndBoundingBox((SVG.Ellipse) obj);
+         else if (obj instanceof SVG.PolyLine)
+            path = makePathAndBoundingBox((SVG.PolyLine) obj);
+
+         if (elem.boundingBox == null) {
+            elem.boundingBox = calculatePathBounds(path);
+         }
+
+         if (elem.transform != null)
+            path.transform(elem.transform);
+
+         path.setFillType(getClipRuleFromState());
+      }
+      else if (obj instanceof SVG.Text)
+      {
+         SVG.Text  textElem = (SVG.Text) obj;
+         path = makePathAndBoundingBox(textElem);
+
+         if (textElem.transform != null)
+            path.transform(textElem.transform);
+
+         path.setFillType(getClipRuleFromState());
+      }
+      else {
+         error("Invalid %s element found in clipPath definition", obj.getClass().getSimpleName());
+      }
+
+      // Does the clippath child element also have a clippath?
+      if (state.style.clipPath != null)
+      {
+         Path  childsClipPath = calculateClipPath(obj, obj.boundingBox);
+         if (childsClipPath != null)
+            path.op(childsClipPath, Path.Op.INTERSECT);
+      }
+
+      // Restore style state
+      state = stateStack.pop();
+
+      return path;
+   }
+
+
+
+   //-----------------------------------------------------------------------------------------------
+   // Old-style clippath handling.
+   // Pre-KitKat. Kept for backwars compatibility.
+
+
+   private void checkForClipPath_OldStyle(SvgElement obj, Box boundingBox)
+   {
+/**/Log.d(TAG,"checkForClipPath_OldStyle()");
+      // Use the old/original method for clip paths
+
+      // Locate the referenced object
+      SvgObject  ref = obj.document.resolveIRI(state.style.clipPath);
       if (ref == null) {
          error("ClipPath reference '%s' not found", state.style.clipPath);
          return;
       }
 
-      ClipPath  clipPath = (ClipPath) ref;
+      ClipPath clipPath = (ClipPath) ref;
 
       // An empty clipping path will completely clip away the element (sect 14.3.5).
       if (clipPath.children.isEmpty()) {
@@ -3617,7 +3811,7 @@ class SVGAndroidRenderer
 
       checkForClipPath(clipPath);
 
-      Path  combinedPath = new Path();
+      Path combinedPath = new Path();
       for (SvgObject child: clipPath.children)
       {
          addObjectToClip(child, true, combinedPath, new Matrix());
@@ -3660,6 +3854,7 @@ class SVGAndroidRenderer
    // The clip state push and pop methods only save the matrix.
    // The normal push/pop save the clip region also which would
    // destroy the clip region we are trying to build.
+   @SuppressLint("WrongConstant")  // MATRIX_SAVE_FLAG is deprecated and being flagged as an error by Android Studio
    private void  clipStatePush()
    {
       // Save matrix and clip
@@ -3681,16 +3876,10 @@ class SVGAndroidRenderer
 
    private Path.FillType  getClipRuleFromState()
    {
-      if (state.style.clipRule == null)
+      if (state.style.clipRule != null && state.style.clipRule == Style.FillRule.EvenOdd)
+         return Path.FillType.EVEN_ODD;
+      else
          return Path.FillType.WINDING;
-      switch (state.style.clipRule)
-      {
-         case EvenOdd:
-            return Path.FillType.EVEN_ODD;
-         case NonZero:
-         default:
-            return Path.FillType.WINDING;
-      }
    }
 
 
@@ -3745,7 +3934,7 @@ class SVGAndroidRenderer
 
       checkForClipPath(obj);
 
-      combinedPath.setFillType(path.getFillType());
+      combinedPath.setFillType(getClipRuleFromState());
       combinedPath.addPath(path, combinedPathMatrix);
    }
 
@@ -3814,6 +4003,9 @@ class SVGAndroidRenderer
       combinedPath.setFillType(getClipRuleFromState());
       combinedPath.addPath(textAsPath, combinedPathMatrix);
    }
+
+
+   //-----------------------------------------------------------------------------------------------
 
 
    private class  PlainTextToPath extends TextProcessor
@@ -4014,10 +4206,40 @@ class SVGAndroidRenderer
       if (obj.boundingBox == null) {
          obj.boundingBox = calculatePathBounds(path);
       }
-
-      path.setFillType(getClipRuleFromState());
       return path;
    }
+
+
+   private Path makePathAndBoundingBox(SVG.Text obj)
+   {
+      // Get the first coordinate pair from the lists in the x and y properties.
+      float  x = (obj.x == null || obj.x.size() == 0) ? 0f : obj.x.get(0).floatValueX(this);
+      float  y = (obj.y == null || obj.y.size() == 0) ? 0f : obj.y.get(0).floatValueY(this);
+      float  dx = (obj.dx == null || obj.dx.size() == 0) ? 0f : obj.dx.get(0).floatValueX(this);
+      float  dy = (obj.dy == null || obj.dy.size() == 0) ? 0f : obj.dy.get(0).floatValueY(this);
+
+      // Handle text alignment
+      if (state.style.textAnchor != Style.TextAnchor.Start) {
+         float  textWidth = calculateTextWidth(obj);
+         if (state.style.textAnchor == Style.TextAnchor.Middle) {
+            x -= (textWidth / 2);
+         } else {
+            x -= textWidth;  // 'End' (right justify)
+         }
+      }
+
+      if (obj.boundingBox == null) {
+         TextBoundsCalculator  proc = new TextBoundsCalculator(x, y);
+         enumerateTextSpans(obj, proc);
+         obj.boundingBox = new Box(proc.bbox.left, proc.bbox.top, proc.bbox.width(), proc.bbox.height());
+      }
+
+      Path  textAsPath = new Path();
+      enumerateTextSpans(obj, new PlainTextToPath(x + dx, y + dy, textAsPath));
+
+      return textAsPath;
+   }
+
 
 
    //==============================================================================
