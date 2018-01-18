@@ -68,7 +68,7 @@
  <li><a href="#My_document_has_a_viewBox,_but_it_is_still_not_scaling">My document has a viewBox, but it is still not scaling</a> </li>
  <li><a href="#Dealing_with_Inkscape_files">Dealing with Inkscape files</a> </li>
  <li><a href="#My_document_used_to_scale_okay_prior_to_version_1.2.0,_but_doesn">My document used to scale okay prior to version 1.2.0, but doesn't now</a> </li>
- <li><a href="#ScaleType_.CENTER_doesn't_work_when_using_an_ImageView_or_S">ScaleType.CENTER doesn't work when using an ImageView or SVGImageView</a> </li>
+ <li><a href="#ScaleType_.CENTER_doesn't_work_when_using_an_ImageView_or_S">ScaleType.CENTER and ScaleType.FIT_XY do not work when using an ImageView or SVGImageView</a> </li>
  </ul>
  
  <hr>
@@ -185,7 +185,9 @@ canvas.drawPicture(p);
 
 <h3><a name="Solution"></a>Solution<a href="#Solution" class="section_anchor"></a></h3>
 
-<p>The fix is to disable hardware acceleration.  See the answer above for instructions. </p>
+<p>Upgrade to AndroidSVG 1.3.  In this version, the clip path code has been completely rewritten.  The new code fixes some clipping bugs and works on all versions of Android from 4.4 (KitKat) onwards.</p>
+
+<p>For versions of the library before 1.3, try disable hardware acceleration.  See the answer above for instructions.</p>
 
 <hr>
 
@@ -304,9 +306,9 @@ in some situations, but not others, and made some assumptions that meant that th
 <hr>
 
 
-<h2><a name="ScaleType_.CENTER_doesn't_work_when_using_an_ImageView_or_S"></a>ScaleType.CENTER doesn't work when using an ImageView or SVGImageView</h2>
+<h2><a name="ScaleType_.CENTER_doesn't_work_when_using_an_ImageView_or_S"></a>ScaleType.CENTER and ScaleType.FIT_XY do not work when using an ImageView or SVGImageView</h2>
 
-<p><code>ScaleType.CENTER</code> doesn't work in these situations.  Use <code>ScaleType.CENTER_INSIDE</code> instead. </p>
+<p>The <code>ImageView</code> class has a bug which prevents <code>ScaleType.CENTER</code> and <code>ScaleType.FIT_XY</code> from working.  Use another scale type instead. For example: <code>ScaleType.CENTER_INSIDE</code>.</p>
 
 <pre class="prettyprint">
 SVGImageView &nbsp;iv = new SVGImageView(this);
