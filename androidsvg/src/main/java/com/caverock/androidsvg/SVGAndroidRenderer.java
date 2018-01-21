@@ -1507,12 +1507,26 @@ class SVGAndroidRenderer
          if (display())
          {
             // Get the first coordinate pair from the lists in the x and y properties.
-            float x=0, y=0, dx=0, dy=0;
+            float    x=0, y=0, dx=0, dy=0;
+            boolean  specifiedX = (tspan.x != null && tspan.x.size() > 0);
             if (textprocessor instanceof PlainTextDrawer) {
-               x = (tspan.x == null || tspan.x.size() == 0) ? ((PlainTextDrawer) textprocessor).x : tspan.x.get(0).floatValueX(this);
+               x = !specifiedX ? ((PlainTextDrawer) textprocessor).x : tspan.x.get(0).floatValueX(this);
                y = (tspan.y == null || tspan.y.size() == 0) ? ((PlainTextDrawer) textprocessor).y : tspan.y.get(0).floatValueY(this);
                dx = (tspan.dx == null || tspan.dx.size() == 0) ? 0f : tspan.dx.get(0).floatValueX(this);
                dy = (tspan.dy == null || tspan.dy.size() == 0) ? 0f : tspan.dy.get(0).floatValueY(this);
+            }
+
+            // If x was specified on tspan, then we need to recalculate the alignment
+            if (specifiedX) {
+              Style.TextAnchor  anchor = getAnchorPosition();
+              if (anchor != Style.TextAnchor.Start) {
+                 float  textWidth = calculateTextWidth(tspan);
+                 if (anchor == Style.TextAnchor.Middle) {
+                    x -= (textWidth / 2);
+                 } else {
+                    x -= textWidth;  // 'End' (right justify)
+                 }
+               }
             }
 
             checkForGradientsAndPatterns((SvgElement) tspan.getTextRoot());
