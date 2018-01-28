@@ -106,11 +106,10 @@ class SVGAndroidRenderer
    private static final float  BEZIER_ARC_FACTOR = 0.5522847498f;
 
    // The feColorMatrix luminance-to-alpha coefficient. Used for <mask>s.
-   // Using integer arithmetic for a little extra speed.
-   private static final int  LUMINANCE_FACTOR_SHIFT = 15;
-   private static final int  LUMINANCE_TO_ALPHA_RED = (int)(0.2125f * (1 << LUMINANCE_FACTOR_SHIFT));
-   private static final int  LUMINANCE_TO_ALPHA_GREEN = (int)(0.7154f * (1 << LUMINANCE_FACTOR_SHIFT));
-   private static final int  LUMINANCE_TO_ALPHA_BLUE = (int)(0.0721f * (1 << LUMINANCE_FACTOR_SHIFT));
+   // Note we are using the CSS/SVG2 version of the coefficients here, rather than the older SVG1.1 coefficients.
+   public static final float  LUMINANCE_TO_ALPHA_RED   = 0.2127f;
+   public static final float  LUMINANCE_TO_ALPHA_GREEN = 0.7151f;
+   public static final float  LUMINANCE_TO_ALPHA_BLUE  = 0.0722f;
 
    private static final String DEFAULT_FONT_FAMILY = "serif";
 
@@ -258,6 +257,12 @@ class SVGAndroidRenderer
 
       // Save state
       statePush();
+
+      // If root element sepecifies a width, then we need toadjust our default viewPort that was based on the canvas size
+      if (rootObj.width != null)
+         canvasViewPort.width = rootObj.width.floatValue(this, canvasViewPort.width);
+      if (rootObj.height != null)
+         canvasViewPort.height = rootObj.height.floatValue(this, canvasViewPort.height);
 
       // Render the document
       render(rootObj, canvasViewPort,
@@ -720,11 +725,10 @@ class SVGAndroidRenderer
            // Step 1
            Paint  maskPaint1 = new Paint();
            // ColorFilter that does the SVG luminanceToAlpha conversion
-           // Note we are using the CSS/SVG2 version of the coefficients here, rather than the older SVG1.1 coefficients.
            ColorMatrix  luminanceToAlpha = new ColorMatrix(new float[] {0,       0,       0,       0, 0,
                                                                         0,       0,       0,       0, 0,
                                                                         0,       0,       0,       0, 0,
-                                                                        0.2127f, 0.7151f, 0.0722f, 0, 0});
+                                                                        SVGAndroidRenderer.LUMINANCE_TO_ALPHA_RED, SVGAndroidRenderer.LUMINANCE_TO_ALPHA_GREEN, SVGAndroidRenderer.LUMINANCE_TO_ALPHA_BLUE, 0, 0});
            maskPaint1.setColorFilter(new ColorMatrixColorFilter(luminanceToAlpha));
            canvas.saveLayer(null, maskPaint1, Canvas.ALL_SAVE_FLAG);   // TODO use real mask bounds
 
@@ -2044,7 +2048,7 @@ class SVGAndroidRenderer
     * Updates the global style state with the style defined by the current object.
     * Will also update the current paints etc where appropriate.
     */
-   private void updateStyle(RendererState state, Style style)
+   private void  updateStyle(RendererState state, Style style)
    {
       // Now update each style property we know about
       if (isSpecified(style, SVG.SPECIFIED_COLOR))
@@ -3706,6 +3710,8 @@ class SVGAndroidRenderer
          }
 
          path = objectToPath((SvgElement) ref, false);
+         if (path == null)
+            return null;
 
          if (useElement.boundingBox == null) {
             useElement.boundingBox = calculatePathBounds(path);
@@ -3734,6 +3740,9 @@ class SVGAndroidRenderer
          else if (obj instanceof SVG.PolyLine)
             path = makePathAndBoundingBox((SVG.PolyLine) obj);
 
+         if (path == null)
+            return null;
+
          if (elem.boundingBox == null) {
             elem.boundingBox = calculatePathBounds(path);
          }
@@ -3748,6 +3757,9 @@ class SVGAndroidRenderer
          SVG.Text  textElem = (SVG.Text) obj;
          path = makePathAndBoundingBox(textElem);
 
+         if (path == null)
+            return null;
+
          if (textElem.transform != null)
             path.transform(textElem.transform);
 
@@ -3755,6 +3767,7 @@ class SVGAndroidRenderer
       }
       else {
          error("Invalid %s element found in clipPath definition", obj.getClass().getSimpleName());
+         return null;
       }
 
       // Does the clippath child element also have a clippath?
@@ -3780,7 +3793,6 @@ class SVGAndroidRenderer
 
    private void checkForClipPath_OldStyle(SvgElement obj, Box boundingBox)
    {
-/**/Log.d(TAG,"checkForClipPath_OldStyle()");
       // Use the old/original method for clip paths
 
       // Locate the referenced object
