@@ -27,8 +27,6 @@ import android.util.Log;
 
 import com.caverock.androidsvg.CSSParser.Ruleset;
 
-import org.xml.sax.SAXException;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -85,7 +83,10 @@ public class SVG
 
    private static final double  SQRT2 = 1.414213562373095;
 
+   // Parser configuration
+   private static boolean  enableInternalEntities = true;
 
+   // The root svg element
    private Svg     rootElement = null;
 
    // Metadata
@@ -128,6 +129,7 @@ public class SVG
    }
 
 
+   /* package private */
    SVG()
    {
    }
@@ -144,7 +146,7 @@ public class SVG
    public static SVG  getFromInputStream(InputStream is) throws SVGParseException
    {
       SVGParser  parser = new SVGParser();
-      return parser.parse(is);
+      return parser.parse(is, enableInternalEntities);
    }
 
 
@@ -159,7 +161,7 @@ public class SVG
    public static SVG  getFromString(String svg) throws SVGParseException
    {
       SVGParser  parser = new SVGParser();
-      return parser.parse(new ByteArrayInputStream(svg.getBytes()));
+      return parser.parse(new ByteArrayInputStream(svg.getBytes()), enableInternalEntities);
    }
 
 
@@ -192,7 +194,7 @@ public class SVG
       SVGParser    parser = new SVGParser();
       InputStream  is = resources.openRawResource(resourceId);
       try {
-         return parser.parse(is);
+         return parser.parse(is, enableInternalEntities);
       } finally {
          try {
            is.close();
@@ -218,7 +220,7 @@ public class SVG
       SVGParser    parser = new SVGParser();
       InputStream  is = assetManager.open(filename);
       try {
-         return parser.parse(is);
+         return parser.parse(is, enableInternalEntities);
       } finally {
          try {
            is.close();
@@ -230,6 +232,43 @@ public class SVG
 
 
    //===============================================================================
+
+
+   /**
+    * Tells the parser whether to allow the expansion of internal entities.
+    * An example of document containing an internal entities is:
+    *
+    * {@code
+    * <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd" [
+    *   <!ENTITY hello "Hello World!">
+    * ]>
+    * <svg>
+    *    <text>&hello;</text>
+    * </svg>
+    * }
+    *
+    * Entities are useful in some circumstances, but SVG files that use them are quite rare.  Note
+    * also that enabling entity expansion makes you vulnerable to the
+    * <a href="https://en.wikipedia.org/wiki/Billion_laughs_attack">Billion Laughs Attack</a>
+    *
+    * Entity expansion is enabled by default.
+    *
+    * @param enable Set true if you want to enable entity expansion by the parser.
+    * @since 1.3
+    */
+   public static void  setInternalEntitiesEnabled(boolean enable)
+   {
+      enableInternalEntities = enable;
+   }
+
+   /**
+    * @return true if internal entity expansion is enabled in the parser
+    * @since 1.3
+    */
+   public static boolean  isInternalEntitiesEnabled()
+   {
+      return enableInternalEntities;
+   }
 
 
    /**
@@ -629,11 +668,7 @@ public class SVG
       if (this.rootElement == null)
          throw new IllegalArgumentException("SVG document is empty");
 
-      try {
-        this.rootElement.width = SVGParser.parseLength(value);
-      } catch (SAXException e) {
-         throw new SVGParseException(e.getMessage());
-      }
+      this.rootElement.width = SVGParser.parseLength(value);
    }
 
 
@@ -690,11 +725,7 @@ public class SVG
       if (this.rootElement == null)
          throw new IllegalArgumentException("SVG document is empty");
 
-      try {
-        this.rootElement.height = SVGParser.parseLength(value);
-      } catch (SAXException e) {
-         throw new SVGParseException(e.getMessage());
-      }
+      this.rootElement.height = SVGParser.parseLength(value);
    }
 
 
@@ -1525,7 +1556,7 @@ public class SVG
    interface SvgContainer
    {
       List<SvgObject>  getChildren();
-      void             addChild(SvgObject elem) throws SAXException;
+      void             addChild(SvgObject elem) throws SVGParseException;
    }
 
 
@@ -1542,7 +1573,7 @@ public class SVG
       @Override
       public List<SvgObject>  getChildren() { return children; }
       @Override
-      public void addChild(SvgObject elem) throws SAXException  { children.add(elem); }
+      public void addChild(SvgObject elem) throws SVGParseException  { children.add(elem); }
 
       @Override
       public void setRequiredFeatures(Set<String> features) { this.requiredFeatures = features; }
@@ -1709,12 +1740,12 @@ public class SVG
    static class  TextContainer extends SvgConditionalContainer
    {
       @Override
-      public void  addChild(SvgObject elem) throws SAXException
+      public void  addChild(SvgObject elem) throws SVGParseException
       {
          if (elem instanceof TextChild)
             children.add(elem);
          else
-            throw new SAXException("Text content elements cannot contain "+elem+" elements.");
+            throw new SVGParseException("Text content elements cannot contain "+elem+" elements.");
       }
    }
 
@@ -1836,12 +1867,12 @@ public class SVG
       }
 
       @Override
-      public void addChild(SvgObject elem) throws SAXException
+      public void addChild(SvgObject elem) throws SVGParseException
       {
          if (elem instanceof Stop)
             children.add(elem);
          else
-            throw new SAXException("Gradient elements cannot contain "+elem+" elements.");
+            throw new SVGParseException("Gradient elements cannot contain "+elem+" elements.");
       }
    }
 
@@ -1855,7 +1886,7 @@ public class SVG
       @Override
       public List<SvgObject> getChildren() { return Collections.emptyList(); }
       @Override
-      public void addChild(SvgObject elem) throws SAXException { /* do nothing */ }
+      public void addChild(SvgObject elem) throws SVGParseException { /* do nothing */ }
    }
 
 
@@ -1938,7 +1969,7 @@ public class SVG
       @Override
       public List<SvgObject> getChildren() { return Collections.emptyList(); }
       @Override
-      public void addChild(SvgObject elem) throws SAXException { /* do nothing */ }
+      public void addChild(SvgObject elem) throws SVGParseException { /* do nothing */ }
    }
 
 

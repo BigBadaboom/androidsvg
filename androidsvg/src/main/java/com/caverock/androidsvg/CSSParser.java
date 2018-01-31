@@ -16,18 +16,16 @@
 
 package com.caverock.androidsvg;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-
-import org.xml.sax.SAXException;
-
 import android.util.Log;
 
 import com.caverock.androidsvg.SVG.SvgContainer;
 import com.caverock.androidsvg.SVG.SvgElementBase;
 import com.caverock.androidsvg.SVG.SvgObject;
 import com.caverock.androidsvg.SVGParser.TextScanner;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * A very simple CSS parser that is not very compliant with the CSS spec but
@@ -283,7 +281,7 @@ public class CSSParser
    }
 
 
-   Ruleset  parse(String sheet) throws SAXException
+   Ruleset  parse(String sheet) throws SVGParseException
    {
       CSSTextScanner  scan = new CSSTextScanner(sheet);
       scan.skipWhitespace();
@@ -292,13 +290,13 @@ public class CSSParser
    }
 
 
-   static boolean mediaMatches(String mediaListStr, MediaType rendererMediaType) throws SAXException
+   static boolean mediaMatches(String mediaListStr, MediaType rendererMediaType) throws SVGParseException
    {
       CSSTextScanner  scan = new CSSTextScanner(mediaListStr);
       scan.skipWhitespace();
       List<MediaType>  mediaList = parseMediaList(scan);
       if (!scan.empty())
-         throw new SAXException("Invalid @media type list");
+         throw new SVGParseException("Invalid @media type list");
       return mediaMatches(mediaList, rendererMediaType);
    }
 
@@ -379,7 +377,7 @@ public class CSSParser
        * Returns true if it found one.
        * Returns false if there was an error or the input is empty.
        */
-      boolean  nextSimpleSelector(Selector selector) throws SAXException
+      boolean  nextSimpleSelector(Selector selector) throws SVGParseException
       {
          if (empty())
             return false;
@@ -418,7 +416,7 @@ public class CSSParser
                   selectorPart = new SimpleSelector(combinator, null);
                String  value = nextIdentifier();
                if (value == null)
-                  throw new SAXException("Invalid \".class\" selector in <style> element");
+                  throw new SVGParseException("Invalid \".class\" selector in <style> element");
                selectorPart.addAttrib(CLASS, AttribOp.EQUALS, value);
                selector.addedAttributeOrPseudo();
                continue;
@@ -431,7 +429,7 @@ public class CSSParser
                   selectorPart = new SimpleSelector(combinator, null);
                String  value = nextIdentifier();
                if (value == null)
-                  throw new SAXException("Invalid \"#id\" selector in <style> element");
+                  throw new SVGParseException("Invalid \"#id\" selector in <style> element");
                selectorPart.addAttrib(ID, AttribOp.EQUALS, value);
                selector.addedIdAttribute();
             }
@@ -446,7 +444,7 @@ public class CSSParser
                String  attrName = nextIdentifier();
                String  attrValue = null;
                if (attrName == null)
-                  throw new SAXException("Invalid attribute selector in <style> element");
+                  throw new SVGParseException("Invalid attribute selector in <style> element");
                skipWhitespace();
                AttribOp  op = null;
                if (consume('='))
@@ -459,11 +457,11 @@ public class CSSParser
                   skipWhitespace();
                   attrValue = nextAttribValue();
                   if (attrValue == null)
-                     throw new SAXException("Invalid attribute selector in <style> element");
+                     throw new SVGParseException("Invalid attribute selector in <style> element");
                   skipWhitespace();
                }
                if (!consume(']'))
-                  throw new SAXException("Invalid attribute selector in <style> element");
+                  throw new SVGParseException("Invalid attribute selector in <style> element");
                selectorPart.addAttrib(attrName, (op == null) ? AttribOp.EXISTS : op, attrValue);
                selector.addedAttributeOrPseudo();
                continue;
@@ -556,7 +554,7 @@ public class CSSParser
    }
 
 
-   private static List<MediaType> parseMediaList(CSSTextScanner scan) throws SAXException
+   private static List<MediaType> parseMediaList(CSSTextScanner scan) throws SVGParseException
    {
       ArrayList<MediaType>  typeList = new ArrayList<>();
       while (!scan.empty()) {
@@ -564,7 +562,7 @@ public class CSSParser
          try {
             typeList.add(MediaType.valueOf(type));
          } catch (IllegalArgumentException e) {
-            throw new SAXException("Invalid @media type list");
+            throw new SVGParseException("Invalid @media type list");
          }
          // If there is a comma, keep looping, otherwise break
          if (!scan.skipCommaWhitespace())
@@ -574,17 +572,17 @@ public class CSSParser
    }
 
 
-   private void  parseAtRule(Ruleset ruleset, CSSTextScanner scan) throws SAXException
+   private void  parseAtRule(Ruleset ruleset, CSSTextScanner scan) throws SVGParseException
    {
       String  atKeyword = scan.nextIdentifier();
       scan.skipWhitespace();
       if (atKeyword == null)
-         throw new SAXException("Invalid '@' rule in <style> element");
+         throw new SVGParseException("Invalid '@' rule in <style> element");
       if (!inMediaRule && atKeyword.equals("media"))
       {
          List<MediaType>  mediaList = parseMediaList(scan);
          if (!scan.consume('{'))
-            throw new SAXException("Invalid @media rule: missing rule set");
+            throw new SVGParseException("Invalid @media rule: missing rule set");
             
          scan.skipWhitespace();
          if (mediaMatches(mediaList, rendererMediaType)) {
@@ -596,7 +594,7 @@ public class CSSParser
          }
 
          if (!scan.consume('}'))
-            throw new SAXException("Invalid @media rule: expected '}' at end of rule set");
+            throw new SVGParseException("Invalid @media rule: expected '}' at end of rule set");
 
       //} else if (atKeyword.equals("charset")) {
       //} else if (atKeyword.equals("import")) {
@@ -630,7 +628,7 @@ public class CSSParser
    }
 
 
-   private Ruleset  parseRuleset(CSSTextScanner scan) throws SAXException
+   private Ruleset  parseRuleset(CSSTextScanner scan) throws SVGParseException
    {
       Ruleset  ruleset = new Ruleset(); 
       while (!scan.empty())
@@ -654,13 +652,13 @@ public class CSSParser
    }
 
 
-   private boolean  parseRule(Ruleset ruleset, CSSTextScanner scan) throws SAXException
+   private boolean  parseRule(Ruleset ruleset, CSSTextScanner scan) throws SVGParseException
    {
       List<Selector>  selectors = parseSelectorGroup(scan);
       if (selectors != null && !selectors.isEmpty())
       {
          if (!scan.consume('{'))
-            throw new SAXException("Malformed rule block in <style> element: missing '{'");
+            throw new SVGParseException("Malformed rule block in <style> element: missing '{'");
          scan.skipWhitespace();
          SVG.Style  ruleStyle = parseDeclarations(scan);
          scan.skipWhitespace();
@@ -679,7 +677,7 @@ public class CSSParser
    /*
     * Parse a selector group (eg. E, F, G). In many/most cases there will be only one entry.
     */
-   private List<Selector>  parseSelectorGroup(CSSTextScanner scan) throws SAXException
+   private List<Selector>  parseSelectorGroup(CSSTextScanner scan) throws SVGParseException
    {
       if (scan.empty())
          return null;
@@ -707,7 +705,7 @@ public class CSSParser
 
 
    // Parse a list of
-   private SVG.Style  parseDeclarations(CSSTextScanner scan) throws SAXException
+   private SVG.Style  parseDeclarations(CSSTextScanner scan) throws SVGParseException
    {
       SVG.Style  ruleStyle = new SVG.Style();
       while (true)
@@ -725,7 +723,7 @@ public class CSSParser
          if (scan.consume('!')) {
             scan.skipWhitespace();
             if (!scan.consume("important")) {
-               throw new SAXException("Malformed rule set in <style> element: found unexpected '!'");
+               throw new SVGParseException("Malformed rule set in <style> element: found unexpected '!'");
             }
             // We don't do anything with these. We just ignore them.
             scan.skipWhitespace();
@@ -738,7 +736,7 @@ public class CSSParser
          if (scan.empty())
             break;
       }
-      throw new SAXException("Malformed rule set in <style> element");
+      throw new SVGParseException("Malformed rule set in <style> element");
    }
 
 
