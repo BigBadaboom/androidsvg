@@ -80,6 +80,11 @@ class SVGParser
    private static final String  XLINK_NAMESPACE = "http://www.w3.org/1999/xlink";
    private static final String  FEATURE_STRING_PREFIX = "http://www.w3.org/TR/SVG11/feature#";
 
+   // Used by the automatic XML parser switching code.
+   // This value defines how much of the SVG file preamble will we keep in order to check for
+   // a doctype definition that has internal entities defined.
+   public static final int  ENTITY_WATCH_BUFFER_SIZE = 4096;
+
    // SVG parser
    private SVG               svgDocument = null;
    private SVG.SvgContainer  currentElement = null;
@@ -589,7 +594,7 @@ class SVGParser
          is.reset();
          if (firstTwoBytes == GZIPInputStream.GZIP_MAGIC) {
             // Looks like a zipped file.
-            is = new GZIPInputStream(is);
+            is = new BufferedInputStream( new GZIPInputStream(is) );
          }
       }
       catch (IOException ioe)
@@ -599,35 +604,14 @@ class SVGParser
 
       try
       {
-         if (enableInternalEntities)
-         {
-            // Use the SAXParser, which supports entities, but is slower and
-            // is vulnerable to the "Billion laughs" entity expansion problem.
-            parseUsingSAX(is);
-         }
-         else
-         {
-            // Use XmlPullParser, which is faster, but doesn't support entity expansion.
-            parseUsingXmlPullParser(is);
-         }
+         // Mark the start in case we need to restart the parsing due to switching XML parser
+         // 4096 chars is hopefully enough to capture most doctype declarations that have entities.
+         is.mark(ENTITY_WATCH_BUFFER_SIZE);
 
-      }
-      catch (XmlPullParserException e)
-      {
-         throw new SVGParseException("XML parser problem", e);
-      }
-      catch (IOException e)
-      {
-         throw new SVGParseException("Stream error", e);
-      }
-      // Thrown by SAX parser
-      catch (ParserConfigurationException e)
-      {
-         throw new SVGParseException("XML parser problem", e);
-      }
-      catch (SAXException e)
-      {
-         throw new SVGParseException("SVG parse error: "+e.getMessage(), e);
+         // Use XmlPullParser by default, which is faster, but doesn't support entity expansion.
+         // In this parser we watch for capture doctype declarations, and then switch to the SAX
+         // parser if any entities are defined in the doctype.
+         parseUsingXmlPullParser(is, enableInternalEntities);
       }
       finally
       {
@@ -639,7 +623,6 @@ class SVGParser
       }
       return svgDocument;
    }
-
 
 
    //=========================================================================
@@ -710,46 +693,77 @@ class SVGParser
    };
 
 
-   private void parseUsingXmlPullParser(InputStream is) throws XmlPullParserException, IOException, SVGParseException
+   private void parseUsingXmlPullParser(InputStream is, boolean enableInternalEntities) throws SVGParseException
    {
-      XmlPullParser         parser = Xml.newPullParser();
-      XPPAttributesWrapper  attributes = new XPPAttributesWrapper(parser);
-
-      parser.setFeature(XmlPullParser.FEATURE_PROCESS_DOCDECL, false);
-      parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, true);
-      parser.setInput(is, null);
-
-      int  eventType = parser.getEventType();
-      while (eventType != XmlPullParser.END_DOCUMENT)
+      try
       {
-         switch(eventType) {
-            case XmlPullParser.START_DOCUMENT:
-               startDocument();
-               break;
-            case XmlPullParser.START_TAG:
-               String qName = parser.getName();
-               if (parser.getPrefix() != null)
-                  qName = parser.getPrefix() + ':' + qName;
-               startElement(parser.getNamespace(), parser.getName(), qName, attributes);
-               break;
-            case XmlPullParser.END_TAG:
-               qName = parser.getName();
-               if (parser.getPrefix() != null)
-                  qName = parser.getPrefix() + ':' + qName;
-               endElement(parser.getNamespace(), parser.getName(), qName);
-               break;
-            case XmlPullParser.TEXT:
-               int[] startAndLength = new int[2];
-               char[] text = parser.getTextCharacters(startAndLength);
-               text(text, startAndLength[0], startAndLength[1]);
-               break;
-            //case XmlPullParser.COMMENT:
-            //   text(parser.getText());
-            //   break;
+         XmlPullParser         parser = Xml.newPullParser();
+         XPPAttributesWrapper  attributes = new XPPAttributesWrapper(parser);
+
+
+         parser.setFeature(XmlPullParser.FEATURE_PROCESS_DOCDECL, false);
+         parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, true);
+         parser.setInput(is, null);
+
+         int  eventType = parser.getEventType();
+         while (eventType != XmlPullParser.END_DOCUMENT)
+         {
+            switch(eventType) {
+               case XmlPullParser.START_DOCUMENT:
+                  startDocument();
+                  break;
+               case XmlPullParser.START_TAG:
+                  String qName = parser.getName();
+                  if (parser.getPrefix() != null)
+                     qName = parser.getPrefix() + ':' + qName;
+                  startElement(parser.getNamespace(), parser.getName(), qName, attributes);
+                  break;
+               case XmlPullParser.END_TAG:
+                  qName = parser.getName();
+                  if (parser.getPrefix() != null)
+                     qName = parser.getPrefix() + ':' + qName;
+                  endElement(parser.getNamespace(), parser.getName(), qName);
+                  break;
+               case XmlPullParser.TEXT:
+                  int[] startAndLength = new int[2];
+                  char[] text = parser.getTextCharacters(startAndLength);
+                  text(text, startAndLength[0], startAndLength[1]);
+                  break;
+               //case XmlPullParser.COMMENT:
+               //   text(parser.getText());
+               //   break;
+
+               case XmlPullParser.DOCDECL:
+                  if (enableInternalEntities &&                  // entities are enabled
+                      svgDocument.getRootElement() == null &&    // and we haven't already parsed the root element
+                      parser.getText().contains("<!ENTITY ")) {  // and doctype seems to contain an entity definition
+                     // File uses internal entities. Switch to the SAX parser.
+                     try {
+                        Log.d(TAG,"Switching to SAX parser to process entities");
+                        is.reset();
+                        parseUsingSAX(is);
+                     } catch (IOException e) {
+                        // reset() failed
+                        Log.w(TAG, "Detected internal entity definitions, but could not parse them.");
+                        // All we can do is just continue using the XmlPullParser.
+                        // Entities will not be parsed properly :(
+                     }
+                     return;
+                  }
+            }
+            eventType = parser.nextToken();
          }
-         eventType = parser.next();
+         endDocument();
+
       }
-      endDocument();
+      catch (XmlPullParserException e)
+      {
+         throw new SVGParseException("XML parser problem", e);
+      }
+      catch (IOException e)
+      {
+         throw new SVGParseException("Stream error", e);
+      }
    }
 
 
@@ -758,23 +772,38 @@ class SVGParser
    //=========================================================================
 
 
-   private void parseUsingSAX(InputStream is) throws IOException, ParserConfigurationException, SAXException, SAXNotRecognizedException, SAXNotSupportedException
+   private void parseUsingSAX(InputStream is) throws SVGParseException
    {
-      // Invoke the SAX XML parser on the input.
-      SAXParserFactory  spf = SAXParserFactory.newInstance();
+      try
+      {
+         // Invoke the SAX XML parser on the input.
+         SAXParserFactory  spf = SAXParserFactory.newInstance();
 
-      // Disable external entity resolving
-      spf.setFeature("http://xml.org/sax/features/external-general-entities", false);
-      spf.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+         // Disable external entity resolving
+         spf.setFeature("http://xml.org/sax/features/external-general-entities", false);
+         spf.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
 
-      SAXParser sp = spf.newSAXParser();
-      XMLReader xr = sp.getXMLReader();
+         SAXParser sp = spf.newSAXParser();
+         XMLReader xr = sp.getXMLReader();
 
-      SAXHandler  handler = new SAXHandler();
-      xr.setContentHandler(handler);
-      xr.setProperty("http://xml.org/sax/properties/lexical-handler", handler);
+         SAXHandler  handler = new SAXHandler();
+         xr.setContentHandler(handler);
+         xr.setProperty("http://xml.org/sax/properties/lexical-handler", handler);
 
-      xr.parse(new InputSource(is));
+         xr.parse(new InputSource(is));
+      }
+      catch (ParserConfigurationException e)
+      {
+         throw new SVGParseException("XML parser problem", e);
+      }
+      catch (SAXException e)
+      {
+         throw new SVGParseException("SVG parse error", e);
+      }
+      catch (IOException e)
+      {
+         throw new SVGParseException("Stream error", e);
+      }
    }
 
 
