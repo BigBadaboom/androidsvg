@@ -258,7 +258,7 @@ class SVGAndroidRenderer
       // Save state
       statePush();
 
-      // If root element sepecifies a width, then we need toadjust our default viewPort that was based on the canvas size
+      // If root element specifies a width, then we need to adjust our default viewPort that was based on the canvas size
       if (rootObj.width != null)
          canvasViewPort.width = rootObj.width.floatValue(this, canvasViewPort.width);
       if (rootObj.height != null)
