@@ -729,6 +729,9 @@ class SVGParser
                   char[] text = parser.getTextCharacters(startAndLength);
                   text(text, startAndLength[0], startAndLength[1]);
                   break;
+               case XmlPullParser.CDSECT:
+                  text(parser.getText());
+                  break;
                //case XmlPullParser.COMMENT:
                //   text(parser.getText());
                //   break;
