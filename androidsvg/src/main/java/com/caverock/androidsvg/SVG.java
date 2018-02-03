@@ -1488,18 +1488,20 @@ public class SVG
 
 
    // Any object in the tree that corresponds to an SVG element
-   static class SvgElementBase extends SvgObject
+   static abstract class SvgElementBase extends SvgObject
    {
       String        id = null;
       Boolean       spacePreserve = null;
       Style         baseStyle = null;   // style defined by explicit style attributes in the element (eg. fill="black")
       Style         style = null;       // style expressed in a 'style' attribute (eg. style="fill:black")
       List<String>  classNames = null;  // contents of the 'class' attribute
+
+      abstract String  getNodeName();
    }
 
 
    // Any object in the tree that corresponds to an SVG element
-   static class SvgElement extends SvgElementBase
+   static abstract class SvgElement extends SvgElementBase
    {
       Box     boundingBox = null;
    }
@@ -1522,7 +1524,7 @@ public class SVG
 
 
    // Any element that can appear inside a <switch> element.
-   static class  SvgConditionalElement extends SvgElement implements SvgConditional
+   static abstract class  SvgConditionalElement extends SvgElement implements SvgConditional
    {
       Set<String>  requiredFeatures = null;
       String       requiredExtensions = null;
@@ -1560,7 +1562,7 @@ public class SVG
    }
 
 
-   static class SvgConditionalContainer extends SvgElement implements SvgContainer, SvgConditional
+   static abstract class SvgConditionalContainer extends SvgElement implements SvgContainer, SvgConditional
    {
       List<SvgObject> children = new ArrayList<>();
 
@@ -1604,13 +1606,13 @@ public class SVG
    }
 
 
-   static class SvgPreserveAspectRatioContainer extends SvgConditionalContainer
+   static abstract class SvgPreserveAspectRatioContainer extends SvgConditionalContainer
    {
       PreserveAspectRatio  preserveAspectRatio = null;
    }
 
 
-   static class SvgViewBoxContainer extends SvgPreserveAspectRatioContainer
+   static abstract class SvgViewBoxContainer extends SvgPreserveAspectRatioContainer
    {
       Box  viewBox;
    }
@@ -1623,6 +1625,9 @@ public class SVG
       Length  width;
       Length  height;
       public String  version;
+
+      @Override
+      String  getNodeName() { return "svg"; }
    }
 
 
@@ -1633,6 +1638,9 @@ public class SVG
 
       @Override
       public void setTransform(Matrix transform) { this.transform = transform; }
+
+      @Override
+      String  getNodeName() { return "group"; }
    }
 
 
@@ -1645,6 +1653,8 @@ public class SVG
    // referenced from other parts of the file.
    static class Defs extends Group implements NotDirectlyRendered
    {
+      @Override
+      String  getNodeName() { return "defs"; }
    }
 
 
@@ -1673,6 +1683,9 @@ public class SVG
    {
       PathDefinition  d;
       Float           pathLength;
+
+      @Override
+      String  getNodeName() { return "path"; }
    }
 
 
@@ -1684,6 +1697,9 @@ public class SVG
       Length  height;
       Length  rx;
       Length  ry;
+
+      @Override
+      String  getNodeName() { return "rect"; }
    }
 
 
@@ -1692,6 +1708,9 @@ public class SVG
       Length  cx;
       Length  cy;
       Length  r;
+
+      @Override
+      String  getNodeName() { return "circle"; }
    }
 
 
@@ -1701,6 +1720,9 @@ public class SVG
       Length  cy;
       Length  rx;
       Length  ry;
+
+      @Override
+      String  getNodeName() { return "ellipse"; }
    }
 
 
@@ -1710,17 +1732,25 @@ public class SVG
       Length  y1;
       Length  x2;
       Length  y2;
+
+      @Override
+      String  getNodeName() { return "line"; }
    }
 
 
    static class PolyLine extends GraphicsElement
    {
       float[]  points;
+
+      @Override
+      String  getNodeName() { return "polyline"; }
    }
 
 
    static class Polygon extends PolyLine
    {
+      @Override
+      String  getNodeName() { return "polygon"; }
    }
 
 
@@ -1737,7 +1767,7 @@ public class SVG
    }
    
 
-   static class  TextContainer extends SvgConditionalContainer
+   static abstract class  TextContainer extends SvgConditionalContainer
    {
       @Override
       public void  addChild(SvgObject elem) throws SVGParseException
@@ -1750,7 +1780,7 @@ public class SVG
    }
 
 
-   static class  TextPositionedContainer extends TextContainer
+   static abstract class  TextPositionedContainer extends TextContainer
    {
       List<Length>  x;
       List<Length>  y;
@@ -1765,6 +1795,8 @@ public class SVG
 
       @Override
       public void setTransform(Matrix transform) { this.transform = transform; }
+      @Override
+      String  getNodeName() { return "text"; }
    }
 
 
@@ -1776,6 +1808,8 @@ public class SVG
       public void  setTextRoot(TextRoot obj) { this.textRoot = obj; }
       @Override
       public TextRoot  getTextRoot() { return this.textRoot; }
+      @Override
+      String  getNodeName() { return "tspan"; }
    }
 
 
@@ -1812,6 +1846,8 @@ public class SVG
       public void  setTextRoot(TextRoot obj) { this.textRoot = obj; }
       @Override
       public TextRoot  getTextRoot() { return this.textRoot; }
+      @Override
+      String  getNodeName() { return "tref"; }
    }
 
 
@@ -1826,6 +1862,8 @@ public class SVG
       public void  setTextRoot(TextRoot obj) { this.textRoot = obj; }
       @Override
       public TextRoot  getTextRoot() { return this.textRoot; }
+      @Override
+      String  getNodeName() { return "textPath"; }
    }
 
 
@@ -1837,6 +1875,8 @@ public class SVG
 
    static class Symbol extends SvgViewBoxContainer implements NotDirectlyRendered
    {
+      @Override
+      String  getNodeName() { return "symbol"; }
    }
 
 
@@ -1848,10 +1888,13 @@ public class SVG
       Length   markerWidth;
       Length   markerHeight;
       Float    orient;
+
+      @Override
+      String  getNodeName() { return "marker"; }
    }
 
 
-   static class GradientElement extends SvgElementBase implements SvgContainer
+   static abstract class GradientElement extends SvgElementBase implements SvgContainer
    {
       List<SvgObject> children = new ArrayList<>();
 
@@ -1887,6 +1930,8 @@ public class SVG
       public List<SvgObject> getChildren() { return Collections.emptyList(); }
       @Override
       public void addChild(SvgObject elem) throws SVGParseException { /* do nothing */ }
+      @Override
+      String  getNodeName() { return "stop"; }
    }
 
 
@@ -1896,6 +1941,9 @@ public class SVG
       Length  y1;
       Length  x2;
       Length  y2;
+
+      @Override
+      String  getNodeName() { return "linearGradient"; }
    }
 
 
@@ -1906,12 +1954,18 @@ public class SVG
       Length  r;
       Length  fx;
       Length  fy;
+
+      @Override
+      String  getNodeName() { return "radialGradient"; }
    }
 
 
    static class ClipPath extends Group implements NotDirectlyRendered
    {
       Boolean  clipPathUnitsAreUser;
+
+      @Override
+      String  getNodeName() { return "clipPath"; }
    }
 
 
@@ -1925,6 +1979,9 @@ public class SVG
       Length   width;
       Length   height;
       String   href;
+
+      @Override
+      String  getNodeName() { return "pattern"; }
    }
 
 
@@ -1939,11 +1996,15 @@ public class SVG
 
       @Override
       public void setTransform(Matrix transform) { this.transform = transform; }
+      @Override
+      String  getNodeName() { return "image"; }
    }
 
 
    protected static class View extends SvgViewBoxContainer implements NotDirectlyRendered
    {
+      @Override
+      String  getNodeName() { return "view"; }
    }
 
 
@@ -1955,6 +2016,9 @@ public class SVG
       Length   y;
       Length   width;
       Length   height;
+
+      @Override
+      String  getNodeName() { return "mask"; }
    }
 
 
@@ -1970,6 +2034,8 @@ public class SVG
       public List<SvgObject> getChildren() { return Collections.emptyList(); }
       @Override
       public void addChild(SvgObject elem) throws SVGParseException { /* do nothing */ }
+      @Override
+      String  getNodeName() { return "solidColor"; }
    }
 
 
