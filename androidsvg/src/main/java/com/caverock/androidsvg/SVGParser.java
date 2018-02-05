@@ -44,8 +44,6 @@ import com.caverock.androidsvg.SVG.Unit;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-import org.xml.sax.SAXNotRecognizedException;
-import org.xml.sax.SAXNotSupportedException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.ext.DefaultHandler2;
 import org.xmlpull.v1.XmlPullParser;
@@ -2820,10 +2818,10 @@ class SVGParser
       for (int i=0; i<attributes.getLength(); i++)
       {
          String  val = attributes.getValue(i).trim();
-         if (val.length() == 0) { // The spec doesn't say how to handle empty style attributes.
-            continue;             // Our strategy is just to ignore them.
+         if (val.length() == 0) {  // Empty attribute. Ignore it.
+            continue;
          }
-         //boolean  inherit = val.equals("inherit");
+         //boolean  inherit = val.equals("inherit");   // NYI
 
          switch (SVGAttr.fromString(attributes.getLocalName(i)))
          {
@@ -2874,7 +2872,7 @@ class SVGParser
    }
 
 
-   static void  processStyleProperty(Style style, String localName, String val) throws SVGParseException
+   static void  processStyleProperty(Style style, String localName, String val)// throws SVGParseException
    {
       if (val.length() == 0) { // The spec doesn't say how to handle empty style attributes.
          return;               // Our strategy is just to ignore them.
@@ -2885,71 +2883,83 @@ class SVGParser
       switch (SVGAttr.fromString(localName))
       {
          case fill:
-            try {
-               style.fill = parsePaintSpecifier(val, "fill");
+            style.fill = parsePaintSpecifier(val);
+            if (style.fill != null)
                style.specifiedFlags |= SVG.SPECIFIED_FILL;
-            } catch (SVGParseException e) {
-               // Error: Ignore property
-               Log.w(TAG, e.getMessage());
-            }
             break;
 
          case fill_rule:
             style.fillRule = parseFillRule(val);
-            style.specifiedFlags |= SVG.SPECIFIED_FILL_RULE;
+            if (style.fillRule != null)
+               style.specifiedFlags |= SVG.SPECIFIED_FILL_RULE;
             break;
 
          case fill_opacity:
             style.fillOpacity = parseOpacity(val);
-            style.specifiedFlags |= SVG.SPECIFIED_FILL_OPACITY;
+            if (style.fillOpacity != null)
+               style.specifiedFlags |= SVG.SPECIFIED_FILL_OPACITY;
             break;
 
          case stroke:
-            try {
-               style.stroke = parsePaintSpecifier(val, "stroke");
+            style.stroke = parsePaintSpecifier(val);
+            if (style.stroke != null)
                style.specifiedFlags |= SVG.SPECIFIED_STROKE;
-            } catch (SVGParseException e) {
-               // Error: Ignore property
-               Log.w(TAG, e.getMessage());
-            }
             break;
 
          case stroke_opacity:
             style.strokeOpacity = parseOpacity(val);
-            style.specifiedFlags |= SVG.SPECIFIED_STROKE_OPACITY;
+            if (style.strokeOpacity != null)
+               style.specifiedFlags |= SVG.SPECIFIED_STROKE_OPACITY;
             break;
 
          case stroke_width:
-            style.strokeWidth = parseLength(val);
-            style.specifiedFlags |= SVG.SPECIFIED_STROKE_WIDTH;
+            try {
+               style.strokeWidth = parseLength(val);
+               style.specifiedFlags |= SVG.SPECIFIED_STROKE_WIDTH;
+            } catch (SVGParseException e) {
+               // Do nothing
+            }
             break;
 
          case stroke_linecap:
             style.strokeLineCap = parseStrokeLineCap(val);
-            style.specifiedFlags |= SVG.SPECIFIED_STROKE_LINECAP;
+            if (style.strokeLineCap != null)
+               style.specifiedFlags |= SVG.SPECIFIED_STROKE_LINECAP;
             break;
 
          case stroke_linejoin:
             style.strokeLineJoin = parseStrokeLineJoin(val);
-            style.specifiedFlags |= SVG.SPECIFIED_STROKE_LINEJOIN;
+            if (style.strokeLineJoin != null)
+               style.specifiedFlags |= SVG.SPECIFIED_STROKE_LINEJOIN;
             break;
 
          case stroke_miterlimit:
-            style.strokeMiterLimit = parseFloat(val);
-            style.specifiedFlags |= SVG.SPECIFIED_STROKE_MITERLIMIT;
+            try {
+               style.strokeMiterLimit = parseFloat(val);
+               style.specifiedFlags |= SVG.SPECIFIED_STROKE_MITERLIMIT;
+            } catch (SVGParseException e) {
+               // Do nothing
+            }
             break;
 
          case stroke_dasharray:
-            if (NONE.equals(val))
+            if (NONE.equals(val)) {
                style.strokeDashArray = null;
-            else
-               style.strokeDashArray = parseStrokeDashArray(val);
-            style.specifiedFlags |= SVG.SPECIFIED_STROKE_DASHARRAY;
+               style.specifiedFlags |= SVG.SPECIFIED_STROKE_DASHARRAY;
+               break;
+            }
+            style.strokeDashArray = parseStrokeDashArray(val);
+            if (style.strokeDashArray != null)
+               style.specifiedFlags |= SVG.SPECIFIED_STROKE_DASHARRAY;
             break;
 
          case stroke_dashoffset:
-            style.strokeDashOffset = parseLength(val);
-            style.specifiedFlags |= SVG.SPECIFIED_STROKE_DASHOFFSET;
+            try {
+               style.strokeDashOffset = parseLength(val);
+               style.specifiedFlags |= SVG.SPECIFIED_STROKE_DASHOFFSET;
+            } catch (SVGParseException e) {
+               // Do nothing
+            }
             break;
 
          case opacity:
@@ -2962,8 +2972,7 @@ class SVGParser
                style.color = parseColour(val);
                style.specifiedFlags |= SVG.SPECIFIED_COLOR;
             } catch (SVGParseException e) {
-               // Error: Ignore property
-               Log.w(TAG, e.getMessage());
+               // Do nothing
             }
             break;
 
@@ -2973,42 +2982,50 @@ class SVGParser
 
          case font_family:
             style.fontFamily = parseFontFamily(val);
-            style.specifiedFlags |= SVG.SPECIFIED_FONT_FAMILY;
+            if (style.fontFamily != null)
+               style.specifiedFlags |= SVG.SPECIFIED_FONT_FAMILY;
             break;
 
          case font_size:
             style.fontSize = parseFontSize(val);
-            style.specifiedFlags |= SVG.SPECIFIED_FONT_SIZE;
+            if (style.fontSize != null)
+               style.specifiedFlags |= SVG.SPECIFIED_FONT_SIZE;
             break;
 
          case font_weight:
             style.fontWeight = parseFontWeight(val);
-            style.specifiedFlags |= SVG.SPECIFIED_FONT_WEIGHT;
+            if (style.fontWeight != null)
+               style.specifiedFlags |= SVG.SPECIFIED_FONT_WEIGHT;
             break;
 
          case font_style:
             style.fontStyle = parseFontStyle(val);
-            style.specifiedFlags |= SVG.SPECIFIED_FONT_STYLE;
+            if (style.fontStyle != null)
+               style.specifiedFlags |= SVG.SPECIFIED_FONT_STYLE;
             break;
 
          case text_decoration:
             style.textDecoration = parseTextDecoration(val);
-            style.specifiedFlags |= SVG.SPECIFIED_TEXT_DECORATION;
+            if (style.textDecoration != null)
+               style.specifiedFlags |= SVG.SPECIFIED_TEXT_DECORATION;
             break;
 
          case direction:
             style.direction = parseTextDirection(val);
-            style.specifiedFlags |= SVG.SPECIFIED_DIRECTION;
+            if (style.direction != null)
+               style.specifiedFlags |= SVG.SPECIFIED_DIRECTION;
             break;
 
          case text_anchor:
             style.textAnchor = parseTextAnchor(val);
-            style.specifiedFlags |= SVG.SPECIFIED_TEXT_ANCHOR;
+            if (style.textAnchor != null)
+               style.specifiedFlags |= SVG.SPECIFIED_TEXT_ANCHOR;
             break;
 
          case overflow:
             style.overflow = parseOverflow(val);
-            style.specifiedFlags |= SVG.SPECIFIED_OVERFLOW;
+            if (style.overflow != null)
+               style.specifiedFlags |= SVG.SPECIFIED_OVERFLOW;
             break;
 
          case marker:
@@ -3035,14 +3052,14 @@ class SVGParser
 
          case display:
             if (val.indexOf('|') >= 0 || !VALID_DISPLAY_VALUES.contains('|'+val+'|'))
-               throw new SVGParseException("Invalid value for \"display\" attribute: "+val);
+               break;
             style.display = !val.equals(NONE);
             style.specifiedFlags |= SVG.SPECIFIED_DISPLAY;
             break;
 
          case visibility:
             if (val.indexOf('|') >= 0 || !VALID_VISIBILITY_VALUES.contains('|'+val+'|'))
-               throw new SVGParseException("Invalid value for \"visibility\" attribute: "+val);
+               break;
             style.visibility = val.equals("visible");
             style.specifiedFlags |= SVG.SPECIFIED_VISIBILITY;
             break;
@@ -3069,7 +3086,8 @@ class SVGParser
 
          case clip:
             style.clip = parseClip(val);
-            style.specifiedFlags |= SVG.SPECIFIED_CLIP;
+            if (style.clip != null)
+               style.specifiedFlags |= SVG.SPECIFIED_CLIP;
             break;
 
          case clip_path:
@@ -3129,12 +3147,14 @@ class SVGParser
 
          case vector_effect:
             style.vectorEffect = parseVectorEffect(val);
-            style.specifiedFlags |= SVG.SPECIFIED_VECTOR_EFFECT;
+            if (style.vectorEffect != null)
+               style.specifiedFlags |= SVG.SPECIFIED_VECTOR_EFFECT;
             break;
 
          case image_rendering:
-            style.imageRendering = parseRenderQuality(val, localName);
-            style.specifiedFlags |= SVG.SPECIFIED_IMAGE_RENDERING;
+            style.imageRendering = parseRenderQuality(val);
+            if (style.imageRendering != null)
+               style.specifiedFlags |= SVG.SPECIFIED_IMAGE_RENDERING;
             break;
 
          default:
@@ -3395,10 +3415,14 @@ class SVGParser
    /*
     * Parse an opacity value (a float clamped to the range 0..1).
     */
-   private static float  parseOpacity(String val) throws SVGParseException
+   private static Float  parseOpacity(String val)
    {
-      float  o = parseFloat(val);
-      return (o < 0f) ? 0f : (o > 1f) ? 1f : o;
+      try {
+         float  o = parseFloat(val);
+         return (o < 0f) ? 0f : (o > 1f) ? 1f : o;
+      } catch (SVGParseException e) {
+         return null;
+      }
    }
 
 
@@ -3466,36 +3490,44 @@ class SVGParser
    /*
     * Parse a paint specifier such as in the fill and stroke attributes.
     */
-   private static SvgPaint parsePaintSpecifier(String val, String attrName) throws SVGParseException
+   private static SvgPaint parsePaintSpecifier(String val)
    {
       if (val.startsWith("url("))
       {
          int  closeBracket = val.indexOf(")"); 
-         if (closeBracket == -1)
-            throw new SVGParseException("Bad "+attrName+" attribute. Unterminated url() reference");
+         if (closeBracket != -1)
+         {
+            String    href = val.substring(4, closeBracket).trim();
+            SvgPaint  fallback = null;
 
-         String    href = val.substring(4, closeBracket).trim();
-         SvgPaint  fallback = null;
-
-         val = val.substring(closeBracket+1).trim();
-         if (val.length() > 0)
-            fallback = parseColourSpecifer(val);
-         return new PaintReference(href, fallback);
-
+            val = val.substring(closeBracket+1).trim();
+            if (val.length() > 0)
+               fallback = parseColourSpecifer(val);
+            return new PaintReference(href, fallback);
+         }
+         else
+         {
+            String    href = val.substring(4).trim();
+            return new PaintReference(href, null);
+         }
       }
       return parseColourSpecifer(val);
    }
 
 
-   private static SvgPaint parseColourSpecifer(String val) throws SVGParseException
+   private static SvgPaint parseColourSpecifer(String val)
    {
       switch (val) {
          case NONE:
-            return null;
+            return Colour.TRANSPARENT;
          case CURRENTCOLOR:
             return CurrentColor.getInstance();
          default:
-            return parseColour(val);
+            try {
+               return parseColour(val);
+            } catch (SVGParseException e) {
+               return null;
+            }
       }
    }
 
@@ -3660,7 +3692,7 @@ class SVGParser
 
    // Parse a font attribute
    // [ [ <'font-style'> || <'font-variant'> || <'font-weight'> ]? <'font-size'> [ / <'line-height'> ]? <'font-family'> ] | caption | icon | menu | message-box | small-caption | status-bar | inherit
-   private static void  parseFont(Style style, String val) throws SVGParseException
+   private static void  parseFont(Style style, String val)
    {
       Integer          fontWeight = null;
       Style.FontStyle  fontStyle = null;
@@ -3670,7 +3702,7 @@ class SVGParser
       if (!"|caption|icon|menu|message-box|small-caption|status-bar|".contains('|'+val+'|'))
          return;
          
-      // Fist part: style/variant/weight (opt - one or more)
+      // First part: style/variant/weight (opt - one or more)
       TextScanner  scan = new TextScanner(val);
       String       item;
       while (true)
@@ -3678,7 +3710,7 @@ class SVGParser
          item = scan.nextToken('/');
          scan.skipWhitespace();
          if (item == null)
-            throw new SVGParseException("Invalid font style attribute: missing font size and family");
+            return;
          if (fontWeight != null && fontStyle != null)
             break;
          if (item.equals("normal"))  // indeterminate which of these this refers to
@@ -3689,7 +3721,7 @@ class SVGParser
                continue;
          }
          if (fontStyle == null) {
-            fontStyle = fontStyleKeyword(item);
+            fontStyle = parseFontStyle(item);
             if (fontStyle != null)
                continue;
          }
@@ -3710,9 +3742,13 @@ class SVGParser
       {
          scan.skipWhitespace();
          item = scan.nextToken();
-         if (item == null)
-            throw new SVGParseException("Invalid font style attribute: missing line-height");
-         parseLength(item);
+         if (item != null) {
+            try {
+               parseLength(item);
+            } catch (SVGParseException e) {
+               return;
+            }
+         }
          scan.skipWhitespace();
       }
       
@@ -3726,7 +3762,7 @@ class SVGParser
 
 
    // Parse a font family list
-   private static List<String>  parseFontFamily(String val) throws SVGParseException
+   private static List<String>  parseFontFamily(String val)
    {
       List<String> fonts = null;
       TextScanner  scan = new TextScanner(val);
@@ -3749,107 +3785,93 @@ class SVGParser
 
 
    // Parse a font size keyword or numerical value
-   private static Length  parseFontSize(String val) throws SVGParseException
+   private static Length  parseFontSize(String val)
    {
-      Length  size = FontSizeKeywords.get(val);
-      if (size == null) {
-         size = parseLength(val);
+      try {
+         Length  size = FontSizeKeywords.get(val);
+         if (size == null)
+            size = parseLength(val);
+         return size;
+      } catch (SVGParseException e) {
+         return null;
       }
-      return size;
    }
 
 
    // Parse a font weight keyword or numerical value
-   private static Integer  parseFontWeight(String val) throws SVGParseException
+   private static Integer  parseFontWeight(String val)
    {
-      Integer  wt = FontWeightKeywords.get(val);
-      if (wt == null) {
-         throw new SVGParseException("Invalid font-weight property: "+val);
-      }
-      return wt;
+      return FontWeightKeywords.get(val);
    }
 
 
    // Parse a font style keyword
-   private static Style.FontStyle  parseFontStyle(String val) throws SVGParseException
-   {
-      Style.FontStyle  fs = fontStyleKeyword(val);
-      if (fs != null)
-         return fs;
-      else
-         throw new SVGParseException("Invalid font-style property: "+val);
-   }
-
-
-   // Parse a font style keyword
-   private static Style.FontStyle  fontStyleKeyword(String val)
+   private static Style.FontStyle  parseFontStyle(String val)
    {
       // Italic is probably the most common, so test that first :)
-      if ("italic".equals(val))
-         return Style.FontStyle.Italic;
-      else if ("normal".equals(val))
-         return Style.FontStyle.Normal;
-      else if ("oblique".equals(val))
-         return Style.FontStyle.Oblique;
-      else
-         return null;
+      switch (val)
+      {
+         case "italic":  return Style.FontStyle.Italic;
+         case "normal":  return Style.FontStyle.Normal;
+         case "oblique": return Style.FontStyle.Oblique;
+         default:        return null;
+      }
    }
 
 
    // Parse a text decoration keyword
-   private static TextDecoration  parseTextDecoration(String val) throws SVGParseException
+   private static TextDecoration  parseTextDecoration(String val)
    {
-      if (NONE.equals(val))
-         return Style.TextDecoration.None;
-      if ("underline".equals(val))
-         return Style.TextDecoration.Underline;
-      if ("overline".equals(val))
-         return Style.TextDecoration.Overline;
-      if ("line-through".equals(val))
-         return Style.TextDecoration.LineThrough;
-      if ("blink".equals(val))
-         return Style.TextDecoration.Blink;
-      throw new SVGParseException("Invalid text-decoration property: "+val);
+      switch (val)
+      {
+         case NONE:           return Style.TextDecoration.None;
+         case "underline":    return Style.TextDecoration.Underline;
+         case "overline":     return Style.TextDecoration.Overline;
+         case "line-through": return Style.TextDecoration.LineThrough;
+         case "blink":        return Style.TextDecoration.Blink;
+         default:             return null;
+      }
    }
 
 
    // Parse a text decoration keyword
-   private static TextDirection  parseTextDirection(String val) throws SVGParseException
+   private static TextDirection  parseTextDirection(String val)
    {
-      if ("ltr".equals(val))
-         return Style.TextDirection.LTR;
-      if ("rtl".equals(val))
-         return Style.TextDirection.RTL;
-      throw new SVGParseException("Invalid direction property: "+val);
+      switch (val)
+      {
+         case "ltr": return Style.TextDirection.LTR;
+         case "rtl": return Style.TextDirection.RTL;
+         default:    return null;
+      }
    }
 
 
    // Parse fill rule
-   private static Style.FillRule  parseFillRule(String val) throws SVGParseException
+   private static Style.FillRule  parseFillRule(String val)
    {
       if ("nonzero".equals(val))
          return Style.FillRule.NonZero;
       if ("evenodd".equals(val))
          return Style.FillRule.EvenOdd;
-      throw new SVGParseException("Invalid fill-rule property: "+val);
+      return null;
    }
 
 
    // Parse stroke-linecap
-   private static Style.LineCaps  parseStrokeLineCap(String val) throws SVGParseException
+   private static Style.LineCap  parseStrokeLineCap(String val)
    {
       if ("butt".equals(val))
-         return Style.LineCaps.Butt;
+         return Style.LineCap.Butt;
       if ("round".equals(val))
-         return Style.LineCaps.Round;
+         return Style.LineCap.Round;
       if ("square".equals(val))
-         return Style.LineCaps.Square;
-      throw new SVGParseException("Invalid stroke-linecap property: "+val);
+         return Style.LineCap.Square;
+      return null;
    }
 
 
    // Parse stroke-linejoin
-   private static Style.LineJoin  parseStrokeLineJoin(String val) throws SVGParseException
+   private static Style.LineJoin  parseStrokeLineJoin(String val)
    {
       if ("miter".equals(val))
          return Style.LineJoin.Miter;
@@ -3857,12 +3879,12 @@ class SVGParser
          return Style.LineJoin.Round;
       if ("bevel".equals(val))
          return Style.LineJoin.Bevel;
-      throw new SVGParseException("Invalid stroke-linejoin property: "+val);
+      return null;
    }
 
 
    // Parse stroke-dasharray
-   private static Length[]  parseStrokeDashArray(String val) throws SVGParseException
+   private static Length[]  parseStrokeDashArray(String val)
    {
       TextScanner scan = new TextScanner(val);
       scan.skipWhitespace();
@@ -3874,7 +3896,7 @@ class SVGParser
       if (dash == null)
          return null;
       if (dash.isNegative())
-         throw new SVGParseException("Invalid stroke-dasharray. Dash segemnts cannot be negative: "+val);
+         return null;
 
       float sum = dash.floatValue();
 
@@ -3885,9 +3907,9 @@ class SVGParser
          scan.skipCommaWhitespace();
          dash = scan.nextLength();
          if (dash == null)  // must have hit something unexpected
-            throw new SVGParseException("Invalid stroke-dasharray. Non-Length content found: "+val);
+            return null;
          if (dash.isNegative())
-            throw new SVGParseException("Invalid stroke-dasharray. Dash segemnts cannot be negative: "+val);
+            return null;
          dashes.add(dash);
          sum += dash.floatValue();
       }
@@ -3902,36 +3924,42 @@ class SVGParser
 
 
    // Parse a text anchor keyword
-   private static Style.TextAnchor  parseTextAnchor(String val) throws SVGParseException
+   private static Style.TextAnchor  parseTextAnchor(String val)
    {
-      if ("start".equals(val))
-         return Style.TextAnchor.Start;
-      if ("middle".equals(val))
-         return Style.TextAnchor.Middle;
-      if ("end".equals(val))
-         return Style.TextAnchor.End;
-      throw new SVGParseException("Invalid text-anchor property: "+val);
+      switch (val)
+      {
+         case "start":  return Style.TextAnchor.Start;
+         case "middle": return Style.TextAnchor.Middle;
+         case "end":    return Style.TextAnchor.End;
+         default:       return null;
+      }
    }
 
 
    // Parse a text anchor keyword
-   private static Boolean  parseOverflow(String val) throws SVGParseException
+   private static Boolean  parseOverflow(String val)
    {
-      if ("visible".equals(val) || "auto".equals(val))
-         return Boolean.TRUE;
-      if ("hidden".equals(val) || "scroll".equals(val))
-         return Boolean.FALSE;
-      throw new SVGParseException("Invalid toverflow property: "+val);
+      switch (val)
+      {
+         case "visible":
+         case "auto":
+            return Boolean.TRUE;
+         case "hidden":
+         case "scroll":
+            return Boolean.FALSE;
+         default:
+            return null;
+      }
    }
 
 
    // Parse CSS clip shape (always a rect())
-   private static CSSClipRect  parseClip(String val) throws SVGParseException
+   private static CSSClipRect  parseClip(String val)
    {
       if ("auto".equals(val))
          return null;
-      if (!val.toLowerCase(Locale.US).startsWith("rect("))
-         throw new SVGParseException("Invalid clip attribute shape. Only rect() is supported.");
+      if (!val.startsWith("rect("))
+         return null;
 
       TextScanner scan = new TextScanner(val.substring(5));
       scan.skipWhitespace();
@@ -3945,8 +3973,8 @@ class SVGParser
       Length left = parseLengthOrAuto(scan);
 
       scan.skipWhitespace();
-      if (!scan.consume(')'))
-         throw new SVGParseException("Bad rect() clip definition: "+val);
+      if (!scan.consume(')') && !scan.empty())   // Be forgibing. Allow missing ')'.
+         return null;
 
       return new CSSClipRect(top, right, bottom, left);
    }
@@ -3962,26 +3990,27 @@ class SVGParser
 
 
    // Parse a vector effect keyword
-   private static VectorEffect  parseVectorEffect(String val) throws SVGParseException
+   private static VectorEffect  parseVectorEffect(String val)
    {
-      if (NONE.equals(val))
-         return Style.VectorEffect.None;
-      if ("non-scaling-stroke".equals(val))
-         return Style.VectorEffect.NonScalingStroke;
-      throw new SVGParseException("Invalid vector-effect property: "+val);
+      switch (val)
+      {
+         case NONE:                 return Style.VectorEffect.None;
+         case "non-scaling-stroke": return Style.VectorEffect.NonScalingStroke;
+         default:                   return null;
+      }
    }
 
 
    // Parse a rendering quality property
-   private static RenderQuality  parseRenderQuality(String val, String attrName) throws SVGParseException
+   private static RenderQuality  parseRenderQuality(String val)
    {
-      if ("auto".equals(val))
-         return RenderQuality.auto;
-      if ("optimizeQuality".equals(val))
-         return RenderQuality.optimizeQuality;
-      if ("optimizeSpeed".equals(val))
-         return RenderQuality.optimizeSpeed;
-      throw new SVGParseException("Invalid " + attrName + " property: "+val);
+      switch (val)
+      {
+         case "auto":            return RenderQuality.auto;
+         case "optimizeQuality": return RenderQuality.optimizeQuality;
+         case "optimizeSpeed":   return RenderQuality.optimizeSpeed;
+         default:                return null;
+      }
    }
 
 
@@ -4302,14 +4331,16 @@ class SVGParser
    }
 
 
-   private static String  parseFunctionalIRI(String val, String attrName) throws SVGParseException
+   private static String  parseFunctionalIRI(String val, String attrName)
    {
       if (val.equals(NONE))
          return null;
-      if (!val.startsWith("url(") || !val.endsWith(")"))
-         throw new SVGParseException("Bad "+attrName+" attribute. Expected \"none\" or \"url()\" format");
-
-      return val.substring(4, val.length()-1).trim();
+      if (!val.startsWith("url("))
+         return null;
+      if (val.endsWith(")"))
+         return val.substring(4, val.length()-1).trim();
+      else
+         return val.substring(4).trim();
       // Unlike CSS, the SVG spec seems to indicate that quotes are not allowed in "url()" references
    }
 

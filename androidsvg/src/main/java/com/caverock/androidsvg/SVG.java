@@ -1061,7 +1061,7 @@ public class SVG
       SvgPaint   stroke;
       Float      strokeOpacity;
       Length     strokeWidth;
-      LineCaps   strokeLineCap;
+      LineCap    strokeLineCap;
       LineJoin   strokeLineJoin;
       Float      strokeMiterLimit;
       Length[]   strokeDashArray;
@@ -1121,7 +1121,7 @@ public class SVG
          EvenOdd
       }
 
-      public enum LineCaps
+      public enum LineCap
       {
          Butt,
          Round,
@@ -1188,7 +1188,7 @@ public class SVG
          def.stroke = null;         // none
          def.strokeOpacity = 1f;
          def.strokeWidth = new Length(1f);
-         def.strokeLineCap = LineCaps.Butt;
+         def.strokeLineCap = LineCap.Butt;
          def.strokeLineJoin = LineJoin.Miter;
          def.strokeMiterLimit = 4f;
          def.strokeDashArray = null;
@@ -1261,12 +1261,14 @@ public class SVG
    {
    }
 
+
    static class Colour extends SvgPaint
    {
       int colour;
       
       static final Colour BLACK = new Colour(0xff000000);  // Black singleton - a common default value.
-      
+      static final Colour TRANSPARENT = new Colour(0);     // Transparent black
+
       Colour(int val)
       {
          this.colour = val;
@@ -1277,6 +1279,7 @@ public class SVG
          return String.format("#%08x", colour);
       }
    }
+
 
    // Special version of Colour that indicates use of 'currentColor' keyword
    static class CurrentColor extends SvgPaint

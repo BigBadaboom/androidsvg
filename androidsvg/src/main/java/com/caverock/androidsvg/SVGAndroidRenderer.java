@@ -2064,7 +2064,7 @@ class SVGAndroidRenderer
       if (isSpecified(style, SVG.SPECIFIED_FILL))
       {
          state.style.fill = style.fill;
-         state.hasFill = (style.fill != null);
+         state.hasFill = (style.fill != null && style.fill != Colour.TRANSPARENT);
       }
 
       if (isSpecified(style, SVG.SPECIFIED_FILL_OPACITY))
@@ -2087,7 +2087,7 @@ class SVGAndroidRenderer
       if (isSpecified(style, SVG.SPECIFIED_STROKE))
       {
          state.style.stroke = style.stroke;
-         state.hasStroke = (style.stroke != null);
+         state.hasStroke = (style.stroke != null && style.stroke != Colour.TRANSPARENT);
       }
 
       if (isSpecified(style, SVG.SPECIFIED_STROKE_OPACITY))
@@ -3225,9 +3225,9 @@ class SVGAndroidRenderer
       }
       if (ref instanceof SvgLinearGradient)
          makeLinearGradient(isFill, boundingBox, (SvgLinearGradient) ref);
-      if (ref instanceof SvgRadialGradient)
+      else if (ref instanceof SvgRadialGradient)
          makeRadialGradient(isFill, boundingBox, (SvgRadialGradient) ref);
-      if (ref instanceof SolidColor)
+      else if (ref instanceof SolidColor)
          setSolidColor(isFill, (SolidColor) ref);
       //if (ref instanceof SVG.Pattern) {}  // May be needed later if/when we do direct rendering
    }
@@ -3337,9 +3337,10 @@ class SVGAndroidRenderer
       statePop();
 
       // Create shader instance
-      LinearGradient  gr = new LinearGradient(_x1, _y1, _x2, _y2, colours, positions, tileMode); 
+      LinearGradient  gr = new LinearGradient(_x1, _y1, _x2, _y2, colours, positions, tileMode);
       gr.setLocalMatrix(m);
       paint.setShader(gr);
+      paint.setAlpha(clamp255(state.style.fillOpacity));
    }
 
 
@@ -3450,6 +3451,7 @@ class SVGAndroidRenderer
       RadialGradient  gr = new RadialGradient(_cx, _cy, _r, colours, positions, tileMode); 
       gr.setLocalMatrix(m);
       paint.setShader(gr);
+      paint.setAlpha(clamp255(state.style.fillOpacity));
    }
 
 
@@ -4320,6 +4322,8 @@ class SVGAndroidRenderer
       RendererState  baseState = new RendererState();
       updateStyle(baseState, Style.getDefaultStyle());
       baseState.style.overflow = false;    // By default patterns do not overflow
+
+      // SVG2 TODO: Patterns now inherit from the element referencing the pattern
       state = findInheritFromAncestorState(pattern, baseState);
 
       // The bounds of the area we need to cover with pattern to ensure that our shape is filled
@@ -4349,21 +4353,28 @@ class SVGAndroidRenderer
             patternArea = new Box(rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top);
          }
       }
+
       // Calculate the pattern origin
       originX = x + (float) Math.floor((patternArea.minX - x) / w) * w;
       originY = y + (float) Math.floor((patternArea.minY - y) / h) * h;
+
       // For each Y step, then each X step
       float  right = patternArea.maxX();
       float  bottom = patternArea.maxY();
       Box    stepViewBox = new Box(0,0,w,h);
+
+      boolean  compositing = pushLayer();
+
       for (float stepY = originY; stepY < bottom; stepY += h)
       {
          for (float stepX = originX; stepX < right; stepX += w)
          {
             stepViewBox.minX = stepX;
             stepViewBox.minY = stepY;
+
             // Push the state
             statePush();
+
             // Set pattern clip rectangle if appropriate
             if (!state.style.overflow) {
                setClipRect(stepViewBox.minX, stepViewBox.minY, stepViewBox.width, stepViewBox.height);
@@ -4383,20 +4394,20 @@ class SVGAndroidRenderer
                }
             }
 
-            boolean  compositing = pushLayer();
 
             // Render the pattern
             for (SVG.SvgObject child: pattern.children) {
                render(child);
             }
 
-            if (compositing)
-               popLayer(pattern);
-
             // Pop the state
             statePop();
          }
       }
+
+      if (compositing)
+         popLayer(pattern);
+
       // Pop the state
       statePop();
    }
