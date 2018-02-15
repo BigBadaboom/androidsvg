@@ -2,35 +2,24 @@ package com.caverock.androidsvg;
 
 import android.graphics.Path;
 
-import org.robolectric.Shadows;
 import org.robolectric.annotation.Implementation;
 import org.robolectric.annotation.Implements;
 
 import java.util.ArrayList;
 import java.util.Locale;
 
-import static android.R.attr.bottom;
-import static android.R.attr.left;
-import static android.R.attr.path;
-import static android.R.attr.right;
-import static android.R.attr.top;
-import static android.R.attr.x;
-import static android.R.attr.y;
-import static org.robolectric.shadows.ShadowPath.Point.Type.LINE_TO;
-import static org.robolectric.shadows.ShadowPath.Point.Type.MOVE_TO;
-
 /**
  * Created by Paul on 10/07/2017.
  */
 
 @Implements(Path.class)
-public class MockPath
+class MockPath
 {
    private ArrayList<String>  path = new ArrayList<>();
 
    public void __constructor__()
    {
-      path.clear();;
+      path.clear();
    }
 
    @Implementation
@@ -60,6 +49,7 @@ public class MockPath
    @Implementation
    public void close()
    {
+      // Does nothing
    }
 
 
@@ -74,7 +64,7 @@ public class MockPath
       return sb.toString();
    }
 
-   public static String num(float f)
+   private static String  num(float f)
    {
       if (f == (long) f)
          return String.format("%d", (long) f);

@@ -24,7 +24,6 @@ import android.graphics.Path;
 import android.graphics.Rect;
 import android.graphics.RectF;
 
-import org.assertj.core.util.Strings;
 import org.robolectric.annotation.Implementation;
 import org.robolectric.annotation.Implements;
 import org.robolectric.shadow.api.Shadow;
@@ -39,7 +38,7 @@ import java.util.Stack;
  */
 
 @Implements(Canvas.class)
-public class MockCanvas
+class MockCanvas
 {
    private Bitmap  bitmap = null;
    private Rect    clipRect = new Rect();

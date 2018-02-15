@@ -37,7 +37,7 @@ public class PreserveAspectRatio
    private Scale      scale;
 
    /**
-    * Draw doucment at its natural position and scale.
+    * Draw document at its natural position and scale.
     */
    @SuppressWarnings("unused")
    public static final PreserveAspectRatio  UNSCALED = new PreserveAspectRatio(null, null);

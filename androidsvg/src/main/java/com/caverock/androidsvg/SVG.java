@@ -58,8 +58,9 @@ import java.util.Set;
  * 
  * <pre>
  * {@code
+ * SVG.registerExternalFileResolver(myResolver);
+ *
  * SVG  svg = SVG.getFromAsset(getContext().getAssets(), svgPath);
- * svg.registerExternalFileResolver(myResolver);
  *
  * Bitmap  newBM = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
  * Canvas  bmcanvas = new Canvas(newBM);
@@ -83,6 +84,9 @@ public class SVG
 
    private static final double  SQRT2 = 1.414213562373095;
 
+   // Resolver
+   private static SVGExternalFileResolver  externalFileResolver = null;
+
    // Parser configuration
    private static boolean  enableInternalEntities = true;
 
@@ -93,9 +97,6 @@ public class SVG
    private String  title = "";
    private String  desc = "";
 
-   // Resolver
-   private SVGExternalFileResolver  fileResolver = null;
-   
    // DPI to use for rendering
    private float   renderDPI = 96f;   // default is 96
 
@@ -273,14 +274,22 @@ public class SVG
 
    /**
     * Register an {@link SVGExternalFileResolver} instance that the renderer should use when resolving
-    * external references such as images and fonts.
+    * external references such as images, fonts, and CSS stylesheets.
     * 
     * @param fileResolver the resolver to use.
     */
-   @SuppressWarnings({"WeakerAccess", "unused"})
-   public void  registerExternalFileResolver(SVGExternalFileResolver fileResolver)
+   public static void  registerExternalFileResolver(SVGExternalFileResolver fileResolver)
    {
-      this.fileResolver = fileResolver;
+      externalFileResolver = fileResolver;
+   }
+
+
+   /**
+    * De-register the current {@link SVGExternalFileResolver} instance.
+    */
+   public static void  deregisterExternalFileResolver()
+   {
+      externalFileResolver = null;
    }
 
 
@@ -358,7 +367,7 @@ public class SVG
     * 
     * @param widthInPixels the width of the initial viewport
     * @param heightInPixels the height of the initial viewport
-    * @return a Picture object suitable for later rendering using {@code Canvas.darwPicture()}
+    * @return a Picture object suitable for later rendering using {@code Canvas.drawPicture()}
     */
    @SuppressWarnings({"WeakerAccess", "unused"})
    public Picture  renderToPicture(int widthInPixels, int heightInPixels)
@@ -2058,9 +2067,9 @@ public class SVG
    }
 
 
-   SVGExternalFileResolver  getFileResolver()
+   static SVGExternalFileResolver  getFileResolver()
    {
-      return fileResolver;
+      return externalFileResolver;
    }
 
 

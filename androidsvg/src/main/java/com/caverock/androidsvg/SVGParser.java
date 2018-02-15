@@ -78,10 +78,21 @@ class SVGParser
    private static final String  XLINK_NAMESPACE = "http://www.w3.org/1999/xlink";
    private static final String  FEATURE_STRING_PREFIX = "http://www.w3.org/TR/SVG11/feature#";
 
+   private static final String  XML_STYLESHEET_PROCESSING_INSTRUCTION = "xml-stylesheet";
+
+   // <?xml-stylesheet> attribute names and values
+   public static final String XML_STYLESHEET_ATTR_TYPE = "type";
+   public static final String XML_STYLESHEET_ATTR_ALTERNATE = "alternate";
+   public static final String XML_STYLESHEET_ATTR_HREF = "href";
+   public static final String XML_STYLESHEET_ATTR_MEDIA = "media";
+   public static final String XML_STYLESHEET_ATTR_MEDIA_ALL = "all";
+   public static final String XML_STYLESHEET_ATTR_ALTERNATE_NO = "no";
+
    // Used by the automatic XML parser switching code.
    // This value defines how much of the SVG file preamble will we keep in order to check for
    // a doctype definition that has internal entities defined.
    public static final int  ENTITY_WATCH_BUFFER_SIZE = 4096;
+
 
    // SVG parser
    private SVG               svgDocument = null;
@@ -688,7 +699,7 @@ class SVGParser
       public String getValue(String uri, String localName) { return null; }
       @Override
       public String getValue(String qName) { return null; }
-   };
+   }
 
 
    private void parseUsingXmlPullParser(InputStream is, boolean enableInternalEntities) throws SVGParseException
@@ -751,6 +762,14 @@ class SVGParser
                      }
                      return;
                   }
+                  break;
+
+               case XmlPullParser.PROCESSING_INSTRUCTION:
+Log.d(TAG,"PROC INSTR: "+parser.getText());
+                  TextScanner  scan = new TextScanner(parser.getText());
+                  String       instr = scan.nextToken();
+                  handleProcessingInstruction(instr, parseProcessingInstructionAttributes(scan));
+                  break;
             }
             eventType = parser.nextToken();
          }
@@ -775,6 +794,7 @@ class SVGParser
 
    private void parseUsingSAX(InputStream is) throws SVGParseException
    {
+      Log.d(TAG, "Falling back to SAX parser");
       try
       {
          // Invoke the SAX XML parser on the input.
@@ -853,6 +873,14 @@ class SVGParser
          SVGParser.this.endDocument();
       }
 
+
+      @Override
+      public void processingInstruction(String target, String data) throws SAXException
+      {
+         TextScanner  scan = new TextScanner(data);
+         Map<String, String> attributes = parseProcessingInstructionAttributes(scan);
+         handleProcessingInstruction(target, attributes);
+      }
    }
 
 
@@ -861,13 +889,13 @@ class SVGParser
    //=========================================================================
 
 
-   public void startDocument()
+   private void startDocument()
    {
       SVGParser.this.svgDocument = new SVG();
    }
 
 
-   public void startElement(String uri, String localName, String qName, Attributes attributes) throws SVGParseException
+   private void startElement(String uri, String localName, String qName, Attributes attributes) throws SVGParseException
    {
       if (ignoring) {
          ignoreDepth++;
@@ -952,7 +980,7 @@ class SVGParser
    }
 
 
-   public void  text(String characters) throws SVGParseException
+   private void  text(String characters) throws SVGParseException
    {
       if (ignoring)
          return;
@@ -976,7 +1004,7 @@ class SVGParser
    }
 
 
-   public void  text(char[] ch, int start, int length) throws SVGParseException
+   private void  text(char[] ch, int start, int length) throws SVGParseException
    {
       if (ignoring)
          return;
@@ -1018,7 +1046,7 @@ class SVGParser
    }
 
 
-   public void  endElement(String uri, String localName, String qName) throws SVGParseException
+   private void  endElement(String uri, String localName, String qName) throws SVGParseException
    {
       if (ignoring) {
          if (--ignoreDepth == 0) {
@@ -1085,11 +1113,62 @@ class SVGParser
    }
 
 
-   public void  endDocument()
+   private void  endDocument()
    {
       // Dump document
       if (LibConfig.DEBUG)
          dumpNode(svgDocument.getRootElement(), "");
+   }
+
+
+   private void  handleProcessingInstruction(String instruction, Map<String, String> attributes)
+   {
+      if (instruction.equals(XML_STYLESHEET_PROCESSING_INSTRUCTION) && SVG.getFileResolver() != null)
+      {
+         // If a "type" is specified, make sure it is the CSS type
+         String  attr = attributes.get(XML_STYLESHEET_ATTR_TYPE);
+         if (attr != null && !CSSParser.CSS_MIME_TYPE.equals(attributes.get("type")))
+            return;
+         // Alternate stylesheets are not supported
+         attr = attributes.get(XML_STYLESHEET_ATTR_ALTERNATE);
+         if (attr != null && !XML_STYLESHEET_ATTR_ALTERNATE_NO.equals(attributes.get("alternate")))
+            return;
+
+         attr = attributes.get(XML_STYLESHEET_ATTR_HREF);
+         if (attr != null)
+         {
+            String  css = SVG.getFileResolver().resolveCSSStyleSheet(attr);
+            if (css == null)
+               return;
+
+            String  mediaAttr = attributes.get(XML_STYLESHEET_ATTR_MEDIA);
+            if (mediaAttr != null && !XML_STYLESHEET_ATTR_MEDIA_ALL.equals(mediaAttr.trim())) {
+               css = "@media " + mediaAttr + " { " + css + "}";
+            }
+
+            parseCSSStyleSheet(css);
+         }
+
+      }
+   }
+
+
+   private Map<String,String>  parseProcessingInstructionAttributes(TextScanner scan)
+   {
+      HashMap<String, String>  attributes = new HashMap<>();
+
+      scan.skipWhitespace();
+      String  attrName = scan.nextToken('=');
+      while (attrName != null)
+      {
+         scan.consume('=');
+         String value = scan.nextQuotedString();
+         attributes.put(attrName, value);
+
+         scan.skipWhitespace();
+         attrName = scan.nextToken('=');
+      }
+      return attributes;
    }
 
 
@@ -1770,7 +1849,7 @@ class SVGParser
    }
 
 
-   private void  parseAttributesTRef(SVG.TRef obj, Attributes attributes) throws SVGParseException
+   private void  parseAttributesTRef(SVG.TRef obj, Attributes attributes)
    {
       for (int i=0; i<attributes.getLength(); i++)
       {
@@ -2538,6 +2617,9 @@ class SVGParser
       }
       */
 
+      /*
+       * Returns the char at the current position and advances the pointer.
+       */
       Integer  nextChar()
       {
          if (position == inputLength)
@@ -2603,6 +2685,9 @@ class SVGParser
       }
 
 
+      /*
+       * Skip the current char and peek at the char in the following position.
+       */
       int  advanceChar()
       {
          if (position == inputLength)
@@ -2671,6 +2756,30 @@ class SVGParser
          }
          return input.substring(start, position);
       }
+
+
+      /*
+       * Scans the input starting immediately at 'position' looking for a continuous
+       * sequence of ASCII letters. Terminates at any non-letter.
+       */
+      String  nextWord()
+      {
+         if (empty())
+            return null;
+         int  start = position;
+
+         int  ch = input.charAt(position);
+         if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z'))
+         {
+            ch = advanceChar();
+            while ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z'))
+               ch = advanceChar();
+            return input.substring(start, position);
+         }
+         position = start;
+         return null;
+      }
+
 
       /*
        * Scans the input starting immediately at 'position' for the a sequence
@@ -2846,7 +2955,7 @@ class SVGParser
    /*
     * Parse the 'style' attribute.
     */
-   private static void  parseStyle(SvgElementBase obj, String style) throws SVGParseException
+   private static void  parseStyle(SvgElementBase obj, String style)
    {
       TextScanner  scan = new TextScanner(style.replaceAll("/\\*.*?\\*/", ""));  // regex strips block comments
 
@@ -4018,7 +4127,7 @@ class SVGParser
 
 
    // Parse the string that defines a path.
-   private static SVG.PathDefinition  parsePath(String val) throws SVGParseException
+   private static SVG.PathDefinition  parsePath(String val)
    {
       TextScanner  scan = new TextScanner(val);
 
@@ -4269,7 +4378,7 @@ class SVGParser
    
    // Parse the attribute that declares the list of SVG features that must be
    // supported if we are to render this element
-   private static Set<String>  parseRequiredFeatures(String val) throws SVGParseException
+   private static Set<String>  parseRequiredFeatures(String val)
    {
       TextScanner      scan = new TextScanner(val);
       HashSet<String>  result = new HashSet<>();
@@ -4293,7 +4402,7 @@ class SVGParser
 
    // Parse the attribute that declares the list of languages, one of which
    // must be supported if we are to render this element
-   private static Set<String>  parseSystemLanguage(String val) throws SVGParseException
+   private static Set<String>  parseSystemLanguage(String val)
    {
       TextScanner      scan = new TextScanner(val);
       HashSet<String>  result = new HashSet<>();
@@ -4316,7 +4425,7 @@ class SVGParser
 
    // Parse the attribute that declares the list of MIME types that must be
    // supported if we are to render this element
-   private static Set<String>  parseRequiredFormats(String val) throws SVGParseException
+   private static Set<String>  parseRequiredFormats(String val)
    {
       TextScanner      scan = new TextScanner(val);
       HashSet<String>  result = new HashSet<>();
@@ -4367,7 +4476,7 @@ class SVGParser
          switch (SVGAttr.fromString(attributes.getLocalName(i)))
          {
             case type:
-               isTextCSS = val.equals("text/css");
+               isTextCSS = val.equals(CSSParser.CSS_MIME_TYPE);
                break;
             case media:
                media = val;
@@ -4386,7 +4495,7 @@ class SVGParser
    }
 
 
-   private void  parseCSSStyleSheet(String sheet) throws SVGParseException
+   private void  parseCSSStyleSheet(String sheet)
    {
       CSSParser  cssp = new CSSParser(MediaType.screen);
       svgDocument.addCSSRules(cssp.parse(sheet));

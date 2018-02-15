@@ -20,11 +20,11 @@ import android.graphics.Bitmap;
 import android.graphics.Typeface;
 
 /**
- * Resolver class used by the renderer when processing Text and Image elements.
+ * Resolver class used by the renderer when resolving font, image, and external CSS references.
  * <p>
  * The default behaviour is to tell AndroidSVG that the reference could not be found.
  * <p>
- * Extend this class and override the methods if you want to customise how AndroidSVG treats font and image references.
+ * Extend this class and override the methods if you want to customise how AndroidSVG treats font, image, and external CSS references.
  */
 
 public abstract class SVGExternalFileResolver
@@ -32,8 +32,8 @@ public abstract class SVGExternalFileResolver
    /**
     * Called by renderer to resolve font references in &lt;text&gt; elements.
     * <p>
-    * Return a {@code Typeface} instance, or null if you want the renderer to ignore
-    * this font and use the default Android font instead.
+    * An implementation of this method should return a {@code Typeface} instance, or null
+    * if you want the renderer to ignore this font request.
     * <p>
     * Note that AndroidSVG does not attempt to cache Typeface references.  If you want
     * them cached, for speed or memory reasons, you should do so yourself.
@@ -51,8 +51,8 @@ public abstract class SVGExternalFileResolver
    /**
     * Called by renderer to resolve image file references in &lt;image&gt; elements.
     * <p>
-    * Return a {@code Bitmap} instance, or null if you want the renderer to ignore
-    * this image.
+    * An implementation of this method should return a {@code Bitmap} instance, or null if
+    * you want the renderer to ignore this image.
     * <p>
     * Note that AndroidSVG does not attempt to cache Bitmap references.  If you want
     * them cached, for speed or memory reasons, you should do so yourself.
@@ -61,6 +61,24 @@ public abstract class SVGExternalFileResolver
     * @return an Android Bitmap object, or null if the image could not be found.
     */
    public Bitmap  resolveImage(String filename)
+   {
+      return null;
+   }
+
+   /**
+    * Called by the parser to resolve CSS stylesheet file references in &lt;?xml-stylesheet?&gt;
+    * processing instructions.
+    * <p>
+    * An implementation of this method should return a {@code String} whose contents
+    * correspond to the URL passed in.
+    * <p>
+    * Note that AndroidSVG does not attempt to cache stylesheet references.  If you want
+    * them cached, for speed or memory reasons, you should do so yourself.
+    *
+    * @param url the URL of the CSS file as it appears in the SVG file.
+    * @return a AndroidSVG CSSStyleSheet object, or null if the stylesheet could not be found.
+    */
+   public String  resolveCSSStyleSheet(String url)
    {
       return null;
    }

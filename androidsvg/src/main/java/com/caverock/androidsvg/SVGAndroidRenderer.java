@@ -797,7 +797,7 @@ class SVGAndroidRenderer
    private void  renderSwitchChild(SVG.Switch obj)
    {
       String                   deviceLanguage = Locale.getDefault().getLanguage();
-      SVGExternalFileResolver  fileResolver = document.getFileResolver();
+      SVGExternalFileResolver  fileResolver = SVG.getFileResolver();
 
       ChildLoop:
       for (SVG.SvgObject child: obj.getChildren())
@@ -1860,7 +1860,7 @@ class SVGAndroidRenderer
       Bitmap  image = checkForImageDataURL(obj.href);
       if (image == null)
       {
-         SVGExternalFileResolver  fileResolver = document.getFileResolver();
+         SVGExternalFileResolver  fileResolver = SVG.getFileResolver();
          if (fileResolver == null)
             return;
 
@@ -2233,7 +2233,7 @@ class SVGAndroidRenderer
          Typeface  font = null;
 
          if (state.style.fontFamily != null && document != null) {
-            SVGExternalFileResolver  fileResolver = document.getFileResolver();
+            SVGExternalFileResolver  fileResolver = SVG.getFileResolver();
 
             for (String fontName: state.style.fontFamily) {
                font = checkGenericFont(fontName, state.style.fontWeight, state.style.fontStyle);
@@ -3790,7 +3790,7 @@ class SVGAndroidRenderer
 
    //-----------------------------------------------------------------------------------------------
    // Old-style clippath handling.
-   // Pre-KitKat. Kept for backwars compatibility.
+   // Pre-KitKat. Kept for backwards compatibility.
 
 
    private void checkForClipPath_OldStyle(SvgElement obj, Box boundingBox)
