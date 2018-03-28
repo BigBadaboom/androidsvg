@@ -163,14 +163,39 @@ if (svg.getDocumentWidth() != -1) {
 <h3>
 <a id="supported-with-some-limitations" class="anchor" href="#supported-with-some-limitations" aria-hidden="true"><span class="octicon octicon-link"></span></a>Supported with some limitations</h3>
 
-<p><code>&lt;image&gt;</code> <code>&lt;text&gt;</code> <code>&lt;textPath&gt;</code> <code>&lt;tref&gt;</code> <code>&lt;tspan&gt;</code> <code>&lt;pattern&gt;</code> <code>&lt;radialGradient&gt;</code> <code>&lt;style&gt;</code></p>
+<dl>
+  <dt><code>&lt;image&gt;</code></dt>
+  <dd>Loading of external SVG files is not supported.</dd>
+
+  <code>&lt;text&gt;</code></dt>
+    <dd>The multi-value forms of <code>x</code>, <code>y</code>, <code>dx</code>, and <code>dy</code> are not supported. Some of the other text features, such as <code>alignment-baseline</code> etc, are not supported.</dd>
+
+  <code>&lt;textPath&gt;</code></dt>
+  <dd>Same restrictions as <code>&lt;text&gt;</code></dd>
+
+  <code>&lt;tref&gt;</code></dt>
+  <dd>Same restrictions as <code>&lt;text&gt;</code>. Also, external <code>href</code> references are not supported.</dd>
+
+  <code>&lt;tspan&gt;</code></dt>
+  <dd>Same restrictions as <code>&lt;text&gt;</code></dd>
+
+  <code>&lt;pattern&gt;</code></dt>
+  <dd>Patterned strokes are not currently supported.</dd>
+  <dd></dd>
+
+  <code>&lt;radialGradient&gt;</code></dt>
+    <dd>The <code>fx</code> and <code>fy</code> attributes are not currently supported, due to a limitation of the Android <code>Canvas</code> class.</dd>
+
+  <code>&lt;style&gt;</code></dt>
+  <dd>We use a simplified CSS parser that doesn't support the entire CSS standard.</dd>
+</dl>
 
 <h3>
 <a id="not-supported-at-all" class="anchor" href="#not-supported-at-all" aria-hidden="true"><span class="octicon octicon-link"></span></a>Not supported at all</h3>
 
 <ul>
 <li>Animation is not supported.</li>
-<li>Filters are not supported.</li>
+<li>Filter Effects are not supported.</li>
 </ul>
 
 <p>For more information on what elements, attributes and properties are supported, see the

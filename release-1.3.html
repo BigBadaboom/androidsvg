@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="AndroidSVG : SVG rendering library for Android">
+
+    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+    <link rel="stylesheet" type="text/css" href="stylesheets/prettify-eclipse.css">
+
+    <title>AndroidSVG</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/BigBadaboom/androidsvg">View on GitHub</a>
+
+          <a href="index.html"><img id="project_logo" src="images/AndroidSVG_logo.svg" title="AndroidSVG logo"/></a>
+          <h1 id="project_title">AndroidSVG</h1>
+          <h2 id="project_tagline">SVG rendering library for Android</h2>
+
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <div class="inner">
+        <nav>
+          <ul>
+            <li><a href="download.html">Download</a></li>
+            <li><a href="release_notes.html">Release Notes</a></li>
+            <li><a href="doc/index.html">Javadoc</a></li>
+            <li><a href="documentation.html">Documentation</a></li>
+            <li><a href="svg_implementation_details.html">SVG Implementation</a></li>
+            <li><a href="faq.html">FAQ</a></li>
+            <li><a href="known_issues.html">Known Issues</a></li>
+            <li><a href="https://github.com/bigbadaboom/androidsvg/issues">Report a bug</a></li>
+            <li><a href="mailto:androidsvgfeedback@gmail.com">Contact the author</a></li>
+          </ul>
+
+          <p><em><a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License v2.0</a></em></p>
+
+          <p><a href="https://twitter.com/AndroidSVG"><img src="images/twitter.png"></a></p>
+        </nav>
+        <section id="main_content">
+        <h1><a id="androidsvg" class="anchor" href="#androidsvg" aria-hidden="true"><span class="octicon octicon-link"></span></a>Release Notes</h1>
+
+
+<!-- *****************************************************
+     Update https://github.com/openhab/openhab-android/pull/256 when 1.3 is released.
+     *****************************************************-->
+
+
+<h2>1.3 (upcoming release)</h2>
+
+<p>The 1.3 release is coming soon.  See the <a href="https://github.com/BigBadaboom/androidsvg/issues?utf8=%E2%9C%93&q=is%3Aissue+is%3Aopen+milestone%3A1.3" rel="nofollow">list of remaing improvements that are scheuled for this release</a>.</p>
+<p>You can try out the this release now by adding the lines, marked in green below, to the <code>build.gradle file</code> for your app module (note: not the top level <code>build.gradle</code> file).</p>
+
+<pre class="prettyprint">
+<span class="highlight">repositories {
+    maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
+}</span>
+
+android {
+    compileSdkVersion 26
+    ...etc...
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    ...etc...
+    <span class="highlight">implementation group: 'com.caverock', name: 'androidsvg-aar', version: '1.3-SNAPSHOT'</span>
+}
+</pre>
+
+<h3>Changes in this release</h3>
+<ul>
+<li><strong>Added support for external stylesheets</strong> using: (a) <?xml-stylesheet> processing instruction, and (b) CSS @import (thanks to David Gileadi).</li>
+<li>Issue #94: <strong>Implemented new way to do clip paths.</strong> The new method works on all 4.4 (Kitkat) and later devices. Clip paths are now more accurate, handle <code>clip-rule</code> properly, and work for <code>renderToPicture()</code>.  Works around the bug in 6.0 that mangles clipPaths on canvas.retore().</li>
+<li>Issue #45: Implement masks in a much better way using layer compositing.  <strong>Mask processing is *much* faster now.</strong></li>
+<li>Issue #38: Implemented <strong>CSS3 Color</strong> keyword "transparent", and functions <code>rgba()</code>, <code>hsl()</code> and <code>hsla(a)</code>.  Implemented CSS4 Color keyword "rebeccapurple", and <code>#RGBA</code> and <code>#RRGGBBAA</code> hex forms.</li>
+<li>Issue #26: Bad property values no longer throw an exception when parsing. They are now just ignored.</li>
+<li>Fixed bug with <code>fill-opacity</code> not affecting gradients as it should.</li>
+<li>Issue #61: CSS selector match now uses a nodeName string field rather than using reflection.  This should mean that workaround ProGuard rules are no longer needed to avoid obfuscation breaking CSS matching.</li>
+<li>Issue #122: Support both SAXPsrser and XmlPullParser depending on whether we want to support entity expansion or not. Now defaults to XmlPullParser. Parser is now much less prone to the <a href="https://en.wikipedia.org/wiki/Billion_laughs_attack" rel="nofollow">billion laughs attack</a>.</li>
+<li>Fixed issue with the calculation of initial root viewport.</li>
+<li>Issue #118: Fixed bug with <code>text-anchor</code> alignment wasn't being recalculated if <code>x</code> was specified on a child tspan.</li>
+<li>Fixed build issues (thanks to Jorge Ruesga).</li>
+<li>Issue #121: Fixed fault with images that have masks that are also images.</li>
+<li>Changed class attribute parser to not throw an exception if it finds a bad class name.</li>
+<li>Improved marker angle calculation when the path segments at a point do an exact 180deg turn.</li>
+<li>Changed the default font family to serif to match browser behaviour.</li>
+<li>Fixed bug where FuncIRI references with quoted strings, for example <code>url("foo")</code> and <code>url('foo')</code>, were not correctly parsed.</li>
+<li>Issue #78: Fixed bug where <code>renderToCanvas(Canvas canvas, Box viewPort)</code> not rendering the SVG in the correct place.</li>
+<li>Issue #50: Canvas state wasn't being saved before rendering root element.</li>
+<li>Issue #99: Fixed NPE in <code>&lt;linearGradient&gt;</code> and <code>&lt;radialGradient</code> when <code>stop</code> was missing <code>offset</code> attribute (thanks to hazzeh).</li>
+<li>Added support for <code>image-rendering</code> attribute.</li>
+<li>Issue #89: Added support for SVG2 href attributes without the <code>xlink</code> namespace.</li>
+<li>Issue #105: Fixed incorrect parsing of <code>style</code> property values that include whitespace (eg. <code>font-family</code>).</li>
+<li>Fix for wrong short css colors (thanks to Wolfus).</li>
+<li>Fixed bug calculating bounding box of <code>&lt;line&gt;</code> (thanks to francis).</li>
+<li>Issue #62: Changed internal <code>arcTo()</code> function to use floats. The double version was triggering an Android (JIT?) bug in some situations.</li>
+<li>Issue #81: Fixed bug with empty <code>&lt;title&gt;</code> and <code>&lt;desc&gt;</code> elements (eg. <code>&lt;title/&gt;</code>) causing NPEs.</li>
+<li>Migrated to Gradle and added Sonatype upload task (thanks to Nic Dahlquist).</li>
+<li>Fixed a couple of bugs in the internal </code>NumberParser</code> class.</li>
+<li>Cache id lookups in <code>getElementById()</code>.  Speeds up rendering of some files significantly.</li>
+<li>Convert path enumerator to use primitive arrays instead of lists.  Achieves modest speedup in most cases (thanks to Markus Junginger).</li>
+<li>Better handling of input streams in <code>getFromResource()</code> and <code>getFromAsset()</code>.</li>
+<li>Converted internal <code>NumberParser.parseNumber()</code> to return a float rather than a <code>NumberParser</code>. Results in fewer memory allocations and much higher speed (thanks to Markus Junginger).</li>
+<li>Fixed some multi-threading issues in lazy-initialised keyword maps (thanks to papp.robert.s).</li>
+</ul>
+
+
+        </section>
+      </div>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">AndroidSVG maintained by <a href="https://github.com/BigBadaboom">Paul LeBeau</a></p>
+        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+  </body>
+</html>

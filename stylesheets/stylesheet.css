@@ -457,3 +457,12 @@ Small Device Styles
   }
 
 }
+
+
+/********
+Custom styles
+********/
+
+.prettyprint .highlight {
+  background-color: #cfc;
+}

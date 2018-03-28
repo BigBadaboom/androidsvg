@@ -80,7 +80,10 @@ The problem with clip paths is back again due to two regressions in <strong>Andr
 See <a href="https://code.google.com/p/android/issues/detail?id=200128" rel="nofollow">Android issue 200128</a>.  Unfortunately,
 this time, this bug affects both <code>renderToPicture()</code> and <code>renderToCanvas()</code>.</li>
 </p>
- 
+<p>
+To avoid this issue, please upgrade to AndroidSVG 1.3, which has new improved handling of clip paths. The new code avoids the above-mentioned
+issue, but uses Android APIs that are only available on Android 4.4 (Kitkat) or later.  Older devices will continue to use the legacy clip path code.
+</p>
 
 
 
