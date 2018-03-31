@@ -1,8 +1,9 @@
 // This script sets up our pom and artifacts for deployment.
 
 apply plugin: 'com.github.dcendents.android-maven'
+apply plugin: 'signing'
 
-version = '1.2.3'
+version = '1.3-SNAPSHOT'
 group = 'com.caverock'
 
 def siteUrl = 'https://github.com/BigBadaboom/androidsvg'
@@ -14,12 +15,16 @@ install {
             project {
                 packaging 'aar'
 
-                name 'SVG rendering library for Android.'
+                artifactId 'androidsvg-aar'
+                name 'AndroidSVG'
+                description 'SVG rendering library for Android.'
                 url siteUrl
 
                 licenses {
                     license {
-                        name 'Apache 2.0'
+                        name 'The Apache Software License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                        distribution 'repo'
                     }
                 }
                 developers {
@@ -47,4 +52,8 @@ task sourcesJar(type: Jar) {
 // By default, we will upload just our library AAR. Here we specify that we also want to upload our sources.
 artifacts {
     archives sourcesJar
+}
+
+signing {
+    sign configurations.archives
 }

@@ -75,9 +75,9 @@ import java.util.Set;
 
 public class SVG
 {
-   private static final String  TAG = "AndroidSVG";
+   static final String  TAG = "AndroidSVG";
 
-   private static final String  VERSION = "1.2.3-beta-1";
+   private static final String  VERSION = "1.3.0-beta-1";
 
    private static final int     DEFAULT_PICTURE_WIDTH = 512;
    private static final int     DEFAULT_PICTURE_HEIGHT = 512;

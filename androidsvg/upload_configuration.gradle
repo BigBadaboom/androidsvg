@@ -7,14 +7,19 @@ uploadArchives {
             beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
             repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-              authentication(userName: System.getenv('SONATYPE_USERNAME'), password: System.getenv('SONATYPE_PASSWORD'))
+              authentication(userName: sonatypeUsername, password: sonatypePassword)
+            }
+
+            snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+              authentication(userName: sonatypeUsername, password: sonatypePassword)
             }
 
             pom.project {
-               name 'androidsvg'
+               artifactId 'androidsvg-aar'
+               name 'AndroidSVG'
                packaging 'aar'
                description 'SVG rendering library for Android'
-               url 'https://github.com/BigBadaboom/androidsvg'
+               url 'http://bigbadaboom.github.io/androidsvg/'
 
                scm {
                    url 'https://github.com/BigBadaboom/androidsvg'

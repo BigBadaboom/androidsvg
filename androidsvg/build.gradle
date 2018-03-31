@@ -2,19 +2,16 @@ apply plugin: 'com.android.library'
 
 android {
     compileSdkVersion 27
-
     defaultConfig {
         minSdkVersion 8
         targetSdkVersion 27
     }
-
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
     }
-
     dependencies {
         testCompile 'junit:junit:4.12'
         testCompile 'org.robolectric:robolectric:3.3.2'
