@@ -38,7 +38,7 @@ import java.util.Stack;
  */
 
 @Implements(Canvas.class)
-class MockCanvas
+public class MockCanvas
 {
    private Bitmap  bitmap = null;
    private Rect    clipRect = new Rect();
@@ -71,6 +71,10 @@ class MockCanvas
    public  List<String>  getOperations()
    {
       return this.operations;
+   }
+   public  void          clearOperations()
+   {
+      this.operations.clear();
    }
 
 

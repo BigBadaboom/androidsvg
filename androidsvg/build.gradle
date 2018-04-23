@@ -13,8 +13,13 @@ android {
         }
     }
     dependencies {
-        testCompile 'junit:junit:4.12'
-        testCompile 'org.robolectric:robolectric:3.3.2'
+        testImplementation 'junit:junit:4.12'
+        testImplementation 'org.robolectric:robolectric:3.8'
+    }
+    testOptions {
+        unitTests {
+            includeAndroidResources = true
+        }
     }
 }
 
@@ -22,5 +27,5 @@ apply from: 'packaging_configuration.gradle'
 apply from: 'upload_configuration.gradle'
 
 dependencies {
-    compile 'org.jetbrains:annotations-java5:15.0'
+    implementation 'org.jetbrains:annotations-java5:15.0'
 }

@@ -13,10 +13,12 @@ import java.util.Locale;
  */
 
 @Implements(Path.class)
-class MockPath
+public class MockPath
 {
    private ArrayList<String>  path = new ArrayList<>();
 
+
+   @Implementation
    public void __constructor__()
    {
       path.clear();
@@ -49,7 +51,7 @@ class MockPath
    @Implementation
    public void close()
    {
-      // Does nothing
+      path.add("Z");
    }
 
 

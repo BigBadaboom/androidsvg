@@ -46,7 +46,7 @@ public class PreserveAspectRatio
     * Stretch horizontally and vertically to fill the viewport.
     */
    @SuppressWarnings("WeakerAccess")
-   public static final PreserveAspectRatio  STRETCH = new PreserveAspectRatio(Alignment.None, null);
+   public static final PreserveAspectRatio  STRETCH = new PreserveAspectRatio(Alignment.none, null);
 
    /**
     * Keep the document's aspect ratio, but scale it so that it fits neatly inside the viewport.
@@ -55,7 +55,7 @@ public class PreserveAspectRatio
     * bottom of the viewport or at the sides. 
     */
    @SuppressWarnings("WeakerAccess")
-   public static final PreserveAspectRatio  LETTERBOX = new PreserveAspectRatio(Alignment.XMidYMid, Scale.Meet);
+   public static final PreserveAspectRatio  LETTERBOX = new PreserveAspectRatio(Alignment.xMidYMid, Scale.meet);
 
    /**
     * Keep the document's aspect ratio, but scale it so that it fits neatly inside the viewport.
@@ -64,7 +64,7 @@ public class PreserveAspectRatio
     * and wide viewports.
     */
    @SuppressWarnings("unused")
-   public static final PreserveAspectRatio  START = new PreserveAspectRatio(Alignment.XMinYMin, Scale.Meet);
+   public static final PreserveAspectRatio  START = new PreserveAspectRatio(Alignment.xMinYMin, Scale.meet);
 
    /**
     * Keep the document's aspect ratio, but scale it so that it fits neatly inside the viewport.
@@ -73,7 +73,7 @@ public class PreserveAspectRatio
     * and wide viewports.
     */
    @SuppressWarnings("unused")
-   public static final PreserveAspectRatio  END = new PreserveAspectRatio(Alignment.XMaxYMax, Scale.Meet);
+   public static final PreserveAspectRatio  END = new PreserveAspectRatio(Alignment.xMaxYMax, Scale.meet);
 
    /**
     * Keep the document's aspect ratio, but scale it so that it fits neatly inside the viewport.
@@ -82,7 +82,7 @@ public class PreserveAspectRatio
     * short and wide viewports.
     */
    @SuppressWarnings("unused")
-   public static final PreserveAspectRatio  TOP = new PreserveAspectRatio(Alignment.XMidYMin, Scale.Meet);
+   public static final PreserveAspectRatio  TOP = new PreserveAspectRatio(Alignment.xMidYMin, Scale.meet);
 
    /**
     * Keep the document's aspect ratio, but scale it so that it fits neatly inside the viewport.
@@ -91,7 +91,7 @@ public class PreserveAspectRatio
     * short and wide viewports.
     */
    @SuppressWarnings("unused")
-   public static final PreserveAspectRatio  BOTTOM = new PreserveAspectRatio(Alignment.XMidYMax, Scale.Meet);
+   public static final PreserveAspectRatio  BOTTOM = new PreserveAspectRatio(Alignment.xMidYMax, Scale.meet);
 
    /**
     * Keep the document's aspect ratio, but scale it so that it fills the entire viewport.
@@ -101,7 +101,7 @@ public class PreserveAspectRatio
     * but the edges of the document may not.
     */
    @SuppressWarnings("unused")
-   public static final PreserveAspectRatio  FULLSCREEN = new PreserveAspectRatio(Alignment.XMidYMid, Scale.Slice);
+   public static final PreserveAspectRatio  FULLSCREEN = new PreserveAspectRatio(Alignment.xMidYMid, Scale.slice);
 
    /**
     * Keep the document's aspect ratio, but scale it so that it fills the entire viewport.
@@ -111,7 +111,7 @@ public class PreserveAspectRatio
     * but the right hand or bottom edge may not.
     */
    @SuppressWarnings("unused")
-   public static final PreserveAspectRatio  FULLSCREEN_START = new PreserveAspectRatio(Alignment.XMinYMin, Scale.Slice);
+   public static final PreserveAspectRatio  FULLSCREEN_START = new PreserveAspectRatio(Alignment.xMinYMin, Scale.slice);
 
 
 
@@ -125,25 +125,25 @@ public class PreserveAspectRatio
    public enum Alignment
    {
       /** Document is stretched to fit both the width and height of the viewport. When using this Alignment value, the value of Scale is not used and will be ignored. */
-      None,
+      none,
       /** Document is positioned at the top left of the viewport. */
-      XMinYMin,
+      xMinYMin,
       /** Document is positioned at the centre top of the viewport. */
-      XMidYMin,
+      xMidYMin,
       /** Document is positioned at the top right of the viewport. */
-      XMaxYMin,
+      xMaxYMin,
       /** Document is positioned at the middle left of the viewport. */
-      XMinYMid,
+      xMinYMid,
       /** Document is centred in the viewport both vertically and horizontally. */
-      XMidYMid,
+      xMidYMid,
       /** Document is positioned at the middle right of the viewport. */
-      XMaxYMid,
+      xMaxYMid,
       /** Document is positioned at the bottom left of the viewport. */
-      XMinYMax,
+      xMinYMax,
       /** Document is positioned at the bottom centre of the viewport. */
-      XMidYMax,
+      xMidYMax,
       /** Document is positioned at the bottom right of the viewport. */
-      XMaxYMax
+      xMaxYMax
    }
 
 
@@ -157,12 +157,12 @@ public class PreserveAspectRatio
        * The document is scaled so that it is as large as possible without overflowing the viewport.
        * There may be blank areas on one or more sides of the document.
        */
-      Meet,
+      meet,
       /**
        * The document is scaled so that entirely fills the viewport. That means that some of the
        * document may fall outside the viewport and will not be rendered.
        */
-      Slice
+      slice
    }
 
 
@@ -170,6 +170,21 @@ public class PreserveAspectRatio
    {
       this.alignment = alignment;
       this.scale = scale;
+   }
+
+
+   /**
+    * Parse the give preserAspectRation attribute value and return an instance of this class.
+    * @param value a string in the same format as an SVG {@code preserveAspectRatio} attribute
+    * @return a instance of this class
+    */
+   public static PreserveAspectRatio  of(String value)
+   {
+      try {
+         return SVGParser.parsePreserveAspectRatio(value);
+      } catch (SVGParseException e) {
+         throw new IllegalArgumentException(e.getMessage());
+      }
    }
 
 
@@ -208,4 +223,10 @@ public class PreserveAspectRatio
       return (alignment == other.alignment && scale == other.scale);
    }
 
+
+   @Override
+   public String toString()
+   {
+      return alignment + " " + scale;
+   }
 }

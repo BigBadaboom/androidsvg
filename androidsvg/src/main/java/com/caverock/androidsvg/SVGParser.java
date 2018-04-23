@@ -566,16 +566,16 @@ class SVGParser
    private static class AspectRatioKeywords {
       private static final Map<String, PreserveAspectRatio.Alignment> aspectRatioKeywords = new HashMap<>(10);
       static {
-         aspectRatioKeywords.put(NONE, PreserveAspectRatio.Alignment.None);
-         aspectRatioKeywords.put("xMinYMin", PreserveAspectRatio.Alignment.XMinYMin);
-         aspectRatioKeywords.put("xMidYMin", PreserveAspectRatio.Alignment.XMidYMin);
-         aspectRatioKeywords.put("xMaxYMin", PreserveAspectRatio.Alignment.XMaxYMin);
-         aspectRatioKeywords.put("xMinYMid", PreserveAspectRatio.Alignment.XMinYMid);
-         aspectRatioKeywords.put("xMidYMid", PreserveAspectRatio.Alignment.XMidYMid);
-         aspectRatioKeywords.put("xMaxYMid", PreserveAspectRatio.Alignment.XMaxYMid);
-         aspectRatioKeywords.put("xMinYMax", PreserveAspectRatio.Alignment.XMinYMax);
-         aspectRatioKeywords.put("xMidYMax", PreserveAspectRatio.Alignment.XMidYMax);
-         aspectRatioKeywords.put("xMaxYMax", PreserveAspectRatio.Alignment.XMaxYMax);
+         aspectRatioKeywords.put(NONE, PreserveAspectRatio.Alignment.none);
+         aspectRatioKeywords.put("xMinYMin", PreserveAspectRatio.Alignment.xMinYMin);
+         aspectRatioKeywords.put("xMidYMin", PreserveAspectRatio.Alignment.xMidYMin);
+         aspectRatioKeywords.put("xMaxYMin", PreserveAspectRatio.Alignment.xMaxYMin);
+         aspectRatioKeywords.put("xMinYMid", PreserveAspectRatio.Alignment.xMinYMid);
+         aspectRatioKeywords.put("xMidYMid", PreserveAspectRatio.Alignment.xMidYMid);
+         aspectRatioKeywords.put("xMaxYMid", PreserveAspectRatio.Alignment.xMaxYMid);
+         aspectRatioKeywords.put("xMinYMax", PreserveAspectRatio.Alignment.xMinYMax);
+         aspectRatioKeywords.put("xMidYMax", PreserveAspectRatio.Alignment.xMidYMax);
+         aspectRatioKeywords.put("xMaxYMax", PreserveAspectRatio.Alignment.xMaxYMax);
       }
 
       static PreserveAspectRatio.Alignment get(String aspectRatio) {
@@ -3563,9 +3563,15 @@ Log.d(TAG,"PROC INSTR: "+parser.getText());
 
 
    /*
-    * 
+    * Parse a preserveAspectRation attribute
     */
    private static void  parsePreserveAspectRatio(SVG.SvgPreserveAspectRatioContainer obj, String val) throws SVGParseException
+   {
+      obj.preserveAspectRatio = parsePreserveAspectRatio(val);
+   }
+
+
+   static PreserveAspectRatio  parsePreserveAspectRatio(String val) throws SVGParseException
    {
       TextScanner scan = new TextScanner(val);
       scan.skipWhitespace();
@@ -3585,14 +3591,14 @@ Log.d(TAG,"PROC INSTR: "+parser.getText());
          String meetOrSlice = scan.nextToken();
          switch (meetOrSlice) {
             case "meet":
-               scale = PreserveAspectRatio.Scale.Meet; break;
+               scale = PreserveAspectRatio.Scale.meet; break;
             case "slice":
-               scale = PreserveAspectRatio.Scale.Slice; break;
+               scale = PreserveAspectRatio.Scale.slice; break;
             default:
                throw new SVGParseException("Invalid preserveAspectRatio definition: " + val);
          }
       }
-      obj.preserveAspectRatio = new PreserveAspectRatio(align, scale);
+      return new PreserveAspectRatio(align, scale);
    }
 
 
@@ -4497,7 +4503,7 @@ Log.d(TAG,"PROC INSTR: "+parser.getText());
 
    private void  parseCSSStyleSheet(String sheet)
    {
-      CSSParser  cssp = new CSSParser(MediaType.screen);
+      CSSParser  cssp = new CSSParser(MediaType.screen, CSSParser.Source.RenderOptions);
       svgDocument.addCSSRules(cssp.parse(sheet));
    }
 
