@@ -137,13 +137,21 @@ public class SimpleAssetResolver extends SVGExternalFileResolver
    public String  resolveCSSStyleSheet(String url)
    {
       Log.i(TAG, "resolveCSSStyleSheet("+url+")");
+      return getAssetAsString(url);
+   }
 
-      InputStream  is = null;
+
+   /*
+    * Read the contents of the asset whose name is given by "url" and return it as a String.
+    */
+   private String getAssetAsString(String url)
+   {
+      InputStream is = null;
       try
       {
          is = assetManager.open(url);
 
-         Reader         r = new InputStreamReader(is, Charset.forName("UTF-8"));
+         Reader r = new InputStreamReader(is, Charset.forName("UTF-8"));
          char[]         buffer = new char[4096];
          StringBuilder  sb = new StringBuilder();
          int            len = r.read(buffer);
