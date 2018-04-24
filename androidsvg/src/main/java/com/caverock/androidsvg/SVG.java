@@ -2409,10 +2409,33 @@ public class SVG
          if (child.getClass() == clazz)
             result.add(child);
          if (child instanceof SvgContainer)
-            getElementsByTagName((SvgContainer) child, clazz);
+            result.addAll(getElementsByTagName((SvgContainer) child, clazz));
       }
       return result;
    }
 
+   List<SvgObject> elements;
 
+
+   //TODO Add remaining shapes, once their contain function has been implemented.
+   public List<SvgObject> getSVGObjectsByCoordinate(Point point) {
+      List<SvgObject> locations = new ArrayList<>();
+
+      if (elements == null) {
+         elements = new ArrayList<>();
+         elements.addAll(getElementsByTagName(Rect.class));
+         elements.addAll(getElementsByTagName(Polygon.class));
+      }
+
+      for (SvgObject object : elements) {
+         if (object instanceof GraphicsElement) {
+            GraphicsElement element = (GraphicsElement) object;
+            if (element.contains(point)) {
+               locations.add(object);
+            }
+         }
+      }
+
+      return locations;
+   }
 }
