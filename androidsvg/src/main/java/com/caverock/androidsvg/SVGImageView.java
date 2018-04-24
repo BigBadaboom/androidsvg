@@ -11,11 +11,13 @@ import android.view.View;
 
 import java.util.List;
 
-public class SVGImageView extends SVGBaseImageView implements GestureDetector.OnGestureListener, View.OnTouchListener{
+public class SVGImageView extends SVGBaseImageView implements View.OnTouchListener {
 
     private SVG svg;
     private GestureDetector gestureDetector;
     private SVGTouchListener svgTouchlistener;
+
+    private MyGestureListener myGestureListener;
 
     private float scaleY;
     private float scaleX;
@@ -48,47 +50,9 @@ public class SVGImageView extends SVGBaseImageView implements GestureDetector.On
 
     public void setSVGTouchListener(SVGTouchListener listener) {
         svgTouchlistener = listener;
-        gestureDetector = new GestureDetector(getContext(), this);
+        myGestureListener = new MyGestureListener();
+        gestureDetector = new GestureDetector(getContext(), myGestureListener);
         setOnTouchListener(this);
-    }
-
-    @Override
-    public boolean onDown(MotionEvent e) {
-        //NO-OP
-        return false;
-    }
-
-    @Override
-    public void onShowPress(MotionEvent e) {
-        //NO-OP
-    }
-
-    @Override
-    public boolean onSingleTapUp(MotionEvent e) {
-        if(svg != null && svgTouchlistener != null) {
-            int xPos = (int) (e.getX() * scaleX);
-            int yPos = (int) (e.getY() * scaleY);
-            List<SVG.SvgObject> list = svg.getSVGObjectsByCoordinate(new Point(xPos, yPos));
-            svgTouchlistener.onSVGObjectTouch(list);
-        }
-        return false;
-    }
-
-    @Override
-    public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-        //NO-OP
-        return false;
-    }
-
-    @Override
-    public void onLongPress(MotionEvent e) {
-        //NO-OP
-    }
-
-    @Override
-    public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-        //NO-OP
-        return false;
     }
 
     @Override
@@ -107,5 +71,20 @@ public class SVGImageView extends SVGBaseImageView implements GestureDetector.On
 
     public interface SVGTouchListener {
         void onSVGObjectTouch(List<SVG.SvgObject> objectList);
+    }
+
+    private class MyGestureListener extends GestureDetector.SimpleOnGestureListener {
+
+        @Override
+        public boolean onSingleTapConfirmed(MotionEvent e) {
+            if(svg != null && svgTouchlistener != null) {
+                int xPos = (int) (e.getX() * scaleX);
+                int yPos = (int) (e.getY() * scaleY);
+                List<SVG.SvgObject> list = svg.getSVGObjectsByCoordinate(new Point(xPos, yPos));
+                svgTouchlistener.onSVGObjectTouch(list);
+                return true;
+            }
+            return false;
+        }
     }
 }
