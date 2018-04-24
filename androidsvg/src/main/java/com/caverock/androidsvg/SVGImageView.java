@@ -17,8 +17,6 @@ public class SVGImageView extends SVGBaseImageView implements View.OnTouchListen
     private GestureDetector gestureDetector;
     private SVGTouchListener svgTouchlistener;
 
-    private MyGestureListener myGestureListener;
-
     private float scaleY;
     private float scaleX;
 
@@ -50,8 +48,7 @@ public class SVGImageView extends SVGBaseImageView implements View.OnTouchListen
 
     public void setSVGTouchListener(SVGTouchListener listener) {
         svgTouchlistener = listener;
-        myGestureListener = new MyGestureListener();
-        gestureDetector = new GestureDetector(getContext(), myGestureListener);
+        gestureDetector = new GestureDetector(getContext(), new SVGGestureListener());
         setOnTouchListener(this);
     }
 
@@ -73,7 +70,7 @@ public class SVGImageView extends SVGBaseImageView implements View.OnTouchListen
         void onSVGObjectTouch(List<SVG.SvgObject> objectList);
     }
 
-    private class MyGestureListener extends GestureDetector.SimpleOnGestureListener {
+    private class SVGGestureListener extends GestureDetector.SimpleOnGestureListener {
 
         @Override
         public boolean onSingleTapConfirmed(MotionEvent e) {
