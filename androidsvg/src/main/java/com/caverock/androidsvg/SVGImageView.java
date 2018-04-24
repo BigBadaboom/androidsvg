@@ -54,12 +54,13 @@ public class SVGImageView extends SVGBaseImageView implements GestureDetector.On
 
     @Override
     public boolean onDown(MotionEvent e) {
+        //NO-OP
         return false;
     }
 
     @Override
     public void onShowPress(MotionEvent e) {
-
+        //NO-OP
     }
 
     @Override
@@ -75,16 +76,18 @@ public class SVGImageView extends SVGBaseImageView implements GestureDetector.On
 
     @Override
     public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+        //NO-OP
         return false;
     }
 
     @Override
     public void onLongPress(MotionEvent e) {
-
+        //NO-OP
     }
 
     @Override
     public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+        //NO-OP
         return false;
     }
 
