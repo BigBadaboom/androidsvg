@@ -1696,10 +1696,10 @@ public class SVG
 
           for (int i = 0; i < xyArray.length; i++) {
               int xPoint = (int) xyArray[i];
-              i++;
+              i++; //move to y position
               int yPoint = (int) xyArray[i];
 
-              if(i == 1) {
+              if(i == 1) {//case for the first (x,y) pair
                   path.moveTo(xPoint, yPoint);
               } else {
                   path.lineTo(xPoint, yPoint);
@@ -1731,6 +1731,7 @@ public class SVG
 
        @Override
        public boolean contains(Point point) {
+            //TODO implement this method
            return false;
        }
    }
@@ -1797,6 +1798,7 @@ public class SVG
 
        @Override
        public boolean contains(Point point) {
+          //TODO implement this method
            return false;
        }
    }
@@ -1814,6 +1816,7 @@ public class SVG
 
        @Override
        public boolean contains(Point point) {
+          //TODO implement this method
            return false;
        }
    }
@@ -1831,6 +1834,7 @@ public class SVG
 
        @Override
        public boolean contains(Point point) {
+          //TODO implement this method
            return false;
        }
    }
@@ -1849,6 +1853,7 @@ public class SVG
 
        @Override
        public boolean contains(Point point) {
+          //TODO implement this method
            return false;
        }
    }
