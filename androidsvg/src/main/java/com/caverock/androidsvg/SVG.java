@@ -22,6 +22,7 @@ import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Picture;
+import android.graphics.Point;
 import android.graphics.RectF;
 import android.util.Log;
 
@@ -1686,6 +1687,27 @@ public class SVG
 
       @Override
       public void setTransform(Matrix transform) { this.transform = transform; }
+
+      public abstract boolean contains(Point point);
+
+      public RectF initRectF(float[] xyArray) {
+          RectF rectF = new RectF();
+          android.graphics.Path path = new android.graphics.Path();
+
+          for (int i = 0; i < xyArray.length; i++) {
+              int xPoint = (int) xyArray[i];
+              i++;
+              int yPoint = (int) xyArray[i];
+
+              if(i == 1) {
+                  path.moveTo(xPoint, yPoint);
+              } else {
+                  path.lineTo(xPoint, yPoint);
+              }
+          }
+          path.computeBounds(rectF, false);
+          return rectF;
+      }
    }
 
 
@@ -1706,6 +1728,11 @@ public class SVG
 
       @Override
       String  getNodeName() { return "path"; }
+
+       @Override
+       public boolean contains(Point point) {
+           return false;
+       }
    }
 
 
@@ -1717,6 +1744,8 @@ public class SVG
       Length  height;
       Length  rx;
       Length  ry;
+
+      private RectF rectF;
 
       @Override
       String  getNodeName() { return "rect"; }
@@ -1736,6 +1765,24 @@ public class SVG
       public Length getHeight() {
          return height;
       }
+
+       @Override
+       public boolean contains(Point point) {
+           if (rectF == null) {
+               float[] points = new float[] {
+                       getX().floatValue(),
+                       getY().floatValue(),
+                       getX().add(getWidth()),
+                       getY().floatValue(),
+                       getX().add(getWidth()),
+                       getY().add(getHeight()),
+                       getX().floatValue(),
+                       getY().add(getHeight())
+               };
+               rectF = initRectF(points);
+           }
+           return rectF.contains(point.x, point.y);
+       }
    }
 
 
@@ -1747,6 +1794,11 @@ public class SVG
 
       @Override
       String  getNodeName() { return "circle"; }
+
+       @Override
+       public boolean contains(Point point) {
+           return false;
+       }
    }
 
 
@@ -1759,6 +1811,11 @@ public class SVG
 
       @Override
       String  getNodeName() { return "ellipse"; }
+
+       @Override
+       public boolean contains(Point point) {
+           return false;
+       }
    }
 
 
@@ -1771,6 +1828,11 @@ public class SVG
 
       @Override
       String  getNodeName() { return "line"; }
+
+       @Override
+       public boolean contains(Point point) {
+           return false;
+       }
    }
 
 
@@ -1784,13 +1846,28 @@ public class SVG
       public float[] getPoints() {
          return points;
       }
+
+       @Override
+       public boolean contains(Point point) {
+           return false;
+       }
    }
 
 
    public static class Polygon extends PolyLine
    {
+       private RectF rectF;
+
       @Override
       String  getNodeName() { return "polygon"; }
+
+       @Override
+       public boolean contains(Point point) {
+           if (rectF == null) {
+               rectF = initRectF(getPoints());
+           }
+           return rectF.contains(point.x, point.y);
+       }
    }
 
 
