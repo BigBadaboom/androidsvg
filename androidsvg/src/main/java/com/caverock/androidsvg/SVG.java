@@ -107,6 +107,8 @@ public class SVG
    // Map from id attribute to element
    private Map<String, SvgElementBase> idToElementMap = new HashMap<>();
 
+   private List<SvgObject> svgCoordinatesObjects;
+
 
    enum Unit
    {
@@ -2414,20 +2416,17 @@ public class SVG
       return result;
    }
 
-   List<SvgObject> elements;
-
-
-   //TODO Add remaining shapes, once their contain function has been implemented.
+   //TODO Add remaining shapes, once their contains method has been implemented.
    public List<SvgObject> getSVGObjectsByCoordinate(Point point) {
       List<SvgObject> locations = new ArrayList<>();
 
-      if (elements == null) {
-         elements = new ArrayList<>();
-         elements.addAll(getElementsByTagName(Rect.class));
-         elements.addAll(getElementsByTagName(Polygon.class));
+      if (svgCoordinatesObjects == null) {
+         svgCoordinatesObjects = new ArrayList<>();
+         svgCoordinatesObjects.addAll(getElementsByTagName(Rect.class));
+         svgCoordinatesObjects.addAll(getElementsByTagName(Polygon.class));
       }
 
-      for (SvgObject object : elements) {
+      for (SvgObject object : svgCoordinatesObjects) {
          if (object instanceof GraphicsElement) {
             GraphicsElement element = (GraphicsElement) object;
             if (element.contains(point)) {
