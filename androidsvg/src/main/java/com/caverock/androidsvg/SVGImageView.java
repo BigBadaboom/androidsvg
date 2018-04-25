@@ -75,11 +75,14 @@ public class SVGImageView extends SVGBaseImageView implements View.OnTouchListen
         @Override
         public boolean onSingleTapUp(MotionEvent e) {
             if(svg != null && svgTouchlistener != null) {
-                int xPos = (int) (e.getX() * scaleX);
-                int yPos = (int) (e.getY() * scaleY);
-                Point touchPoint = new Point(xPos, yPos);
-                List<SVG.SvgObject> list = svg.getSVGObjectsByCoordinate(touchPoint);
-                svgTouchlistener.onSVGObjectTouch(list, touchPoint);
+                int rawX = (int) e.getX();
+                int rawY = (int) e.getY();
+
+                int xPos = (int) (rawX * scaleX);
+                int yPos = (int) (rawY * scaleY);
+
+                List<SVG.SvgObject> list = svg.getSVGObjectsByCoordinate(new Point(xPos, yPos));
+                svgTouchlistener.onSVGObjectTouch(list, new Point(rawX, rawY));
                 return true;
             }
             return false;
