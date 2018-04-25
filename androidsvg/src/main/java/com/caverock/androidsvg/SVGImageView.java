@@ -67,18 +67,19 @@ public class SVGImageView extends SVGBaseImageView implements View.OnTouchListen
     }
 
     public interface SVGTouchListener {
-        void onSVGObjectTouch(List<SVG.SvgObject> objectList);
+        void onSVGObjectTouch(List<SVG.SvgObject> objectList, Point touchPoint);
     }
 
     private class SVGGestureListener extends GestureDetector.SimpleOnGestureListener {
 
         @Override
-        public boolean onSingleTapConfirmed(MotionEvent e) {
+        public boolean onSingleTapUp(MotionEvent e) {
             if(svg != null && svgTouchlistener != null) {
                 int xPos = (int) (e.getX() * scaleX);
                 int yPos = (int) (e.getY() * scaleY);
-                List<SVG.SvgObject> list = svg.getSVGObjectsByCoordinate(new Point(xPos, yPos));
-                svgTouchlistener.onSVGObjectTouch(list);
+                Point touchPoint = new Point(xPos, yPos);
+                List<SVG.SvgObject> list = svg.getSVGObjectsByCoordinate(touchPoint);
+                svgTouchlistener.onSVGObjectTouch(list, touchPoint);
                 return true;
             }
             return false;
