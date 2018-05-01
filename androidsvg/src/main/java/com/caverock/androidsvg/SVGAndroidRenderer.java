@@ -4525,5 +4525,8 @@ class SVGAndroidRenderer
       statePop();
    }
 
+   public Bitmap decodeImageFromBase64(String base64EncodedImage) {
+      return checkForImageDataURL(base64EncodedImage);
+   }
 
 }

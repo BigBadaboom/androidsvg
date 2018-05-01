@@ -17,9 +17,6 @@ public class SVGImageView extends SVGBaseImageView implements View.OnTouchListen
     private GestureDetector gestureDetector;
     private SVGTouchListener svgTouchlistener;
 
-    private float scaleY;
-    private float scaleX;
-
     public SVGImageView(Context context) {
         super(context);
     }
@@ -54,16 +51,8 @@ public class SVGImageView extends SVGBaseImageView implements View.OnTouchListen
 
     @Override
     public boolean onTouch(View v, MotionEvent event) {
-        initScaleRatios();
         gestureDetector.onTouchEvent(event);
         return true;
-    }
-
-    private void initScaleRatios() {
-        if (svg != null) {
-            scaleY = svg.getDocumentHeight() / getHeight();
-            scaleX = svg.getDocumentWidth() / getWidth();
-        }
     }
 
     public interface SVGTouchListener {
@@ -78,14 +67,22 @@ public class SVGImageView extends SVGBaseImageView implements View.OnTouchListen
                 int rawX = (int) e.getX();
                 int rawY = (int) e.getY();
 
-                int xPos = (int) (rawX * scaleX);
-                int yPos = (int) (rawY * scaleY);
-
-                List<SVG.SvgObject> list = svg.getSVGObjectsByCoordinate(new Point(xPos, yPos));
+                List<SVG.SvgObject> list = svg.getSVGObjectsByCoordinate(new Point(rawX, rawY));
                 svgTouchlistener.onSVGObjectTouch(list, new Point(rawX, rawY));
                 return true;
             }
             return false;
         }
+    }
+
+
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+
+        if (svg != null) {
+            svg.initShapesWithOffset(getWidth());
+        }
+
     }
 }
