@@ -19,6 +19,7 @@ package com.caverock.androidsvg;
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Picture;
@@ -108,7 +109,6 @@ public class SVG
    private Map<String, SvgElementBase> idToElementMap = new HashMap<>();
 
    private List<SvgObject> svgCoordinatesObjects;
-
 
    enum Unit
    {
@@ -1683,32 +1683,45 @@ public class SVG
 
    // One of the element types that can cause graphics to be drawn onto the target canvas.
    // Specifically: 'circle', 'ellipse', 'image', 'line', 'path', 'polygon', 'polyline', 'rect', 'text' and 'use'.
-   static abstract class GraphicsElement extends SvgConditionalElement implements HasTransform
+   public static abstract class GraphicsElement extends SvgConditionalElement implements HasTransform
    {
       Matrix  transform;
+      RectF rectF;
 
       @Override
       public void setTransform(Matrix transform) { this.transform = transform; }
 
       public abstract boolean contains(Point point);
+      public abstract float[] getXYPointsArray();
 
-      public RectF initRectF(float[] xyArray) {
-          RectF rectF = new RectF();
-          android.graphics.Path path = new android.graphics.Path();
 
-          for (int i = 0; i < xyArray.length; i++) {
-              int xPoint = (int) xyArray[i];
-              i++; //move to y position
-              int yPoint = (int) xyArray[i];
+      public RectF initRectFWithOffset(float offset) {
+         rectF = new RectF();
+         android.graphics.Path path = new android.graphics.Path();
+         float[] xyArray = getXYPointsArray();
 
-              if(i == 1) {//case for the first (x,y) pair
-                  path.moveTo(xPoint, yPoint);
-              } else {
-                  path.lineTo(xPoint, yPoint);
-              }
-          }
-          path.computeBounds(rectF, false);
-          return rectF;
+         for (int i = 0; i < xyArray.length; i++) {
+            float xPoint = xyArray[i];
+            i++; //move to y position
+            float yPoint = xyArray[i];
+
+            if(i == 1) {//case for the first (x,y) pair
+               path.moveTo(xPoint, yPoint);
+            } else {
+               path.lineTo(xPoint, yPoint);
+            }
+         }
+
+         if (transform != null) {
+            path.transform(transform);
+         }
+
+         path.computeBounds(rectF, false);
+         if (offset != 0) {
+            rectF.offsetTo(rectF.left * offset, rectF.top * offset);
+         }
+
+         return rectF;
       }
    }
 
@@ -1731,11 +1744,16 @@ public class SVG
       @Override
       String  getNodeName() { return "path"; }
 
-       @Override
-       public boolean contains(Point point) {
-            //TODO implement this method
-           return false;
-       }
+      @Override
+      public boolean contains(Point point) {
+         //TODO implement this method
+         return false;
+      }
+
+      @Override
+      public float[] getXYPointsArray() {
+         return new float[0];
+      }
    }
 
 
@@ -1747,8 +1765,6 @@ public class SVG
       Length  height;
       Length  rx;
       Length  ry;
-
-      private RectF rectF;
 
       @Override
       String  getNodeName() { return "rect"; }
@@ -1769,23 +1785,28 @@ public class SVG
          return height;
       }
 
-       @Override
-       public boolean contains(Point point) {
-           if (rectF == null) {
-               float[] points = new float[] {
-                       getX().floatValue(),
-                       getY().floatValue(),
-                       getX().add(getWidth()),
-                       getY().floatValue(),
-                       getX().add(getWidth()),
-                       getY().add(getHeight()),
-                       getX().floatValue(),
-                       getY().add(getHeight())
-               };
-               rectF = initRectF(points);
-           }
-           return rectF.contains(point.x, point.y);
-       }
+      @Override
+      public boolean contains(Point point) {
+         if (rectF == null) {
+            rectF = initRectFWithOffset(0);
+         }
+         return rectF.contains(point.x, point.y);
+      }
+
+      @Override
+      public float[] getXYPointsArray() {
+         float[] points = new float[] {
+                 getX().floatValue(),
+                 getY().floatValue(),
+                 getX().add(getWidth()),
+                 getY().floatValue(),
+                 getX().add(getWidth()),
+                 getY().add(getHeight()),
+                 getX().floatValue(),
+                 getY().add(getHeight())
+         };
+         return points;
+      }
    }
 
 
@@ -1798,11 +1819,16 @@ public class SVG
       @Override
       String  getNodeName() { return "circle"; }
 
-       @Override
-       public boolean contains(Point point) {
-          //TODO implement this method
-           return false;
-       }
+      @Override
+      public boolean contains(Point point) {
+         //TODO implement this method
+         return false;
+      }
+
+      @Override
+      public float[] getXYPointsArray() {
+         return new float[0];
+      }
    }
 
 
@@ -1816,11 +1842,16 @@ public class SVG
       @Override
       String  getNodeName() { return "ellipse"; }
 
-       @Override
-       public boolean contains(Point point) {
-          //TODO implement this method
-           return false;
-       }
+      @Override
+      public boolean contains(Point point) {
+         //TODO implement this method
+         return false;
+      }
+
+      @Override
+      public float[] getXYPointsArray() {
+         return new float[0];
+      }
    }
 
 
@@ -1834,17 +1865,22 @@ public class SVG
       @Override
       String  getNodeName() { return "line"; }
 
-       @Override
-       public boolean contains(Point point) {
-          //TODO implement this method
-           return false;
-       }
+      @Override
+      public boolean contains(Point point) {
+         //TODO implement this method
+         return false;
+      }
+
+      @Override
+      public float[] getXYPointsArray() {
+         return new float[0];
+      }
    }
 
 
    static class PolyLine extends GraphicsElement
    {
-      float[]  points;
+      float[]  points = new float[0];
 
       @Override
       String  getNodeName() { return "polyline"; }
@@ -1853,28 +1889,32 @@ public class SVG
          return points;
       }
 
-       @Override
-       public boolean contains(Point point) {
-          //TODO implement this method
-           return false;
-       }
+      @Override
+      public boolean contains(Point point) {
+         //TODO implement this method
+         return false;
+      }
+
+      @Override
+      public float[] getXYPointsArray() {
+         return getPoints();
+      }
    }
 
 
    public static class Polygon extends PolyLine
    {
-       private RectF rectF;
 
       @Override
       String  getNodeName() { return "polygon"; }
 
-       @Override
-       public boolean contains(Point point) {
-           if (rectF == null) {
-               rectF = initRectF(getPoints());
-           }
-           return rectF.contains(point.x, point.y);
-       }
+      @Override
+      public boolean contains(Point point) {
+         if (rectF == null) {
+            rectF = initRectFWithOffset(0);
+         }
+         return rectF.contains(point.x, point.y);
+      }
    }
 
 
@@ -2417,8 +2457,7 @@ public class SVG
    }
 
    //TODO Add remaining shapes, once their contains method has been implemented.
-   public List<SvgObject> getSVGObjectsByCoordinate(Point point) {
-      List<SvgObject> locations = new ArrayList<>();
+   public List<SVG.SvgObject> getSVGObjects() {
 
       if (svgCoordinatesObjects == null) {
          svgCoordinatesObjects = new ArrayList<>();
@@ -2426,7 +2465,13 @@ public class SVG
          svgCoordinatesObjects.addAll(getElementsByTagName(Polygon.class));
       }
 
-      for (SvgObject object : svgCoordinatesObjects) {
+      return svgCoordinatesObjects;
+   }
+
+   public List<SvgObject> getSVGObjectsByCoordinate(Point point) {
+      List<SvgObject> locations = new ArrayList<>();
+
+      for (SvgObject object : getSVGObjects()) {
          if (object instanceof GraphicsElement) {
             GraphicsElement element = (GraphicsElement) object;
             if (element.contains(point)) {
@@ -2437,4 +2482,22 @@ public class SVG
 
       return locations;
    }
+
+   public void initShapesWithOffset(int viewWidth) {
+      List<SVG.SvgObject> object = getElementsByTagName(SVG.Image.class);
+      if(object != null && !object.isEmpty()) {
+         SVG.Image img = (SVG.Image) object.get(0);
+         Bitmap image = new SVGAndroidRenderer(null, 0f).decodeImageFromBase64(img.href);
+         if(image != null) {
+            float offset = (float)viewWidth / (float)image.getWidth(); // calculate offset based on the same aspect ratio
+
+            for (SvgObject svgObject : getSVGObjects()) {
+               if (svgObject instanceof GraphicsElement) {
+                  ((GraphicsElement)svgObject).initRectFWithOffset(offset);
+               }
+            }
+         }
+      }
+   }
+
 }
