@@ -1695,7 +1695,7 @@ public class SVG
       public abstract float[] getXYPointsArray();
 
 
-      public RectF initRectFWithOffset(float offset) {
+      public void initRectFWithOffsetRatio(float offsetRatio) {
          rectF = new RectF();
          android.graphics.Path path = new android.graphics.Path();
          float[] xyArray = getXYPointsArray();
@@ -1717,11 +1717,9 @@ public class SVG
          }
 
          path.computeBounds(rectF, false);
-         if (offset != 0) {
-            rectF.offsetTo(rectF.left * offset, rectF.top * offset);
+         if (offsetRatio != 0) {
+            rectF.offsetTo(rectF.left * offsetRatio, rectF.top * offsetRatio);
          }
-
-         return rectF;
       }
    }
 
@@ -1788,7 +1786,7 @@ public class SVG
       @Override
       public boolean contains(Point point) {
          if (rectF == null) {
-            rectF = initRectFWithOffset(0);
+            rectF = initRectFWithOffsetRatio(0);
          }
          return rectF.contains(point.x, point.y);
       }
@@ -1911,7 +1909,7 @@ public class SVG
       @Override
       public boolean contains(Point point) {
          if (rectF == null) {
-            rectF = initRectFWithOffset(0);
+            rectF = initRectFWithOffsetRatio(0);
          }
          return rectF.contains(point.x, point.y);
       }
@@ -2457,7 +2455,7 @@ public class SVG
    }
 
    //TODO Add remaining shapes, once their contains method has been implemented.
-   public List<SVG.SvgObject> getSVGObjects() {
+   public List<SVG.SvgObject> getRectAndPolygonSVGObjects() {
 
       if (svgCoordinatesObjects == null) {
          svgCoordinatesObjects = new ArrayList<>();
@@ -2471,7 +2469,7 @@ public class SVG
    public List<SvgObject> getSVGObjectsByCoordinate(Point point) {
       List<SvgObject> locations = new ArrayList<>();
 
-      for (SvgObject object : getSVGObjects()) {
+      for (SvgObject object : getRectAndPolygonSVGObjects()) {
          if (object instanceof GraphicsElement) {
             GraphicsElement element = (GraphicsElement) object;
             if (element.contains(point)) {
@@ -2491,9 +2489,9 @@ public class SVG
          if(image != null) {
             float offset = (float)viewWidth / (float)image.getWidth(); // calculate offset based on the same aspect ratio
 
-            for (SvgObject svgObject : getSVGObjects()) {
+            for (SvgObject svgObject : getRectAndPolygonSVGObjects()) {
                if (svgObject instanceof GraphicsElement) {
-                  ((GraphicsElement)svgObject).initRectFWithOffset(offset);
+                  ((GraphicsElement)svgObject).initRectFWithOffsetRatio(offset);
                }
             }
          }
