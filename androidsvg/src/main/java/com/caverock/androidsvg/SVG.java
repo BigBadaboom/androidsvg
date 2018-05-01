@@ -1786,7 +1786,7 @@ public class SVG
       @Override
       public boolean contains(Point point) {
          if (rectF == null) {
-            rectF = initRectFWithOffsetRatio(0);
+            initRectFWithOffsetRatio(0);
          }
          return rectF.contains(point.x, point.y);
       }
@@ -1909,7 +1909,7 @@ public class SVG
       @Override
       public boolean contains(Point point) {
          if (rectF == null) {
-            rectF = initRectFWithOffsetRatio(0);
+            initRectFWithOffsetRatio(0);
          }
          return rectF.contains(point.x, point.y);
       }
