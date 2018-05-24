@@ -1719,6 +1719,8 @@ public class SVG
          path.computeBounds(rectF, false);
          if (offsetRatio != 0) {
             rectF.offsetTo(rectF.left * offsetRatio, rectF.top * offsetRatio);
+            rectF.right = rectF.left + ((rectF.right - rectF.left) * offsetRatio);
+            rectF.bottom = rectF.top + ((rectF.bottom - rectF.top) * offsetRatio);
          }
       }
    }
