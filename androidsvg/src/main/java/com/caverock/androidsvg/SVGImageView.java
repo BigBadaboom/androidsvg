@@ -56,10 +56,21 @@ public class SVGImageView extends SVGBaseImageView implements View.OnTouchListen
     }
 
     public interface SVGTouchListener {
+        void onSVGObjectLongPress(Point point);
         void onSVGObjectTouch(List<SVG.SvgObject> objectList, Point touchPoint);
     }
 
     private class SVGGestureListener extends GestureDetector.SimpleOnGestureListener {
+
+        @Override
+        public void onLongPress(MotionEvent e) {
+            if (svg != null && svgTouchlistener != null) {
+                int rawX = (int) e.getX();
+                int rawY = (int) e.getY();
+
+                svgTouchlistener.onSVGObjectLongPress(new Point(rawX, rawY));
+            }
+        }
 
         @Override
         public boolean onSingleTapUp(MotionEvent e) {
