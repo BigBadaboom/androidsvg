@@ -17,6 +17,13 @@ public class SVGImageView extends SVGBaseImageView implements View.OnTouchListen
     private GestureDetector gestureDetector;
     private SVGTouchListener svgTouchlistener;
 
+    private static Point getPointForEvent(MotionEvent event) {
+        int rawX = (int) event.getX();
+        int rawY = (int) event.getY();
+
+        return new Point(rawX, rawY);
+    }
+
     public SVGImageView(Context context) {
         super(context);
     }
@@ -51,13 +58,37 @@ public class SVGImageView extends SVGBaseImageView implements View.OnTouchListen
 
     @Override
     public boolean onTouch(View v, MotionEvent event) {
-        gestureDetector.onTouchEvent(event);
+        if (svg == null || svgTouchlistener == null) {
+            return true;
+        }
+
+        if (gestureDetector.onTouchEvent(event)) {
+            return true;
+        }
+
+        Point point = getPointForEvent(event);
+        List<SVG.SvgObject> list = svg.getSVGObjectsByCoordinate(point);
+
+
+        switch (event.getActionMasked()) {
+            case MotionEvent.ACTION_CANCEL:
+            case MotionEvent.ACTION_UP:
+                svgTouchlistener.onSVGObjectTouchUp(list, point);
+                break;
+            case MotionEvent.ACTION_MOVE:
+                svgTouchlistener.onSVGObjectMove(point);
+        }
         return true;
     }
 
     public interface SVGTouchListener {
+        void onSVGObjectTouchUp(List<SVG.SvgObject> list, Point point);
+
         void onSVGObjectLongPress(Point point);
+
         void onSVGObjectTouch(List<SVG.SvgObject> objectList, Point touchPoint);
+
+        void onSVGObjectMove(Point point);
     }
 
     private class SVGGestureListener extends GestureDetector.SimpleOnGestureListener {
@@ -65,21 +96,16 @@ public class SVGImageView extends SVGBaseImageView implements View.OnTouchListen
         @Override
         public void onLongPress(MotionEvent e) {
             if (svg != null && svgTouchlistener != null) {
-                int rawX = (int) e.getX();
-                int rawY = (int) e.getY();
-
-                svgTouchlistener.onSVGObjectLongPress(new Point(rawX, rawY));
+                svgTouchlistener.onSVGObjectLongPress(getPointForEvent(e));
             }
         }
 
         @Override
         public boolean onSingleTapUp(MotionEvent e) {
-            if(svg != null && svgTouchlistener != null) {
-                int rawX = (int) e.getX();
-                int rawY = (int) e.getY();
-
-                List<SVG.SvgObject> list = svg.getSVGObjectsByCoordinate(new Point(rawX, rawY));
-                svgTouchlistener.onSVGObjectTouch(list, new Point(rawX, rawY));
+            if (svg != null && svgTouchlistener != null) {
+                Point point = getPointForEvent(e);
+                List<SVG.SvgObject> list = svg.getSVGObjectsByCoordinate(point);
+                svgTouchlistener.onSVGObjectTouch(list, point);
                 return true;
             }
             return false;
