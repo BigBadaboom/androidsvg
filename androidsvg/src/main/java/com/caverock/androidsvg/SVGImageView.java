@@ -72,6 +72,7 @@ public class SVGImageView extends SVGBaseImageView implements View.OnTouchListen
 
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_CANCEL:
+                svgTouchlistener.onSVGObjectTouchUp(null, null);
             case MotionEvent.ACTION_UP:
                 svgTouchlistener.onSVGObjectTouchUp(list, point);
                 break;
