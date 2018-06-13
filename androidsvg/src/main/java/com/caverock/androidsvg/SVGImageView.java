@@ -1,313 +1,126 @@
-/*
-   Copyright 2013 Paul LeBeau, Cave Rock Software Ltd.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package com.caverock.androidsvg;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Method;
-
 import android.content.Context;
-import android.content.res.TypedArray;
-import android.graphics.Paint;
-import android.graphics.Picture;
-import android.graphics.drawable.PictureDrawable;
-import android.net.Uri;
-import android.os.AsyncTask;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Point;
 import android.util.AttributeSet;
-import android.util.Log;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
 import android.view.View;
-import android.widget.ImageView;
 
-/**
- * SVGImageView is a View widget that allows users to include SVG images in their layouts.
- * 
- * It is implemented as a thin layer over {@code android.widget.ImageView}.
- * <p>
- * In its present form it has one significant limitation.  It uses the {@link SVG#renderToPicture()}
- * method. That means that SVG documents that use {@code <mask>} elements will not display correctly.
- * 
- * @attr ref R.styleable#SVGImageView_svg
- */
-@SuppressWarnings("JavaDoc")
-public class SVGImageView extends ImageView
-{
-   private static Method  setLayerTypeMethod = null;
+import java.util.List;
 
-   static {
-      try
-      {
-         setLayerTypeMethod = View.class.getMethod("setLayerType", Integer.TYPE, Paint.class);
-      }
-      catch (NoSuchMethodException e) { /* do nothing */ }
-   }
+public class SVGImageView extends SVGBaseImageView implements View.OnTouchListener {
 
+    private SVG svg;
+    private GestureDetector gestureDetector;
+    private SVGTouchListener svgTouchlistener;
 
-   public SVGImageView(Context context)
-   {
-      super(context);
-   }
+    private static Point getPointForEvent(MotionEvent event) {
+        int rawX = (int) event.getX();
+        int rawY = (int) event.getY();
 
+        return new Point(rawX, rawY);
+    }
 
-   public SVGImageView(Context context, AttributeSet attrs)
-   {
-      super(context, attrs, 0);
-      init(attrs, 0);
-   }
+    public SVGImageView(Context context) {
+        super(context);
+    }
 
+    public SVGImageView(Context context, AttributeSet attrs) {
+        super(context, attrs);
+    }
 
-   public SVGImageView(Context context, AttributeSet attrs, int defStyle)
-   {
-      super(context, attrs, defStyle);
-      init(attrs, defStyle);
-   }
+    public SVGImageView(Context context, AttributeSet attrs, int defStyle) {
+        super(context, attrs, defStyle);
+    }
 
-   
-   private void  init(AttributeSet attrs, int defStyle)
-   {
-      if (isInEditMode())
-         return;
+    @Override
+    public void setSVG(SVG svg) {
+        if (svg == null) {
+            throw new IllegalArgumentException("SVG can not be null");
+        }
 
-      TypedArray a = getContext().getTheme()
-                     .obtainStyledAttributes(attrs, R.styleable.SVGImageView, defStyle, 0);
-      try
-      {
-         int  resourceId = a.getResourceId(R.styleable.SVGImageView_svg, -1);
-         if (resourceId != -1) {
-            setImageResource(resourceId);
-            return;
-         }
+        this.svg = svg;
 
-         String  url = a.getString(R.styleable.SVGImageView_svg);
-         if (url != null)
-         {
-            Uri  uri = Uri.parse(url);
-            if (internalSetImageURI(uri, false))
-               return;
+        Bitmap bitmap = Bitmap.createBitmap((int) Math.ceil(svg.getDocumentWidth()), (int) Math.ceil(svg.getDocumentHeight()), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        svg.renderToCanvas(canvas);
+        setImageBitmap(bitmap);
+    }
 
-            // Last chance, try loading it as an asset filename
-            setImageAsset(url);
-         }
-         
-      } finally {
-         a.recycle();
-      }
-   }
+    public void setSVGTouchListener(SVGTouchListener listener) {
+        svgTouchlistener = listener;
+        gestureDetector = new GestureDetector(getContext(), new SVGGestureListener());
+        setOnTouchListener(this);
+    }
+
+    @Override
+    public boolean onTouch(View v, MotionEvent event) {
+        if (svg == null || svgTouchlistener == null) {
+            return true;
+        }
+
+        if (gestureDetector.onTouchEvent(event)) {
+            return true;
+        }
+
+        Point point = getPointForEvent(event);
+        List<SVG.SvgObject> list = svg.getSVGObjectsByCoordinate(point);
 
 
+        switch (event.getActionMasked()) {
+            case MotionEvent.ACTION_CANCEL:
+                svgTouchlistener.onSVGObjectTouchUp(null, null);
+            case MotionEvent.ACTION_UP:
+                svgTouchlistener.onSVGObjectTouchUp(list, point);
+                break;
+            case MotionEvent.ACTION_MOVE:
+                svgTouchlistener.onSVGObjectMove(point);
+        }
+        return true;
+    }
 
-   /**
-    * Directly set the SVG.
-    */
-   public void  setSVG(SVG mysvg)
-   {
-      if (mysvg == null)
-         throw new IllegalArgumentException("Null value passed to setSVG()");
+    public interface SVGTouchListener {
+        void onSVGObjectTouchUp(List<SVG.SvgObject> list, Point point);
 
-      setSoftwareLayerType();
-      setImageDrawable(new PictureDrawable(mysvg.renderToPicture()));
-   }
+        void onSVGObjectLongPress(Point point);
 
+        void onSVGObjectTouch(List<SVG.SvgObject> objectList, Point touchPoint);
 
-   /**
-    * Load an SVG image from the given resource id.
-    */
-   @Override
-   public void setImageResource(int resourceId)
-   {
-      new LoadResourceTask(getContext(), resourceId).execute();
-   }
+        void onSVGObjectMove(Point point);
+    }
 
+    private class SVGGestureListener extends GestureDetector.SimpleOnGestureListener {
 
-   /**
-    * Load an SVG image from the given resource URI.
-    */
-   @Override
-   public void  setImageURI(Uri uri)
-   {
-      internalSetImageURI(uri, true);
-   }
-
-
-   /**
-    * Load an SVG image from the given asset filename.
-    */
-   public void  setImageAsset(String filename)
-   {
-      new LoadAssetTask(getContext(), filename).execute();
-   }
-
-
-   /*
-    * Attempt to set a picture from a Uri. Return true if it worked.
-    */
-   private boolean  internalSetImageURI(Uri uri, boolean isDirectRequestFromUser)
-   {
-      InputStream  is;
-      try
-      {
-         is = getContext().getContentResolver().openInputStream(uri);
-      }
-      catch (FileNotFoundException e)
-      {
-         if (isDirectRequestFromUser)
-            Log.e("SVGImageView", "File not found: " + uri);
-         return false;
-      }
-
-      new LoadURITask().execute(is);
-      return true;
-   }
-
-
-   //===============================================================================================
-
-
-   private class LoadResourceTask extends AsyncTask<Integer, Integer, Picture>
-   {
-      private Context  context;
-      private int      resourceId;
-
-      LoadResourceTask(Context context, int resourceId)
-      {
-         this.context = context;
-         this.resourceId = resourceId;
-      }
-
-      protected Picture  doInBackground(Integer... params)
-      {
-         try
-         {
-            SVG  svg = SVG.getFromResource(context, resourceId);
-            return svg.renderToPicture();
-         }
-         catch (SVGParseException e)
-         {
-            Log.e("SVGImageView", String.format("Error loading resource 0x%x: %s", resourceId, e.getMessage()));
-         }
-         return null;
-      }
-
-      protected void  onPostExecute(Picture picture)
-      {
-         if (picture != null) {
-            setSoftwareLayerType();
-            setImageDrawable(new PictureDrawable(picture));
-         }
-      }
-   }
-
-
-   private class LoadAssetTask extends AsyncTask<String, Integer, Picture>
-   {
-      private Context  context;
-      private String   filename;
-
-      LoadAssetTask(Context context, String filename)
-      {
-         this.context = context;
-         this.filename = filename;
-      }
-
-      protected Picture  doInBackground(String... params)
-      {
-         try
-         {
-            SVG  svg = SVG.getFromAsset(context.getAssets(), filename);
-            return svg.renderToPicture();
-         }
-         catch (SVGParseException e)
-         {
-            Log.e("SVGImageView", "Error loading file " + filename + ": " + e.getMessage());
-         }
-         catch (FileNotFoundException e)
-         {
-            Log.e("SVGImageView", "File not found: " + filename);
-         }
-         catch (IOException e)
-         {
-            Log.e("SVGImageView", "Unable to load asset file: " + filename, e);
-         }
-         return null;
-      }
-
-      protected void  onPostExecute(Picture picture)
-      {
-         if (picture != null) {
-            setSoftwareLayerType();
-            setImageDrawable(new PictureDrawable(picture));
-         }
-      }
-   }
-
-
-   private class LoadURITask extends AsyncTask<InputStream, Integer, Picture>
-   {
-      protected Picture  doInBackground(InputStream... is)
-      {
-         try
-         {
-            SVG  svg = SVG.getFromInputStream(is[0]);
-            return svg.renderToPicture();
-         }
-         catch (SVGParseException e)
-         {
-            Log.e("SVGImageView", "Parse error loading URI: " + e.getMessage());
-         }
-         finally
-         {
-            try
-            {
-               is[0].close();
+        @Override
+        public void onLongPress(MotionEvent e) {
+            if (svg != null && svgTouchlistener != null) {
+                svgTouchlistener.onSVGObjectLongPress(getPointForEvent(e));
             }
-            catch (IOException e) { /* do nothing */ }
-         }
-         return null;
-      }
+        }
 
-      protected void  onPostExecute(Picture picture)
-      {
-         if (picture != null) {
-            setSoftwareLayerType();
-            setImageDrawable(new PictureDrawable(picture));
-         }
-      }
-   }
-
-
-   //===============================================================================================
+        @Override
+        public boolean onSingleTapUp(MotionEvent e) {
+            if (svg != null && svgTouchlistener != null) {
+                Point point = getPointForEvent(e);
+                List<SVG.SvgObject> list = svg.getSVGObjectsByCoordinate(point);
+                svgTouchlistener.onSVGObjectTouch(list, point);
+                return true;
+            }
+            return false;
+        }
+    }
 
 
-   /*
-    * Use reflection to call an API 11 method from this library (which is configured with a minSdkVersion of 8)
-    */
-   private void  setSoftwareLayerType()
-   {
-      if (setLayerTypeMethod == null)
-         return;
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
 
-      try
-      {
-         int  LAYER_TYPE_SOFTWARE = View.class.getField("LAYER_TYPE_SOFTWARE").getInt(new View(getContext()));
-         setLayerTypeMethod.invoke(this, LAYER_TYPE_SOFTWARE, null);
-      }
-      catch (Exception e)
-      {
-         Log.w("SVGImageView", "Unexpected failure calling setLayerType", e);
-      }
-   }
+        if (svg != null) {
+            svg.initShapesWithOffset(getWidth());
+        }
+
+    }
 }
