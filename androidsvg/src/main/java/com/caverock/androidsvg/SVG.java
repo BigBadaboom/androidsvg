@@ -1001,6 +1001,12 @@ public class SVG
    }
 
 
+   void  clearRenderCSSRules()
+   {
+      this.cssRules.removeFromSource(CSSParser.Source.RenderOptions);
+   }
+
+
    //===============================================================================
    // Object sub-types used in the SVG object tree
 

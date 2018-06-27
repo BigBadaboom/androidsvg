@@ -24,14 +24,18 @@ import android.graphics.Path;
 import android.graphics.Rect;
 import android.graphics.RectF;
 
+import org.intellij.lang.annotations.RegExp;
 import org.robolectric.annotation.Implementation;
 import org.robolectric.annotation.Implements;
 import org.robolectric.shadow.api.Shadow;
+import org.robolectric.shadows.ShadowPaint;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Stack;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Mock version of Android Canvas class for testing.
@@ -239,7 +243,32 @@ public class MockCanvas
 
    private static String  paintToStr(Paint paint)
    {
-      return "Paint()";
+      ShadowPaint  sp = ((ShadowPaint) Shadow.extract(paint));
+      List<String>  props = new ArrayList<>();
+
+      props.add(String.format("color=#%x",sp.getColor()));
+      return "Paint({" + String.join(",", props) + "})";
    }
+
+
+   /*
+    * Look for "Paint()" value in ops entry with index opIndex.
+    * Return the value of the paint property with name propName.
+    */
+   String  paintProp(int opsIndex, String propName)
+   {
+      String   op = operations.get(opsIndex);
+      Pattern  re = Pattern.compile("Paint\\((\\{[^}]*})\\)");
+      Matcher  m = re.matcher(op);
+      if (!m.find())
+         return "NO "+propName;
+
+      String   keyvals = m.group(1);
+      re = Pattern.compile("(?:\\{|,)" + propName + "=([^,}]*)");
+      m = re.matcher(keyvals);
+      return m.find() ? m.group(1) : "NO "+propName;
+   }
+
+
 }
 

@@ -4,6 +4,7 @@
     <declare-styleable name="SVGImageView">
         <!-- Location of the SVG document. -->
         <attr name="svg" format="reference|string"/>
+        <attr name="css" format="string"/>
     </declare-styleable>
 
 </resources>

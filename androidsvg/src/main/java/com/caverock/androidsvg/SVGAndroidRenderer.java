@@ -241,6 +241,9 @@ class SVGAndroidRenderer
     */
    void  renderDocument(SVG document, RenderOptions renderOptions)
    {
+      if (renderOptions == null)
+         throw new NullPointerException("renderOptions shouldn't be null");  // Sanity check. Should never happen
+
       this.document = document;
 
       SVG.Svg  rootObj = document.getRootElement();
@@ -277,6 +280,9 @@ class SVGAndroidRenderer
                                                                       : rootObj.preserveAspectRatio;
       }
 
+      if (renderOptions.hasCss())
+         document.addCSSRules(renderOptions.css);
+
       // Initialise the state
       resetState();
 
@@ -297,6 +303,9 @@ class SVGAndroidRenderer
 
       // Restore state
       statePop();
+
+      if (renderOptions.hasCss())
+         document.clearRenderCSSRules();
    }
 
 

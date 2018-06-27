@@ -24,6 +24,7 @@ import com.caverock.androidsvg.SVG.SvgObject;
 import com.caverock.androidsvg.SVGParser.TextScanner;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 
@@ -40,7 +41,8 @@ public class CSSParser
    private static final String  ID = "id";
    private static final String  CLASS = "class";
 
-   private MediaType deviceMediaType = null;
+   private MediaType  deviceMediaType = null;
+   private Source     source = null;    // Where these rules came from (Parser or RenderOptions)
 
    private boolean  inMediaRule = false;
 
@@ -187,6 +189,20 @@ public class CSSParser
          return this.rules == null || this.rules.isEmpty();
       }
 
+      /*
+       * Remove all rules that were addres from a give Source.
+       */
+      void  removeFromSource(Source sourceToBeRemoved)
+      {
+         if (this.rules == null)
+            return;
+         Iterator<Rule> iter = this.rules.iterator();
+         while (iter.hasNext()) {
+            if (iter.next().source == sourceToBeRemoved)
+               iter.remove();
+         }
+      }
+
       @Override
       public String toString()
       {
@@ -200,15 +216,24 @@ public class CSSParser
    }
 
 
+   static enum  Source
+   {
+      Parser,
+      RenderOptions
+   }
+
+
    static class  Rule
    {
       Selector   selector = null;
       SVG.Style  style = null;
+      Source     source;
       
-      Rule(Selector selector, SVG.Style style)
+      Rule(Selector selector, SVG.Style style, Source source)
       {
          this.selector = selector;
          this.style = style;
+         this.source = source;
       }
 
       @Override
@@ -279,13 +304,20 @@ public class CSSParser
    
    CSSParser()
    {
-      this.deviceMediaType = MediaType.screen;
+      this(MediaType.screen, Source.Parser);
    }
 
 
-   CSSParser(MediaType rendererMediaType)
+   CSSParser(Source source)
+   {
+      this(MediaType.screen, source);
+   }
+
+
+   CSSParser(MediaType rendererMediaType, Source source)
    {
       this.deviceMediaType = rendererMediaType;
+      this.source = source;
    }
 
 
@@ -843,7 +875,7 @@ public class CSSParser
          SVG.Style  ruleStyle = parseDeclarations(scan);
          scan.skipWhitespace();
          for (Selector selector: selectors) {
-            ruleset.add( new Rule(selector, ruleStyle) );
+            ruleset.add( new Rule(selector, ruleStyle, source) );
          }
          return true;
       }

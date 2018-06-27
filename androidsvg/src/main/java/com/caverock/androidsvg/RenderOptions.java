@@ -26,7 +26,7 @@ import android.graphics.RectF;
 
 public class RenderOptions
 {
-   //CSSParser.Ruleset    css = null;
+   CSSParser.Ruleset    css = null;
    //String               id = null;
    PreserveAspectRatio  preserveAspectRatio = null;
    SVG.Box              viewBox = null;
@@ -54,7 +54,9 @@ public class RenderOptions
     */
    public RenderOptions(RenderOptions other)
    {
-      //this.css = other.css;
+      if (other == null)
+         return;
+      this.css = other.css;
       //this.id = other.id;
       this.preserveAspectRatio = other.preserveAspectRatio;
       this.viewBox = other.viewBox;
@@ -65,29 +67,25 @@ public class RenderOptions
 
    /**
     * Specifies some additional CSS rules that will be applied during render in addition to
-    * and specified in the file itself.
+    * any specified in the file itself.
     * @param css CSS rules to apply
     * @return this RenderOptions instance
     */
-/*
    public RenderOptions  css(String css)
    {
-      CSSParser  parser = new CSSParser();
+      CSSParser  parser = new CSSParser(CSSParser.Source.RenderOptions);
       this.css = parser.parse(css);
       return this;
    }
-*/
 
 
    /**
     * Returns true if this RenderOptions instance has had CSS set with {@link #css(String)}.
     */
-/*
    public boolean hasCss()
    {
       return this.css != null;
    }
-*/
 
 
    /**
