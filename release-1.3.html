@@ -113,7 +113,7 @@ dependencies {
 <li>Convert path enumerator to use primitive arrays instead of lists.  Achieves modest speedup in most cases (thanks to Markus Junginger).</li>
 <li>Better handling of input streams in <code>getFromResource()</code> and <code>getFromAsset()</code>.</li>
 <li>Converted internal <code>NumberParser.parseNumber()</code> to return a float rather than a <code>NumberParser</code>. Results in fewer memory allocations and much higher speed (thanks to Markus Junginger).</li>
-<li>Fixed some multi-threading issues in lazy-initialised keyword maps (thanks to papp.robert.s).</li>
+<li>Fixed some multi-threading issues in lazy-initialised keyword maps (thanks to papp.robert.s), and in element and attribute maps (issue #145 fix thanks to brudaswen).</li>
 </ul>
 
 
