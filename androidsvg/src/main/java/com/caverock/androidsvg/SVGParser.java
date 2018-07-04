@@ -147,35 +147,27 @@ class SVGParser
       use,
       view,
       UNSUPPORTED;
-      
-      private static final Map<String,SVGElem>  cache = new HashMap<>();
-      
-      public static SVGElem  fromString(String str)
-      {
-         // First check cache to see if it is there
-         SVGElem  elem = cache.get(str);
-         if (elem != null)
-            return elem;
-         // Manual check for "switch" which is in upper case because it's a Java reserved identifier
-         if (str.equals("switch")) {
-            cache.put(str, SWITCH);
-            return SWITCH;
-         }
-         // Do the (slow) Enum.valueOf()
-         try
-         {
-            elem = valueOf(str);
-            if (elem != SWITCH) {  // Don't allow matches with "SWITCH"
-               cache.put(str, elem);
-               return elem;
+
+      private static final Map<String, SVGElem> cache = new HashMap<>();
+
+      static {
+         for (SVGElem elem : values()) {
+            if (elem == SWITCH) {
+               cache.put("switch", elem);
+            } else if (elem != UNSUPPORTED) {
+               final String key = elem.name();
+               cache.put(key, elem);
             }
-         } 
-         catch (IllegalArgumentException e)
-         {
-            // Do nothing
          }
-         // Unknown element name
-         cache.put(str, UNSUPPORTED);
+      }
+
+      public static SVGElem fromString(String str) {
+         // First check cache to see if it is there
+         SVGElem elem = cache.get(str);
+         if (elem != null) {
+            return elem;
+         }
+
          return UNSUPPORTED;
       }
    }
@@ -314,41 +306,29 @@ class SVGParser
       visibility,
       UNSUPPORTED;
 
-      private static final Map<String,SVGAttr>  cache = new HashMap<>();
-      
-      public static SVGAttr  fromString(String str)
-      {
-         // First check cache to see if it is there
-         SVGAttr  attr = cache.get(str);
-         if (attr != null)
-            return attr;
-         // Do the (slow) Enum.valueOf()
-         if (str.equals("class")) {
-            cache.put(str, CLASS);
-            return CLASS;
-         }
-         // Check for underscore in attribute - it could potentially confuse us
-         if (str.indexOf('_') != -1) {
-            cache.put(str, UNSUPPORTED);
-            return UNSUPPORTED;
-         }
-         try
-         {
-            attr = valueOf(str.replace('-', '_'));
-            if (attr != CLASS) {
-               cache.put(str, attr);
-               return attr;
+      private static final Map<String, SVGAttr> cache = new HashMap<>();
+
+      static {
+         for (SVGAttr attr : values()) {
+            if (attr == CLASS) {
+               cache.put("class", attr);
+            } else if (attr != UNSUPPORTED) {
+               final String key = attr.name().replace('_', '-');
+               cache.put(key, attr);
             }
-         } 
-         catch (IllegalArgumentException e)
-         {
-            // Do nothing
          }
-         // Unknown attribute name
-         cache.put(str, UNSUPPORTED);
-         return UNSUPPORTED;
       }
 
+      public static SVGAttr fromString(String str)
+      {
+         // First check cache to see if it is there
+         SVGAttr attr = cache.get(str);
+         if (attr != null) {
+            return attr;
+         }
+
+         return UNSUPPORTED;
+      }
    }
 
 
