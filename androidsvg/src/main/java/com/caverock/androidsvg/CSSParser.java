@@ -189,6 +189,11 @@ public class CSSParser
          return this.rules == null || this.rules.isEmpty();
       }
 
+      int  ruleCount()
+      {
+         return (this.rules != null) ? this.rules.size() : 0;
+      }
+
       /*
        * Remove all rules that were addres from a give Source.
        */
@@ -218,7 +223,7 @@ public class CSSParser
 
    static enum  Source
    {
-      Parser,
+      Document,
       RenderOptions
    }
 
@@ -239,7 +244,7 @@ public class CSSParser
       @Override
       public String toString()
       {
-         return String.valueOf(selector) + " {}";
+         return String.valueOf(selector) + " {...} (src="+this.source+")";
       }
    }
 
@@ -272,16 +277,19 @@ public class CSSParser
       }
 
       // Methods for accumulating a specificity value as SimpleSelector entries are added.
+      // Number of ID selectors in the selector
       void  addedIdAttribute()
       {
-         specificity += 10000;
+         specificity += 1000000;
       }
 
+      // Number of class selectors, attributes selectors, and pseudo-classes
       void  addedAttributeOrPseudo()
       {
-         specificity += 100;
+         specificity += 1000;
       }
 
+      // Number of type (element) selectors and pseudo-elements
       void  addedElement()
       {
          specificity += 1;
@@ -293,7 +301,7 @@ public class CSSParser
          StringBuilder  sb = new StringBuilder();
          for (SimpleSelector sel: selector)
             sb.append(sel).append(' ');
-         return sb.append('(').append(specificity).append(')').toString();
+         return sb.append('[').append(specificity).append(']').toString();
       }
    }
 
@@ -304,7 +312,7 @@ public class CSSParser
    
    CSSParser()
    {
-      this(MediaType.screen, Source.Parser);
+      this(MediaType.screen, Source.Document);
    }
 
 
@@ -470,14 +478,14 @@ public class CSSParser
                   throw new CSSParseException("Invalid \"#id\" selector");
                selectorPart.addAttrib(ID, AttribOp.EQUALS, value);
                selector.addedIdAttribute();
+               continue;
             }
 
-            if (selectorPart == null)
-               break;
-
-            // Now check for attribute selection and pseudo selectors   
+            // Now check for attribute selection and pseudo selectors
             if (consume('['))
             {
+               if (selectorPart == null)
+                  selectorPart = new SimpleSelector(combinator, null);
                skipWhitespace();
                String  attrName = nextIdentifier();
                String  attrValue = null;
@@ -507,6 +515,8 @@ public class CSSParser
 
             if (consume(':'))
             {
+               if (selectorPart == null)
+                  selectorPart = new SimpleSelector(combinator, null);
                // skip pseudo
                int  pseudoStart = position;
                if (nextIdentifier() != null) {
@@ -1072,8 +1082,8 @@ public class CSSParser
 
    private static int getChildPosition(List<SvgContainer> ancestors, int ancestorsPos, SvgElementBase obj)
    {
-      if (ancestorsPos < 0)  // Has no parent, so can't have a sibling
-         return -1;
+      if (ancestorsPos < 0)  // Has no parent, so must be only child of document
+         return 0;
       if (ancestors.get(ancestorsPos) != obj.parent)  // parent doesn't match, so obj must be an indirect reference (eg. from a <use>)
          return -1;
       int  childPos = 0;

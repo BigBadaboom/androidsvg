@@ -4483,7 +4483,7 @@ Log.d(TAG,"PROC INSTR: "+parser.getText());
 
    private void  parseCSSStyleSheet(String sheet)
    {
-      CSSParser  cssp = new CSSParser(MediaType.screen, CSSParser.Source.RenderOptions);
+      CSSParser  cssp = new CSSParser(MediaType.screen, CSSParser.Source.Document);
       svgDocument.addCSSRules(cssp.parse(sheet));
    }
 
