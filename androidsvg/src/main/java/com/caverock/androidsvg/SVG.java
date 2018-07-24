@@ -1740,6 +1740,9 @@ public class SVG
       Length  y;
       Length  width;
       Length  height;
+
+      @Override
+      String  getNodeName() { return "use"; }
    }
 
 
@@ -1934,6 +1937,8 @@ public class SVG
    // An SVG element that can contain other elements.
    static class Switch extends Group
    {
+      @Override
+      String  getNodeName() { return "switch"; }
    }
 
 
