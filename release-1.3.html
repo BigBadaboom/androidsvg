@@ -82,6 +82,7 @@ dependencies {
 <ul>
 <li>Issue #11: <strong>Added support for passing extra CSS at render time</strong>, and also when using <code>SVGImageView</code>.  This enables the long-requested ability to re-colour SVGs.  To use this feature, you need to use one of the new <code>renderToX()</code> methods that take a <code>RenderOptions</code> parameter.</li>
 <li><strong>Added support for external stylesheets</strong> using: (a) <?xml-stylesheet> processing instruction, and (b) CSS @import (thanks to David Gileadi).</li>
+<li>Issue #18: <strong>Added support for all CSS Selectors Level 3 pseudo classes (:not(), :nth-child(), :last-of-type, etc).</strong>  Some are supported but never match because they don't make sense for us (eg. :checked)</li>
 <li>Issue #94: <strong>Implemented new way to do clip paths.</strong> The new method works on all 4.4 (Kitkat) and later devices. Clip paths are now more accurate, handle <code>clip-rule</code> properly, and work for <code>renderToPicture()</code>.  Works around the bug in 6.0 that mangles clipPaths on canvas.retore().</li>
 <li>Issue #45: Implement masks in a much better way using layer compositing.  <strong>Mask processing is *much* faster now.</strong></li>
 <li>Issue #38: Implemented <strong>CSS3 Color</strong> keyword "transparent", and functions <code>rgba()</code>, <code>hsl()</code> and <code>hsla(a)</code>.  Implemented CSS4 Color keyword "rebeccapurple", and <code>#RGBA</code> and <code>#RRGGBBAA</code> hex forms.</li>
