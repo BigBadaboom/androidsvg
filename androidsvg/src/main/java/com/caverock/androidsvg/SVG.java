@@ -2296,7 +2296,7 @@ public class SVG
    }
 
 
-   SvgObject  getElementById(String id)
+   SvgElementBase  getElementById(String id)
    {
       if (id == null || id.length() == 0)
          return null;

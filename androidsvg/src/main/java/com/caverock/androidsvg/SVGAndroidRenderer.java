@@ -115,6 +115,8 @@ class SVGAndroidRenderer
 
    private static HashSet<String>  supportedFeatures = null;
 
+   private CSSParser.RuleMatchContext  ruleMatchContext = null;
+
 
    private class RendererState
    {
@@ -282,6 +284,10 @@ class SVGAndroidRenderer
 
       if (renderOptions.hasCss())
          document.addCSSRules(renderOptions.css);
+      if (renderOptions.hasTarget()) {
+         this.ruleMatchContext = new CSSParser.RuleMatchContext();
+         this.ruleMatchContext.targetElement = document.getElementById(renderOptions.targetId);
+      }
 
       // Initialise the state
       resetState();
@@ -432,7 +438,7 @@ class SVGAndroidRenderer
       {
          for (CSSParser.Rule rule: document.getCSSRules())
          {
-            if (CSSParser.ruleMatch(rule.selector, obj)) {
+            if (CSSParser.ruleMatch(this.ruleMatchContext, rule.selector, obj)) {
                updateStyle(state, rule.style);
             }
          }

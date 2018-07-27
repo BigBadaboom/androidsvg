@@ -29,9 +29,11 @@ public class RenderOptions
    CSSParser.Ruleset    css = null;
    //String               id = null;
    PreserveAspectRatio  preserveAspectRatio = null;
+   String               targetId = null;
    SVG.Box              viewBox = null;
    String               viewId = null;
    SVG.Box              viewPort = null;
+
 
    public RenderOptions()
    {
@@ -84,6 +86,7 @@ public class RenderOptions
     */
    public boolean hasCss()
    {
+//      return this.css != null && this.css.ruleCount() > 0;
       return this.css != null;
    }
 
@@ -213,6 +216,29 @@ public class RenderOptions
    public boolean hasViewPort()
    {
       return this.viewPort != null;
+   }
+
+
+   /**
+    * Specifies the {@code id} of an element, in the SVG, to treat as the target element when
+    * using the {@code :target} CSS pseudo class.
+    *
+    * @param targetId the id attribute of an element
+    * @return this RenderOptions instance
+    */
+   public RenderOptions  target(String targetId)
+   {
+      this.targetId = targetId;
+      return this;
+   }
+
+
+   /**
+    * Returns true if this RenderOptions instance has had a view set with {@link #view(String)}.
+    */
+   public boolean hasTarget()
+   {
+      return this.targetId != null;
    }
 
 

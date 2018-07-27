@@ -244,7 +244,7 @@ public class MockCanvas
    private static String  paintToStr(Paint paint)
    {
       ShadowPaint  sp = ((ShadowPaint) Shadow.extract(paint));
-      List<String>  props = new ArrayList<>();
+     List<String>  props = new ArrayList<>();
 
       props.add(String.format("color=#%x",sp.getColor()));
       return "Paint({" + String.join(",", props) + "})";

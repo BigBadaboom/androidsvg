@@ -29,7 +29,7 @@ class IntegerParser
    private long     value;
 
 
-   private IntegerParser(long value, int pos)
+   IntegerParser(long value, int pos)
    {
       this.value = value;
       this.pos = pos;
@@ -49,24 +49,25 @@ class IntegerParser
     * Scan the string for an SVG integer.
     * Assumes maxPos will not be greater than input.length().
     */
-   /*
-   private static IntegerParser  parseInt(String input, int startpos, int len)
+   static IntegerParser  parseInt(String input, int startpos, int len, boolean includeSign)
    {
       int      pos = startpos;
       boolean  isNegative = false;
       long     value = 0;
-
+      char     ch;
 
       if (pos >= len)
         return null;  // String is empty - no number found
 
-      char  ch = input.charAt(pos);
-      switch (ch) {
-         case '-': isNegative = true;
-                   // fall through
-         case '+': pos++;
+      if (includeSign)
+      {
+         ch = input.charAt(pos);
+         switch (ch) {
+            case '-': isNegative = true;
+               // fall through
+            case '+': pos++;
+         }
       }
-
       int  sigStart = pos;
 
       while (pos < len)
@@ -94,9 +95,8 @@ class IntegerParser
          return null;
       }
 
-      return new IntegerParser(isNegative, value, pos);
+      return new IntegerParser(value, pos);
    }
-   */
 
 
    /*
