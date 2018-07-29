@@ -50,7 +50,7 @@ public class RenderToCanvasTest
       List<String>  ops = ((MockCanvas) Shadow.extract(bmcanvas1)).getOperations();
       //System.out.println(String.join(",", ops));
       assertEquals("concat(Matrix(1 0 0 1 0 50))", ops.get(1));
-      assertEquals("drawPath('M 0 0 L 200 0 L 200 100 L 0 100 L 0 0 Z', Paint())", ops.get(3));
+      assertEquals("drawPath('M 0 0 L 200 0 L 200 100 L 0 100 L 0 0 Z', Paint({color=#ff008000}))", ops.get(3));
    }
 
 
@@ -69,7 +69,7 @@ public class RenderToCanvasTest
       List<String>  ops = ((MockCanvas) Shadow.extract(bmcanvas2)).getOperations();
       //System.out.println(String.join(",", ops));
       assertEquals("concat(Matrix(0.5 0 0 0.5 50 75))", ops.get(1));
-      assertEquals("drawPath('M 0 0 L 200 0 L 200 100 L 0 100 L 0 0 Z', Paint())", ops.get(3));
+      assertEquals("drawPath('M 0 0 L 200 0 L 200 100 L 0 100 L 0 0 Z', Paint({color=#ff008000}))", ops.get(3));
    }
 
 
@@ -136,7 +136,7 @@ public class RenderToCanvasTest
       List<String>  ops = ((MockCanvas) Shadow.extract(bmcanvas2)).getOperations();
       //System.out.println(String.join(",", ops));
       assertEquals("concat(Matrix(0.5 0 0 0.5 100 100))", ops.get(1));
-      assertEquals("drawPath('M 0 0 L 200 0 L 200 100 L 0 100 L 0 0 Z', Paint())", ops.get(3));
+      assertEquals("drawPath('M 0 0 L 200 0 L 200 100 L 0 100 L 0 0 Z', Paint({color=#ff008000}))", ops.get(3));
    }
 
 
