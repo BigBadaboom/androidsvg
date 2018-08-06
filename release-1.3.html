@@ -86,6 +86,7 @@ dependencies {
 <li>Issue #94: <strong>Implemented new way to do clip paths.</strong> The new method works on all 4.4 (Kitkat) and later devices. Clip paths are now more accurate, handle <code>clip-rule</code> properly, and work for <code>renderToPicture()</code>.  Works around the bug in 6.0 that mangles clipPaths on canvas.retore().</li>
 <li>Issue #45: Implement masks in a much better way using layer compositing.  <strong>Mask processing is *much* faster now.</strong></li>
 <li>Issue #38: Implemented <strong>CSS3 Color</strong> keyword "transparent", and functions <code>rgba()</code>, <code>hsl()</code> and <code>hsla(a)</code>.  Implemented CSS4 Color keyword "rebeccapurple", and <code>#RGBA</code> and <code>#RRGGBBAA</code> hex forms.</li>
+<li>The <code>SVGPositioning</code> class has been renamed to <code>PreserveAspectRatio</code> so that it makes more sense when used with the <code>RenderOptions</code> class.</li>
 <li>Issue #26: Bad property values no longer throw an exception when parsing. They are now just ignored.</li>
 <li>Fixed bug with <code>fill-opacity</code> not affecting gradients as it should.</li>
 <li>Issue #61: CSS selector match now uses a nodeName string field rather than using reflection.  This should mean that workaround ProGuard rules are no longer needed to avoid obfuscation breaking CSS matching.</li>
