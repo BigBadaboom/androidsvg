@@ -20,7 +20,6 @@ import org.xml.sax.SAXException;
 
 /**
  * Thrown by the parser if a problem is found in the SVG file.
- * Extends SAXException rather than Exception to avoid unnecessary casts in the SAX parser handling code.
  */
 
 public class SVGParseException extends SAXException

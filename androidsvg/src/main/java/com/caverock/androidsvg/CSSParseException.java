@@ -16,11 +16,11 @@
 
 package com.caverock.androidsvg;
 
-/**
+/*
  * Thrown by the CSS parser if a problem is found while parsing a CSS file.
  */
 
-public class CSSParseException extends Exception
+class CSSParseException extends Exception
 {
    CSSParseException(String msg)
    {

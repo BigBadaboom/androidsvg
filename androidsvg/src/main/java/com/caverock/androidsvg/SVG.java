@@ -46,7 +46,7 @@ import java.util.Set;
  * Typically, you will call one of the SVG loading and parsing classes then call the renderer,
  * passing it a canvas to draw upon.
  * 
- * <h4>Usage summary</h4>
+ * <h3>Usage summary</h3>
  * 
  * <ul>
  * <li>Use one of the static {@code getFromX()} methods to read and parse the SVG file.  They will
@@ -54,7 +54,7 @@ import java.util.Set;
  * <li>Call one of the {@code renderToX()} methods to render the document.
  * </ul>
  * 
- * <h4>Usage example</h4>
+ * <h3>Usage example</h3>
  * 
  * <pre>
  * {@code
@@ -188,6 +188,7 @@ public class SVG
     * @param resourceId the resource identifier of the SVG document.
     * @return an SVG instance on which you can call one of the render methods.
     * @throws SVGParseException if there is an error parsing the document.
+    * @since 1.2.1
     */
    @SuppressWarnings("WeakerAccess")
    public static SVG  getFromResource(Resources resources, int resourceId) throws SVGParseException
@@ -275,8 +276,15 @@ public class SVG
    /**
     * Register an {@link SVGExternalFileResolver} instance that the renderer should use when resolving
     * external references such as images, fonts, and CSS stylesheets.
+    *
+    * <p>
+    * <em>Note: prior to release 1.3, this was an instance method of (@code SVG}.  In 1.3, it was
+    * changed to a static method so that users can resolve external references to CSSS files while
+    * the SVG is being parsed.</em>
+    * </p>
     * 
     * @param fileResolver the resolver to use.
+    * @since 1.3
     */
    public static void  registerExternalFileResolver(SVGExternalFileResolver fileResolver)
    {
@@ -359,6 +367,7 @@ public class SVG
     *
     * @param renderOptions options that describe how to render this SVG on the Canvas.
     * @return a Picture object suitable for later rendering using {@link Canvas#drawPicture(Picture)}
+    * @since 1.3
     */
    @SuppressWarnings({"WeakerAccess", "unused"})
    public Picture  renderToPicture(RenderOptions renderOptions)
@@ -409,6 +418,7 @@ public class SVG
     * @param heightInPixels the height of the {@code Picture}
     * @param renderOptions options that describe how to render this SVG on the Canvas.
     * @return a Picture object suitable for later rendering using {@link Canvas#drawPicture(Picture)}
+    * @since 1.3
     */
    @SuppressWarnings({"WeakerAccess", "unused"})
    public Picture  renderToPicture(int widthInPixels, int heightInPixels, RenderOptions renderOptions)
@@ -472,6 +482,7 @@ public class SVG
     * will be used as the viewport into which the document will be rendered.
     * 
     * @param canvas the canvas to which the document should be rendered.
+    * @since 1.3
     */
    @SuppressWarnings({"WeakerAccess", "unused"})
    public void  renderToCanvas(Canvas canvas)
@@ -508,6 +519,7 @@ public class SVG
     *
     * @param canvas the canvas to which the document should be rendered.
     * @param renderOptions options that describe how to render this SVG on the Canvas.
+    * @since 1.3
     */
    @SuppressWarnings({"WeakerAccess", "unused"})
    public void  renderToCanvas(Canvas canvas, RenderOptions renderOptions)
@@ -1110,7 +1122,7 @@ public class SVG
                                                           | SPECIFIED_VIEWPORT_FILL_OPACITY | SPECIFIED_VECTOR_EFFECT;
    */
 
-   protected static class  Style implements Cloneable
+   static class  Style implements Cloneable
    {
       // Which properties have been explicitly specified by this element
       long       specifiedFlags = 0;
@@ -1733,7 +1745,7 @@ public class SVG
    }
 
 
-   protected static class Use extends Group
+   static class Use extends Group
    {
       String  href;
       Length  x;
@@ -1856,7 +1868,7 @@ public class SVG
    }
 
 
-   protected static class Text extends TextPositionedContainer implements TextRoot, HasTransform
+   static class Text extends TextPositionedContainer implements TextRoot, HasTransform
    {
       Matrix  transform;
 
@@ -2054,7 +2066,7 @@ public class SVG
    }
 
 
-   protected static class Image extends SvgPreserveAspectRatioContainer implements HasTransform
+   static class Image extends SvgPreserveAspectRatioContainer implements HasTransform
    {
       String  href;
       Length  x;
@@ -2070,7 +2082,7 @@ public class SVG
    }
 
 
-   protected static class View extends SvgViewBoxContainer implements NotDirectlyRendered
+   static class View extends SvgViewBoxContainer implements NotDirectlyRendered
    {
       @Override
       String  getNodeName() { return "view"; }

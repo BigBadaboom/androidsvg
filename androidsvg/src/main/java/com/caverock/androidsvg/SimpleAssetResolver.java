@@ -100,7 +100,7 @@ public class SimpleAssetResolver extends SVGExternalFileResolver
 
 
    /**
-    * Attempt to find the specified image file in the "assets" folder and return a decoded Bitmap.
+    * Attempt to find the specified image file in the <code>assets</code> folder and return a decoded Bitmap.
     */
    @Override
    public Bitmap  resolveImage(String filename)
@@ -132,6 +132,7 @@ public class SimpleAssetResolver extends SVGExternalFileResolver
 
    /**
     * Attempt to find the specified stylesheet file in the "assets" folder and return its string contents.
+    * @since 1.3
     */
    @Override
    public String  resolveCSSStyleSheet(String url)

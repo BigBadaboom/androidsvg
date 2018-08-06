@@ -22,12 +22,31 @@ import android.graphics.Typeface;
 /**
  * Resolver class used by the renderer when resolving font, image, and external CSS references.
  * <p>
- * The default behaviour is to tell AndroidSVG that the reference could not be found.
+ * When AndroidSVG encounters a reference to an external object, such as an image, it will call the
+ * associated method on this class in an attempt to load it.
  * <p>
+ * The default behaviour of each method is to tell AndroidSVG that the reference could not be found.
  * Extend this class and override the methods if you want to customise how AndroidSVG treats font, image, and external CSS references.
+ *
+ * <h3>Example usage</h3>
+ *
+ * <pre class="code-block">
+ * {@code
+ * public class MyResolver {
+ *    // Override the default method implementations with your own.
+ *    // See the code for SimpleAssetResolver class, for examples of how to do that.
+ * }
+ *
+ * // Register your resolver with AndroidSVG
+ * SVG.registerExternalFileResolver(new MyResolver());
+ *
+ * // Your resolver will now be used when an SVG is parsed or rendered,
+ * SVG mySVG = SVG.getFromX();
+ * }
+ * </pre>
  */
 
-public abstract class SVGExternalFileResolver
+public class SVGExternalFileResolver
 {
    /**
     * Called by renderer to resolve font references in &lt;text&gt; elements.
@@ -77,6 +96,7 @@ public abstract class SVGExternalFileResolver
     *
     * @param url the URL of the CSS file as it appears in the SVG file.
     * @return a AndroidSVG CSSStyleSheet object, or null if the stylesheet could not be found.
+    * @since 1.3
     */
    public String  resolveCSSStyleSheet(String url)
    {

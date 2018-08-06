@@ -37,11 +37,14 @@ import android.widget.ImageView;
  * SVGImageView is a View widget that allows users to include SVG images in their layouts.
  * 
  * It is implemented as a thin layer over {@code android.widget.ImageView}.
- * <p>
- * In its present form it has one significant limitation.  It uses the {@link SVG#renderToPicture()}
- * method. That means that SVG documents that use {@code <mask>} elements will not display correctly.
- * 
- * @attr ref R.styleable#SVGImageView_svg
+ *
+ * <h2>XML attributes</h2>
+ * <dl>
+ *   <dt><code>svg</code></dt>
+ *   <dd>A resource reference, or a file name, of an SVG in your application</dd>
+ *   <dt><code>css</code></dt>
+ *   <dd>Optional extra CSS to apply when rendering the SVG</dd>
+ * </dl>
  */
 @SuppressWarnings("JavaDoc")
 public class SVGImageView extends ImageView
@@ -127,7 +130,9 @@ public class SVGImageView extends ImageView
 
 
    /**
-    * Directly set the SVG.
+    * Directly set the SVG that should be rendered by this view.
+    * @param svg An {@code SVG} instance
+    * @since 1.2.1
     */
    public void  setSVG(SVG svg)
    {
@@ -140,6 +145,9 @@ public class SVGImageView extends ImageView
 
    /**
     * Directly set the SVG and the CSS.
+    * @param svg An {@code SVG} instance
+    * @param css Optional extra CSS to apply when rendering
+    * @since 1.3
     */
    public void  setSVG(SVG svg, String css)
    {
@@ -155,6 +163,8 @@ public class SVGImageView extends ImageView
 
    /**
     * Directly set the CSS.
+    * @param css Extra CSS to apply when rendering
+    * @since 1.3
     */
    public void  setCSS(String css)
    {
@@ -166,6 +176,7 @@ public class SVGImageView extends ImageView
 
    /**
     * Load an SVG image from the given resource id.
+    * @param resourceId the id of an Android resource in your application
     */
    @Override
    public void setImageResource(int resourceId)
@@ -176,6 +187,7 @@ public class SVGImageView extends ImageView
 
    /**
     * Load an SVG image from the given resource URI.
+    * @param uri the URI of an Android resource in your application
     */
    @Override
    public void  setImageURI(Uri uri)
@@ -187,6 +199,7 @@ public class SVGImageView extends ImageView
 
    /**
     * Load an SVG image from the given asset filename.
+    * @param filename the file name of an SVG in the assets folder in your application
     */
    public void  setImageAsset(String filename)
    {
