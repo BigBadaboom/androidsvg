@@ -48,6 +48,11 @@ publishing {
             artifactId = artifactIdAAR
             groupId = group
 
+            artifact("${buildDir}/outputs/aar/androidsvg-release.aar") {
+                // wrap in a closure because this task isn't defined 'till
+                // the android plugin finishes
+                builtBy { tasks["assembleRelease"] }
+            }
             artifact sourcesJar
             artifact javadocJar
 
@@ -161,6 +166,6 @@ task libraryJar(type: Jar, dependsOn: 'compileReleaseJavaWithJavac') {
 }
 
 signing {
-//    sign publishing.publications.mavenAAR
+    sign publishing.publications.mavenAAR
     sign publishing.publications.mavenJAR
 }
