@@ -23,8 +23,7 @@ android {
     }
 }
 
-apply from: 'packaging_configuration.gradle'
-apply from: 'upload_configuration.gradle'
+apply from: 'publish.gradle'
 
 dependencies {
     implementation 'org.jetbrains:annotations-java5:15.0'
