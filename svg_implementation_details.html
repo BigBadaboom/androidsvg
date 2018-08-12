@@ -30,6 +30,7 @@
       <div class="inner">
         <nav>
           <ul>
+            <li><a href="index.html">Home</a></li>
             <li><a href="download.html">Download</a></li>
             <li><a href="release_notes.html">Release Notes</a></li>
             <li><a href="doc/index.html">Javadoc</a></li>
@@ -37,7 +38,7 @@
             <li><a href="svg_implementation_details.html">SVG Implementation</a></li>
             <li><a href="faq.html">FAQ</a></li>
             <li><a href="known_issues.html">Known Issues</a></li>
-            <li><a href="https://github.com/bigbadaboom/androidsvg/issues">Report a bug</a></li>
+            <li><a href="report_bugs.html">Report a bug</a></li>
             <li><a href="mailto:androidsvgfeedback@gmail.com">Contact the author</a></li>
           </ul>
 
@@ -66,15 +67,7 @@ AndroidSVG is intended only as a static renderer, so animation will probably nev
 </p>
 
 <p>
-SVG Acid test: <i>Note that this file has been slightly modified in the following ways:</i>
-</p>
-<ol>
-<li><i>an external CSS style sheet has been inlined, and </i></li>
-<li><i>one CSS selector type that is not currently supported was converted to a style attribute.</i></li>
-</ol>
-
-<p>
-The modified file is available on the <a href="http://code.google.com/p/androidsvg/downloads/list">old downloads page</a>.
+SVG Acid test. <em>Note that this file has been slightly modified in that one CSS selector type that is not currently supported was converted to a style attribute.</em>
 </p>
 
 
@@ -154,7 +147,7 @@ The modified file is available on the <a href="http://code.google.com/p/androids
    <td><code>&lt;mask&gt;</code></td>
    <td> Mask</td>
    <td> 1.0</td>
-   <td> Fully supported when using <code>renderToCanvas()</code>. </td>
+   <td> Fully supported.  Was only available for <code>renderToCanvas()</code> in versions prior to 1.3. </td>
   <tr>
   <tr>
    <td><code>&lt;path&gt;</code></td>
@@ -166,7 +159,7 @@ The modified file is available on the <a href="http://code.google.com/p/androids
    <td><code>&lt;pattern&gt;</code></td>
    <td> Pattern</td>
    <td> 1.0</td>
-   <td> Supported for fills only. Patterns do not work for <code>&lt;text&gt;</code> of <code>&lt;textPath&gt;</code> elements at present. Better support for patterns is coming in a future version. </td>
+   <td> Fully supported. </td>
   <tr>
   <tr>
    <td><code>&lt;polygon&gt;</code></td>
@@ -196,7 +189,7 @@ The modified file is available on the <a href="http://code.google.com/p/androids
    <td><code>&lt;solidColor&gt;</code> </td>
    <td> Solid colour references</td>
    <td> 1.2</td>
-   <td> Fully supported </td>
+   <td> Fully supported. </td>
   <tr>
   <tr>
    <td><code>&lt;stop&gt;</code></td>
@@ -232,7 +225,7 @@ The modified file is available on the <a href="http://code.google.com/p/androids
    <td><code>&lt;text&gt;</code></td>
    <td> Text</td>
    <td> 1.0</td>
-   <td> Moderate support. The most common features are supported but not more advanced features like fonts, glyphs and individual character transforms.</td>
+   <td> Good support. The most common features are supported but not more advanced features like fonts, glyphs and individual character transforms.</td>
   <tr>
   <tr>
    <td><code>&lt;textPath&gt;</code></td>
@@ -286,157 +279,157 @@ The modified file is available on the <a href="http://code.google.com/p/androids
   <tr>
    <td><code>clip</code></td>
    <td> 1.0</td>
-   <td> Fully supported </td>
+   <td> Fully supported. </td>
   <tr>
   <tr>
    <td><code>clip-path</code> </td>
    <td> 1.0</td>
-   <td> Fully supported </td>
+   <td> Fully supported. </td>
   <tr>
   <tr>
    <td><code>clip-rule</code> </td>
    <td> 1.0</td>
-   <td> Fully supported </td>
+   <td> Fully supported. </td>
   <tr>
   <tr>
    <td><code>display</code></td>
    <td> 1.0</td>
-   <td> Fully supported </td>
+   <td> Fully supported. </td>
   <tr>
   <tr>
    <td><code>fill</code></td>
    <td> 1.0</td>
-   <td> Fully supported </td>
+   <td> Fully supported. </td>
   <tr>
   <tr>
    <td><code>fill-rule</code> </td>
    <td> 1.0</td>
-   <td> Fully supported </td>
+   <td> Fully supported. </td>
   <tr>
   <tr>
    <td><code>fill-opacity</code></td>
    <td> 1.0</td>
-   <td> Fully supported </td>
+   <td> Fully supported. </td>
   <tr>
   <tr>
    <td><code>color</code> </td>
    <td> 1.0</td>
-   <td> Fully supported </td>
+   <td> Fully supported. </td>
   <tr>
   <tr>
    <td><code>font</code></td>
    <td> 1.0</td>
-   <td> SVG fonts not are supported but you can load external font files using the <code>SVGExternalFileResolver</code> class.. </td>
+   <td> SVG fonts not are supported but you can load external font files (eg. TTF fonts) using the <code>SVGExternalFileResolver</code> class.. </td>
   <tr>
   <tr>
    <td><code>font-family</code></td>
    <td> 1.0</td>
-   <td> Fully supported except for generic font families like serif, fantasy etc. (see <a title="Support generic font families in font-family attribute." class="closed_ref" href="/p/androidsvg/issues/detail?id=1">&nbsp;issue 1&nbsp;</a>) </td>
+   <td> Fully supported. </td>
   <tr>
   <tr>
    <td><code>font-size</code> </td>
    <td> 1.0</td>
-   <td> Fully supported </td>
+   <td> Fully supported. </td>
   <tr>
   <tr>
    <td><code>font-weight</code></td>
    <td> 1.0</td>
-   <td> Fully supported </td>
+   <td> Fully supported. </td>
   <tr>
   <tr>
    <td><code>font-style</code></td>
    <td> 1.0</td>
-   <td> Fully supported </td>
+   <td> Fully supported. </td>
   <tr>
   <tr>
    <td><code>marker</code></td>
    <td> 1.0</td>
-   <td> Fully supported </td>
+   <td> Fully supported. </td>
   <tr>
   <tr>
    <td><code>marker-start</code></td>
    <td> 1.0</td>
-   <td> Fully supported </td>
+   <td> Fully supported. </td>
   <tr>
   <tr>
    <td><code>marker-mid</code></td>
    <td> 1.0</td>
-   <td> Fully supported </td>
+   <td> Fully supported. </td>
   <tr>
   <tr>
    <td><code>marker-end</code></td>
    <td> 1.0</td>
-   <td> Fully supported </td>
+   <td> Fully supported. </td>
   <tr>
   <tr>
    <td><code>mask</code></td>
    <td> 1.0</td>
-   <td> Fully supported, but only when using <code>renderToCanvas()</code>. Note that masks are (currently) slow and quite memory intensive. Use with care - especially on low spec devices. </td>
+   <td> Fully supported. </td>
   <tr>
   <tr>
    <td><code>opacity</code></td>
    <td> 1.0</td>
-   <td> Fully supported </td>
+   <td> Fully supported. </td>
   <tr>
   <tr>
    <td><code>overflow</code></td>
    <td> 1.0</td>
-   <td> Fully supported </td>
+   <td> Fully supported. </td>
   <tr>
   <tr>
    <td><code>stop-color</code></td>
    <td> 1.0</td>
-   <td> Fully supported </td>
+   <td> Fully supported. </td>
   <tr>
   <tr>
    <td><code>stop-opacity</code></td>
    <td> 1.0</td>
-   <td> Fully supported </td>
+   <td> Fully supported. </td>
   <tr>
   <tr>
    <td><code>stroke</code></td>
    <td> 1.0</td>
-   <td> All stroke styles are supported except for patterns </td>
+   <td> Fully supported. </td>
   <tr>
   <tr>
    <td><code>stroke-opacity</code></td>
    <td> 1.0</td>
-   <td> Fully supported </td>
+   <td> Fully supported. </td>
   <tr>
   <tr>
    <td><code>stroke-width</code></td>
    <td> 1.0</td>
-   <td> Fully supported </td>
+   <td> Fully supported. </td>
   <tr>
   <tr>
    <td><code>stroke-linecap</code></td>
    <td> 1.0</td>
-   <td> Fully supported </td>
+   <td> Fully supported. </td>
   <tr>
   <tr>
    <td><code>stroke-linejoin</code></td>
    <td> 1.0</td>
-   <td> Fully supported </td>
+   <td> Fully supported. </td>
   <tr>
   <tr>
    <td><code>stroke-miterlimit</code> </td>
    <td> 1.0</td>
-   <td> Fully supported </td>
+   <td> Fully supported. </td>
   <tr>
   <tr>
    <td><code>stroke-dasharray</code></td>
    <td> 1.0</td>
-   <td> Fully supported </td>
+   <td> Fully supported. </td>
   <tr>
   <tr>
    <td><code>stroke-dashoffset</code> </td>
    <td> 1.0</td>
-   <td> Fully supported </td>
+   <td> Fully supported. </td>
   <tr>
   <tr>
    <td><code>text-anchor</code></td>
    <td> 1.0</td>
-   <td> Fully supported </td>
+   <td> Fully supported. </td>
   <tr>
   <tr>
    <td><code>text-decoration</code></td>
@@ -446,22 +439,22 @@ The modified file is available on the <a href="http://code.google.com/p/androids
   <tr>
    <td><code>vector-effect</code> </td>
    <td> 1.2</td>
-   <td> Fully supported </td>
+   <td> Fully supported. </td>
   <tr>
   <tr>
    <td><code>viewport-fill</code> </td>
    <td> 1.2</td>
-   <td> Fully supported </td>
+   <td> Fully supported. </td>
   <tr>
   <tr>
    <td><code>viewport-fill-opacity</code> </td>
    <td> 1.2</td>
-   <td> Fully supported </td>
+   <td> Fully supported. </td>
   <tr>
   <tr>
    <td><code>visibility</code></td>
    <td> 1.0</td>
-   <td> Fully supported </td>
+   <td> Fully supported. </td>
   </tr>
  </tbody>
 </table>
@@ -471,7 +464,7 @@ The modified file is available on the <a href="http://code.google.com/p/androids
 <h2><a name="CSS_support"></a>CSS support<a href="#CSS_support" class="section_anchor"></a></h2>
 
 <p>
-CSS support via the <code>&lt;style&gt;</code> element was added in version 1.1 of AndroidSVG.  Most features of CSS 2.1 are implemented with a few exceptions.
+CSS support via the <code>&lt;style&gt;</code> element was added in version 1.1 of AndroidSVG.  Most features of CSS 3 are implemented with a few exceptions.
 </p>
 
 <h3><a name="The_<style>_element"></a>The <code>&lt;style&gt;</code> element</h3>
@@ -483,13 +476,13 @@ The <code>&lt;style&gt;</code> element attributes <code>type</code> and <code>me
 <h3><a name="Selectors"></a>Selectors</h3>
 
 <p>
-Almost all CSS2.1 selectors are supported except for most pseudo and attribute selectors.
+Almost all CSS3 selectors are supported except for attribute selectors.
 </p>
 
 <ul>
 <li>Simple selectors like <code>E</code>, <code>E F</code>, <code>*</code>, <code>E.class</code>, <code>E#id</code> all work as expected.</li>
 <li>The <code>E &gt; F</code> and <code>E + F</code> combinators are supported.</li>
-<li><code>E:first-child</code> is supported, but other pseudo selectors are ignored because they don't make sense in the Android context.</li>
+<li>All CSS3 pseudo classes, like <code>E:first-child</code> and <code>E:nth-child2n+1)</code>, are supported.  However, those that only make sense for HTML always return false.</li>
 <li><code>E[id="foo"]</code> and <code>E[class="foo"]</code> are supported, but matching on other attributes will not work.</li>
 <li>Pseudo elements like <code>:before</code> and <code>:after</code> are not supported.  They are not applicable to SVG files anyway.</li>
 </ul>
@@ -498,7 +491,7 @@ Almost all CSS2.1 selectors are supported except for most pseudo and attribute s
 <h3><a name="&quot;At&quot;_rules"></a>"At" rules</h3>
 
 <p>
-<code>@media</code> is supported, but other rules like <code>@charset</code>, <code>@import</code> are not.
+<code>@media</code> and <code>@import</code> are supported, but other rules like <code>@charset</code> are not.
 </p>
  
 
