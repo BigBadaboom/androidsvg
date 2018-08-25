@@ -36,7 +36,7 @@ import java.util.Map;
  */
 class CSSParser
 {
-   private static final String  TAG = "AndroidSVG CSSParser";
+   private static final String  TAG = "CSSParser";
 
    static final String  CSS_MIME_TYPE = "text/css";
 

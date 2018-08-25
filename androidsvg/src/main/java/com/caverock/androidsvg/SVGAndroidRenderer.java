@@ -3809,7 +3809,7 @@ class SVGAndroidRenderer
          path.setFillType(getClipRuleFromState());
       }
       else {
-         error("Invalid %s element found in clipPath definition", obj.getClass().getSimpleName());
+         error("Invalid %s element found in clipPath definition", obj.getNodeName());
          return null;
       }
 
@@ -3856,7 +3856,7 @@ class SVGAndroidRenderer
       boolean  userUnits = (clipPath.clipPathUnitsAreUser == null || clipPath.clipPathUnitsAreUser);
 
       if ((obj instanceof SVG.Group) && !userUnits) {
-         warn("<clipPath clipPathUnits=\"objectBoundingBox\"> is not supported when referenced from container elements (like %s)", obj.getClass().getSimpleName());
+         warn("<clipPath clipPathUnits=\"objectBoundingBox\"> is not supported when referenced from container elements (like %s)", obj.getNodeName());
          return;
       }
 
@@ -3912,7 +3912,7 @@ class SVGAndroidRenderer
       } else if (obj instanceof SVG.GraphicsElement) {
          addObjectToClip((SVG.GraphicsElement) obj, combinedPath, combinedPathMatrix);
       } else {
-         error("Invalid %s element found in clipPath definition", obj.getClass().getSimpleName());
+         error("Invalid %s element found in clipPath definition", obj.toString());
       }
 
       // Restore state

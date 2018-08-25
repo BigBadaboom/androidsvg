@@ -38,8 +38,12 @@ public class ViewsTest
       String  test = "<?xml version=\"1.0\" standalone=\"no\"?>\n" +
                      "<svg xmlns=\"http://www.w3.org/2000/svg\">" +
                      "  <view id=\"normalView\" viewBox=\"0 0 100 100\"/>" +
-                     "  <view id=\"halfView\"   viewBox=\"0 0 200 200\"/>" +
-                     "  <view id=\"doubleView\" viewBox=\"0 0  50  50\"/>" +
+                     "  <g>" +
+                     "    <view id=\"halfView\"   viewBox=\"0 0 200 200\"/>" +
+                     "    <g>" +
+                     "      <view id=\"doubleView\" viewBox=\"0 0  50  50\"/>" +
+                     "    </g>" +
+                     "  </g>" +
                      "</svg>";
       SVG  svg = SVG.getFromString(test);
 

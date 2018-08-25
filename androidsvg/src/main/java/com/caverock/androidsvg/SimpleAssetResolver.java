@@ -38,7 +38,7 @@ import android.util.Log;
 
 public class SimpleAssetResolver extends SVGExternalFileResolver
 {
-   private static final String  TAG = SimpleAssetResolver.class.getSimpleName();
+   private static final String  TAG = "SimpleAssetResolver";
 
    private AssetManager  assetManager;
    

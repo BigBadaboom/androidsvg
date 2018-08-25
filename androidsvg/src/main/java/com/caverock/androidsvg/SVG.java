@@ -75,7 +75,7 @@ import java.util.Set;
 
 public class SVG
 {
-   static final String  TAG = "AndroidSVG";
+   //static final String  TAG = "SVG";
 
    private static final String  VERSION = "1.3";
 
@@ -216,7 +216,7 @@ public class SVG
     * @throws SVGParseException if there is an error parsing the document.
     * @throws IOException if there is some IO error while reading the file.
     */
-   @SuppressWarnings("WeakerAccess")
+   @SuppressWarnings({"WeakerAccess", "unused"})
    public static SVG  getFromAsset(AssetManager assetManager, String filename) throws SVGParseException, IOException
    {
       SVGParser    parser = new SVGParser();
@@ -258,6 +258,7 @@ public class SVG
     * @param enable Set true if you want to enable entity expansion by the parser.
     * @since 1.3
     */
+   @SuppressWarnings("unused")
    public static void  setInternalEntitiesEnabled(boolean enable)
    {
       enableInternalEntities = enable;
@@ -267,6 +268,7 @@ public class SVG
     * @return true if internal entity expansion is enabled in the parser
     * @since 1.3
     */
+   @SuppressWarnings("unused")
    public static boolean  isInternalEntitiesEnabled()
    {
       return enableInternalEntities;
@@ -286,6 +288,7 @@ public class SVG
     * @param fileResolver the resolver to use.
     * @since 1.3
     */
+   @SuppressWarnings("unused")
    public static void  registerExternalFileResolver(SVGExternalFileResolver fileResolver)
    {
       externalFileResolver = fileResolver;
@@ -295,6 +298,7 @@ public class SVG
    /**
     * De-register the current {@link SVGExternalFileResolver} instance.
     */
+   @SuppressWarnings("unused")
    public static void  deregisterExternalFileResolver()
    {
       externalFileResolver = null;
@@ -662,7 +666,7 @@ public class SVG
       if (this.rootElement == null)
          throw new IllegalArgumentException("SVG document is empty");
 
-      List<SvgObject>  viewElems = getElementsByTagName(View.class);
+      List<SvgObject>  viewElems = getElementsByTagName(View.NODE_NAME);
 
       Set<String>  viewIds = new HashSet<>(viewElems.size());
       for (SvgObject elem: viewElems)
@@ -1048,10 +1052,10 @@ public class SVG
          return new Box(minX, minY, maxX-minX, maxY-minY);
       }
 
-      static Box  fromRectF(RectF rect)
-      {
-         return Box.fromLimits(rect.left, rect.top, rect.right, rect.bottom);
-      }
+      //static Box  fromRectF(RectF rect)
+      //{
+      //   return Box.fromLimits(rect.left, rect.top, rect.right, rect.bottom);
+      //}
 
       RectF  toRectF()
       {
@@ -1390,8 +1394,8 @@ public class SVG
 
    static class Length implements Cloneable
    {
-      float  value = 0;
-      Unit   unit = Unit.px;
+      float  value;
+      Unit   unit;
 
       Length(float value, Unit unit)
       {
@@ -1555,10 +1559,9 @@ public class SVG
       SVG           document;
       SvgContainer  parent;
 
-      public String  toString()
+      String  getNodeName()
       {
-         return this.getClass().getSimpleName();
-         //return super.toString();
+         return "";
       }
    }
 
@@ -1572,7 +1575,10 @@ public class SVG
       Style         style = null;       // style expressed in a 'style' attribute (eg. style="fill:black")
       List<String>  classNames = null;  // contents of the 'class' attribute
 
-      abstract String  getNodeName();
+      public String  toString()
+      {
+         return this.getNodeName();
+      }
    }
 
 
@@ -1640,7 +1646,7 @@ public class SVG
 
    static abstract class SvgConditionalContainer extends SvgElement implements SvgContainer, SvgConditional
    {
-      List<SvgObject> children = new ArrayList<>();
+      List<SvgObject>  children = new ArrayList<>();
 
       Set<String>  requiredFeatures = null;
       String       requiredExtensions = null;
@@ -1905,7 +1911,7 @@ public class SVG
       
       public String  toString()
       {
-         return this.getClass().getSimpleName() + " '"+text+"'";
+         return "TextChild: '"+text+"'";
       }
 
       @Override
@@ -2005,12 +2011,12 @@ public class SVG
    {
       Float  offset;
 
-      // Dummy container methods. Stop is officially a container, but we 
+      // Dummy container methods. Stop is officially a container, but we
       // are not interested in any of its possible child elements.
       @Override
       public List<SvgObject> getChildren() { return Collections.emptyList(); }
       @Override
-      public void addChild(SvgObject elem) throws SVGParseException { /* do nothing */ }
+      public void addChild(SvgObject elem) { /* do nothing */ }
       @Override
       String  getNodeName() { return "stop"; }
    }
@@ -2084,8 +2090,10 @@ public class SVG
 
    static class View extends SvgViewBoxContainer implements NotDirectlyRendered
    {
+      static final String  NODE_NAME = "view";
+
       @Override
-      String  getNodeName() { return "view"; }
+      String  getNodeName() { return NODE_NAME; }
    }
 
 
@@ -2109,12 +2117,12 @@ public class SVG
       //public Length  solidColor;
       //public Length  solidOpacity;
 
-      // Dummy container methods. Stop is officially a container, but we 
+      // Dummy container methods. Stop is officially a container, but we
       // are not interested in any of its possible child elements.
       @Override
       public List<SvgObject> getChildren() { return Collections.emptyList(); }
       @Override
-      public void addChild(SvgObject elem) throws SVGParseException { /* do nothing */ }
+      public void addChild(SvgObject elem) { /* do nothing */ }
       @Override
       String  getNodeName() { return "solidColor"; }
    }
@@ -2159,9 +2167,9 @@ public class SVG
 
    static class PathDefinition implements PathInterface
    {
-      private byte[]   commands = null;
+      private byte[]   commands;
       private int      commandsLength = 0;
-      private float[]  coords = null;
+      private float[]  coords;
       private int      coordsLength = 0;
 
       private static final byte  MOVETO  = 0;
@@ -2349,28 +2357,28 @@ public class SVG
 
 
    @SuppressWarnings("rawtypes")
-   private List<SvgObject>  getElementsByTagName(Class clazz)
+   private List<SvgObject>  getElementsByTagName(String nodeName)
    {
+      List<SvgObject>  result = new ArrayList<>();
+
        // Search the object tree for nodes with the give element class
-      return getElementsByTagName(rootElement, clazz);
+      getElementsByTagName(result, rootElement, nodeName);
+      return result;
    }
 
 
    @SuppressWarnings("rawtypes")
-   private List<SvgObject>  getElementsByTagName(SvgContainer obj, Class clazz)
+   private void  getElementsByTagName(List<SvgObject> result, SvgObject obj, String nodeName)
    {
-      List<SvgObject>  result = new ArrayList<>();
 
-      if (obj.getClass() == clazz)
-         result.add((SvgObject) obj);
-      for (SvgObject child: obj.getChildren())
+      if (obj.getNodeName().equals(nodeName))
+         result.add(obj);
+
+      if (obj instanceof SvgContainer)
       {
-         if (child.getClass() == clazz)
-            result.add(child);
-         if (child instanceof SvgContainer)
-            getElementsByTagName((SvgContainer) child, clazz);
+         for (SvgObject child: ((SvgContainer) obj).getChildren())
+            getElementsByTagName(result, child, nodeName);
       }
-      return result;
    }
 
 
