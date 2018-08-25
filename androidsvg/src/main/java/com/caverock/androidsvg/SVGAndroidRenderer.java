@@ -3923,11 +3923,10 @@ class SVGAndroidRenderer
    // The clip state push and pop methods only save the matrix.
    // The normal push/pop save the clip region also which would
    // destroy the clip region we are trying to build.
-   @SuppressLint("WrongConstant")  // MATRIX_SAVE_FLAG is deprecated and being flagged as an error by Android Studio
    private void  clipStatePush()
    {
       // Save matrix and clip
-      canvas.save(Canvas.MATRIX_SAVE_FLAG);
+      canvas.save();
       // Save style state
       stateStack.push(state);
       state = new RendererState(state);
