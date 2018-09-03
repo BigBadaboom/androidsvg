@@ -71,4 +71,14 @@ public class RenderTest
       int     afterSaves = canvas.getSaveCount();
       assertEquals(beforeSaves, afterSaves);
    }
+
+   @Test
+   public void doNotNanWhenRendering() throws SVGParseException {
+      final SVG svg = SVG.getFromInputStream(RenderTest.class.getResourceAsStream("ck-661336.svg"));
+
+      final Bitmap bitmap = Bitmap.createBitmap(2048,2048, Bitmap.Config.ARGB_8888);
+      final Canvas canvas = new Canvas(bitmap);
+
+      svg.renderToCanvas(canvas);
+   }
 }
