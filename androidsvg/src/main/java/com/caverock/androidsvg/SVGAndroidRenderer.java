@@ -2669,7 +2669,7 @@ class SVGAndroidRenderer
       n = (float) Math.sqrt((ux * ux + uy * uy) * (vx * vx + vy * vy));
       p = ux * vx + uy * vy;
       sign = (ux * vy - uy * vx < 0) ? -1.0f : 1.0f;
-      double angleExtent = Math.toDegrees(sign * Math.acos(p / n));
+      double angleExtent = Math.toDegrees(sign * Math.acos(clamp(p / n, -1, 1)));
       if (!sweepFlag && angleExtent > 0) {
          angleExtent -= 360f;
       } else if (sweepFlag && angleExtent < 0) {
@@ -2703,6 +2703,10 @@ class SVGAndroidRenderer
       {
          pather.cubicTo(bezierPoints[i], bezierPoints[i+1], bezierPoints[i+2], bezierPoints[i+3], bezierPoints[i+4], bezierPoints[i+5]);
       }
+   }
+
+   private static float clamp(float value, float min, float max) {
+      return Math.min(Math.max(value, min), max);
    }
 
 
