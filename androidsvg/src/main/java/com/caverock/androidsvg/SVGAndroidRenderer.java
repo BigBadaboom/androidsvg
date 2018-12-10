@@ -750,6 +750,16 @@ class SVGAndroidRenderer
 
    private void  popLayer(SvgElement obj)
    {
+      popLayer(obj, obj.boundingBox);
+   }
+
+
+   /**
+    * @param obj The object we are compositing. Compositing happens if the obj is not fully opaque, or if it has a mask.
+    * @param originalObjBBox Normally equal to obj.boundingBox. However, if obj is a mask, then this is the bounding box of the original object to which the mask was applied.
+    */
+   private void  popLayer(SvgElement obj, Box originalObjBBox)
+   {
       // If this is masked content, apply the mask now
       if (state.style.mask != null) {
          // The masked content has been drawn, now we have to composite it with our mask layer.
@@ -772,10 +782,11 @@ class SVGAndroidRenderer
            maskPaint1.setColorFilter(new ColorMatrixColorFilter(luminanceToAlpha));
            canvas.saveLayer(null, maskPaint1, Canvas.ALL_SAVE_FLAG);   // TODO use real mask bounds
 
-             // Render the mask content into the step 1 part
+             // Render the mask content into the step 1 layer
              SVG.SvgObject  ref = document.resolveIRI(state.style.mask);
-             renderMask((SVG.Mask) ref, obj);
+             renderMask((SVG.Mask) ref, obj, originalObjBBox);
 
+           // The restore applies the luminanceToAlpha conversion
            canvas.restore();
 
            // Step 2
@@ -784,10 +795,12 @@ class SVGAndroidRenderer
            canvas.saveLayer(null, maskPaint2, Canvas.ALL_SAVE_FLAG);
 
              // Render the mask content (again) into the step 2 part
-             renderMask((SVG.Mask) ref, obj);
+             renderMask((SVG.Mask) ref, obj, originalObjBBox);
 
+           // The retore composites the luminanceToAlpha layer with the masks alpha
            canvas.restore();
 
+         // Apply the final mask to the original object waiting in the open layer created in pushLayer()
          canvas.restore();
       }
 
@@ -2191,6 +2204,7 @@ class SVGAndroidRenderer
 
       if (isSpecified(style, SVG.SPECIFIED_STROKE_MITERLIMIT))
       {
+         // FIXME: must be >= 0
          state.style.strokeMiterLimit = style.strokeMiterLimit;
          state.strokePaint.setStrokeMiter(style.strokeMiterLimit);
       }
@@ -4526,7 +4540,7 @@ class SVGAndroidRenderer
    /*
     * Render the contents of a mask element.
     */
-   private void  renderMask(SVG.Mask mask, SvgElement obj)
+   private void  renderMask(SVG.Mask mask, SvgElement obj, Box originalObjBBox)
    {
       debug("Mask render");
 
@@ -4535,8 +4549,8 @@ class SVGAndroidRenderer
 
       if (maskUnitsAreUser)
       {
-         w = (mask.width != null) ? mask.width.floatValueX(this): obj.boundingBox.width;
-         h = (mask.height != null) ? mask.height.floatValueY(this): obj.boundingBox.height;
+         w = (mask.width != null) ? mask.width.floatValueX(this): originalObjBBox.width;
+         h = (mask.height != null) ? mask.height.floatValueY(this): originalObjBBox.height;
          //x = (mask.x != null) ? mask.x.floatValueX(this): (float)(obj.boundingBox.minX - 0.1 * obj.boundingBox.width);
          //y = (mask.y != null) ? mask.y.floatValueY(this): (float)(obj.boundingBox.minY - 0.1 * obj.boundingBox.height);
       }
@@ -4547,10 +4561,10 @@ class SVGAndroidRenderer
          //y = (mask.y != null) ? mask.y.floatValue(this, 1f): -0.1f;
          w = (mask.width != null) ? mask.width.floatValue(this, 1f): 1.2f;
          h = (mask.height != null) ? mask.height.floatValue(this, 1f): 1.2f;
-         //x = obj.boundingBox.minX + x * obj.boundingBox.width;
-         //y = obj.boundingBox.minY + y * obj.boundingBox.height;
-         w *= obj.boundingBox.width;
-         h *= obj.boundingBox.height;
+         //x = originalObjBBox.minX + x * originalObjBBox.width;
+         //y = originalObjBBox.minY + y * originalObjBBox.height;
+         w *= originalObjBBox.width;
+         h *= originalObjBBox.height;
       }
       if (w == 0 || h == 0)
          return;
@@ -4561,18 +4575,28 @@ class SVGAndroidRenderer
       state = findInheritFromAncestorState(mask);
       // Set the style for the mask (inherits from its own ancestors, not from callee's state)
       // The 'opacity', 'filter' and 'display' properties do not apply to the 'mask' element" (sect 14.4)
-      // Next line is not actually needed since we aren't calling pushLayer() here. Kept for future reference.
       state.style.opacity = 1f;
       //state.style.filter = null;
 
+      boolean  compositing = pushLayer();
+
+      // Save the current transform matrix, as we need to undo the following transform straight away
+      canvas.save();
+
       boolean  maskContentUnitsAreUser = (mask.maskContentUnitsAreUser == null || mask.maskContentUnitsAreUser);
       if (!maskContentUnitsAreUser) {
-         canvas.translate(obj.boundingBox.minX, obj.boundingBox.minY);
-         canvas.scale(obj.boundingBox.width, obj.boundingBox.height);
+         canvas.translate(originalObjBBox.minX, originalObjBBox.minY);
+         canvas.scale(originalObjBBox.width, originalObjBBox.height);
       }
 
       // Render the mask
       renderChildren(mask, false);
+
+      // Restore the matrix so that, if this mask has a mask, it is not affected by the objectBoundingBox transform
+      canvas.restore();
+
+      if (compositing)
+         popLayer(obj, originalObjBBox);
 
       // Pop the state
       statePop();
