@@ -1,4 +1,7 @@
 apply plugin: 'com.android.library'
+apply plugin: 'com.github.dcendents.android-maven'
+
+group='com.github.thefabulous'
 
 android {
     compileSdkVersion 28
@@ -25,7 +28,6 @@ android {
     }
 }
 
-apply from: 'publish.gradle'
 
 dependencies {
     implementation 'org.jetbrains:annotations-java5:15.0'
