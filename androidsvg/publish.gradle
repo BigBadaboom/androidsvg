@@ -31,99 +31,6 @@ def  releaseRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/mav
 def  snapshotRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
 
 
-publishing {
-    repositories {
-        maven {
-            url = version.endsWith('SNAPSHOT') ? snapshotRepoUrl : releaseRepoUrl
-            credentials {
-                username project.sonatypeUsername
-                password project.sonatypePassword
-            }
-        }
-    }
-
-    publications {
-
-        mavenAAR(MavenPublication) {
-            artifactId = artifactIdAAR
-            groupId = group
-
-            artifact("${buildDir}/outputs/aar/androidsvg-release.aar") {
-                // wrap in a closure because this task isn't defined 'till
-                // the android plugin finishes
-                builtBy { tasks["assembleRelease"] }
-            }
-            artifact sourcesJar
-            artifact javadocJar
-
-            pom {
-                packaging = 'aar'
-
-                name = libraryName
-                description = libraryDescription
-                url = siteUrl
-
-                licenses {
-                    license {
-                        name = licenseName
-                        url = licenseUrl
-                        distribution = 'repo'
-                    }
-                }
-                developers {
-                    developer {
-                        id = developerId
-                        name = developerName
-                        email = developerEmail
-                    }
-                }
-                scm {
-                    connection = gitUrl
-                    developerConnection = gitUrl
-                    url = siteUrl
-                }
-            }
-        }
-
-        mavenJAR(MavenPublication) {
-            artifactId = artifactIdJAR
-            groupId = group
-
-            artifact libraryJar
-            artifact sourcesJar
-            artifact javadocJar
-
-            pom {
-                packaging = 'jar'
-
-                name = libraryName
-                description = libraryDescription
-                url = siteUrl
-
-                licenses {
-                    license {
-                        name = licenseName
-                        url = licenseUrl
-                        distribution = 'repo'
-                    }
-                }
-                developers {
-                    developer {
-                        id = developerId
-                        name = developerName
-                        email = developerEmail
-                    }
-                }
-                scm {
-                    connection = gitUrl
-                    developerConnection = gitUrl
-                    url = siteUrl
-                }
-            }
-        }
-    }
-}
-
 
 task sourcesJar(type: Jar) {
     from android.sourceSets.main.java.srcDirs
@@ -163,9 +70,4 @@ task libraryJar(type: Jar, dependsOn: 'compileReleaseJavaWithJavac') {
     }
 
     archiveName = "${artifactIdJAR}-${version}.jar"
-}
-
-signing {
-    sign publishing.publications.mavenAAR
-    sign publishing.publications.mavenJAR
 }
