@@ -1985,12 +1985,17 @@ class SVGAndroidRenderer
          return null;
 
       int  comma = url.indexOf(',');
-      if (comma == -1 || comma < 12)
+      if (comma < 12) // "< 12"  test also covers not found (-1) case
          return null;
       if (!";base64".equals(url.substring(comma-7, comma)))
          return null;
-      byte[]  imageData = Base64.decode(url.substring(comma+1), Base64.DEFAULT);
-      return BitmapFactory.decodeByteArray(imageData, 0, imageData.length);
+      try {
+         byte[]  imageData = Base64.decode(url.substring(comma+1), Base64.DEFAULT);  // throws IllegalArgumentException for bad data
+         return BitmapFactory.decodeByteArray(imageData, 0, imageData.length);
+      } catch (Exception e) {
+         Log.e(TAG, "Could not decode bad Data URL", e);
+         return null;
+      }
    }
 
 
