@@ -131,12 +131,18 @@ class SVGAndroidRenderer
       RendererState()
       {
          fillPaint = new Paint();
-         fillPaint.setFlags(Paint.ANTI_ALIAS_FLAG | Paint.DEV_KERN_TEXT_FLAG | Paint.SUBPIXEL_TEXT_FLAG);
+         fillPaint.setFlags(Paint.ANTI_ALIAS_FLAG | Paint.LINEAR_TEXT_FLAG | Paint.SUBPIXEL_TEXT_FLAG);
+         if (android.os.Build.VERSION.SDK_INT >= 14) {
+            fillPaint.setHinting(Paint.HINTING_OFF);
+         }
          fillPaint.setStyle(Paint.Style.FILL);
          fillPaint.setTypeface(Typeface.DEFAULT);
 
          strokePaint = new Paint();
-         strokePaint.setFlags(Paint.ANTI_ALIAS_FLAG | Paint.DEV_KERN_TEXT_FLAG | Paint.SUBPIXEL_TEXT_FLAG);
+         strokePaint.setFlags(Paint.ANTI_ALIAS_FLAG | Paint.LINEAR_TEXT_FLAG | Paint.SUBPIXEL_TEXT_FLAG);
+         if (android.os.Build.VERSION.SDK_INT >= 14) {
+            strokePaint.setHinting(Paint.HINTING_OFF);
+         }
          strokePaint.setStyle(Paint.Style.STROKE);
          strokePaint.setTypeface(Typeface.DEFAULT);
 
