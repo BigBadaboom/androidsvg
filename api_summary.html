@@ -72,7 +72,7 @@
    <ul>
    <li><a href="#Rendering_the_file">Rendering the file</a> to either a Canvas or a Picture</li>
    <li><a href="#Rendering_views">Rendering views</a></li>
-   <li><a href="#Resolving_references_to_external_objects">Resolving references to external objects</a></li>
+   <li><a href="#Resolving_references_to_external_files">Resolving references to external files</a></li>
    </ul>
  </li>
  <li>
@@ -198,15 +198,12 @@ my_svg.setRenderDPI(getResources().getDisplayMetrics().xdpi);
 </pre>
 
 
-<h2><a name="Resolving_references_to_external_objects"></a>Resolving references to external objects</h2>
+<h2><a name="Resolving_references_to_external_files"></a>Resolving references to external files</h2>
 
 <p>
-If your SVG file contains references to external objects, such as images, AndroidSVG needs to be told where
-to get those objects.  You do that by supplying an instance of the <code>SVGExternalFileResolver</code> class.
-
-<pre class="prettyprint">
-public void registerExternalFileResolver(SVGExternalFileResolver fileResolver)
-</pre>
+Your SVG file may contain references to external files, such as images, fonts, or CSS files.  To render those
+objects, AndroidSVG needs to be told where to get them.  You do that by supplying an instance of the
+<code>SVGExternalFileResolver</code> class.
 
 <p>
 For example, a very simple resolver that just looks in your assets folder might look something like the following:
@@ -238,6 +235,25 @@ private SVGExternalFileResolver  myResolver = new SVGExternalFileResolver() {
 };
 </pre>
 
+<p>
+To register your implementation of the resolver with AndroidSVG, use the <code>registerExternalFileResolver()</code>
+method.
+</p>
+
+<pre class="prettyprint">
+public void registerExternalFileResolver(SVGExternalFileResolver fileResolver)
+</pre>
+
+<h4>SimpleAssetResolver</h4>
+
+<p>
+An implementation of this interface is provided by AndroidSVG.  To use it, put all your external files
+in the <code>assets</code> folder, and register it using the following call.
+</p>
+
+<pre class="prettyprint">
+SVG.registerExternalFileResolver(new SimpleAssetResolver(getContext().getAssets()));
+</pre>
 
 
 <h2><a name="SVG_file_metadata"></a>SVG file metadata</h2>

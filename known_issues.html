@@ -58,14 +58,19 @@
  
 <h4>Android prior to 4.2</h4>
 
+<h5>Stroked underline text</h5>
 <p>
 <strong>Stroking of underlined or strikethrough text is broken</strong> in versions of Android <strong>prior to 4.2</strong>.
 AndroidSVG will not attempt to stroke underlines or strikethroughs when running on Android 4.1 or earlier.
 </p>
 
 
+<hr/>
+
+
 <h4>Android 4.3</h4>
 
+<h5>Clip paths</h5>
 <p>
 There is a bug in <strong>Android 4.3</strong> that has the effect of <strong>breaking the <code>&lt;clipPath&gt;</code> feature
 when using <code>renderToPicture()</code></strong>.  Any SVG files that use a <code>&lt;clipPath&gt;</code> will not render correctly.
@@ -76,6 +81,7 @@ using <code>renderToCanvas()</code>, you will not be affected.</li>
 
 <h4>Android 6.0</h4>
 
+<h5>Clip paths (again)</h5>
 <p>
 The problem with clip paths is back again due to two regressions in <strong>Android 6.0</strong>.  Any SVG files that use a <code>&lt;clipPath&gt;</code> will not render correctly.
 See <a href="https://code.google.com/p/android/issues/detail?id=200128" rel="nofollow">Android issue 200128</a>.  Unfortunately,
@@ -86,6 +92,19 @@ To avoid this issue, please upgrade to AndroidSVG 1.3, which has new improved ha
 issue, but uses Android APIs that are only available on Android 4.4 (Kitkat) or later.  Older devices will continue to use the legacy clip path code.
 </p>
 
+
+<h4>Android 5.0 to 8.1</h4>
+
+<a name="Erratically_spaced_text"></a>
+<h5>Erratically spaced text</h5>
+<p>
+Font sizes that are not whole numbers can result in erratically spaced glyphs (characters) in your text.  This issue affects all versions
+of Android from 5.0 (Lollipop) to 8.1 (Oreo), but is fixed in Android 9.0 (Pie).  See <a href="https://issuetracker.google.com/issues/37042531">Android issue 37042531</a>.
+</p>
+<p>
+To work around this issue, upgrade to AndroidSVG 1.4 and avoid font sizes that have a fractional component.  Ie. Use "24", rather than "24.35".  It doesn't seem to matter what the
+current scale or transform is.  It is the declared font size that matters.
+</p>
 
 
         
