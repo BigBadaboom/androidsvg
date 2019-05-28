@@ -158,7 +158,7 @@ public class RenderToCanvasTest
 
       svg.renderToCanvas(bmcanvas2, opts);
 
-      MockCanvas    mock = ((MockCanvas) Shadow.extract(bmcanvas2));
+      MockCanvas    mock = Shadow.extract(bmcanvas2);
       List<String>  ops = mock.getOperations();
       //System.out.println(String.join(",", ops));
       assertEquals("concat(Matrix(2 0 0 2 0 100))", ops.get(1));

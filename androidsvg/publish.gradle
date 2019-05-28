@@ -53,8 +53,10 @@ publishing {
                 // the android plugin finishes
                 builtBy { tasks["assembleRelease"] }
             }
-            artifact sourcesJar
-            artifact javadocJar
+            afterEvaluate {
+               artifact sourcesJar
+               artifact javadocJar
+            }
 
             pom {
                 packaging = 'aar'
@@ -89,9 +91,11 @@ publishing {
             artifactId = artifactIdJAR
             groupId = group
 
-            artifact libraryJar
-            artifact sourcesJar
-            artifact javadocJar
+            afterEvaluate {
+               artifact libraryJar
+               artifact sourcesJar
+               artifact javadocJar
+            }
 
             pom {
                 packaging = 'jar'
@@ -138,7 +142,7 @@ task javadoc(type: Javadoc) {
         links "http://docs.oracle.com/javase/7/docs/api/"
         linksOffline "http://d.android.com/reference", "${android.sdkDirectory}/docs/reference"
         // Replacement stylesheet for javadocs
-        stylesheetFile = new File(projectDir, "javadoc-stylesheet.css");
+        stylesheetFile = new File(projectDir, "javadoc-stylesheet.css")
     }
 }
 

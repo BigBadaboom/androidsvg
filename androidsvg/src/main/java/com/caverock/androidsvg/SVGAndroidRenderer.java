@@ -411,7 +411,6 @@ class SVGAndroidRenderer
    //==============================================================================
 
 
-   @SuppressWarnings("deprecation")
    private void  parentPush(SvgContainer obj)
    {
       parentStack.push(obj);
