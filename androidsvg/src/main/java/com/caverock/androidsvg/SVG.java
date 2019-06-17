@@ -970,7 +970,12 @@ public class SVG
    {
       Length  w = this.rootElement.width;
       Length  h = this.rootElement.height;
-      
+
+      // If both the height and the width are null we use viewBox attributes as the backup.
+      if(w == null && h == null && this.rootElement.viewBox != null && this.rootElement.viewBox.width != 0 && this.rootElement.viewBox.height != 0) {
+         return new Box(0, 0, this.rootElement.viewBox.width, this.rootElement.viewBox.height);
+      }
+
       if (w == null || w.isZero() || w.unit==Unit.percent || w.unit==Unit.em || w.unit==Unit.ex)
          return new Box(-1,-1,-1,-1);
 
