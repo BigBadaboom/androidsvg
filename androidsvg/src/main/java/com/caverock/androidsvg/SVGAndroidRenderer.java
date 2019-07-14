@@ -683,7 +683,6 @@ class SVGAndroidRenderer
     * This operation is made more tricky because the childs bbox is in the child's coordinate space,
     * but the parent needs it in the parent's coordinate space.
     */
-   @SuppressWarnings("deprecation")
    private void updateParentBoundingBox(SvgElement obj)
    {
       if (obj.parent == null)       // skip this if obj is root element
@@ -1979,7 +1978,7 @@ class SVGAndroidRenderer
 
 
    /*
-    * Check for an decode an image encoded in a data URL.
+    * Check for and decode an image encoded in a data URL.
     * We don't handle all permutations of data URLs. Only base64 ones.
     */
    private Bitmap  checkForImageDataURL(String url)
@@ -2695,13 +2694,20 @@ class SVGAndroidRenderer
       n = Math.sqrt((ux * ux) + (uy * uy));  // len(u) * len(1,0) == len(u)
       p = ux;                                // u.v == (ux,uy).(1,0) == (1 * ux) + (0 * uy) == ux
       sign = (uy < 0) ? -1.0 : 1.0;          // u x v == (1 * uy - ux * 0) == uy
-      double angleStart = sign * Math.acos(p / n);  // No need for checkedArcCos() here
+      double angleStart = sign * Math.acos(p / n);  // No need for checkedArcCos() here. (p >= n) should always be true.
 
       // Compute the angle extent
       n = Math.sqrt((ux * ux + uy * uy) * (vx * vx + vy * vy));
       p = ux * vx + uy * vy;
       sign = (ux * vy - uy * vx < 0) ? -1.0f : 1.0f;
       double angleExtent = sign * checkedArcCos(p / n);
+
+      // Catch angleExtents of 0, which will cause problems later in arcToBeziers
+      if (angleExtent == 0f) {
+         pather.lineTo(x, y);
+         return;
+      }
+
       if (!sweepFlag && angleExtent > 0) {
          angleExtent -= TWO_PI;
       } else if (sweepFlag && angleExtent < 0) {
