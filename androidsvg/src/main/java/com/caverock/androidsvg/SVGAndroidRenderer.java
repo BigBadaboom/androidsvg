@@ -360,6 +360,8 @@ class SVGAndroidRenderer
          render((SVG.PolyLine) obj);
       } else if (obj instanceof SVG.Text) {
          render((SVG.Text) obj);
+      } else if (obj instanceof SVG.A) {
+         render((SVG.A) obj);
       }
 
       // Restore state
@@ -651,6 +653,35 @@ class SVGAndroidRenderer
    private void render(SVG.Group obj)
    {
       debug("Group render");
+
+      updateStyleForElement(state, obj);
+
+      if (!display())
+         return;
+
+      if (obj.transform != null) {
+         canvas.concat(obj.transform);
+      }
+
+      checkForClipPath(obj);
+
+      boolean  compositing = pushLayer();
+
+      renderChildren(obj, true);
+
+      if (compositing)
+         popLayer(obj);
+
+      updateParentBoundingBox(obj);
+   }
+
+
+   //==============================================================================
+
+
+   private void render(SVG.A obj)
+   {
+      debug("A render");
 
       updateStyleForElement(state, obj);
 

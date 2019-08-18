@@ -1751,6 +1751,16 @@ public class SVG
    }
 
 
+   // A linking element (we don't currently do anything with this. It is basically just treated like a Group.
+   static class A extends Group
+   {
+      String  href;
+
+      @Override
+      String  getNodeName() { return "a"; }
+   }
+
+
    static class Use extends Group
    {
       String  href;

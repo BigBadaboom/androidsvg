@@ -745,7 +745,6 @@ class SVGParser
                   break;
 
                case XmlPullParser.PROCESSING_INSTRUCTION:
-Log.d(TAG,"PROC INSTR: "+parser.getText());
                   TextScanner  scan = new TextScanner(parser.getText());
                   String       instr = scan.nextToken();
                   handleProcessingInstruction(instr, parseProcessingInstructionAttributes(scan));
@@ -893,10 +892,11 @@ Log.d(TAG,"PROC INSTR: "+parser.getText());
          case svg:
             svg(attributes); break;
          case g:
-         case a: // <a> treated like a group element
             g(attributes); break;
          case defs:
             defs(attributes); break;
+         case a:
+            a(attributes); break;
          case use:
             use(attributes); break;
          case path:
@@ -1065,8 +1065,9 @@ Log.d(TAG,"PROC INSTR: "+parser.getText());
             break;
 
          case svg:
-         case defs:
          case g:
+         case defs:
+         case a:
          case use:
          case image:
          case text:
@@ -1277,7 +1278,48 @@ Log.d(TAG,"PROC INSTR: "+parser.getText());
 
 
    //=========================================================================
-   // <use> group element
+   // <a> element
+
+
+   private void  a(Attributes attributes) throws SVGParseException
+   {
+      debug("<a>");
+
+      if (currentElement == null)
+         throw new SVGParseException("Invalid document. Root element must be <svg>");
+      SVG.A  obj = new SVG.A();
+      obj.document = svgDocument;
+      obj.parent = currentElement;
+      parseAttributesCore(obj, attributes);
+      parseAttributesStyle(obj, attributes);
+      parseAttributesTransform(obj, attributes);
+      parseAttributesConditional(obj, attributes);
+      parseAttributesA(obj, attributes);
+      currentElement.addChild(obj);
+      currentElement = obj;
+   }
+
+
+   private void  parseAttributesA(SVG.A obj, Attributes attributes) throws SVGParseException
+   {
+      for (int i=0; i<attributes.getLength(); i++)
+      {
+         String val = attributes.getValue(i).trim();
+         switch (SVGAttr.fromString(attributes.getLocalName(i)))
+         {
+            case href:
+               if ("".equals(attributes.getURI(i)) || XLINK_NAMESPACE.equals(attributes.getURI(i)))
+                  obj.href = val;
+               break;
+            default:
+               break;
+         }
+      }
+   }
+
+
+   //=========================================================================
+   // <use> element
 
 
    private void  use(Attributes attributes) throws SVGParseException
