@@ -238,7 +238,7 @@ public class SVG
 
    /**
     * Tells the parser whether to allow the expansion of internal entities.
-    * An example of document containing an internal entities is:
+    * An example of a document containing an internal entities is:
     *
     * {@code
     * <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd" [
