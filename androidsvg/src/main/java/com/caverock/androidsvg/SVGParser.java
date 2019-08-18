@@ -1084,6 +1084,12 @@ class SVGParser
          case view:
          case mask:
          case solidColor:
+            if (currentElement == null) {
+               // This situation has been reported by a user. But I am unable to reproduce this fault.
+               // If you can get this error please add your SVG file to https://github.com/BigBadaboom/androidsvg/issues/177
+               // For now we'll return a parse exception for consistency (instead of NPE).
+               throw new SVGParseException(String.format("Unbalanced end element </%s> found", tag));
+            }
             currentElement = ((SvgObject) currentElement).parent;
             break;
 
