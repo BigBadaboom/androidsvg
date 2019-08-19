@@ -2559,7 +2559,7 @@ class SVGAndroidRenderer
    /*
     *  Convert an internal PathDefinition to an android.graphics.Path object
     */
-   private class  PathConverter implements PathInterface
+   protected static class  PathConverter implements PathInterface
    {
       Path   path = new Path();
       float  lastX, lastY;

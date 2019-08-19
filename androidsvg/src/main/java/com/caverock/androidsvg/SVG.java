@@ -233,6 +233,41 @@ public class SVG
    }
 
 
+   /**
+    * Parse an SVG path definition from the given {@code String}.
+    *
+    * {@code
+    * Path  path = SVG.parsePath("M 0,0 L 100,100");
+    * path.setFillType(Path.FillType.EVEN_ODD);
+    *
+    * // You could render the path to a Canvas now
+    * Paint paint = new Paint();
+    * paint.setStyle(Paint.Style.FILL);
+    * paint.setColor(Color.RED);
+    * canvas.drawPath(path, paint);
+    *
+    * // Or perform other operations on it
+    * RectF bounds = new RectF();
+    * path.computeBounds(bounds, false);
+    * }
+    *
+    * Note that this method does not throw any exceptions or return any errors. Per the SVG
+    * specification, if there are any errors in the path definition, the valid portion of the
+    * path up until the first error is returned.
+    *
+    * @param pathDefinition an SVG path element definition string
+    * @return an Android {@code Path}
+    * @since 1.5
+    */
+   public static android.graphics.Path  parsePath(String pathDefinition)
+   {
+      SVG.PathDefinition                pathDef = SVGParser.parsePath(pathDefinition);
+      SVGAndroidRenderer.PathConverter  pathConv = new SVGAndroidRenderer.PathConverter(pathDef);
+      return pathConv.getPath();
+   }
+
+
+
    //===============================================================================
 
 

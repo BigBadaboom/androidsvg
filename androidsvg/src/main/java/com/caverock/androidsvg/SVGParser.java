@@ -4161,7 +4161,7 @@ class SVGParser
 
 
    // Parse the string that defines a path.
-   private static SVG.PathDefinition  parsePath(String val)
+   protected static SVG.PathDefinition  parsePath(String val)
    {
       TextScanner  scan = new TextScanner(val);
 
