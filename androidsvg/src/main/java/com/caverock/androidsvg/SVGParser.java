@@ -593,14 +593,36 @@ class SVGParser
 
       try
       {
-         // Mark the start in case we need to restart the parsing due to switching XML parser
-         // 4096 chars is hopefully enough to capture most doctype declarations that have entities.
-         is.mark(ENTITY_WATCH_BUFFER_SIZE);
+         if (enableInternalEntities)
+         {
+            // We need to check for the presence of entities in the file so we can decide which parser to use.
+            is.mark(ENTITY_WATCH_BUFFER_SIZE);
+            // Read that number of bytes into a buffer so we
+            byte[]  checkBuf = new byte[ENTITY_WATCH_BUFFER_SIZE];
+            int n = is.read(checkBuf);
+            // Read in the bytes as a string. We should probably use UTF-8 here, but the string
+            // constructor that takes a charset requires SDK 9. We should be okay though, since we
+            // are only looking for plain ASCII. And that'll be the same in any encoding.
+            String preamble = new String(checkBuf, 0, n);
+            // Reset the stream so that the XML parsers can do their job.
+            is.reset();
+            if (preamble.indexOf("<!ENTITY ") >= 0) {
+               // Found something that looks like an entity definition.
+               // So we'll use the SAX parser which supports them.
+               Log.d(TAG,"Switching to SAX parser to process entities");
+               parseUsingSAX(is);
+               return svgDocument;
+            }
+         }
 
-         // Use XmlPullParser by default, which is faster, but doesn't support entity expansion.
-         // In this parser we watch for capture doctype declarations, and then switch to the SAX
-         // parser if any entities are defined in the doctype.
-         parseUsingXmlPullParser(is, enableInternalEntities);
+         // Use the (faster) XmlPullParser
+         parseUsingXmlPullParser(is);
+         return svgDocument;
+      }
+      catch (IOException e) {
+         Log.e(TAG, "Error occurred while performing check for entities.  File may not be parsed correctly if it contains entity definitions.", e);
+         parseUsingXmlPullParser(is);
+         return svgDocument;
       }
       finally
       {
@@ -610,7 +632,6 @@ class SVGParser
             Log.e(TAG, "Exception thrown closing input stream");
          }
       }
-      return svgDocument;
    }
 
 
@@ -682,7 +703,7 @@ class SVGParser
    }
 
 
-   private void parseUsingXmlPullParser(InputStream is, boolean enableInternalEntities) throws SVGParseException
+   private void parseUsingXmlPullParser(InputStream is) throws SVGParseException
    {
       try
       {
@@ -724,26 +745,12 @@ class SVGParser
                //case XmlPullParser.COMMENT:
                //   text(parser.getText());
                //   break;
-
-               case XmlPullParser.DOCDECL:
-                  if (enableInternalEntities &&                  // entities are enabled
-                      svgDocument.getRootElement() == null &&    // and we haven't already parsed the root element
-                      parser.getText().contains("<!ENTITY ")) {  // and doctype seems to contain an entity definition
-                     // File uses internal entities. Switch to the SAX parser.
-                     try {
-                        Log.d(TAG,"Switching to SAX parser to process entities");
-                        is.reset();
-                        parseUsingSAX(is);
-                     } catch (IOException e) {
-                        // reset() failed
-                        Log.w(TAG, "Detected internal entity definitions, but could not parse them.");
-                        // All we can do is just continue using the XmlPullParser.
-                        // Entities will not be parsed properly :(
-                     }
-                     return;
-                  }
-                  break;
-
+               //case XmlPullParser.DOCDECL:
+               //   text(parser.getText());
+               //   break;
+               //case XmlPullParser.IGNORABLE_WHITESPACE:
+               //   text(parser.getText());
+               //   break;
                case XmlPullParser.PROCESSING_INSTRUCTION:
                   TextScanner  scan = new TextScanner(parser.getText());
                   String       instr = scan.nextToken();
@@ -773,7 +780,6 @@ class SVGParser
 
    private void parseUsingSAX(InputStream is) throws SVGParseException
    {
-      Log.d(TAG, "Falling back to SAX parser");
       try
       {
          // Invoke the SAX XML parser on the input.
