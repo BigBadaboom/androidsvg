@@ -340,7 +340,7 @@ class SVGAndroidRenderer
          render((SVG.Use) obj);
       } else if (obj instanceof SVG.Switch) {
          render((SVG.Switch) obj);
-      } else if (obj instanceof SVG.Group) {
+      } else if (obj instanceof SVG.Group) {   // Includes <a> elements
          render((SVG.Group) obj);
       } else if (obj instanceof SVG.Image) {
          render((SVG.Image) obj);
@@ -360,8 +360,6 @@ class SVGAndroidRenderer
          render((SVG.PolyLine) obj);
       } else if (obj instanceof SVG.Text) {
          render((SVG.Text) obj);
-      } else if (obj instanceof SVG.A) {
-         render((SVG.A) obj);
       }
 
       // Restore state
@@ -650,38 +648,10 @@ class SVGAndroidRenderer
    //==============================================================================
 
 
+   // Render <g> and <a> elements
    private void render(SVG.Group obj)
    {
-      debug("Group render");
-
-      updateStyleForElement(state, obj);
-
-      if (!display())
-         return;
-
-      if (obj.transform != null) {
-         canvas.concat(obj.transform);
-      }
-
-      checkForClipPath(obj);
-
-      boolean  compositing = pushLayer();
-
-      renderChildren(obj, true);
-
-      if (compositing)
-         popLayer(obj);
-
-      updateParentBoundingBox(obj);
-   }
-
-
-   //==============================================================================
-
-
-   private void render(SVG.A obj)
-   {
-      debug("A render");
+      debug(obj.getNodeName() + " render");
 
       updateStyleForElement(state, obj);
 

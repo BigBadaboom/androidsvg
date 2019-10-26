@@ -16,6 +16,8 @@
 
 package com.caverock.androidsvg;
 
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Path;
 import android.os.Build;
 
@@ -25,6 +27,7 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadow.api.Shadow;
 
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
@@ -32,7 +35,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-@Config(manifest=Config.NONE, sdk = Build.VERSION_CODES.JELLY_BEAN, shadows={MockPath.class})
+@Config(manifest=Config.NONE, sdk = Build.VERSION_CODES.JELLY_BEAN, shadows={MockCanvas.class, MockPath.class})
 @RunWith(RobolectricTestRunner.class)
 public class ParseTest
 {
@@ -144,5 +147,51 @@ public class ParseTest
       }
    }
 */
+
+
+   /**
+    * Checks that A elements are parsed and rendered correctly.
+    * @throws SVGParseException
+    */
+   @Test
+   public void parseA() throws SVGParseException
+   {
+      String  test = "<svg xmlns=\"http://www.w3.org/2000/svg\">" +
+                     "<a>" +
+                     "  <rect width=\"10\" height=\"10\" fill=\"red\"/>" +
+                     "</a>" +
+                     "</svg>";
+      SVG  svg = SVG.getFromString(test);
+
+      Bitmap bm = Bitmap.createBitmap(10, 10, Bitmap.Config.ARGB_8888);
+      Canvas bmcanvas = new Canvas(bm);
+
+      // Test that A element has been inserted in the DOM tree correctly
+      RenderOptions opts = RenderOptions.create();
+      opts.css("a rect { fill: green; }");
+
+      svg.renderToCanvas(bmcanvas, opts);
+
+      MockCanvas    mock = Shadow.extract(bmcanvas);
+      List<String>  ops = mock.getOperations();
+      //System.out.println(String.join(",", ops));
+      assertEquals("drawPath('M 0 0 L 10 0 L 10 10 L 0 10 L 0 0 Z', Paint({color=#ff008000}))", ops.get(4));
+
+
+      // Test that A elements are being visited properly while rendering
+      test = "<svg xmlns=\"http://www.w3.org/2000/svg\">" +
+             "<a fill=\"green\">" +
+             "  <rect width=\"10\" height=\"10\"/>" +
+             "</a>" +
+             "</svg>";
+      svg = SVG.getFromString(test);
+
+      mock.clearOperations();
+      svg.renderToCanvas(bmcanvas);
+
+      ops = mock.getOperations();
+      //System.out.println(String.join(",", ops));
+      assertEquals("drawPath('M 0 0 L 10 0 L 10 10 L 0 10 L 0 0 Z', Paint({color=#ff008000}))", ops.get(4));
+   }
 
 }
