@@ -20,6 +20,7 @@ import android.graphics.Matrix;
 import android.util.Log;
 import android.util.Xml;
 
+import com.caverock.androidsvg.CSSParser.CSSTextScanner;
 import com.caverock.androidsvg.CSSParser.MediaType;
 import com.caverock.androidsvg.SVG.Box;
 import com.caverock.androidsvg.SVG.CSSClipRect;
@@ -2991,18 +2992,21 @@ class SVGParser
     */
    private static void  parseStyle(SvgElementBase obj, String style)
    {
-      TextScanner  scan = new TextScanner(style.replaceAll("/\\*.*?\\*/", ""));  // regex strips block comments
+      CSSTextScanner  scan = new CSSTextScanner(style.replaceAll("/\\*.*?\\*/", ""));  // regex strips block comments
 
-      while (true)
+      while (!scan.empty())
       {
-         String  propertyName = scan.nextToken(':');
          scan.skipWhitespace();
+         String  propertyName = scan.nextIdentifier();
+         scan.skipWhitespace();
+         if (scan.consume(';'))
+            continue;  // Handle stray/extra separators gracefully
          if (!scan.consume(':'))
-            break;  // Syntax error. Stop processing CSS rules.
+            break;  // Unrecoverable parse error
          scan.skipWhitespace();
-         String  propertyValue = scan.nextTokenWithWhitespace(';');
+         String  propertyValue = scan.nextPropertyValue();
          if (propertyValue == null)
-            break;  // Syntax error
+            continue;  // Empty value. Just ignore this property and keep parsing
          scan.skipWhitespace();
          if (scan.empty() || scan.consume(';'))
          {

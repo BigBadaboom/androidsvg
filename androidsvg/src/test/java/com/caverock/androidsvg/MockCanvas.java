@@ -27,7 +27,6 @@ import android.graphics.RectF;
 import org.robolectric.annotation.Implementation;
 import org.robolectric.annotation.Implements;
 import org.robolectric.shadow.api.Shadow;
-import org.robolectric.shadows.ShadowPaint;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -128,7 +127,7 @@ public class MockCanvas
    @Implementation
    public void  drawText(String text, float x, float y, Paint paint)
    {
-      this.operations.add(String.format(Locale.US, "drawText(\"%s\", %s, %s, %s)", text, num(x), num(y), paint));
+      this.operations.add(String.format(Locale.US, "drawText(\"%s\", %s, %s, %s)", text, num(x), num(y), paintToStr(paint)));
    }
 
    @Implementation
@@ -242,11 +241,7 @@ public class MockCanvas
 
    private static String  paintToStr(Paint paint)
    {
-      ShadowPaint  sp = ((ShadowPaint) Shadow.extract(paint));
-     List<String>  props = new ArrayList<>();
-
-      props.add(String.format("color=#%x",sp.getColor()));
-      return "Paint({" + String.join(",", props) + "})";
+      return ((MockPaint) Shadow.extract(paint)).getDescription();
    }
 
 
@@ -257,14 +252,8 @@ public class MockCanvas
    String  paintProp(int opsIndex, String propName)
    {
       String   op = operations.get(opsIndex);
-      Pattern  re = Pattern.compile("Paint\\((\\{[^}]*})\\)");
+      Pattern  re = Pattern.compile("[\\(\\s]" + propName + ":([^\\s\\)]*)");
       Matcher  m = re.matcher(op);
-      if (!m.find())
-         return "NO "+propName;
-
-      String   keyvals = m.group(1);
-      re = Pattern.compile("(?:\\{|,)" + propName + "=([^,}]*)");
-      m = re.matcher(keyvals);
       return m.find() ? m.group(1) : "NO "+propName;
    }
 

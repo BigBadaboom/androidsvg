@@ -33,7 +33,7 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(manifest=Config.NONE, sdk=Build.VERSION_CODES.JELLY_BEAN, shadows={MockCanvas.class, MockPath.class, MockPicture.class})
+@Config(manifest=Config.NONE, sdk=Build.VERSION_CODES.JELLY_BEAN, shadows={MockCanvas.class, MockPath.class, MockPicture.class, MockPaint.class})
 public class RenderToPictureTest
 {
    @Test
@@ -51,7 +51,7 @@ public class RenderToPictureTest
       assertEquals(512, picture.getWidth());
       assertEquals(512, picture.getHeight());
       assertEquals("concat(Matrix(2.56 0 0 2.56 0 128))", ops.get(1));
-      assertEquals("drawPath('M 0 0 L 200 0 L 200 100 L 0 100 L 0 0 Z', Paint({color=#ff008000}))", ops.get(3));
+      assertEquals("drawPath('M 0 0 L 200 0 L 200 100 L 0 100 L 0 0 Z', Paint(f:ANTI_ALIAS|LINEAR_TEXT|SUBPIXEL_TEXT h:OFF s:FILL ts:16 tf:android.graphics.Typeface@0 color:#ff008000))", ops.get(3));
    }
 
 
@@ -101,7 +101,7 @@ public class RenderToPictureTest
       assertEquals(400, picture.getWidth());
       assertEquals(400, picture.getHeight());
       assertEquals("concat(Matrix(2 0 0 2 0 100))", ops.get(1));
-      assertEquals("drawPath('M 0 0 L 200 0 L 200 100 L 0 100 L 0 0 Z', Paint({color=#ff008000}))", ops.get(3));
+      assertEquals("drawPath('M 0 0 L 200 0 L 200 100 L 0 100 L 0 0 Z', Paint(f:ANTI_ALIAS|LINEAR_TEXT|SUBPIXEL_TEXT h:OFF s:FILL ts:16 tf:android.graphics.Typeface@0 color:#ff008000))", ops.get(3));
    }
 
 
@@ -143,7 +143,7 @@ public class RenderToPictureTest
       assertEquals(400, picture.getWidth());
       assertEquals(400, picture.getHeight());
       assertEquals("concat(Matrix(1 0 0 1 100 200))", ops.get(1));
-      assertEquals("drawPath('M 0 0 L 200 0 L 200 100 L 0 100 L 0 0 Z', Paint({color=#ff008000}))", ops.get(3));
+      assertEquals("drawPath('M 0 0 L 200 0 L 200 100 L 0 100 L 0 0 Z', Paint(f:ANTI_ALIAS|LINEAR_TEXT|SUBPIXEL_TEXT h:OFF s:FILL ts:16 tf:android.graphics.Typeface@0 color:#ff008000))", ops.get(3));
    }
 
 

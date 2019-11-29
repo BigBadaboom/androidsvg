@@ -440,7 +440,7 @@ class CSSParser
    //==============================================================================
    
    
-   private static class CSSTextScanner extends TextScanner
+   static class CSSTextScanner extends TextScanner
    {
       CSSTextScanner(String input)
       {

@@ -35,7 +35,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-@Config(manifest=Config.NONE, sdk = Build.VERSION_CODES.JELLY_BEAN, shadows={MockCanvas.class, MockPath.class})
+@Config(manifest=Config.NONE, sdk = Build.VERSION_CODES.JELLY_BEAN, shadows={MockCanvas.class, MockPath.class, MockPaint.class})
 @RunWith(RobolectricTestRunner.class)
 public class ParseTest
 {
@@ -175,7 +175,7 @@ public class ParseTest
       MockCanvas    mock = Shadow.extract(bmcanvas);
       List<String>  ops = mock.getOperations();
       //System.out.println(String.join(",", ops));
-      assertEquals("drawPath('M 0 0 L 10 0 L 10 10 L 0 10 L 0 0 Z', Paint({color=#ff008000}))", ops.get(4));
+      assertEquals("drawPath('M 0 0 L 10 0 L 10 10 L 0 10 L 0 0 Z', Paint(f:ANTI_ALIAS|LINEAR_TEXT|SUBPIXEL_TEXT h:OFF s:FILL ts:16 tf:android.graphics.Typeface@0 color:#ff008000))", ops.get(4));
 
 
       // Test that A elements are being visited properly while rendering
@@ -191,7 +191,51 @@ public class ParseTest
 
       ops = mock.getOperations();
       //System.out.println(String.join(",", ops));
-      assertEquals("drawPath('M 0 0 L 10 0 L 10 10 L 0 10 L 0 0 Z', Paint({color=#ff008000}))", ops.get(4));
+      assertEquals("drawPath('M 0 0 L 10 0 L 10 10 L 0 10 L 0 0 Z', Paint(f:ANTI_ALIAS|LINEAR_TEXT|SUBPIXEL_TEXT h:OFF s:FILL ts:16 tf:android.graphics.Typeface@0 color:#ff008000))", ops.get(4));
+   }
+
+
+   /**
+    * Issue 186
+    * CSS properties without a value are badly parsed.
+    */
+   @Test
+   public void issue186() throws SVGParseException
+   {
+      String  test = "<svg xmlns=\"http://www.w3.org/2000/svg\">" +
+                     "<text style=\"text-decoration:;fill:green\">Test</text>" +
+                     "</svg>";
+      SVG  svg = SVG.getFromString(test);
+
+      Bitmap bm = Bitmap.createBitmap(10, 10, Bitmap.Config.ARGB_8888);
+      Canvas bmcanvas = new Canvas(bm);
+
+      svg.renderToCanvas(bmcanvas);
+
+      MockCanvas    mock = Shadow.extract(bmcanvas);
+      List<String>  ops = mock.getOperations();
+      //System.out.println(String.join(",", ops));
+      assertEquals("#ff008000", mock.paintProp(3, "color"));
+   }
+
+
+   @Test
+   public void parseStyleLeadingColon() throws SVGParseException
+   {
+      String  test = "<svg xmlns=\"http://www.w3.org/2000/svg\">" +
+                     "<text style=\"fill:green;:fill:red\">Test</text>" +
+                     "</svg>";
+      SVG  svg = SVG.getFromString(test);
+
+      Bitmap bm = Bitmap.createBitmap(10, 10, Bitmap.Config.ARGB_8888);
+      Canvas bmcanvas = new Canvas(bm);
+
+      svg.renderToCanvas(bmcanvas);
+
+      MockCanvas    mock = Shadow.extract(bmcanvas);
+      List<String>  ops = mock.getOperations();
+      //System.out.println(String.join(",", ops));
+      assertEquals("#ff008000", mock.paintProp(3, "color"));
    }
 
 }
