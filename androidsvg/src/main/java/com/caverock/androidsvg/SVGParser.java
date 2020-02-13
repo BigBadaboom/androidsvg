@@ -1038,8 +1038,8 @@ class SVGParser
       if (ignoring) {
          if (--ignoreDepth == 0) {
             ignoring = false;
-            return;
          }
+         return;
       }
 
       if (!SVG_NAMESPACE.equals(uri) && !"".equals(uri)) {
