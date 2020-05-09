@@ -1493,7 +1493,7 @@ class SVGAndroidRenderer
          }
 
          // Update the current text position
-         x += state.fillPaint.measureText(text);
+         x += measureText(text);
       }
    }
 
@@ -1719,10 +1719,30 @@ class SVGAndroidRenderer
          }
 
          // Update the current text position
-         x += state.fillPaint.measureText(text);
+         x += measureText(text);
       }
    }
 
+   /*
+    * Return the text width. 
+	* One cannot use Paint.measureText in all cases since it does Math.ceil on the result.
+	* In case the fractional part of the text size is important (f.e. text size 0.06) the value returned by measureText is very far off the mark.
+	*
+    */
+   private float measureText(String text) {
+      float[] widths=new float[text.length()];
+      state.fillPaint.getTextWidths(text,widths);
+      float res=0;
+      for(float val:widths) {
+         res+=val;
+      }
+      return res;
+      /*float prevSize=state.fillPaint.getTextSize();
+      state.fillPaint.setTextSize(prevSize*100);
+      float res=state.fillPaint.measureText(text);
+      state.fillPaint.setTextSize(prevSize);
+      return res/100;*/
+   }
 
    //==============================================================================
 
@@ -1746,7 +1766,7 @@ class SVGAndroidRenderer
       @Override
       public void processText(String text)
       {
-         x += state.fillPaint.measureText(text);
+         x += measureText(text);
       }
    }
 
