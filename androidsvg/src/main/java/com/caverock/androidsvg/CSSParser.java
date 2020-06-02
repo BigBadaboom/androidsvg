@@ -50,6 +50,8 @@ class CSSParser
    private MediaType  deviceMediaType = null;
    private Source     source = null;    // Where these rules came from (Parser or RenderOptions)
 
+   private SVGExternalFileResolver externalFileResolver = null;
+
    private boolean  inMediaRule = false;
 
 
@@ -378,20 +380,21 @@ class CSSParser
    
    CSSParser()
    {
-      this(MediaType.screen, Source.Document);
+      this(MediaType.screen, Source.Document, null);
    }
 
 
-   CSSParser(Source source)
+   CSSParser(Source source, SVGExternalFileResolver externalFileResolver)
    {
-      this(MediaType.screen, source);
+      this(MediaType.screen, source, externalFileResolver);
    }
 
 
-   CSSParser(MediaType rendererMediaType, Source source)
+   CSSParser(MediaType rendererMediaType, Source source, SVGExternalFileResolver externalFileResolver)
    {
       this.deviceMediaType = rendererMediaType;
       this.source = source;
+      this.externalFileResolver = externalFileResolver;
    }
 
 
@@ -1166,8 +1169,8 @@ class CSSParser
          if (!scan.empty() && !scan.consume(';'))
             throw new CSSParseException("Invalid @media rule: expected '}' at end of rule set");
 
-         if (SVG.getFileResolver() != null && mediaMatches(mediaList, deviceMediaType)) {
-            String  css = SVG.getFileResolver().resolveCSSStyleSheet(file);
+         if (externalFileResolver != null && mediaMatches(mediaList, deviceMediaType)) {
+            String  css = externalFileResolver.resolveCSSStyleSheet(file);
             if (css == null)
                return;
             ruleset.addAll( parse(css) );

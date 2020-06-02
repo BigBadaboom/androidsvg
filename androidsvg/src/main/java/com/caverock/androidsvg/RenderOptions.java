@@ -38,13 +38,14 @@ import android.graphics.RectF;
 
 public class RenderOptions
 {
-   CSSParser.Ruleset    css = null;
-   //String               id = null;
-   PreserveAspectRatio  preserveAspectRatio = null;
-   String               targetId = null;
-   SVG.Box              viewBox = null;
-   String               viewId = null;
-   SVG.Box              viewPort = null;
+   CSSParser.Ruleset        css = null;
+   //String                 id = null;
+   PreserveAspectRatio      preserveAspectRatio = null;
+   String                   targetId = null;
+   SVG.Box                  viewBox = null;
+   String                   viewId = null;
+   SVG.Box                  viewPort = null;
+   SVGExternalFileResolver  externalFileResolver = null;
 
 
    /**
@@ -82,6 +83,17 @@ public class RenderOptions
       this.viewPort = other.viewPort;
    }
 
+   /**
+    * Register an {@link SVGExternalFileResolver} instance that the renderer should use when resolving
+    * external references such as images, fonts, and CSS stylesheets.
+    *
+    * @param resolver the resolver to use.
+    * @since 1.5
+    */
+   public RenderOptions setExternalFileResolver(SVGExternalFileResolver resolver) {
+      this.externalFileResolver = resolver;
+      return this;
+   }
 
    /**
     * Specifies some additional CSS rules that will be applied during render in addition to
@@ -91,7 +103,7 @@ public class RenderOptions
     */
    public RenderOptions  css(String css)
    {
-      CSSParser  parser = new CSSParser(CSSParser.Source.RenderOptions);
+      CSSParser  parser = new CSSParser(CSSParser.Source.RenderOptions, externalFileResolver);
       this.css = parser.parse(css);
       return this;
    }

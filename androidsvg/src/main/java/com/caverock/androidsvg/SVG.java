@@ -85,7 +85,8 @@ public class SVG
    private static final double  SQRT2 = 1.414213562373095;
 
    // Resolver
-   private static SVGExternalFileResolver  externalFileResolver = null;
+   private static SVGExternalFileResolver  externalFileResolverSingleton = null;
+   private SVGExternalFileResolver externalFileResolver;
 
    // Parser configuration
    private static boolean  enableInternalEntities = true;
@@ -131,8 +132,9 @@ public class SVG
 
 
    /* package private */
-   SVG()
+   SVG(SVGExternalFileResolver fileResolver)
    {
+      externalFileResolver = fileResolver;
    }
 
 
@@ -146,8 +148,7 @@ public class SVG
    @SuppressWarnings("WeakerAccess")
    public static SVG  getFromInputStream(InputStream is) throws SVGParseException
    {
-      SVGParserImpl parser = new SVGParserImpl();
-      return parser.parse(is, enableInternalEntities);
+      return createParser().parseStream(is);
    }
 
 
@@ -161,8 +162,7 @@ public class SVG
    @SuppressWarnings({"WeakerAccess", "unused"})
    public static SVG  getFromString(String svg) throws SVGParseException
    {
-      SVGParserImpl parser = new SVGParserImpl();
-      return parser.parse(new ByteArrayInputStream(svg.getBytes()), enableInternalEntities);
+      return createParser().parseStream(new ByteArrayInputStream(svg.getBytes()));
    }
 
 
@@ -193,10 +193,9 @@ public class SVG
    @SuppressWarnings("WeakerAccess")
    public static SVG  getFromResource(Resources resources, int resourceId) throws SVGParseException
    {
-      SVGParserImpl parser = new SVGParserImpl();
       InputStream  is = resources.openRawResource(resourceId);
       try {
-         return parser.parse(is, enableInternalEntities);
+         return createParser().parseStream(is);
       } finally {
          try {
            is.close();
@@ -219,10 +218,9 @@ public class SVG
    @SuppressWarnings({"WeakerAccess", "unused"})
    public static SVG  getFromAsset(AssetManager assetManager, String filename) throws SVGParseException, IOException
    {
-      SVGParserImpl parser = new SVGParserImpl();
       InputStream  is = assetManager.open(filename);
       try {
-         return parser.parse(is, enableInternalEntities);
+         return createParser().parseStream(is);
       } finally {
          try {
            is.close();
@@ -270,6 +268,19 @@ public class SVG
 
    //===============================================================================
 
+   /**
+    * Creates a new {@link SVGParser} instance.
+    *
+    * @since 1.5
+    */
+   public static SVGParser createParser()
+   {
+      return new SVGParserImpl()
+              .setInternalEntitiesEnabled(enableInternalEntities)
+              .setExternalFileResolver(externalFileResolverSingleton);
+   }
+
+   //===============================================================================
 
    /**
     * Tells the parser whether to allow the expansion of internal entities.
@@ -326,7 +337,7 @@ public class SVG
    @SuppressWarnings("unused")
    public static void  registerExternalFileResolver(SVGExternalFileResolver fileResolver)
    {
-      externalFileResolver = fileResolver;
+      externalFileResolverSingleton = fileResolver;
    }
 
 
@@ -336,7 +347,7 @@ public class SVG
    @SuppressWarnings("unused")
    public static void  deregisterExternalFileResolver()
    {
-      externalFileResolver = null;
+      externalFileResolverSingleton = null;
    }
 
 
@@ -468,9 +479,10 @@ public class SVG
       if (renderOptions == null || renderOptions.viewPort == null) {
          renderOptions = (renderOptions == null) ? new RenderOptions() : new RenderOptions(renderOptions);
          renderOptions.viewPort(0f, 0f, (float) widthInPixels, (float) heightInPixels);
+         renderOptions.setExternalFileResolver(externalFileResolver);
       }
 
-      SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, this.renderDPI);
+      SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, this.renderDPI, externalFileResolver);
 
       renderer.renderDocument(this, renderOptions);
 
@@ -498,12 +510,14 @@ public class SVG
    {
       RenderOptions  renderOptions = new RenderOptions();
       renderOptions.view(viewId)
-                   .viewPort(0f, 0f, (float) widthInPixels, (float) heightInPixels);
+                   .viewPort(0f, 0f, (float) widthInPixels, (float) heightInPixels)
+                   .setExternalFileResolver(externalFileResolver);
+
 
       Picture  picture = new Picture();
       Canvas   canvas = picture.beginRecording(widthInPixels, heightInPixels);
 
-      SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, this.renderDPI);
+      SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, this.renderDPI, externalFileResolver);
 
       renderer.renderDocument(this, renderOptions);
 
@@ -547,7 +561,7 @@ public class SVG
          renderOptions.viewPort(0f, 0f, (float) canvas.getWidth(), (float) canvas.getHeight());
       }
 
-      SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, this.renderDPI);
+      SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, this.renderDPI, externalFileResolver);
 
       renderer.renderDocument(this, renderOptions);
    }
@@ -570,7 +584,7 @@ public class SVG
          renderOptions.viewPort(0f, 0f, (float) canvas.getWidth(), (float) canvas.getHeight());
       }
 
-      SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, this.renderDPI);
+      SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, this.renderDPI, externalFileResolver);
 
       renderer.renderDocument(this, renderOptions);
    }
@@ -2186,12 +2200,6 @@ public class SVG
    void setDesc(String desc)
    {
       this.desc = desc;
-   }
-
-
-   static SVGExternalFileResolver  getFileResolver()
-   {
-      return externalFileResolver;
    }
 
 

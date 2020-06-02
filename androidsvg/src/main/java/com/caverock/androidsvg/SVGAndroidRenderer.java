@@ -116,6 +116,8 @@ class SVGAndroidRenderer
 
    private CSSParser.RuleMatchContext  ruleMatchContext = null;
 
+   private SVGExternalFileResolver externalFileResolver = null;
+
 
    private class RendererState
    {
@@ -204,10 +206,11 @@ class SVGAndroidRenderer
     * @param defaultDPI the DPI setting to use when converting real-world units such as centimetres.
     */
 
-   SVGAndroidRenderer(Canvas canvas, float defaultDPI)
+   SVGAndroidRenderer(Canvas canvas, float defaultDPI, SVGExternalFileResolver externalFileResolver)
    {
       this.canvas = canvas;
       this.dpi = defaultDPI;
+      this.externalFileResolver = externalFileResolver;
    }
 
 
@@ -286,6 +289,9 @@ class SVGAndroidRenderer
          preserveAspectRatio = renderOptions.hasPreserveAspectRatio() ? renderOptions.preserveAspectRatio
                                                                       : rootObj.preserveAspectRatio;
       }
+
+      if (externalFileResolver == null)
+         externalFileResolver = renderOptions.externalFileResolver;
 
       if (renderOptions.hasCss())
          document.addCSSRules(renderOptions.css);
@@ -854,8 +860,7 @@ class SVGAndroidRenderer
 
    private void  renderSwitchChild(SVG.Switch obj)
    {
-      String                   deviceLanguage = Locale.getDefault().getLanguage();
-      SVGExternalFileResolver  fileResolver = SVG.getFileResolver();
+      String  deviceLanguage = Locale.getDefault().getLanguage();
 
       ChildLoop:
       for (SVG.SvgObject child: obj.getChildren())
@@ -887,20 +892,20 @@ class SVGAndroidRenderer
          // Check formats (MIME types)
          Set<String>  reqfmts = condObj.getRequiredFormats();
          if (reqfmts != null) {
-            if (reqfmts.isEmpty() || fileResolver==null)
+            if (reqfmts.isEmpty() || externalFileResolver==null)
                continue;
             for (String mimeType: reqfmts) {
-               if (!fileResolver.isFormatSupported(mimeType))
+               if (!externalFileResolver.isFormatSupported(mimeType))
                   continue ChildLoop;
             }
          }
          // Check formats (MIME types)
          Set<String>  reqfonts = condObj.getRequiredFonts();
          if (reqfonts != null) {
-            if (reqfonts.isEmpty() || fileResolver==null)
+            if (reqfonts.isEmpty() || externalFileResolver==null)
                continue;
             for (String fontName: reqfonts) {
-               if (fileResolver.resolveFont(fontName, state.style.fontWeight, String.valueOf(state.style.fontStyle)) == null)
+               if (externalFileResolver.resolveFont(fontName, state.style.fontWeight, String.valueOf(state.style.fontStyle)) == null)
                   continue ChildLoop;
             }
          }
@@ -1918,11 +1923,10 @@ class SVGAndroidRenderer
       Bitmap  image = checkForImageDataURL(obj.href);
       if (image == null)
       {
-         SVGExternalFileResolver  fileResolver = SVG.getFileResolver();
-         if (fileResolver == null)
+         if (externalFileResolver == null)
             return;
 
-         image = fileResolver.resolveImage(obj.href);
+         image = externalFileResolver.resolveImage(obj.href);
       }
       if (image == null) {
          error("Could not locate image '%s'", obj.href);
@@ -2297,12 +2301,10 @@ class SVGAndroidRenderer
          Typeface  font = null;
 
          if (state.style.fontFamily != null && document != null) {
-            SVGExternalFileResolver  fileResolver = SVG.getFileResolver();
-
             for (String fontName: state.style.fontFamily) {
                font = checkGenericFont(fontName, state.style.fontWeight, state.style.fontStyle);
-               if (font == null && fileResolver != null) {
-                  font = fileResolver.resolveFont(fontName, state.style.fontWeight, String.valueOf(state.style.fontStyle));
+               if (font == null && externalFileResolver != null) {
+                  font = externalFileResolver.resolveFont(fontName, state.style.fontWeight, String.valueOf(state.style.fontStyle));
                }
                if (font != null)
                   break;

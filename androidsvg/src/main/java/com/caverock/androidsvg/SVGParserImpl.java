@@ -71,7 +71,7 @@ import javax.xml.parsers.SAXParserFactory;
  * SVG parser code. Used by SVG class. Should not be called directly.
  */
 
-class SVGParserImpl
+class SVGParserImpl implements SVGParser
 {
    private static final String  TAG = "SVGParser";
 
@@ -96,8 +96,10 @@ class SVGParserImpl
 
 
    // SVG parser
-   private SVG               svgDocument = null;
-   private SVG.SvgContainer  currentElement = null;
+   private SVG                      svgDocument = null;
+   private SVG.SvgContainer         currentElement = null;
+   private boolean                  enableInternalEntities = true;
+   private SVGExternalFileResolver  externalFileResolver = null;
 
    // For handling elements we don't support
    private boolean   ignoring = false;
@@ -570,7 +572,7 @@ class SVGParserImpl
    //=========================================================================
 
 
-   SVG  parse(InputStream is, boolean enableInternalEntities) throws SVGParseException
+   public SVG parseStream(InputStream is) throws SVGParseException
    {
       // Transparently handle zipped files (.svgz)
       if (!is.markSupported()) {
@@ -635,6 +637,21 @@ class SVGParserImpl
       }
    }
 
+   //=========================================================================
+   // Attribute setters
+   //=========================================================================
+
+   @Override
+   public SVGParser setInternalEntitiesEnabled(boolean enable) {
+      enableInternalEntities = enable;
+      return this;
+   }
+
+   @Override
+   public SVGParser setExternalFileResolver(SVGExternalFileResolver fileResolver) {
+      externalFileResolver = fileResolver;
+      return this;
+   }
 
    //=========================================================================
    // XmlPullParser parsing
@@ -877,7 +894,7 @@ class SVGParserImpl
 
    private void startDocument()
    {
-      SVGParserImpl.this.svgDocument = new SVG();
+      SVGParserImpl.this.svgDocument = new SVG(externalFileResolver);
    }
 
 
@@ -1117,7 +1134,7 @@ class SVGParserImpl
 
    private void  handleProcessingInstruction(String instruction, Map<String, String> attributes)
    {
-      if (instruction.equals(XML_STYLESHEET_PROCESSING_INSTRUCTION) && SVG.getFileResolver() != null)
+      if (instruction.equals(XML_STYLESHEET_PROCESSING_INSTRUCTION) && externalFileResolver != null)
       {
          // If a "type" is specified, make sure it is the CSS type
          String  attr = attributes.get(XML_STYLESHEET_ATTR_TYPE);
@@ -1131,7 +1148,7 @@ class SVGParserImpl
          attr = attributes.get(XML_STYLESHEET_ATTR_HREF);
          if (attr != null)
          {
-            String  css = SVG.getFileResolver().resolveCSSStyleSheet(attr);
+            String  css = externalFileResolver.resolveCSSStyleSheet(attr);
             if (css == null)
                return;
 
@@ -4541,7 +4558,7 @@ class SVGParserImpl
 
    private void  parseCSSStyleSheet(String sheet)
    {
-      CSSParser  cssp = new CSSParser(MediaType.screen, CSSParser.Source.Document);
+      CSSParser  cssp = new CSSParser(MediaType.screen, CSSParser.Source.Document, externalFileResolver);
       svgDocument.addCSSRules(cssp.parse(sheet));
    }
 
