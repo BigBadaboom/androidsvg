@@ -71,7 +71,7 @@ import javax.xml.parsers.SAXParserFactory;
  * SVG parser code. Used by SVG class. Should not be called directly.
  */
 
-class SVGParser
+class SVGParserImpl
 {
    private static final String  TAG = "SVGParser";
 
@@ -819,21 +819,21 @@ class SVGParser
       @Override
       public void startDocument() throws SAXException
       {
-         SVGParser.this.startDocument();
+         SVGParserImpl.this.startDocument();
       }
 
 
       @Override
       public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException
       {
-         SVGParser.this.startElement(uri, localName, qName, attributes);
+         SVGParserImpl.this.startElement(uri, localName, qName, attributes);
       }
 
 
       @Override
       public void characters(char[] ch, int start, int length) throws SAXException
       {
-         SVGParser.this.text(new String(ch, start, length));
+         SVGParserImpl.this.text(new String(ch, start, length));
       }
 
 
@@ -849,14 +849,14 @@ class SVGParser
       @Override
       public void endElement(String uri, String localName, String qName) throws SAXException
       {
-         SVGParser.this.endElement(uri, localName, qName);
+         SVGParserImpl.this.endElement(uri, localName, qName);
       }
 
 
       @Override
       public void endDocument() throws SAXException
       {
-         SVGParser.this.endDocument();
+         SVGParserImpl.this.endDocument();
       }
 
 
@@ -877,7 +877,7 @@ class SVGParser
 
    private void startDocument()
    {
-      SVGParser.this.svgDocument = new SVG();
+      SVGParserImpl.this.svgDocument = new SVG();
    }
 
 

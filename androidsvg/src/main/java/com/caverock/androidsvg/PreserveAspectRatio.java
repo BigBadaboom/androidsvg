@@ -205,7 +205,7 @@ public class PreserveAspectRatio
    public static PreserveAspectRatio  of(String value)
    {
       try {
-         return SVGParser.parsePreserveAspectRatio(value);
+         return SVGParserImpl.parsePreserveAspectRatio(value);
       } catch (SVGParseException e) {
          throw new IllegalArgumentException(e.getMessage());
       }

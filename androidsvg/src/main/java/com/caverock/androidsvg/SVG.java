@@ -146,7 +146,7 @@ public class SVG
    @SuppressWarnings("WeakerAccess")
    public static SVG  getFromInputStream(InputStream is) throws SVGParseException
    {
-      SVGParser  parser = new SVGParser();
+      SVGParserImpl parser = new SVGParserImpl();
       return parser.parse(is, enableInternalEntities);
    }
 
@@ -161,7 +161,7 @@ public class SVG
    @SuppressWarnings({"WeakerAccess", "unused"})
    public static SVG  getFromString(String svg) throws SVGParseException
    {
-      SVGParser  parser = new SVGParser();
+      SVGParserImpl parser = new SVGParserImpl();
       return parser.parse(new ByteArrayInputStream(svg.getBytes()), enableInternalEntities);
    }
 
@@ -193,7 +193,7 @@ public class SVG
    @SuppressWarnings("WeakerAccess")
    public static SVG  getFromResource(Resources resources, int resourceId) throws SVGParseException
    {
-      SVGParser    parser = new SVGParser();
+      SVGParserImpl parser = new SVGParserImpl();
       InputStream  is = resources.openRawResource(resourceId);
       try {
          return parser.parse(is, enableInternalEntities);
@@ -219,7 +219,7 @@ public class SVG
    @SuppressWarnings({"WeakerAccess", "unused"})
    public static SVG  getFromAsset(AssetManager assetManager, String filename) throws SVGParseException, IOException
    {
-      SVGParser    parser = new SVGParser();
+      SVGParserImpl parser = new SVGParserImpl();
       InputStream  is = assetManager.open(filename);
       try {
          return parser.parse(is, enableInternalEntities);
@@ -261,7 +261,7 @@ public class SVG
     */
    public static android.graphics.Path  parsePath(String pathDefinition)
    {
-      SVG.PathDefinition                pathDef = SVGParser.parsePath(pathDefinition);
+      SVG.PathDefinition                pathDef = SVGParserImpl.parsePath(pathDefinition);
       SVGAndroidRenderer.PathConverter  pathConv = new SVGAndroidRenderer.PathConverter(pathDef);
       return pathConv.getPath();
    }
@@ -769,7 +769,7 @@ public class SVG
       if (this.rootElement == null)
          throw new IllegalArgumentException("SVG document is empty");
 
-      this.rootElement.width = SVGParser.parseLength(value);
+      this.rootElement.width = SVGParserImpl.parseLength(value);
    }
 
 
@@ -826,7 +826,7 @@ public class SVG
       if (this.rootElement == null)
          throw new IllegalArgumentException("SVG document is empty");
 
-      this.rootElement.height = SVGParser.parseLength(value);
+      this.rootElement.height = SVGParserImpl.parseLength(value);
    }
 
 

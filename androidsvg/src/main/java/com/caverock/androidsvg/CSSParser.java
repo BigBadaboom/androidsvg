@@ -21,7 +21,7 @@ import android.util.Log;
 import com.caverock.androidsvg.SVG.SvgContainer;
 import com.caverock.androidsvg.SVG.SvgElementBase;
 import com.caverock.androidsvg.SVG.SvgObject;
-import com.caverock.androidsvg.SVGParser.TextScanner;
+import com.caverock.androidsvg.SVGParserImpl.TextScanner;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -1284,7 +1284,7 @@ class CSSParser
          }
          scan.consume(';');
          // TODO: support CSS only values such as "inherit"
-         SVGParser.processStyleProperty(ruleStyle, propertyName, propertyValue);
+         SVGParserImpl.processStyleProperty(ruleStyle, propertyName, propertyValue);
          scan.skipWhitespace();
          if (scan.empty() || scan.consume('}'))
             break;
