@@ -21,6 +21,7 @@ import android.graphics.Canvas;
 import android.graphics.Path;
 import android.os.Build;
 
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
@@ -236,6 +237,33 @@ public class ParseTest
       List<String>  ops = mock.getOperations();
       //System.out.println(String.join(",", ops));
       assertEquals("#ff008000", mock.paintProp(3, "color"));
+   }
+
+
+   /**
+    * Issue 199
+    * Semi-thread safe parsing properties (enableInternalEntities and externalFileResolver)
+    */
+   @Test
+   public void issue199() throws SVGParseException
+   {
+      String  test = "<svg xmlns=\"http://www.w3.org/2000/svg\"></svg>";
+
+      SVG  svg = SVG.getFromString(test);
+      assertTrue(svg.isInternalEntitiesEnabled());
+      Assert.assertNull(svg.getExternalFileResolver());
+
+      SVG.setInternalEntitiesEnabled(false);
+      SVGExternalFileResolver  resolver = new SimpleAssetResolver(null);
+      SVG.registerExternalFileResolver(resolver);
+
+      SVG  svg2 = SVG.getFromString(test);
+      Assert.assertFalse(svg2.isInternalEntitiesEnabled());
+      Assert.assertEquals(resolver, svg2.getExternalFileResolver());
+
+      // Ensure settings for "svg" haven't changed
+      assertTrue(svg.isInternalEntitiesEnabled());
+      Assert.assertNull(svg.getExternalFileResolver());
    }
 
 }

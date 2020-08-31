@@ -84,12 +84,16 @@ public class SVG
 
    private static final double  SQRT2 = 1.414213562373095;
 
-   // Resolver
+   // Parser configuration singletons
+   // Configures the parser that will be used for the next SVG that gets parsed
    private static SVGExternalFileResolver  externalFileResolverSingleton = null;
-   private SVGExternalFileResolver externalFileResolver;
+   private static boolean                  enableInternalEntitiesSingleton = true;
 
-   // Parser configuration
-   private static boolean  enableInternalEntities = true;
+   // The parser configuration settings that was used for the current instance
+   // WIll continue to be used for future parsing by this instance. For example
+   // when parsing addition CSS.
+   private SVGExternalFileResolver  externalFileResolver;
+   private boolean                  enableInternalEntities;
 
    // The root svg element
    private Svg     rootElement = null;
@@ -132,9 +136,10 @@ public class SVG
 
 
    /* package private */
-   SVG(SVGExternalFileResolver fileResolver)
+   SVG(boolean enableInternalEntities, SVGExternalFileResolver fileResolver)
    {
-      externalFileResolver = fileResolver;
+      this.enableInternalEntities = enableInternalEntities;
+      this.externalFileResolver = fileResolver;
    }
 
 
@@ -265,21 +270,6 @@ public class SVG
    }
 
 
-
-   //===============================================================================
-
-   /**
-    * Creates a new {@link SVGParser} instance.
-    *
-    * @since 1.5
-    */
-   public static SVGParser createParser()
-   {
-      return new SVGParserImpl()
-              .setInternalEntitiesEnabled(enableInternalEntities)
-              .setExternalFileResolver(externalFileResolverSingleton);
-   }
-
    //===============================================================================
 
    /**
@@ -307,15 +297,22 @@ public class SVG
    @SuppressWarnings("unused")
    public static void  setInternalEntitiesEnabled(boolean enable)
    {
-      enableInternalEntities = enable;
+      enableInternalEntitiesSingleton = enable;
    }
 
    /**
+    * Indicates whether internal entities were enabled when this SVG was parsed.
+    *
+    * <p>
+    * <em>Note: prior to release 1.5, this was a static method of (@code SVG}.  In 1.5, it was
+    * changed to a instance method to coincide with the change making parsing settings thread safe.</em>
+    * </p>
+    *
     * @return true if internal entity expansion is enabled in the parser
-    * @since 1.3
+    * @since 1.5
     */
    @SuppressWarnings("unused")
-   public static boolean  isInternalEntitiesEnabled()
+   public boolean  isInternalEntitiesEnabled()
    {
       return enableInternalEntities;
    }
@@ -343,11 +340,28 @@ public class SVG
 
    /**
     * De-register the current {@link SVGExternalFileResolver} instance.
+    *
+    * @since 1.3
     */
    @SuppressWarnings("unused")
    public static void  deregisterExternalFileResolver()
    {
       externalFileResolverSingleton = null;
+   }
+
+
+
+
+   /**
+    * Get the {@link SVGExternalFileResolver} in effect when this SVG was parsed..
+    *
+    * @return the current external file resolver instance
+    * @since 1.5
+    */
+   @SuppressWarnings("unused")
+   public SVGExternalFileResolver  getExternalFileResolver()
+   {
+      return externalFileResolver;
    }
 
 
@@ -479,7 +493,6 @@ public class SVG
       if (renderOptions == null || renderOptions.viewPort == null) {
          renderOptions = (renderOptions == null) ? new RenderOptions() : new RenderOptions(renderOptions);
          renderOptions.viewPort(0f, 0f, (float) widthInPixels, (float) heightInPixels);
-         renderOptions.setExternalFileResolver(externalFileResolver);
       }
 
       SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, this.renderDPI, externalFileResolver);
@@ -510,8 +523,7 @@ public class SVG
    {
       RenderOptions  renderOptions = new RenderOptions();
       renderOptions.view(viewId)
-                   .viewPort(0f, 0f, (float) widthInPixels, (float) heightInPixels)
-                   .setExternalFileResolver(externalFileResolver);
+                   .viewPort(0f, 0f, (float) widthInPixels, (float) heightInPixels);
 
 
       Picture  picture = new Picture();
@@ -967,6 +979,16 @@ public class SVG
       return -1f;
    }
 
+
+
+   //===============================================================================
+
+
+   private static SVGParser  createParser()
+   {
+      return new SVGParserImpl().setInternalEntitiesEnabled(enableInternalEntitiesSingleton)
+                                .setExternalFileResolver(externalFileResolverSingleton);
+   }
 
 
    //===============================================================================

@@ -38,14 +38,13 @@ import android.graphics.RectF;
 
 public class RenderOptions
 {
-   CSSParser.Ruleset        css = null;
-   //String                 id = null;
-   PreserveAspectRatio      preserveAspectRatio = null;
-   String                   targetId = null;
-   SVG.Box                  viewBox = null;
-   String                   viewId = null;
-   SVG.Box                  viewPort = null;
-   SVGExternalFileResolver  externalFileResolver = null;
+   String               css = null;
+   //String             id = null;
+   PreserveAspectRatio  preserveAspectRatio = null;
+   String               targetId = null;
+   SVG.Box              viewBox = null;
+   String               viewId = null;
+   SVG.Box              viewPort = null;
 
 
    /**
@@ -84,18 +83,6 @@ public class RenderOptions
    }
 
    /**
-    * Register an {@link SVGExternalFileResolver} instance that the renderer should use when resolving
-    * external references such as images, fonts, and CSS stylesheets.
-    *
-    * @param resolver the resolver to use.
-    * @since 1.5
-    */
-   public RenderOptions setExternalFileResolver(SVGExternalFileResolver resolver) {
-      this.externalFileResolver = resolver;
-      return this;
-   }
-
-   /**
     * Specifies some additional CSS rules that will be applied during render in addition to
     * any specified in the file itself.
     * @param css CSS rules to apply
@@ -103,8 +90,7 @@ public class RenderOptions
     */
    public RenderOptions  css(String css)
    {
-      CSSParser  parser = new CSSParser(CSSParser.Source.RenderOptions, externalFileResolver);
-      this.css = parser.parse(css);
+      this.css = css;
       return this;
    }
 
@@ -115,7 +101,7 @@ public class RenderOptions
     */
    public boolean hasCss()
    {
-      return this.css != null && this.css.ruleCount() > 0;
+      return this.css != null && this.css.trim().length() > 0;
    }
 
 

@@ -894,7 +894,7 @@ class SVGParserImpl implements SVGParser
 
    private void startDocument()
    {
-      SVGParserImpl.this.svgDocument = new SVG(externalFileResolver);
+      SVGParserImpl.this.svgDocument = new SVG(enableInternalEntities, externalFileResolver);
    }
 
 

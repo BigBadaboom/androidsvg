@@ -290,11 +290,10 @@ class SVGAndroidRenderer
                                                                       : rootObj.preserveAspectRatio;
       }
 
-      if (externalFileResolver == null)
-         externalFileResolver = renderOptions.externalFileResolver;
-
-      if (renderOptions.hasCss())
-         document.addCSSRules(renderOptions.css);
+      if (renderOptions.hasCss()) {
+         CSSParser  parser = new CSSParser(CSSParser.Source.RenderOptions, externalFileResolver);
+         document.addCSSRules(parser.parse(renderOptions.css));
+      }
       if (renderOptions.hasTarget()) {
          this.ruleMatchContext = new CSSParser.RuleMatchContext();
          this.ruleMatchContext.targetElement = document.getElementById(renderOptions.targetId);
@@ -892,7 +891,7 @@ class SVGAndroidRenderer
          // Check formats (MIME types)
          Set<String>  reqfmts = condObj.getRequiredFormats();
          if (reqfmts != null) {
-            if (reqfmts.isEmpty() || externalFileResolver==null)
+            if (reqfmts.isEmpty() || externalFileResolver == null)
                continue;
             for (String mimeType: reqfmts) {
                if (!externalFileResolver.isFormatSupported(mimeType))
@@ -902,7 +901,7 @@ class SVGAndroidRenderer
          // Check formats (MIME types)
          Set<String>  reqfonts = condObj.getRequiredFonts();
          if (reqfonts != null) {
-            if (reqfonts.isEmpty() || externalFileResolver==null)
+            if (reqfonts.isEmpty() || externalFileResolver == null)
                continue;
             for (String fontName: reqfonts) {
                if (externalFileResolver.resolveFont(fontName, state.style.fontWeight, String.valueOf(state.style.fontStyle)) == null)
