@@ -63,7 +63,7 @@ public class CssPseudoClasses
       assertEquals("#ff00ff00", mock.paintProp(3, "color"));
       assertEquals("#ff000000", mock.paintProp(6, "color"));
 
-      ops.clear();;
+      ops.clear();
 
       // ":first-child" by itself should match everything (matches <svg>, which affects all children)
       renderOptions.css(":first-child { fill: #00f; }");
@@ -97,7 +97,7 @@ public class CssPseudoClasses
       svg.renderToCanvas(canvas, renderOptions);
 
       MockCanvas    mock = ((MockCanvas) Shadow.extract(canvas));
-      List<String>  ops = mock.getOperations();
+      //List<String>  ops = mock.getOperations();
       //System.out.println(String.join(",", ops));
 
       assertEquals("#ff000000", mock.paintProp(3, "color"));
@@ -128,7 +128,7 @@ public class CssPseudoClasses
       svg.renderToCanvas(canvas, renderOptions);
 
       MockCanvas    mock = ((MockCanvas) Shadow.extract(canvas));
-      List<String>  ops = mock.getOperations();
+      //List<String>  ops = mock.getOperations();
       //System.out.println(String.join(",", ops));
 
       assertEquals("#ff000000", mock.paintProp(3, "color"));
@@ -166,7 +166,7 @@ public class CssPseudoClasses
       assertEquals("#ff00ff00", mock.paintProp(6, "color"));
       assertEquals("#ff000000", mock.paintProp(9, "color"));
 
-      ops.clear();;
+      ops.clear();
 
       test = "<svg width=\"100\" height=\"100\">" +
              "  <circle cx=\"10\" cy=\"10\" r=\"10\"/>" +
@@ -181,7 +181,7 @@ public class CssPseudoClasses
       svg.renderToCanvas(canvas, renderOptions);
 
       mock = ((MockCanvas) Shadow.extract(canvas));
-      ops = mock.getOperations();
+      //ops = mock.getOperations();
       //System.out.println(String.join(",", ops));
 
       // All the elements will be green because :first-of-type matches the <svg> and all the child elements inherit that green
@@ -223,7 +223,7 @@ public class CssPseudoClasses
 
       // Test tagless version
 
-      ops.clear();;
+      ops.clear();
 
       test = "<svg width=\"100\" height=\"100\">" +
              "  <circle cx=\"10\" cy=\"10\" r=\"10\"/>" +
@@ -238,7 +238,7 @@ public class CssPseudoClasses
       svg.renderToCanvas(canvas, renderOptions);
 
       mock = ((MockCanvas) Shadow.extract(canvas));
-      ops = mock.getOperations();
+      //ops = mock.getOperations();
       //System.out.println(String.join(",", ops));
 
       // All the elements will be green because :first-of-type matches the <svg> and all the child elements inherit that green
@@ -272,7 +272,7 @@ public class CssPseudoClasses
       svg.renderToCanvas(canvas, renderOptions);
 
       MockCanvas    mock = ((MockCanvas) Shadow.extract(canvas));
-      List<String>  ops = mock.getOperations();
+      //List<String>  ops = mock.getOperations();
       //System.out.println(String.join(",", ops));
 
       assertEquals("#ff000000", mock.paintProp(3, "color"));
@@ -303,7 +303,7 @@ public class CssPseudoClasses
       svg.renderToCanvas(canvas, renderOptions);
 
       MockCanvas    mock = ((MockCanvas) Shadow.extract(canvas));
-      List<String>  ops = mock.getOperations();
+      //List<String>  ops = mock.getOperations();
       //System.out.println(String.join(",", ops));
 
       assertEquals("#ff000000", mock.paintProp(3, "color"));
@@ -336,7 +336,7 @@ public class CssPseudoClasses
       svg.renderToCanvas(canvas, renderOptions);
 
       MockCanvas    mock = ((MockCanvas) Shadow.extract(canvas));
-      List<String>  ops = mock.getOperations();
+      //List<String>  ops = mock.getOperations();
       //System.out.println(String.join(",", ops));
 
       assertEquals("#ff00ff00", mock.paintProp(3, "color"));
@@ -369,7 +369,7 @@ public class CssPseudoClasses
       svg.renderToCanvas(canvas, renderOptions);
 
       MockCanvas    mock = ((MockCanvas) Shadow.extract(canvas));
-      List<String>  ops = mock.getOperations();
+      //List<String>  ops = mock.getOperations();
       //System.out.println(String.join(",", ops));
 
       assertEquals("#ff00ff00", mock.paintProp(3, "color"));
@@ -403,7 +403,7 @@ public class CssPseudoClasses
       svg.renderToCanvas(canvas, renderOptions);
 
       MockCanvas    mock = ((MockCanvas) Shadow.extract(canvas));
-      List<String>  ops = mock.getOperations();
+      //List<String>  ops = mock.getOperations();
       //System.out.println(String.join(",", ops));
 
       assertEquals("#ff00ff00", mock.paintProp(3, "color"));
@@ -437,7 +437,7 @@ public class CssPseudoClasses
       svg.renderToCanvas(canvas, renderOptions);
 
       MockCanvas    mock = ((MockCanvas) Shadow.extract(canvas));
-      List<String>  ops = mock.getOperations();
+      //List<String>  ops = mock.getOperations();
       //System.out.println(String.join(",", ops));
 
       assertEquals("#ff000000", mock.paintProp(3, "color"));
@@ -471,7 +471,7 @@ public class CssPseudoClasses
       svg.renderToCanvas(canvas, renderOptions);
 
       MockCanvas    mock = ((MockCanvas) Shadow.extract(canvas));
-      List<String>  ops = mock.getOperations();
+      //List<String>  ops = mock.getOperations();
       //System.out.println(String.join(",", ops));
 
       assertEquals("#ff000000", mock.paintProp(3, "color"));
@@ -511,7 +511,7 @@ public class CssPseudoClasses
       svg.renderToCanvas(canvas, renderOptions);
 
       MockCanvas    mock = ((MockCanvas) Shadow.extract(canvas));
-      List<String>  ops = mock.getOperations();
+      //List<String>  ops = mock.getOperations();
       //System.out.println(String.join(",", ops));
 
       assertEquals("#ff000000", mock.paintProp(3, "color"));
@@ -557,7 +557,7 @@ public class CssPseudoClasses
       svg.renderToCanvas(canvas, renderOptions);
 
       MockCanvas    mock = ((MockCanvas) Shadow.extract(canvas));
-      List<String>  ops = mock.getOperations();
+      //List<String>  ops = mock.getOperations();
       //System.out.println(String.join(",", ops));
 
       assertEquals("#ff000000", mock.paintProp(3, "color"));
@@ -598,7 +598,7 @@ public class CssPseudoClasses
       svg.renderToCanvas(canvas, renderOptions);
 
       MockCanvas    mock = ((MockCanvas) Shadow.extract(canvas));
-      List<String>  ops = mock.getOperations();
+      //List<String>  ops = mock.getOperations();
       //System.out.println(String.join(",", ops));
 
       assertEquals("#ff00ff00", mock.paintProp(3, "color"));
@@ -634,7 +634,7 @@ public class CssPseudoClasses
       svg.renderToCanvas(canvas, renderOptions);
 
       MockCanvas    mock = ((MockCanvas) Shadow.extract(canvas));
-      List<String>  ops = mock.getOperations();
+      //List<String>  ops = mock.getOperations();
       //System.out.println(String.join(",", ops));
 
       assertEquals("#ff000000", mock.paintProp(3, "color"));
@@ -670,7 +670,7 @@ public class CssPseudoClasses
       svg.renderToCanvas(canvas, renderOptions);
 
       MockCanvas    mock = ((MockCanvas) Shadow.extract(canvas));
-      List<String>  ops = mock.getOperations();
+      //List<String>  ops = mock.getOperations();
       //System.out.println(String.join(",", ops));
 
       assertEquals("#ff000000", mock.paintProp(3, "color"));
@@ -709,7 +709,7 @@ public class CssPseudoClasses
       svg.renderToCanvas(canvas, renderOptions);
 
       MockCanvas    mock = ((MockCanvas) Shadow.extract(canvas));
-      List<String>  ops = mock.getOperations();
+      //List<String>  ops = mock.getOperations();
       //System.out.println(String.join(",", ops));
 
       assertEquals("#ff000000", mock.paintProp(3, "color"));
@@ -721,7 +721,7 @@ public class CssPseudoClasses
 
 
    @Test
-   public void nthChildMinu4Plus10() throws SVGParseException
+   public void nthChildMinus4Plus10() throws SVGParseException
    {
       //disableLogging();
       String  test = "<svg width=\"100\" height=\"100\">" +
@@ -750,7 +750,7 @@ public class CssPseudoClasses
       svg.renderToCanvas(canvas, renderOptions);
 
       MockCanvas    mock = ((MockCanvas) Shadow.extract(canvas));
-      List<String>  ops = mock.getOperations();
+      //List<String>  ops = mock.getOperations();
       //System.out.println(String.join(",", ops));
 
       assertEquals("#ff000000", mock.paintProp(3, "color"));
@@ -791,7 +791,7 @@ public class CssPseudoClasses
       svg.renderToCanvas(canvas, renderOptions);
 
       MockCanvas    mock = ((MockCanvas) Shadow.extract(canvas));
-      List<String>  ops = mock.getOperations();
+      //List<String>  ops = mock.getOperations();
       //System.out.println(String.join(",", ops));
 
       assertEquals("#ff00ff00", mock.paintProp(3, "color"));
@@ -827,7 +827,7 @@ public class CssPseudoClasses
       svg.renderToCanvas(canvas, renderOptions);
 
       MockCanvas    mock = ((MockCanvas) Shadow.extract(canvas));
-      List<String>  ops = mock.getOperations();
+      //List<String>  ops = mock.getOperations();
       //System.out.println(String.join(",", ops));
 
       assertEquals("#ff00ff00", mock.paintProp(3, "color"));
@@ -863,7 +863,7 @@ public class CssPseudoClasses
       svg.renderToCanvas(canvas, renderOptions);
 
       MockCanvas    mock = ((MockCanvas) Shadow.extract(canvas));
-      List<String>  ops = mock.getOperations();
+      //List<String>  ops = mock.getOperations();
       //System.out.println(String.join(",", ops));
 
       assertEquals("#ff00ff00", mock.paintProp(3, "color"));
@@ -898,7 +898,7 @@ public class CssPseudoClasses
       svg.renderToCanvas(canvas, renderOptions);
 
       MockCanvas    mock = ((MockCanvas) Shadow.extract(canvas));
-      List<String>  ops = mock.getOperations();
+      //List<String>  ops = mock.getOperations();
       //System.out.println(String.join(",", ops));
 
       assertEquals("#ff00ff00", mock.paintProp(3, "color"));
@@ -932,7 +932,7 @@ public class CssPseudoClasses
       svg.renderToCanvas(canvas, renderOptions);
 
       MockCanvas    mock = ((MockCanvas) Shadow.extract(canvas));
-      List<String>  ops = mock.getOperations();
+      //List<String>  ops = mock.getOperations();
       //System.out.println(String.join(",", ops));
 
       assertEquals("#ff000000", mock.paintProp(3, "color"));
@@ -966,7 +966,7 @@ public class CssPseudoClasses
       svg.renderToCanvas(canvas, renderOptions);
 
       MockCanvas    mock = ((MockCanvas) Shadow.extract(canvas));
-      List<String>  ops = mock.getOperations();
+      //List<String>  ops = mock.getOperations();
       //System.out.println(String.join(",", ops));
 
       assertEquals("#ff000000", mock.paintProp(3, "color"));
@@ -1000,7 +1000,7 @@ public class CssPseudoClasses
       svg.renderToCanvas(canvas, renderOptions);
 
       MockCanvas    mock = ((MockCanvas) Shadow.extract(canvas));
-      List<String>  ops = mock.getOperations();
+      //List<String>  ops = mock.getOperations();
       //System.out.println(String.join(",", ops));
 
       assertEquals("#ff00ff00", mock.paintProp(3, "color"));
@@ -1034,7 +1034,7 @@ public class CssPseudoClasses
       svg.renderToCanvas(canvas, renderOptions);
 
       MockCanvas    mock = ((MockCanvas) Shadow.extract(canvas));
-      List<String>  ops = mock.getOperations();
+      //List<String>  ops = mock.getOperations();
       //System.out.println(String.join(",", ops));
 
       assertEquals("#ff00ff00", mock.paintProp(3, "color"));
@@ -1068,7 +1068,7 @@ public class CssPseudoClasses
       svg.renderToCanvas(canvas, renderOptions);
 
       MockCanvas    mock = ((MockCanvas) Shadow.extract(canvas));
-      List<String>  ops = mock.getOperations();
+      //List<String>  ops = mock.getOperations();
       //System.out.println(String.join(",", ops));
 
       assertEquals("#ff000000", mock.paintProp(3, "color"));
@@ -1102,7 +1102,7 @@ public class CssPseudoClasses
       svg.renderToCanvas(canvas, renderOptions);
 
       MockCanvas    mock = ((MockCanvas) Shadow.extract(canvas));
-      List<String>  ops = mock.getOperations();
+      //List<String>  ops = mock.getOperations();
       //System.out.println(String.join(",", ops));
 
       assertEquals("#ff000000", mock.paintProp(3, "color"));
@@ -1136,7 +1136,7 @@ public class CssPseudoClasses
       svg.renderToCanvas(canvas, renderOptions);
 
       MockCanvas    mock = ((MockCanvas) Shadow.extract(canvas));
-      List<String>  ops = mock.getOperations();
+      //List<String>  ops = mock.getOperations();
       //System.out.println(String.join(",", ops));
 
       assertEquals("#ff000000", mock.paintProp(3, "color"));
@@ -1170,7 +1170,7 @@ public class CssPseudoClasses
       svg.renderToCanvas(canvas, renderOptions);
 
       MockCanvas    mock = ((MockCanvas) Shadow.extract(canvas));
-      List<String>  ops = mock.getOperations();
+      //List<String>  ops = mock.getOperations();
       //System.out.println(String.join(",", ops));
 
       assertEquals("#ff000000", mock.paintProp(3, "color"));
@@ -1205,7 +1205,7 @@ public class CssPseudoClasses
       svg.renderToCanvas(canvas, renderOptions);
 
       MockCanvas    mock = ((MockCanvas) Shadow.extract(canvas));
-      List<String>  ops = mock.getOperations();
+      //List<String>  ops = mock.getOperations();
       //System.out.println(String.join(",", ops));
 
       assertEquals("#ff000000", mock.paintProp(3, "color"));
@@ -1276,7 +1276,7 @@ public class CssPseudoClasses
       svg.renderToCanvas(canvas, renderOptions);
 
       MockCanvas    mock = ((MockCanvas) Shadow.extract(canvas));
-      List<String>  ops = mock.getOperations();
+      //List<String>  ops = mock.getOperations();
       //System.out.println(String.join(",", ops));
 
       assertEquals("#ff000000", mock.paintProp(3, "color"));

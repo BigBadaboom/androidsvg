@@ -18,8 +18,6 @@ package com.caverock.androidsvg;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Matrix;
-import android.graphics.Rect;
 import android.os.Build;
 
 import org.junit.Test;
@@ -59,7 +57,7 @@ public class RenderCSS
       svg.renderToCanvas(canvas, renderOptions);
 
       MockCanvas    mock = ((MockCanvas) Shadow.extract(canvas));
-      List<String>  ops = mock.getOperations();
+      //List<String>  ops = mock.getOperations();
       //System.out.println(String.join(",", ops));
 
       assertEquals("#ff000000", mock.paintProp(3, "color"));

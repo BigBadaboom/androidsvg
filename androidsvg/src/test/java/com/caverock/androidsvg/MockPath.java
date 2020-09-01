@@ -66,7 +66,7 @@ public class MockPath
       MockPath  mockOtherPath = ((MockPath) Shadow.extract(otherPath));
       if (path.isEmpty()) {
 
-         path = new ArrayList(mockOtherPath.path);
+         path = new ArrayList<>(mockOtherPath.path);
          return true;
       }
 
@@ -86,7 +86,7 @@ public class MockPath
    public void  transform(Matrix matrix)
    {
       if (this.transforms == null)
-         this.transforms = new ArrayList<Matrix>();
+         this.transforms = new ArrayList<>();
       this.transforms.add(matrix);
    }
 

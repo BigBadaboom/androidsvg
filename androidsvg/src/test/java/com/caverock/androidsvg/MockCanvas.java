@@ -252,7 +252,7 @@ public class MockCanvas
    String  paintProp(int opsIndex, String propName)
    {
       String   op = operations.get(opsIndex);
-      Pattern  re = Pattern.compile("[\\(\\s]" + propName + ":([^\\s\\)]*)");
+      Pattern  re = Pattern.compile("[(\\s]" + propName + ":([^\\s)]*)");
       Matcher  m = re.matcher(op);
       return m.find() ? m.group(1) : "NO "+propName;
    }

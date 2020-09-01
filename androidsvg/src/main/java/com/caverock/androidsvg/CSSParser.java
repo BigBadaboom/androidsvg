@@ -47,10 +47,10 @@ class CSSParser
    private static final int SPECIFICITY_ATTRIBUTE_OR_PSEUDOCLASS = 1000;
    private static final int SPECIFICITY_ELEMENT_OR_PSEUDOELEMENT = 1;
 
-   private MediaType  deviceMediaType = null;
-   private Source     source = null;    // Where these rules came from (Parser or RenderOptions)
+   private MediaType  deviceMediaType;
+   private Source     source;    // Where these rules came from (Parser or RenderOptions)
 
-   private SVGExternalFileResolver externalFileResolver = null;
+   private SVGExternalFileResolver externalFileResolver;
 
    private boolean  inMediaRule = false;
 
@@ -118,7 +118,7 @@ class CSSParser
       //target_within,
       //blank,
 
-      // Opers from Selectors 4
+      // Operators from Selectors 4
       // any-link, local-link, scope, focus-visible, focus-within, drop, current, past,
       // future, playing, paused, read-only, read-write, placeholder-shown, default, valid, invalid,
       // in-range, out-of-range, required, optional, user-invalid, nth-col, nth-last-col
@@ -162,8 +162,8 @@ class CSSParser
 
    private static class SimpleSelector
    {
-      Combinator         combinator = null;
-      String             tag = null;       // null means "*"
+      Combinator         combinator;
+      String             tag;       // null means "*"
       List<Attrib>       attribs = null;
       List<PseudoClass>  pseudos = null;
 
@@ -263,7 +263,7 @@ class CSSParser
       }
 
       /*
-       * Remove all rules that were addres from a give Source.
+       * Remove all rules that were added from a given Source.
        */
       void  removeFromSource(Source sourceToBeRemoved)
       {
@@ -289,7 +289,7 @@ class CSSParser
    }
 
 
-   static enum  Source
+   enum  Source
    {
       Document,
       RenderOptions
@@ -298,9 +298,9 @@ class CSSParser
 
    static class  Rule
    {
-      Selector   selector = null;
-      SVG.Style  style = null;
-      Source     source;
+      final Selector   selector;
+      final SVG.Style  style;
+      final Source     source;
       
       Rule(Selector selector, SVG.Style style, Source source)
       {
@@ -312,7 +312,7 @@ class CSSParser
       @Override
       public String toString()
       {
-         return String.valueOf(selector) + " {...} (src="+this.source+")";
+         return selector + " {...} (src="+this.source+")";
       }
    }
 
@@ -339,6 +339,7 @@ class CSSParser
          return this.simpleSelectors.get(i);
       }
 
+      @SuppressWarnings("BooleanMethodIsAlwaysInverted")
       boolean isEmpty()
       {
          return (this.simpleSelectors == null) || this.simpleSelectors.isEmpty();
@@ -638,8 +639,8 @@ class CSSParser
 
       private static class  AnPlusB
       {
-         public int a;
-         public int b;
+         final public int a;
+         final public int b;
 
          AnPlusB(int a, int b) {
             this.a = a;
@@ -648,7 +649,7 @@ class CSSParser
       }
 
 
-      private AnPlusB  nextAnPlusB() throws CSSParseException
+      private AnPlusB  nextAnPlusB()
       {
          if (empty())
             return null;
@@ -724,7 +725,7 @@ class CSSParser
        * Parse a list of identifiers from a pseudo class parameter set.
        * Eg. for :lang(en)
        */
-      private List<String>  nextIdentListParam() throws CSSParseException
+      private List<String>  nextIdentListParam()
       {
          if (empty())
             return null;
@@ -736,8 +737,8 @@ class CSSParser
            return null;
          skipWhitespace();
 
-         while (true) {
-            String  ident = nextIdentifier();
+         do {
+            String ident = nextIdentifier();
             if (ident == null) {
                position = start;
                return null;
@@ -746,9 +747,7 @@ class CSSParser
                result = new ArrayList<>();
             result.add(ident);
             skipWhitespace();
-            if (!skipCommaWhitespace())
-               break;
-         }
+         } while (skipCommaWhitespace());
 
          if (consume(')'))
            return result;
@@ -814,7 +813,7 @@ class CSSParser
          if (ident == null)
             throw new CSSParseException("Invalid pseudo class");
 
-         PseudoClass        pseudo = null;
+         PseudoClass        pseudo;
          PseudoClassIdents  identEnum = PseudoClassIdents.fromString(ident);
          switch (identEnum)
          {
@@ -1002,11 +1001,11 @@ class CSSParser
       private int  hexChar(int ch)
       {
          if (ch >= '0' && ch <= '9')
-            return ((int)ch - (int)'0');
+            return (ch - (int)'0');
          if (ch >= 'A' && ch <= 'F')
-            return ((int)ch - (int)'A') + 10;
+            return (ch - (int)'A') + 10;
          if (ch >= 'a' && ch <= 'f')
-            return ((int)ch - (int)'a') + 10;
+            return (ch - (int)'a') + 10;
          return -1;
       }
 
@@ -1265,14 +1264,13 @@ class CSSParser
    private SVG.Style  parseDeclarations(CSSTextScanner scan) throws CSSParseException
    {
       SVG.Style  ruleStyle = new SVG.Style();
-      while (true)
-      {
-         String  propertyName = scan.nextIdentifier();
+      do {
+         String propertyName = scan.nextIdentifier();
          scan.skipWhitespace();
          if (!scan.consume(':'))
             throw new CSSParseException("Expected ':'");
          scan.skipWhitespace();
-         String  propertyValue = scan.nextPropertyValue();
+         String propertyValue = scan.nextPropertyValue();
          if (propertyValue == null)
             throw new CSSParseException("Expected property value");
          // Check for !important flag.
@@ -1289,9 +1287,7 @@ class CSSParser
          // TODO: support CSS only values such as "inherit"
          SVGParserImpl.processStyleProperty(ruleStyle, propertyName, propertyValue);
          scan.skipWhitespace();
-         if (scan.empty() || scan.consume('}'))
-            break;
-      }
+      } while (!scan.empty() && !scan.consume('}'));
       return ruleStyle;
    }
 
@@ -1498,19 +1494,19 @@ class CSSParser
    //==============================================================================
 
 
-   private static interface  PseudoClass
+   private interface  PseudoClass
    {
-      public boolean  matches(RuleMatchContext ruleMatchContext, SvgElementBase obj);
+      boolean  matches(RuleMatchContext ruleMatchContext, SvgElementBase obj);
    }
 
 
    private static class  PseudoClassAnPlusB  implements PseudoClass
    {
-      private int      a;
-      private int      b;
-      private boolean  isFromStart;
-      private boolean  isOfType;
-      private String   nodeName;  // The node name for when isOfType is true
+      private final int      a;
+      private final int      b;
+      private final boolean  isFromStart;
+      private final boolean  isOfType;
+      private final String   nodeName;  // The node name for when isOfType is true
 
 
       PseudoClassAnPlusB(int a, int b, boolean isFromStart, boolean isOfType, String nodeName)
@@ -1525,7 +1521,7 @@ class CSSParser
       @Override
       public boolean matches(RuleMatchContext ruleMatchContext, SvgElementBase obj)
       {
-         // If this is a "*-of-type" pseudoclass, and the node name hasn't beens specified,
+         // If this is a "*-of-type" pseudoclass, and the node name hasn't been specified,
          // then match true if the element being tested is first of its type
          String  nodeNameToCheck = (isOfType && nodeName == null) ? obj.getNodeName() : nodeName;
 
@@ -1566,8 +1562,8 @@ class CSSParser
       public String toString()
       {
          String last = isFromStart ? "" : "last-";
-         return isOfType ? String.format("nth-%schild(%dn%+d of type <%s>)", last, a, b, nodeName)
-                         : String.format("nth-%schild(%dn%+d)", last, a, b);
+         return isOfType ? String.format(Locale.US, "nth-%schild(%dn%+d of type <%s>)", last, a, b, nodeName)
+                         : String.format(Locale.US, "nth-%schild(%dn%+d)", last, a, b);
       }
 
    }
@@ -1575,8 +1571,8 @@ class CSSParser
 
    private static class  PseudoClassOnlyChild  implements PseudoClass
    {
-      private boolean  isOfType;
-      private String   nodeName;  // The node name for when isOfType is true
+      private final boolean  isOfType;
+      private final String   nodeName;  // The node name for when isOfType is true
 
 
       public PseudoClassOnlyChild(boolean isOfType, String nodeName)
@@ -1588,7 +1584,7 @@ class CSSParser
       @Override
       public boolean matches(RuleMatchContext ruleMatchContext, SvgElementBase obj)
       {
-         // If this is a "*-of-type" pseudoclass, and the node name hasn't beens specified,
+         // If this is a "*-of-type" pseudoclass, and the node name hasn't been specified,
          // then match true if the element being tested is first of its type
          String  nodeNameToCheck = (isOfType && nodeName == null) ? obj.getNodeName() : nodeName;
 
@@ -1613,7 +1609,7 @@ class CSSParser
       public String toString()
       {
          return isOfType ? String.format("only-of-type <%s>", nodeName)
-                         : String.format("only-child");
+                         : "only-child";
       }
 
    }
@@ -1663,7 +1659,7 @@ class CSSParser
 
    private static class  PseudoClassNot  implements PseudoClass
    {
-      private List<Selector>  selectorGroup;
+      private final List<Selector>  selectorGroup;
 
       PseudoClassNot(List<Selector> selectorGroup)
       {
@@ -1684,7 +1680,7 @@ class CSSParser
 
       int getSpecificity()
       {
-         // The specificity of :not is the kighest specificity of the selectors in its simpleSelectors parameter list
+         // The specificity of :not is the highest specificity of the selectors in its simpleSelectors parameter list
          int highest = Integer.MIN_VALUE;
          for (Selector selector: selectorGroup) {
             if (selector.specificity > highest)
@@ -1724,7 +1720,7 @@ class CSSParser
 
    private static class  PseudoClassNotSupported  implements PseudoClass
    {
-      private String  clazz;
+      private final String  clazz;
 
       PseudoClassNotSupported(String clazz)
       {

@@ -17,7 +17,6 @@
 package com.caverock.androidsvg;
 
 import android.graphics.Canvas;
-import android.graphics.RectF;
 
 /**
  * A fluent builder class that creates a render configuration object for the
@@ -80,6 +79,7 @@ public class RenderOptions
       this.viewBox = other.viewBox;
       this.viewId = other.viewId;
       this.viewPort = other.viewPort;
+      this.targetId = other.targetId;
    }
 
    /**
@@ -107,11 +107,12 @@ public class RenderOptions
 
    /**
     * Specifies how the renderer should handle aspect ratio when rendering the SVG.
-    * If not sepecified, the default will be <code>PreserveAspectRatio.LETTERBOX</code>. This is
+    * If not specified, the default will be <code>PreserveAspectRatio.LETTERBOX</code>. This is
     * equivalent to the SVG default of <code>xMidYMid meet</code>.
     * @param preserveAspectRatio the new aspect ration value
     * @return this same <code>RenderOptions</code> instance
     */
+   @SuppressWarnings("UnusedReturnValue")
    public RenderOptions  preserveAspectRatio(PreserveAspectRatio preserveAspectRatio)
    {
       this.preserveAspectRatio = preserveAspectRatio;

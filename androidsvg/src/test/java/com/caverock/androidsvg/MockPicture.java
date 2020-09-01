@@ -25,8 +25,6 @@ import org.robolectric.annotation.Implements;
 import org.robolectric.shadow.api.Shadow;
 import org.robolectric.shadows.ShadowPicture;
 
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.List;
 
 /**

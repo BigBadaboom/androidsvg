@@ -35,8 +35,8 @@ package com.caverock.androidsvg;
  */
 public class PreserveAspectRatio
 {
-   private Alignment  alignment;
-   private Scale      scale;
+   private final Alignment  alignment;
+   private final Scale      scale;
 
    /**
     * Draw document at its natural position and scale.

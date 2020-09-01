@@ -148,10 +148,12 @@ public class SimpleAssetResolver extends SVGExternalFileResolver
    private String getAssetAsString(String url)
    {
       InputStream is = null;
+      //noinspection TryFinallyCanBeTryWithResources
       try
       {
          is = assetManager.open(url);
 
+         //noinspection CharsetObjectCanBeUsed
          Reader r = new InputStreamReader(is, Charset.forName("UTF-8"));
          char[]         buffer = new char[4096];
          StringBuilder  sb = new StringBuilder();

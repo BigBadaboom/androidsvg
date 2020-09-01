@@ -3,7 +3,7 @@ apply plugin: 'com.android.library'
 android {
     compileSdkVersion 29
     defaultConfig {
-        minSdkVersion 8
+        minSdkVersion 14
         targetSdkVersion 29
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
@@ -16,7 +16,7 @@ android {
     }
     dependencies {
         testImplementation 'junit:junit:4.12'
-        testImplementation 'org.robolectric:robolectric:3.8'
+        testImplementation 'org.robolectric:robolectric:4.3.1'
     }
     testOptions {
         unitTests {
@@ -29,5 +29,5 @@ apply from: 'publish.gradle'
 
 dependencies {
     androidTestImplementation 'junit:junit:4.12'
-    androidTestImplementation 'com.android.support.test:runner:0.5'
+    androidTestImplementation 'com.android.support.test:runner:1.0.2'
 }

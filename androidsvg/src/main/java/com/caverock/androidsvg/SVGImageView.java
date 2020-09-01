@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Paint;
@@ -46,11 +47,10 @@ import android.widget.ImageView;
  *   <dd>Optional extra CSS to apply when rendering the SVG</dd>
  * </dl>
  */
-@SuppressWarnings("JavaDoc")
 public class SVGImageView extends ImageView
 {
-   private SVG            svg = null;
-   private RenderOptions  renderOptions = new RenderOptions();
+   private SVG                  svg = null;
+   private final RenderOptions  renderOptions = new RenderOptions();
 
    private static Method  setLayerTypeMethod = null;
 
@@ -181,7 +181,7 @@ public class SVGImageView extends ImageView
    @Override
    public void setImageResource(int resourceId)
    {
-      new LoadResourceTask(getContext(), resourceId).execute();
+      new LoadResourceTask(this.getContext()).execute(resourceId);
    }
 
 
@@ -262,19 +262,19 @@ public class SVGImageView extends ImageView
    //===============================================================================================
 
 
+   @SuppressLint("StaticFieldLeak")
    private class LoadResourceTask extends AsyncTask<Integer, Integer, SVG>
    {
-      private Context  context;
-      private int      resourceId;
+      private final Context  context;
 
-      LoadResourceTask(Context context, int resourceId)
+      LoadResourceTask(Context context)
       {
          this.context = context;
-         this.resourceId = resourceId;
       }
 
       protected SVG  doInBackground(Integer... params)
       {
+         int  resourceId = params[0];
          try
          {
             return SVG.getFromResource(context, resourceId);
@@ -294,6 +294,7 @@ public class SVGImageView extends ImageView
    }
 
 
+   @SuppressLint("StaticFieldLeak")
    private class LoadURITask extends AsyncTask<InputStream, Integer, SVG>
    {
       protected SVG  doInBackground(InputStream... is)

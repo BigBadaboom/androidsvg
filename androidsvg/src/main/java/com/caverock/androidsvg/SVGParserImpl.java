@@ -609,7 +609,7 @@ class SVGParserImpl implements SVGParser
             String preamble = new String(checkBuf, 0, n);
             // Reset the stream so that the XML parsers can do their job.
             is.reset();
-            if (preamble.indexOf("<!ENTITY ") >= 0) {
+            if (preamble.contains("<!ENTITY ")) {
                // Found something that looks like an entity definition.
                // So we'll use the SAX parser which supports them.
                Log.d(TAG,"Switching to SAX parser to process entities");
@@ -661,9 +661,9 @@ class SVGParserImpl implements SVGParser
    /*
     * Implements the SAX Attributes class so that our parser can share a common attributes object
     */
-   private class  XPPAttributesWrapper  implements Attributes
+   private static class  XPPAttributesWrapper  implements Attributes
    {
-      private XmlPullParser  parser;
+      private final XmlPullParser  parser;
 
       public XPPAttributesWrapper(XmlPullParser parser)
       {
@@ -834,7 +834,7 @@ class SVGParserImpl implements SVGParser
    private class  SAXHandler  extends DefaultHandler2
    {
       @Override
-      public void startDocument() throws SAXException
+      public void startDocument()
       {
          SVGParserImpl.this.startDocument();
       }
@@ -871,14 +871,14 @@ class SVGParserImpl implements SVGParser
 
 
       @Override
-      public void endDocument() throws SAXException
+      public void endDocument()
       {
          SVGParserImpl.this.endDocument();
       }
 
 
       @Override
-      public void processingInstruction(String target, String data) throws SAXException
+      public void processingInstruction(String target, String data)
       {
          TextScanner  scan = new TextScanner(data);
          Map<String, String> attributes = parseProcessingInstructionAttributes(scan);
@@ -1330,11 +1330,12 @@ class SVGParserImpl implements SVGParser
    }
 
 
-   private void  parseAttributesA(SVG.A obj, Attributes attributes) throws SVGParseException
+   private void  parseAttributesA(SVG.A obj, Attributes attributes)
    {
       for (int i=0; i<attributes.getLength(); i++)
       {
          String val = attributes.getValue(i).trim();
+         //noinspection SwitchStatementWithTooFewBranches
          switch (SVGAttr.fromString(attributes.getLocalName(i)))
          {
             case href:
@@ -1906,6 +1907,7 @@ class SVGParserImpl implements SVGParser
       for (int i=0; i<attributes.getLength(); i++)
       {
          String val = attributes.getValue(i).trim();
+         //noinspection SwitchStatementWithTooFewBranches
          switch (SVGAttr.fromString(attributes.getLocalName(i)))
          {
             case href:
@@ -1941,7 +1943,7 @@ class SVGParserImpl implements SVGParser
    }
 
 
-   private void  parseAttributesConditional(SVG.SvgConditional obj, Attributes attributes) throws SVGParseException
+   private void  parseAttributesConditional(SVG.SvgConditional obj, Attributes attributes)
    {
       for (int i=0; i<attributes.getLength(); i++)
       {
@@ -2232,6 +2234,7 @@ class SVGParserImpl implements SVGParser
       for (int i=0; i<attributes.getLength(); i++)
       {
          String val = attributes.getValue(i).trim();
+         //noinspection SwitchStatementWithTooFewBranches
          switch (SVGAttr.fromString(attributes.getLocalName(i)))
          {
             case offset:
@@ -2317,6 +2320,7 @@ class SVGParserImpl implements SVGParser
       for (int i=0; i<attributes.getLength(); i++)
       {
          String val = attributes.getValue(i).trim();
+         //noinspection SwitchStatementWithTooFewBranches
          switch (SVGAttr.fromString(attributes.getLocalName(i)))
          {
             case clipPathUnits:
@@ -2558,11 +2562,11 @@ class SVGParserImpl implements SVGParser
 
    static class TextScanner
    {
-      String   input;
-      int      position = 0;
-      int      inputLength = 0;
+      final String  input;
+      int           position = 0;
+      int           inputLength;
 
-      private   NumberParser  numberParser = new NumberParser();
+      private  final NumberParser  numberParser = new NumberParser();
 
 
       TextScanner(String input)
@@ -2974,7 +2978,7 @@ class SVGParserImpl implements SVGParser
    /*
     * Parse the style attributes for an element.
     */
-   private void  parseAttributesStyle(SvgElementBase obj, Attributes attributes) throws SVGParseException
+   private void  parseAttributesStyle(SvgElementBase obj, Attributes attributes)
    {
       for (int i=0; i<attributes.getLength(); i++)
       {
@@ -3583,7 +3587,7 @@ class SVGParserImpl implements SVGParser
    {
       try {
          float  o = parseFloat(val);
-         return (o < 0f) ? 0f : (o > 1f) ? 1f : o;
+         return (o < 0f) ? 0f : Math.min(o, 1f);
       } catch (SVGParseException e) {
          return null;
       }
@@ -3823,8 +3827,8 @@ class SVGParserImpl implements SVGParser
       hue /= 60f;    // [0, 360] -> [0, 6]
       sat /= 100;   // [0, 100] -> [0, 1]
       light /= 100; // [0, 100] -> [0, 1]
-      sat = (sat < 0f) ? 0f : (sat > 1f) ? 1f : sat;
-      light = (light < 0f) ? 0f : (light > 1f) ? 1f : light;
+      sat = (sat < 0f) ? 0f : Math.min(sat, 1f);
+      light = (light < 0f) ? 0f : Math.min(light, 1f);
       float  t1, t2;
       if (light <= 0.5f) {
          t2 = light * (sat + 1f);
@@ -4089,7 +4093,7 @@ class SVGParserImpl implements SVGParser
       if (sum == 0f)
          return null;
       
-      return dashes.toArray(new Length[dashes.size()]);
+      return dashes.toArray(new Length[0]);
    }
 
 

@@ -95,7 +95,7 @@ public class CSS
       svg.renderToCanvas(canvas, renderOptions);
 
       MockCanvas    mock = ((MockCanvas) Shadow.extract(canvas));
-      List<String> ops = mock.getOperations();
+      //List<String> ops = mock.getOperations();
       //System.out.println(String.join(",", ops));
 
       assertEquals("#ff00ff00", mock.paintProp(5, "color"));

@@ -29,12 +29,10 @@ import org.robolectric.annotation.Config;
 import org.robolectric.shadow.api.Shadow;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 @Config(manifest=Config.NONE, sdk = Build.VERSION_CODES.JELLY_BEAN, shadows={MockCanvas.class, MockPath.class, MockPaint.class})
 @RunWith(RobolectricTestRunner.class)
@@ -88,7 +86,7 @@ public class ParseTest
 
 
    @Test
-   public void parsePath() throws SVGParseException
+   public void parsePath()
    {
       String  test = "M100,200 C100,100 250,100 250,200 S400,300 400,200";
       Path  path = SVG.parsePath(test);
@@ -150,7 +148,7 @@ public class ParseTest
 */
 
 
-   /**
+   /*
     * Checks that A elements are parsed and rendered correctly.
     * @throws SVGParseException
     */
@@ -214,7 +212,7 @@ public class ParseTest
       svg.renderToCanvas(bmcanvas);
 
       MockCanvas    mock = Shadow.extract(bmcanvas);
-      List<String>  ops = mock.getOperations();
+      //List<String>  ops = mock.getOperations();
       //System.out.println(String.join(",", ops));
       assertEquals("#ff008000", mock.paintProp(3, "color"));
    }
@@ -234,7 +232,7 @@ public class ParseTest
       svg.renderToCanvas(bmcanvas);
 
       MockCanvas    mock = Shadow.extract(bmcanvas);
-      List<String>  ops = mock.getOperations();
+      //List<String>  ops = mock.getOperations();
       //System.out.println(String.join(",", ops));
       assertEquals("#ff008000", mock.paintProp(3, "color"));
    }

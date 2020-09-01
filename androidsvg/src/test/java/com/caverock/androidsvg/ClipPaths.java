@@ -18,8 +18,6 @@ package com.caverock.androidsvg;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Matrix;
-import android.graphics.Rect;
 import android.os.Build;
 
 import org.junit.Test;

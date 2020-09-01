@@ -92,8 +92,8 @@ public class SVG
    // The parser configuration settings that was used for the current instance
    // WIll continue to be used for future parsing by this instance. For example
    // when parsing addition CSS.
-   private SVGExternalFileResolver  externalFileResolver;
-   private boolean                  enableInternalEntities;
+   private final SVGExternalFileResolver  externalFileResolver;
+   private final boolean                  enableInternalEntities;
 
    // The root svg element
    private Svg     rootElement = null;
@@ -106,10 +106,10 @@ public class SVG
    private float   renderDPI = 96f;   // default is 96
 
    // CSS rules
-   private Ruleset  cssRules = new Ruleset();
+   private final Ruleset  cssRules = new Ruleset();
 
    // Map from id attribute to element
-   private Map<String, SvgElementBase> idToElementMap = new HashMap<>();
+   private final Map<String, SvgElementBase> idToElementMap = new HashMap<>();
 
 
    enum Unit
@@ -199,6 +199,7 @@ public class SVG
    public static SVG  getFromResource(Resources resources, int resourceId) throws SVGParseException
    {
       InputStream  is = resources.openRawResource(resourceId);
+      //noinspection TryFinallyCanBeTryWithResources
       try {
          return createParser().parseStream(is);
       } finally {
@@ -224,6 +225,7 @@ public class SVG
    public static SVG  getFromAsset(AssetManager assetManager, String filename) throws SVGParseException, IOException
    {
       InputStream  is = assetManager.open(filename);
+      //noinspection TryFinallyCanBeTryWithResources
       try {
          return createParser().parseStream(is);
       } finally {
@@ -1412,7 +1414,7 @@ public class SVG
 
    static class Colour extends SvgPaint
    {
-      int colour;
+      final int colour;
       
       static final Colour BLACK = new Colour(0xff000000);  // Black singleton - a common default value.
       static final Colour TRANSPARENT = new Colour(0);     // Transparent black
@@ -1432,7 +1434,7 @@ public class SVG
    // Special version of Colour that indicates use of 'currentColor' keyword
    static class CurrentColor extends SvgPaint
    {
-      private static CurrentColor  instance = new CurrentColor();
+      private final static CurrentColor  instance = new CurrentColor();
       
       private CurrentColor()
       {
@@ -1447,8 +1449,8 @@ public class SVG
 
    static class PaintReference extends SvgPaint
    {
-      String    href;
-      SvgPaint  fallback;
+      final String    href;
+      final SvgPaint  fallback;
       
       PaintReference(String href, SvgPaint fallback)
       {
@@ -1465,8 +1467,8 @@ public class SVG
 
    static class Length implements Cloneable
    {
-      float  value;
-      Unit   unit;
+      final float  value;
+      final Unit   unit;
 
       Length(float value, Unit unit)
       {
@@ -1490,8 +1492,6 @@ public class SVG
       {
          switch (unit)
          {
-            case px:
-               return value;
             case em:
                return value * renderer.getCurrentFontSize();
             case ex:
@@ -1511,6 +1511,7 @@ public class SVG
                if (viewPortUser == null)
                   return value;  // Undefined in this situation - so just return value to avoid an NPE
                return value * viewPortUser.width / 100f;
+            case px:
             default:
                return value;
          }
@@ -1564,8 +1565,6 @@ public class SVG
       {
          switch (unit)
          {
-            case px:
-               return value;
             case in:
                return value * dpi;
             case cm:
@@ -1576,6 +1575,7 @@ public class SVG
                return value * dpi / 72f;
             case pc: // 1 pica = 1/6 in
                return value * dpi / 6f;
+            case px:
             case em:
             case ex:
             case percent:
@@ -1604,10 +1604,10 @@ public class SVG
 
    static class CSSClipRect
    {
-      Length  top;
-      Length  right;
-      Length  bottom;
-      Length  left;
+      final Length  top;
+      final Length  right;
+      final Length  bottom;
+      final Length  left;
       
       CSSClipRect(Length top, Length right, Length bottom, Length left)
       {
@@ -2431,7 +2431,6 @@ public class SVG
    }
 
 
-   @SuppressWarnings("rawtypes")
    private List<SvgObject>  getElementsByTagName(String nodeName)
    {
       List<SvgObject>  result = new ArrayList<>();
@@ -2442,7 +2441,6 @@ public class SVG
    }
 
 
-   @SuppressWarnings("rawtypes")
    private void  getElementsByTagName(List<SvgObject> result, SvgObject obj, String nodeName)
    {
 

@@ -61,7 +61,8 @@ class NumberParser
       int      decimalPos = 0;
       int      exponent;
 
-      long     TOO_BIG = Long.MAX_VALUE / 10;
+      final long     TOO_BIG_L = Long.MAX_VALUE / 10;
+      final int      TOO_BIG_I = Integer.MAX_VALUE / 10;
 
       pos = startpos;
 
@@ -94,7 +95,7 @@ class NumberParser
             // Multiply any skipped zeroes into buffer
             numDigits += numTrailingZeroes;
             while (numTrailingZeroes > 0) {
-               if (significand > TOO_BIG) {
+               if (significand > TOO_BIG_L) {
                   //Log.e("Number is too large");
                   return Float.NaN;
                }
@@ -102,7 +103,7 @@ class NumberParser
                numTrailingZeroes--;
             }
 
-            if (significand > TOO_BIG) {
+            if (significand > TOO_BIG_L) {
                // We will overflow if we continue...
                //Log.e("Number is too large");
                return Float.NaN;
@@ -191,7 +192,7 @@ class NumberParser
                   ch = input.charAt(pos);
                   if (ch >= '0' && ch <= '9')
                   {
-                     if (expVal > TOO_BIG) {
+                     if (expVal > TOO_BIG_I) {
                         // We will overflow if we continue...
                         //Log.e("Exponent of number is too large");
                         return Float.NaN;
@@ -255,13 +256,13 @@ class NumberParser
    }
 
 
-   private static final float  positivePowersOf10[] = {
+   private static final float[]  positivePowersOf10 = {
       1e0f,  1e1f,  1e2f,  1e3f,  1e4f,  1e5f,  1e6f,  1e7f,  1e8f,  1e9f,
       1e10f, 1e11f, 1e12f, 1e13f, 1e14f, 1e15f, 1e16f, 1e17f, 1e18f, 1e19f,
       1e20f, 1e21f, 1e22f, 1e23f, 1e24f, 1e25f, 1e26f, 1e27f, 1e28f, 1e29f,
       1e30f, 1e31f, 1e32f, 1e33f, 1e34f, 1e35f, 1e36f, 1e37f, 1e38f
    };
-   private static final float  negativePowersOf10[] = {
+   private static final float[]  negativePowersOf10 = {
       1e0f,   1e-1f,  1e-2f,  1e-3f,  1e-4f,  1e-5f,  1e-6f,  1e-7f,  1e-8f,  1e-9f,
       1e-10f, 1e-11f, 1e-12f, 1e-13f, 1e-14f, 1e-15f, 1e-16f, 1e-17f, 1e-18f, 1e-19f,
       1e-20f, 1e-21f, 1e-22f, 1e-23f, 1e-24f, 1e-25f, 1e-26f, 1e-27f, 1e-28f, 1e-29f,

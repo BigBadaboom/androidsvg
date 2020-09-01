@@ -25,8 +25,8 @@ package com.caverock.androidsvg;
 
 class IntegerParser
 {
-   private int      pos;
-   private long     value;
+   private final int      pos;
+   private final long     value;
 
 
    IntegerParser(long value, int pos)
