@@ -1458,8 +1458,10 @@ class CSSParser
       // Check the attributes
       if (sel.attribs != null)
       {
-         for (Attrib attr: sel.attribs)
+         int count = sel.attribs.size();
+         for (int i = 0; i < count; i++)
          {
+            Attrib attr = sel.attribs.get(i);
             switch (attr.name) {
                case ID:
                   if (!attr.value.equals(obj.id))
@@ -1480,7 +1482,9 @@ class CSSParser
 
       // Check the pseudo classes
       if (sel.pseudos != null) {
-         for (PseudoClass pseudo: sel.pseudos) {
+         int count = sel.pseudos.size();
+         for (int i = 0; i < count; i++) {
+            PseudoClass pseudo = sel.pseudos.get(i);
             if (!pseudo.matches(ruleMatchContext, obj))
                return false;
          }
