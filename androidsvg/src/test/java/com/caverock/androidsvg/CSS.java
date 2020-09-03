@@ -101,4 +101,33 @@ public class CSS
       assertEquals("#ff00ff00", mock.paintProp(5, "color"));
    }
 
+
+   // Issue 204
+   @Test
+   public void nonAsciiClassNames() throws SVGParseException
+   {
+      //disableLogging();
+      String  test = "<svg width=\"100\" height=\"100\">" +
+                     "  <style>" +
+                     "    .зеленый {fill:#0f0}" +
+                     "  </style>" +
+                     "  <rect class=\"зеленый\" width=\"10\" height=\"10\"/>" +
+                     "</svg>";
+      SVG  svg = SVG.getFromString(test);
+
+      Bitmap newBM = Bitmap.createBitmap((int) Math.ceil(svg.getDocumentWidth()),
+                                         (int) Math.ceil(svg.getDocumentHeight()),
+                                         Bitmap.Config.ARGB_8888);
+      Canvas canvas = new Canvas(newBM);
+
+      RenderOptions renderOptions = RenderOptions.create().css("");
+      svg.renderToCanvas(canvas, renderOptions);
+
+      MockCanvas    mock = ((MockCanvas) Shadow.extract(canvas));
+      //List<String> ops = mock.getOperations();
+      //System.out.println(String.join(",", ops));
+
+      assertEquals("#ff00ff00", mock.paintProp(3, "color"));
+   }
+
 }

@@ -463,7 +463,24 @@ class CSSParser
          position = end;
          return result;
       }
-         
+
+
+      // ident-token:
+      //   start-char rest-char*
+      //   - start-char rest-char*
+      //   -- rest-char*
+      //
+      // Where:
+      //   start-char: a-z A-Z _ or escape or non-ASCII
+      //   rest-char: a-z A-Z 0-9 _ - or escape non-ASCII
+      //   escape:  (not yet implemented)
+      //     \ char
+      //     \ hexdigit{1-6}
+      //     \ hexdigit{1-6} whitespace
+      //   non-ASCII: >= U+0080
+      //   whitespace: (space or \t or newline)+
+      //   newline: \n or \r\n or \r or \f
+
       private int  scanForIdentifier()
       {
          if (empty())
@@ -474,12 +491,12 @@ class CSSParser
          int  ch = input.charAt(position);
          if (ch == '-')
             ch = advanceChar();
-         // nmstart
-         if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (ch == '_'))
+         // start-char
+         if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (ch == '-') || (ch == '_') || (ch >= 0x80))
          {
             ch = advanceChar();
-            // nmchar
-            while ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || (ch == '-') || (ch == '_')) {
+            // rest-char
+            while ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || (ch == '-') || (ch == '_') || (ch >= 0x80)) {
                ch = advanceChar();
             }
             lastValidPos = position;
