@@ -1118,6 +1118,8 @@ class CSSParser
    // Returns true if 'deviceMediaType' matches one of the media types in 'mediaList'
    private static boolean mediaMatches(List<MediaType> mediaList, MediaType rendererMediaType)
    {
+      if (mediaList.size() == 0) // No specific media specified, so match all
+         return true;
       for (MediaType type: mediaList) {
          if (type == MediaType.all || type == rendererMediaType)
             return true;
