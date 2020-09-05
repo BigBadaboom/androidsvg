@@ -730,11 +730,20 @@ class SVGAndroidRenderer
 
    private boolean  pushLayer()
    {
-      if (!requiresCompositing())
+      return pushLayer(1f);
+   }
+
+
+   private boolean  pushLayer(float opacityAdjustment)
+   {
+      // opacityAdjustment is used by fillWithPattern() in order to apply the fillOpacity for the
+      // pattern
+
+      if (!requiresCompositing() && opacityAdjustment == 1f)
          return false;
 
       // Custom version of statePush() that also saves the layer
-      canvas.saveLayerAlpha(null, clamp255(state.style.opacity), Canvas.ALL_SAVE_FLAG);
+      canvas.saveLayerAlpha(null, clamp255(state.style.opacity * opacityAdjustment), Canvas.ALL_SAVE_FLAG);
 
       // Save style state
       stateStack.push(state);
@@ -4383,6 +4392,7 @@ class SVGAndroidRenderer
       boolean      patternUnitsAreUser = (pattern.patternUnitsAreUser != null && pattern.patternUnitsAreUser);
       float        x, y, w, h;
       float        originX, originY;
+      float        objFillOpacity = state.style.fillOpacity;
 
       if (pattern.href != null)
          fillInChainedPatternFields(pattern, pattern.href);
@@ -4462,7 +4472,7 @@ class SVGAndroidRenderer
       float  bottom = patternArea.maxY();
       Box    stepViewBox = new Box(0,0,w,h);
 
-      boolean  compositing = pushLayer();
+      boolean  compositing = pushLayer(objFillOpacity);
 
       for (float stepY = originY; stepY < bottom; stepY += h)
       {
