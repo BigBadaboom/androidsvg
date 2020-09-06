@@ -81,6 +81,11 @@ class SVGParserImpl implements SVGParser
 
    private static final String  XML_STYLESHEET_PROCESSING_INSTRUCTION = "xml-stylesheet";
 
+   // Versions of Android earlier than 15 (ICS) have an XmlPullParser that doesn't support the
+   // nextToken() method. Also, they throw an exception when calling setFeature().
+   // So for simplicity, we'll just force the use of the SAX parser on Androids < 15.
+   private static final boolean FORCE_SAX_ON_EARLY_ANDROIDS = (android.os.Build.VERSION.SDK_INT < 15);
+
    // <?xml-stylesheet> attribute names and values
    public static final String XML_STYLESHEET_ATTR_TYPE = "type";
    public static final String XML_STYLESHEET_ATTR_ALTERNATE = "alternate";
@@ -596,6 +601,12 @@ class SVGParserImpl implements SVGParser
 
       try
       {
+         if (FORCE_SAX_ON_EARLY_ANDROIDS) {
+            Log.d(TAG,"Forcing SAX parser for this version of Android");
+            parseUsingSAX(is);
+            return svgDocument;
+         }
+
          if (enableInternalEntities)
          {
             // We need to check for the presence of entities in the file so we can decide which parser to use.
@@ -803,9 +814,11 @@ class SVGParserImpl implements SVGParser
          // Invoke the SAX XML parser on the input.
          SAXParserFactory  spf = SAXParserFactory.newInstance();
 
-         // Disable external entity resolving
-         spf.setFeature("http://xml.org/sax/features/external-general-entities", false);
-         spf.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+         if (!FORCE_SAX_ON_EARLY_ANDROIDS) {
+            // Disable external entity resolving
+            spf.setFeature("http://xml.org/sax/features/external-general-entities", false);
+            spf.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+         }
 
          SAXParser sp = spf.newSAXParser();
          XMLReader xr = sp.getXMLReader();
