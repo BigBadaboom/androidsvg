@@ -30,6 +30,8 @@ import com.caverock.androidsvg.SVG.GradientSpread;
 import com.caverock.androidsvg.SVG.Length;
 import com.caverock.androidsvg.SVG.PaintReference;
 import com.caverock.androidsvg.SVG.Style;
+import com.caverock.androidsvg.SVG.Style.CSSBlendMode;
+import com.caverock.androidsvg.SVG.Style.Isolation;
 import com.caverock.androidsvg.SVG.Style.RenderQuality;
 import com.caverock.androidsvg.SVG.Style.TextDecoration;
 import com.caverock.androidsvg.SVG.Style.TextDirection;
@@ -266,12 +268,14 @@ class SVGParserImpl implements SVGParser
       href,
       // id,
       image_rendering,
+      isolation,   // @since 1.5
       marker,
       marker_start, marker_mid, marker_end,
       markerHeight, markerUnits, markerWidth,
       mask,
       maskContentUnits, maskUnits,
       media,
+      mix_blend_mode,  // @since 1.5
       offset,
       opacity,
       orient,
@@ -3014,7 +3018,7 @@ class SVGParserImpl implements SVGParser
             default:
                if (obj.baseStyle == null)
                   obj.baseStyle = new Style();
-               processStyleProperty(obj.baseStyle, attributes.getLocalName(i), attributes.getValue(i).trim());
+               processStyleProperty(obj.baseStyle, attributes.getLocalName(i), attributes.getValue(i).trim(), true);
                break;
          }
       }
@@ -3046,14 +3050,14 @@ class SVGParserImpl implements SVGParser
          {
             if (obj.style == null)
                obj.style = new Style();
-            processStyleProperty(obj.style, propertyName, propertyValue);
+            processStyleProperty(obj.style, propertyName, propertyValue, false);
             scan.skipWhitespace();
          }
       }
    }
 
 
-   static void  processStyleProperty(Style style, String localName, String val)// throws SVGParseException
+   static void  processStyleProperty(Style style, String localName, String val, boolean isFromAttribute)
    {
       if (val.length() == 0) { // The spec doesn't say how to handle empty style attributes.
          return;               // Our strategy is just to ignore them.
@@ -3287,6 +3291,9 @@ class SVGParserImpl implements SVGParser
             break;
 
          case solid_color:
+            // SVG 1.2 Tiny
+            if (!isFromAttribute)
+               break;
             if (val.equals(CURRENTCOLOR)) {
                style.solidColor = CurrentColor.getInstance();
             } else {
@@ -3302,11 +3309,15 @@ class SVGParserImpl implements SVGParser
             break;
 
          case solid_opacity:
+            // SVG 1.2 Tiny
+            if (!isFromAttribute)
+               break;
             style.solidOpacity = parseOpacity(val);
             style.specifiedFlags |= SVG.SPECIFIED_SOLID_OPACITY;
             break;
 
          case viewport_fill:
+            // SVG 1.2 Tiny
             if (val.equals(CURRENTCOLOR)) {
                style.viewportFill = CurrentColor.getInstance();
             } else {
@@ -3322,11 +3333,14 @@ class SVGParserImpl implements SVGParser
             break;
 
          case viewport_fill_opacity:
+            // SVG 1.2 Tiny
             style.viewportFillOpacity = parseOpacity(val);
             style.specifiedFlags |= SVG.SPECIFIED_VIEWPORT_FILL_OPACITY;
             break;
 
          case vector_effect:
+            if (isFromAttribute)
+               break;
             style.vectorEffect = parseVectorEffect(val);
             if (style.vectorEffect != null)
                style.specifiedFlags |= SVG.SPECIFIED_VECTOR_EFFECT;
@@ -3336,6 +3350,22 @@ class SVGParserImpl implements SVGParser
             style.imageRendering = parseRenderQuality(val);
             if (style.imageRendering != null)
                style.specifiedFlags |= SVG.SPECIFIED_IMAGE_RENDERING;
+            break;
+
+         case isolation:
+            if (isFromAttribute)
+               break;
+            style.isolation = parseIsolation(val);
+            if (style.isolation != null)
+               style.specifiedFlags |= SVG.SPECIFIED_ISOLATION;
+            break;
+
+         case mix_blend_mode:
+            if (isFromAttribute)
+               break;
+            style.mixBlendMode = CSSBlendMode.fromString(val);
+            if (style.mixBlendMode != null)
+               style.specifiedFlags |= SVG.SPECIFIED_MIX_BLEND_MODE;
             break;
 
          default:
@@ -4197,6 +4227,18 @@ class SVGParserImpl implements SVGParser
          case "optimizeQuality": return RenderQuality.optimizeQuality;
          case "optimizeSpeed":   return RenderQuality.optimizeSpeed;
          default:                return null;
+      }
+   }
+
+
+   // Parse a isolation property
+   private static Isolation  parseIsolation(String val)
+   {
+      switch (val)
+      {
+         case "auto":    return Isolation.auto;
+         case "isolate": return Style.Isolation.isolate;
+         default:        return null;
       }
    }
 

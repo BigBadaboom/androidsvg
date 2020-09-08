@@ -1304,7 +1304,7 @@ class CSSParser
          }
          scan.consume(';');
          // TODO: support CSS only values such as "inherit"
-         SVGParserImpl.processStyleProperty(ruleStyle, propertyName, propertyValue);
+         SVGParserImpl.processStyleProperty(ruleStyle, propertyName, propertyValue, false);
          scan.skipWhitespace();
       } while (!scan.empty() && !scan.consume('}'));
       return ruleStyle;

@@ -1188,6 +1188,8 @@ public class SVG
    static final long SPECIFIED_VECTOR_EFFECT         = (1L<<35);
    static final long SPECIFIED_DIRECTION             = (1L<<36);
    static final long SPECIFIED_IMAGE_RENDERING       = (1L<<37);
+   static final long SPECIFIED_ISOLATION             = (1L<<38);
+   static final long SPECIFIED_MIX_BLEND_MODE        = (1L<<39);
 
    private static final long SPECIFIED_ALL = 0xffffffff;
 
@@ -1258,6 +1260,9 @@ public class SVG
 
       RenderQuality  imageRendering;
 
+      Isolation     isolation;
+      CSSBlendMode  mixBlendMode;
+
 
       static final int  FONT_WEIGHT_NORMAL = 400;
       static final int  FONT_WEIGHT_BOLD = 700;
@@ -1327,6 +1332,56 @@ public class SVG
          optimizeSpeed
       }
 
+      public enum Isolation
+      {
+         auto,
+         isolate
+      }
+
+      public enum CSSBlendMode
+      {
+         normal,
+         multiply,
+         screen,
+         overlay,
+         darken,
+         lighten,
+         color_dodge,
+         color_burn,
+         hard_light,
+         soft_light,
+         difference,
+         exclusion,
+         hue,
+         saturation,
+         color,
+         luminosity,
+         UNSUPPORTED;
+
+         private static final Map<String, CSSBlendMode> cache = new HashMap<>();
+
+         static {
+            for (CSSBlendMode mode : values()) {
+               if (mode != UNSUPPORTED) {
+                  final String key = mode.name().replace('_', '-');
+                  cache.put(key, mode);
+               }
+            }
+         }
+
+         public static CSSBlendMode fromString(String str)
+         {
+            // First check cache to see if it is there
+            CSSBlendMode mode = cache.get(str);
+            if (mode != null) {
+               return mode;
+            }
+
+            return UNSUPPORTED;
+         }
+      }
+
+
       static Style  getDefaultStyle()
       {
          Style  def = new Style();
@@ -1370,6 +1425,8 @@ public class SVG
          def.viewportFillOpacity = 1f;
          def.vectorEffect = VectorEffect.None;
          def.imageRendering = RenderQuality.auto;
+         def.isolation = Isolation.auto;
+         def.mixBlendMode = CSSBlendMode.normal;
          return def;
       }
 
@@ -1391,6 +1448,8 @@ public class SVG
          this.viewportFill = null;
          this.viewportFillOpacity = 1f;
          this.vectorEffect = VectorEffect.None;
+         this.isolation = Isolation.auto;
+         this.mixBlendMode = CSSBlendMode.normal;
       }
 
 

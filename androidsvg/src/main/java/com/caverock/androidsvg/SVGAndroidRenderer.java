@@ -20,6 +20,7 @@ package com.caverock.androidsvg;
 import android.annotation.TargetApi;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.BlendMode;
 import android.graphics.Canvas;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
@@ -58,7 +59,9 @@ import com.caverock.androidsvg.SVG.Rect;
 import com.caverock.androidsvg.SVG.SolidColor;
 import com.caverock.androidsvg.SVG.Stop;
 import com.caverock.androidsvg.SVG.Style;
+import com.caverock.androidsvg.SVG.Style.CSSBlendMode;
 import com.caverock.androidsvg.SVG.Style.FontStyle;
+import com.caverock.androidsvg.SVG.Style.Isolation;
 import com.caverock.androidsvg.SVG.Style.RenderQuality;
 import com.caverock.androidsvg.SVG.Style.TextAnchor;
 import com.caverock.androidsvg.SVG.Style.TextDecoration;
@@ -89,6 +92,12 @@ import java.util.Stack;
 class SVGAndroidRenderer
 {
    private static final String  TAG = "SVGAndroidRenderer";
+
+   private static final boolean  SUPPORTS_FONT_HINTING = Build.VERSION.SDK_INT >= 14;        // ICS
+   private static final boolean  SUPPORTS_STROKED_UNDERLINES = Build.VERSION.SDK_INT >= 17;  // Jelly Bean (4.2)
+   private static final boolean  SUPPORTS_PATH_OP = Build.VERSION.SDK_INT >= 19;             // Kit Kat
+   private static final boolean  SUPPORTS_BLEND_MODE = Build.VERSION.SDK_INT >= 29;          // Android 10
+
 
    private final Canvas   canvas;
    private final float    dpi;    // dots per inch. Needed for accurate conversion of length values that have real world units, such as "cm".
@@ -135,7 +144,7 @@ class SVGAndroidRenderer
       {
          fillPaint = new Paint();
          fillPaint.setFlags(Paint.ANTI_ALIAS_FLAG | Paint.LINEAR_TEXT_FLAG | Paint.SUBPIXEL_TEXT_FLAG);
-         if (android.os.Build.VERSION.SDK_INT >= 14) {
+         if (SUPPORTS_FONT_HINTING) {
             fillPaint.setHinting(Paint.HINTING_OFF);
          }
          fillPaint.setStyle(Paint.Style.FILL);
@@ -143,7 +152,7 @@ class SVGAndroidRenderer
 
          strokePaint = new Paint();
          strokePaint.setFlags(Paint.ANTI_ALIAS_FLAG | Paint.LINEAR_TEXT_FLAG | Paint.SUBPIXEL_TEXT_FLAG);
-         if (android.os.Build.VERSION.SDK_INT >= 14) {
+         if (SUPPORTS_FONT_HINTING) {
             strokePaint.setHinting(Paint.HINTING_OFF);
          }
          strokePaint.setStyle(Paint.Style.STROKE);
@@ -306,7 +315,7 @@ class SVGAndroidRenderer
       checkXMLSpaceAttribute(rootObj);
 
       // Save state
-      statePush();
+      statePush(true);
 
       Box  viewPort = new Box(renderOptions.viewPort);
       // If root element specifies a width, then we need to adjust our default viewPort that was based on the canvas size
@@ -397,8 +406,18 @@ class SVGAndroidRenderer
 
    private void  statePush()
    {
-      // Save matrix and clip
-      canvas.save();
+      statePush(false);
+   }
+
+   private void  statePush(boolean isRootContext)
+   {
+      if (isRootContext) {
+         // Root SVG context should be transparent. So we need to saveLayer
+         // to avoid background messing with blend modes etc.
+         canvas.saveLayer(null, null, Canvas.ALL_SAVE_FLAG);
+      } else {
+         canvas.save();
+      }
       // Save style state
       stateStack.push(state);
       state = new RendererState(state);
@@ -743,7 +762,12 @@ class SVGAndroidRenderer
          return false;
 
       // Custom version of statePush() that also saves the layer
-      canvas.saveLayerAlpha(null, clamp255(state.style.opacity * opacityAdjustment), Canvas.ALL_SAVE_FLAG);
+      Paint  savePaint = new Paint();
+      savePaint.setAlpha(clamp255(state.style.opacity * opacityAdjustment));
+      if (SUPPORTS_BLEND_MODE && state.style.mixBlendMode != CSSBlendMode.normal) {
+         setBlendMode(savePaint);
+      }
+      canvas.saveLayer(null, savePaint, Canvas.ALL_SAVE_FLAG);
 
       // Save style state
       stateStack.push(state);
@@ -830,7 +854,36 @@ class SVGAndroidRenderer
    private boolean requiresCompositing()
    {
       return (state.style.opacity < 1.0f) ||
-             (state.style.mask != null);
+             (state.style.mask != null) ||
+             (state.style.isolation == Isolation.isolate) ||
+             (SUPPORTS_BLEND_MODE && state.style.mixBlendMode != CSSBlendMode.normal);
+   }
+
+
+   @TargetApi(Build.VERSION_CODES.Q)
+   private void  setBlendMode(Paint paint)
+   {
+      debug(TAG,"Setting blend mode to "+state.style.mixBlendMode);
+      switch (state.style.mixBlendMode)
+      {
+         case multiply:    paint.setBlendMode(BlendMode.MULTIPLY); break;
+         case screen:      paint.setBlendMode(BlendMode.SCREEN); break;
+         case overlay:     paint.setBlendMode(BlendMode.OVERLAY); break;
+         case darken:      paint.setBlendMode(BlendMode.DARKEN); break;
+         case lighten:     paint.setBlendMode(BlendMode.LIGHTEN); break;
+         case color_dodge: paint.setBlendMode(BlendMode.COLOR_DODGE); break;
+         case color_burn:  paint.setBlendMode(BlendMode.COLOR_BURN); break;
+         case hard_light:  paint.setBlendMode(BlendMode.HARD_LIGHT); break;
+         case soft_light:  paint.setBlendMode(BlendMode.SOFT_LIGHT); break;
+         case difference:  paint.setBlendMode(BlendMode.DIFFERENCE); break;
+         case exclusion:   paint.setBlendMode(BlendMode.EXCLUSION); break;
+         case hue:         paint.setBlendMode(BlendMode.HUE); break;
+         case saturation:  paint.setBlendMode(BlendMode.SATURATION); break;
+         case color:       paint.setBlendMode(BlendMode.COLOR); break;
+         case luminosity:  paint.setBlendMode(BlendMode.LUMINOSITY); break;
+         case normal:
+         default: paint.setBlendMode(null); break;
+      }
    }
 
 
@@ -2350,7 +2403,7 @@ class SVGAndroidRenderer
          state.fillPaint.setUnderlineText(style.textDecoration == TextDecoration.Underline);
          // There is a bug in Android <= JELLY_BEAN (16) that causes stroked underlines to
          // not be drawn properly. See bug (39511). This has been fixed in JELLY_BEAN_MR1 (4.2)
-         if (android.os.Build.VERSION.SDK_INT >= 17) {
+         if (SUPPORTS_STROKED_UNDERLINES) {
             state.strokePaint.setStrikeThruText(style.textDecoration == TextDecoration.LineThrough);
             state.strokePaint.setUnderlineText(style.textDecoration == TextDecoration.Underline);
          }
@@ -2439,6 +2492,16 @@ class SVGAndroidRenderer
       if (isSpecified(style, SVG.SPECIFIED_IMAGE_RENDERING))
       {
          state.style.imageRendering = style.imageRendering;
+      }
+
+      if (isSpecified(style, SVG.SPECIFIED_ISOLATION))
+      {
+         state.style.isolation = style.isolation;
+      }
+
+      if (isSpecified(style, SVG.SPECIFIED_MIX_BLEND_MODE))
+      {
+         state.style.mixBlendMode = style.mixBlendMode;
       }
    }
 
@@ -3706,7 +3769,7 @@ class SVGAndroidRenderer
       if (state.style.clipPath == null)
          return;
 
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT)
+      if (SUPPORTS_PATH_OP)
       {
          // KitKat introduced Path.Op which allows us to do boolean operations on Paths
          Path  combinedPath = calculateClipPath(obj, boundingBox);
