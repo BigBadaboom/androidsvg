@@ -3153,12 +3153,8 @@ class SVGParserImpl implements SVGParser
             break;
 
          case color:
-            try {
-               style.color = parseColour(val);
-               style.specifiedFlags |= SVG.SPECIFIED_COLOR;
-            } catch (SVGParseException e) {
-               // Do nothing
-            }
+            style.color = parseColour(val);
+            style.specifiedFlags |= SVG.SPECIFIED_COLOR;
             break;
 
          case font:
@@ -3253,13 +3249,7 @@ class SVGParserImpl implements SVGParser
             if (val.equals(CURRENTCOLOR)) {
                style.stopColor = CurrentColor.getInstance();
             } else {
-               try {
-                  style.stopColor = parseColour(val);
-               } catch (SVGParseException e) {
-                  // Error: Ignore property
-                  Log.w(TAG, e.getMessage());
-                  break;
-               }
+               style.stopColor = parseColour(val);
             }
             style.specifiedFlags |= SVG.SPECIFIED_STOP_COLOR;
             break;
@@ -3297,13 +3287,7 @@ class SVGParserImpl implements SVGParser
             if (val.equals(CURRENTCOLOR)) {
                style.solidColor = CurrentColor.getInstance();
             } else {
-               try {
-                  style.solidColor = parseColour(val);
-               } catch (SVGParseException e) {
-                  // Error: Ignore property
-                  Log.w(TAG, e.getMessage());
-                  break;
-               }
+               style.solidColor = parseColour(val);
             }
             style.specifiedFlags |= SVG.SPECIFIED_SOLID_COLOR;
             break;
@@ -3321,13 +3305,7 @@ class SVGParserImpl implements SVGParser
             if (val.equals(CURRENTCOLOR)) {
                style.viewportFill = CurrentColor.getInstance();
             } else {
-               try {
-                  style.viewportFill = parseColour(val);
-               } catch (SVGParseException e) {
-                  // Error: Ignore property
-                  Log.w(TAG, e.getMessage());
-                  break;
-               }
+               style.viewportFill = parseColour(val);
             }
             style.specifiedFlags |= SVG.SPECIFIED_VIEWPORT_FILL;
             break;
@@ -3740,11 +3718,7 @@ class SVGParserImpl implements SVGParser
          case CURRENTCOLOR:
             return CurrentColor.getInstance();
          default:
-            try {
-               return parseColour(val);
-            } catch (SVGParseException e) {
-               return null;
-            }
+            return parseColour(val);
       }
    }
 
@@ -3752,13 +3726,13 @@ class SVGParserImpl implements SVGParser
    /*
     * Parse a colour definition.
     */
-   private static Colour  parseColour(String val) throws SVGParseException
+   private static Colour  parseColour(String val)
    {
       if (val.charAt(0) == '#')
       {
          IntegerParser  ip = IntegerParser.parseHex(val, 1, val.length());
          if (ip == null) {
-            throw new SVGParseException("Bad hex colour value: "+val);
+            return Colour.BLACK;
          }
          int  pos = ip.getEndPos();
          int  h1, h2, h3, h4;
@@ -3782,10 +3756,12 @@ class SVGParserImpl implements SVGParser
                return new Colour(ip.value() << 24 | ip.value() >>> 8);
             default:
                // Hex value had bad length for a colour
-               throw new SVGParseException("Bad hex colour value: "+val);
+               return Colour.BLACK;
          }
       }
 
+      // Parse an rgb() or rgba() colour.
+      // In CSS Color 4, these are synonyms, and the alpha parameter is optional in both cases.
       String   valLowerCase = val.toLowerCase(Locale.US);
       boolean  isRGBA = valLowerCase.startsWith("rgba(");
       if (isRGBA || valLowerCase.startsWith("rgb("))
@@ -3794,32 +3770,58 @@ class SVGParserImpl implements SVGParser
          scan.skipWhitespace();
 
          float  red = scan.nextFloat();
-         if (!Float.isNaN(red) && scan.consume('%'))
-            red = (red * 256) / 100;
+         if (!Float.isNaN(red)) {
+            if (scan.consume('%'))
+               red = (red * 256) / 100;
 
-         float  green = scan.checkedNextFloat(red);
-         if (!Float.isNaN(green) && scan.consume('%'))
-            green = (green * 256) / 100;
+            // If there is a comma, then it is the "legacy" format: rgb(r, g, b, a?).
+            // Otherwise we assume it is the new format: rgb[a?](r g b / a?).
+            boolean isLegacyCSSColor3 = scan.skipCommaWhitespace();
 
-         float  blue = scan.checkedNextFloat(green);
-         if (!Float.isNaN(blue) && scan.consume('%'))
-            blue = (blue * 256) / 100;
+            float green = scan.nextFloat();
+            if (!Float.isNaN(green)) {
+               if (scan.consume('%'))
+                  green = (green * 256) / 100;
 
-         if (isRGBA) {
-            float  alpha = scan.checkedNextFloat(blue);
-            scan.skipWhitespace();
-            if (Float.isNaN(alpha) || !scan.consume(')'))
-               throw new SVGParseException("Bad rgba() colour value: "+val);
-            return new Colour( clamp255(alpha * 256)<<24 | clamp255(red)<<16 | clamp255(green)<<8 | clamp255(blue) );
-         } else {
-            scan.skipWhitespace();
-            if (Float.isNaN(blue) || !scan.consume(')'))
-               throw new SVGParseException("Bad rgb() colour value: "+val);
-            return new Colour( 0xff000000 | clamp255(red)<<16 | clamp255(green)<<8 | clamp255(blue) );
+               if (isLegacyCSSColor3) {
+                  if (!scan.skipCommaWhitespace())
+                     return Colour.BLACK;   // Error
+               } else {
+                  scan.skipWhitespace();
+               }
+
+               float blue = scan.nextFloat();
+               if (!Float.isNaN(blue)) {
+                  if (scan.consume('%'))
+                     blue = (blue * 256) / 100;
+
+                  // Now look for optional alpha
+                  float alpha = Float.NaN;
+                  if (isLegacyCSSColor3) {
+                     if (scan.skipCommaWhitespace())
+                        alpha = scan.nextFloat();
+                  } else {
+                     scan.skipWhitespace();
+                     if (scan.consume('/')) {
+                        scan.skipWhitespace();
+                        alpha = scan.nextFloat();
+                     }
+                  }
+                  scan.skipWhitespace();
+                  if (!scan.consume(')'))
+                     return Colour.BLACK;
+                  if (Float.isNaN(alpha))
+                     return new Colour( 0xff000000 | clamp255(red)<<16 | clamp255(green)<<8 | clamp255(blue) );
+                  else
+                     return new Colour( clamp255(alpha * 256)<<24 | clamp255(red)<<16 | clamp255(green)<<8 | clamp255(blue) );
+               }
+            }
          }
       }
       else
       {
+         // Parse an hsl() or hsla() colour.
+         // In CSS Color 4, these are synonyms, and the alpha parameter is optional in both cases.
          boolean  isHSLA = valLowerCase.startsWith("hsla(");
          if (isHSLA || valLowerCase.startsWith("hsl("))
          {
@@ -3827,26 +3829,51 @@ class SVGParserImpl implements SVGParser
             scan.skipWhitespace();
 
             float  hue = scan.nextFloat();
+            if (!Float.isNaN(hue)) {
+               scan.consume("deg");  // Optional units
 
-            float  saturation = scan.checkedNextFloat(hue);
-            if (!Float.isNaN(saturation))
-               scan.consume('%');
+               // If there is a comma, then it is the "legacy" format: rgb(r, g, b, a?).
+               // Otherwise we assume it is the new format: rgb[a?](r g b / a?).
+               boolean isLegacyCSSColor3 = scan.skipCommaWhitespace();
 
-            float  lightness = scan.checkedNextFloat(saturation);
-            if (!Float.isNaN(lightness))
-               scan.consume('%');
+               float saturation = scan.nextFloat();
+               if (!Float.isNaN(saturation)) {
+                  if (!scan.consume('%'))
+                     return Colour.BLACK;
 
-            if (isHSLA) {
-               float alpha = scan.checkedNextFloat(lightness);
-               scan.skipWhitespace();
-               if (Float.isNaN(alpha) || !scan.consume(')'))
-                  throw new SVGParseException("Bad hsla() colour value: "+val);
-               return new Colour( clamp255(alpha * 256)<<24 | hslToRgb(hue, saturation, lightness) );
-            } else {
-               scan.skipWhitespace();
-               if (Float.isNaN(lightness) || !scan.consume(')'))
-                  throw new SVGParseException("Bad hsl() colour value: "+val);
-               return new Colour( 0xff000000 | hslToRgb(hue, saturation, lightness) );
+                  if (isLegacyCSSColor3) {
+                     if (!scan.skipCommaWhitespace())
+                        return Colour.BLACK;
+                  } else {
+                     scan.skipWhitespace();
+                  }
+
+                  float lightness = scan.nextFloat();
+                  if (!Float.isNaN(lightness)) {
+                     if (!scan.consume('%'))
+                        return Colour.BLACK;
+
+                     // Now look for optional alpha
+                     float alpha = Float.NaN;
+                     if (isLegacyCSSColor3) {
+                        if (scan.skipCommaWhitespace())
+                           alpha = scan.nextFloat();
+                     } else {
+                        scan.skipWhitespace();
+                        if (scan.consume('/')) {
+                           scan.skipWhitespace();
+                           alpha = scan.nextFloat();
+                        }
+                     }
+                     scan.skipWhitespace();
+                     if (!scan.consume(')'))
+                        return Colour.BLACK;
+                     if (Float.isNaN(alpha))
+                        return new Colour( 0xff000000 | hslToRgb(hue, saturation, lightness) );
+                     else
+                        return new Colour( clamp255(alpha * 256)<<24 | hslToRgb(hue, saturation, lightness) );
+                  }
+               }
             }
          }
       }
@@ -3897,13 +3924,10 @@ class SVGParserImpl implements SVGParser
 
 
    // Parse a colour component value (0..255 or 0%-100%)
-   private static Colour  parseColourKeyword(String nameLowerCase) throws SVGParseException
+   private static Colour  parseColourKeyword(String nameLowerCase)
    {
       Integer  col = ColourKeywords.get(nameLowerCase);
-      if (col == null) {
-         throw new SVGParseException("Invalid colour keyword: "+nameLowerCase);
-      }
-      return new Colour(col);
+      return (col == null) ? Colour.BLACK : new Colour(col);
    }
 
 
