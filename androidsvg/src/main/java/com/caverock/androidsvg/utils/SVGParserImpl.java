@@ -14,35 +14,36 @@
    limitations under the License.
 */
 
-package com.caverock.androidsvg;
+package com.caverock.androidsvg.utils;
 
 import android.graphics.Matrix;
 import android.util.Log;
 import android.util.Xml;
 
-import com.caverock.androidsvg.CSSParser.CSSTextScanner;
-import com.caverock.androidsvg.CSSParser.MediaType;
-import com.caverock.androidsvg.SVG.Box;
-import com.caverock.androidsvg.SVG.CSSClipRect;
-import com.caverock.androidsvg.SVG.Colour;
-import com.caverock.androidsvg.SVG.CurrentColor;
-import com.caverock.androidsvg.SVG.GradientSpread;
-import com.caverock.androidsvg.SVG.Length;
-import com.caverock.androidsvg.SVG.PaintReference;
-import com.caverock.androidsvg.SVG.Style;
-import com.caverock.androidsvg.SVG.Style.CSSBlendMode;
-import com.caverock.androidsvg.SVG.Style.Isolation;
-import com.caverock.androidsvg.SVG.Style.RenderQuality;
-import com.caverock.androidsvg.SVG.Style.TextDecoration;
-import com.caverock.androidsvg.SVG.Style.TextDirection;
-import com.caverock.androidsvg.SVG.Style.VectorEffect;
-import com.caverock.androidsvg.SVG.SvgElementBase;
-import com.caverock.androidsvg.SVG.SvgObject;
-import com.caverock.androidsvg.SVG.SvgPaint;
-import com.caverock.androidsvg.SVG.TextChild;
-import com.caverock.androidsvg.SVG.TextPositionedContainer;
-import com.caverock.androidsvg.SVG.TextRoot;
-import com.caverock.androidsvg.SVG.Unit;
+import com.caverock.androidsvg.BuildConfig;
+import com.caverock.androidsvg.PreserveAspectRatio;
+import com.caverock.androidsvg.SVGExternalFileResolver;
+import com.caverock.androidsvg.SVGParseException;
+import com.caverock.androidsvg.utils.CSSParser.MediaType;
+import com.caverock.androidsvg.utils.SVGBase.Box;
+import com.caverock.androidsvg.utils.SVGBase.CSSClipRect;
+import com.caverock.androidsvg.utils.SVGBase.Colour;
+import com.caverock.androidsvg.utils.SVGBase.CurrentColor;
+import com.caverock.androidsvg.utils.SVGBase.GradientSpread;
+import com.caverock.androidsvg.utils.SVGBase.Length;
+import com.caverock.androidsvg.utils.SVGBase.PaintReference;
+import com.caverock.androidsvg.utils.SVGBase.SvgElementBase;
+import com.caverock.androidsvg.utils.SVGBase.SvgObject;
+import com.caverock.androidsvg.utils.SVGBase.SvgPaint;
+import com.caverock.androidsvg.utils.SVGBase.TextChild;
+import com.caverock.androidsvg.utils.SVGBase.TextPositionedContainer;
+import com.caverock.androidsvg.utils.SVGBase.TextRoot;
+import com.caverock.androidsvg.utils.SVGBase.Unit;
+import com.caverock.androidsvg.utils.Style.Isolation;
+import com.caverock.androidsvg.utils.Style.RenderQuality;
+import com.caverock.androidsvg.utils.Style.TextDecoration;
+import com.caverock.androidsvg.utils.Style.TextDirection;
+import com.caverock.androidsvg.utils.Style.VectorEffect;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
@@ -89,12 +90,12 @@ class SVGParserImpl implements SVGParser
    private static final boolean FORCE_SAX_ON_EARLY_ANDROIDS = (android.os.Build.VERSION.SDK_INT < 15);
 
    // <?xml-stylesheet> attribute names and values
-   public static final String XML_STYLESHEET_ATTR_TYPE = "type";
-   public static final String XML_STYLESHEET_ATTR_ALTERNATE = "alternate";
-   public static final String XML_STYLESHEET_ATTR_HREF = "href";
-   public static final String XML_STYLESHEET_ATTR_MEDIA = "media";
-   public static final String XML_STYLESHEET_ATTR_MEDIA_ALL = "all";
-   public static final String XML_STYLESHEET_ATTR_ALTERNATE_NO = "no";
+   public static final String  XML_STYLESHEET_ATTR_TYPE = "type";
+   public static final String  XML_STYLESHEET_ATTR_ALTERNATE = "alternate";
+   public static final String  XML_STYLESHEET_ATTR_HREF = "href";
+   public static final String  XML_STYLESHEET_ATTR_MEDIA = "media";
+   public static final String  XML_STYLESHEET_ATTR_MEDIA_ALL = "all";
+   public static final String  XML_STYLESHEET_ATTR_ALTERNATE_NO = "no";
 
    // Used by the automatic XML parser switching code.
    // This value defines how much of the SVG file preamble will we keep in order to check for
@@ -103,8 +104,8 @@ class SVGParserImpl implements SVGParser
 
 
    // SVG parser
-   private SVG                      svgDocument = null;
-   private SVG.SvgContainer         currentElement = null;
+   private SVGBase                  svgDocument = null;
+   private SVGBase.SvgContainer     currentElement = null;
    private boolean                  enableInternalEntities = true;
    private SVGExternalFileResolver  externalFileResolver = null;
 
@@ -239,7 +240,7 @@ class SVGParserImpl implements SVGParser
 
 
    // Supported SVG attributes
-   private enum  SVGAttr
+   enum  SVGAttr
    {
       CLASS,    // Upper case because 'class' is a reserved word. Handled as a special case.
       clip,
@@ -258,10 +259,19 @@ class SVGParserImpl implements SVGParser
       fill_opacity,
       font,
       font_family,
+      font_feature_settings,
       font_size,
       font_weight,
       font_style,
-      // font_size_adjust, font_stretch, font_variant,  
+      // font_size_adjust, font_stretch,
+      font_kerning,                // @since 1.5
+      font_variant,                // @since 1.5
+      font_variant_ligatures,      // @since 1.5
+      font_variant_position,       // @since 1.5
+      font_variant_caps,           // @since 1.5
+      font_variant_numeric,        // @since 1.5
+      font_variant_east_asian,     // @since 1.5
+      glyph_orientation_vertical,  // @since 1.5
       gradientTransform,
       gradientUnits,
       height,
@@ -305,12 +315,14 @@ class SVGParserImpl implements SVGParser
       systemLanguage,
       text_anchor,
       text_decoration,
+      text_orientation,  // @since 1.5
       transform,
       type,
       vector_effect,
       version,
       viewBox,
       width,
+      writing_mode,  // @since 1.5
       x, y,
       x1, y1,
       x2, y2,
@@ -345,13 +357,13 @@ class SVGParserImpl implements SVGParser
 
 
    // Special attribute keywords
-   private static final String  NONE = "none";
-   private static final String  CURRENTCOLOR = "currentColor";
+   static final String  NONE = "none";
+   static final String  CURRENTCOLOR = "currentColor";
 
-   private static final String VALID_DISPLAY_VALUES = "|inline|block|list-item|run-in|compact|marker|table|inline-table"+
-                                                      "|table-row-group|table-header-group|table-footer-group|table-row"+
-                                                      "|table-column-group|table-column|table-cell|table-caption|none|";
-   private static final String VALID_VISIBILITY_VALUES = "|visible|hidden|collapse|";
+   static final String VALID_DISPLAY_VALUES = "|inline|block|list-item|run-in|compact|marker|table|inline-table"+
+                                              "|table-row-group|table-header-group|table-footer-group|table-row"+
+                                              "|table-column-group|table-column|table-cell|table-caption|none|";
+   static final String VALID_VISIBILITY_VALUES = "|visible|hidden|collapse|";
 
    // These static inner classes are only loaded/initialized when first used and are thread safe
    private static class ColourKeywords {
@@ -535,10 +547,10 @@ class SVGParserImpl implements SVGParser
    private static class FontWeightKeywords {
       private static final Map<String, Integer> fontWeightKeywords = new HashMap<>(13);
       static {
-         fontWeightKeywords.put("normal", SVG.Style.FONT_WEIGHT_NORMAL);
-         fontWeightKeywords.put("bold", SVG.Style.FONT_WEIGHT_BOLD);
-         fontWeightKeywords.put("bolder", SVG.Style.FONT_WEIGHT_BOLDER);
-         fontWeightKeywords.put("lighter", SVG.Style.FONT_WEIGHT_LIGHTER);
+         fontWeightKeywords.put("normal", Style.FONT_WEIGHT_NORMAL);
+         fontWeightKeywords.put("bold", Style.FONT_WEIGHT_BOLD);
+         fontWeightKeywords.put("bolder", Style.FONT_WEIGHT_BOLDER);
+         fontWeightKeywords.put("lighter", Style.FONT_WEIGHT_LIGHTER);
          fontWeightKeywords.put("100", 100);
          fontWeightKeywords.put("200", 200);
          fontWeightKeywords.put("300", 300);
@@ -555,33 +567,13 @@ class SVGParserImpl implements SVGParser
       }
    }
 
-   private static class AspectRatioKeywords {
-      private static final Map<String, PreserveAspectRatio.Alignment> aspectRatioKeywords = new HashMap<>(10);
-      static {
-         aspectRatioKeywords.put(NONE, PreserveAspectRatio.Alignment.none);
-         aspectRatioKeywords.put("xMinYMin", PreserveAspectRatio.Alignment.xMinYMin);
-         aspectRatioKeywords.put("xMidYMin", PreserveAspectRatio.Alignment.xMidYMin);
-         aspectRatioKeywords.put("xMaxYMin", PreserveAspectRatio.Alignment.xMaxYMin);
-         aspectRatioKeywords.put("xMinYMid", PreserveAspectRatio.Alignment.xMinYMid);
-         aspectRatioKeywords.put("xMidYMid", PreserveAspectRatio.Alignment.xMidYMid);
-         aspectRatioKeywords.put("xMaxYMid", PreserveAspectRatio.Alignment.xMaxYMid);
-         aspectRatioKeywords.put("xMinYMax", PreserveAspectRatio.Alignment.xMinYMax);
-         aspectRatioKeywords.put("xMidYMax", PreserveAspectRatio.Alignment.xMidYMax);
-         aspectRatioKeywords.put("xMaxYMax", PreserveAspectRatio.Alignment.xMaxYMax);
-      }
-
-      static PreserveAspectRatio.Alignment get(String aspectRatio) {
-         return aspectRatioKeywords.get(aspectRatio);
-      }
-   }
-
 
    //=========================================================================
    // Main parser invocation methods
    //=========================================================================
 
 
-   public SVG parseStream(InputStream is) throws SVGParseException
+   public SVGBase parseStream(InputStream is) throws SVGParseException
    {
       // Transparently handle zipped files (.svgz)
       if (!is.markSupported()) {
@@ -911,7 +903,7 @@ class SVGParserImpl implements SVGParser
 
    private void startDocument()
    {
-      SVGParserImpl.this.svgDocument = new SVG(enableInternalEntities, externalFileResolver);
+      SVGParserImpl.this.svgDocument = new SVGBase(enableInternalEntities, externalFileResolver);
    }
 
 
@@ -1018,7 +1010,7 @@ class SVGParserImpl implements SVGParser
             styleElementContents = new StringBuilder(characters.length());
          styleElementContents.append(characters);
       }
-      else if (currentElement instanceof SVG.TextContainer)
+      else if (currentElement instanceof SVGBase.TextContainer)
       {
          appendToTextContainer(characters);
       }
@@ -1042,7 +1034,7 @@ class SVGParserImpl implements SVGParser
             styleElementContents = new StringBuilder(length);
          styleElementContents.append(ch, start, length);
       }
-      else if (currentElement instanceof SVG.TextContainer)
+      else if (currentElement instanceof SVGBase.TextContainer)
       {
          appendToTextContainer(new String(ch, start, length));
       }
@@ -1053,16 +1045,16 @@ class SVGParserImpl implements SVGParser
    private void  appendToTextContainer(String characters) throws SVGParseException
    {
       // The parser can pass us several text nodes in a row. If this happens, we
-      // want to collapse them all into one SVG.TextSequence node
-      SVG.SvgConditionalContainer  parent = (SVG.SvgConditionalContainer) currentElement;
-      int  numOlderSiblings = parent.children.size();
-      SVG.SvgObject  previousSibling = (numOlderSiblings == 0) ? null : parent.children.get(numOlderSiblings-1);
-      if (previousSibling instanceof SVG.TextSequence) {
+      // want to collapse them all into one SVGBase.TextSequence node
+      SVGBase.SvgConditionalContainer  parent = (SVGBase.SvgConditionalContainer) currentElement;
+      int  numOlderSiblings = parent.getChildren().size();
+      SVGBase.SvgObject  previousSibling = (numOlderSiblings == 0) ? null : parent.getChildren().get(numOlderSiblings-1);
+      if (previousSibling instanceof SVGBase.TextSequence) {
          // Last sibling was a TextSequence also, so merge them.
-         ((SVG.TextSequence) previousSibling).text += characters;
+         ((SVGBase.TextSequence) previousSibling).text += characters;
       } else {
          // Add a new TextSequence to the child node list
-         currentElement.addChild(new SVG.TextSequence( characters ));
+         currentElement.addChild(new SVGBase.TextSequence( characters ));
       }
    }
 
@@ -1144,7 +1136,7 @@ class SVGParserImpl implements SVGParser
    private void  endDocument()
    {
       // Dump document
-      if (LibConfig.DEBUG)
+      if (BuildConfig.DEBUG)
          dumpNode(svgDocument.getRootElement(), "");
    }
 
@@ -1203,12 +1195,12 @@ class SVGParserImpl implements SVGParser
    //=========================================================================
 
 
-   private void  dumpNode(SVG.SvgObject elem, String indent)
+   private void  dumpNode(SVGBase.SvgObject elem, String indent)
    {
       Log.d(TAG, indent+elem);
-      if (elem instanceof SVG.SvgConditionalContainer) {
+      if (elem instanceof SVGBase.SvgConditionalContainer) {
          indent = indent+"  ";
-         for (SVG.SvgObject child: ((SVG.SvgConditionalContainer) elem).children) {
+         for (SVGBase.SvgObject child: ((SVGBase.SvgConditionalContainer) elem).children) {
             dumpNode(child, indent);
          }
       }
@@ -1217,7 +1209,7 @@ class SVGParserImpl implements SVGParser
 
    private void  debug(String format, Object... args)
    {
-      if (LibConfig.DEBUG)
+      if (BuildConfig.DEBUG)
          Log.d(TAG, String.format(format, args));
    }
 
@@ -1231,7 +1223,7 @@ class SVGParserImpl implements SVGParser
    {
       debug("<svg>");
 
-      SVG.Svg  obj = new SVG.Svg();
+      SVGBase.Svg  obj = new SVGBase.Svg();
       obj.document = svgDocument;
       obj.parent = currentElement;
       parseAttributesCore(obj, attributes);
@@ -1248,7 +1240,7 @@ class SVGParserImpl implements SVGParser
    }
 
    
-   private void  parseAttributesSVG(SVG.Svg obj, Attributes attributes) throws SVGParseException
+   private void  parseAttributesSVG(SVGBase.Svg obj, Attributes attributes) throws SVGParseException
    {
       for (int i=0; i<attributes.getLength(); i++)
       {
@@ -1291,7 +1283,7 @@ class SVGParserImpl implements SVGParser
 
       if (currentElement == null)
          throw new SVGParseException("Invalid document. Root element must be <svg>");
-      SVG.Group  obj = new SVG.Group();
+      SVGBase.Group  obj = new SVGBase.Group();
       obj.document = svgDocument;
       obj.parent = currentElement;
       parseAttributesCore(obj, attributes);
@@ -1313,7 +1305,7 @@ class SVGParserImpl implements SVGParser
 
       if (currentElement == null)
          throw new SVGParseException("Invalid document. Root element must be <svg>");
-      SVG.Defs  obj = new SVG.Defs();
+      SVGBase.Defs  obj = new SVGBase.Defs();
       obj.document = svgDocument;
       obj.parent = currentElement;
       parseAttributesCore(obj, attributes);
@@ -1334,7 +1326,7 @@ class SVGParserImpl implements SVGParser
 
       if (currentElement == null)
          throw new SVGParseException("Invalid document. Root element must be <svg>");
-      SVG.A  obj = new SVG.A();
+      SVGBase.A  obj = new SVGBase.A();
       obj.document = svgDocument;
       obj.parent = currentElement;
       parseAttributesCore(obj, attributes);
@@ -1347,7 +1339,7 @@ class SVGParserImpl implements SVGParser
    }
 
 
-   private void  parseAttributesA(SVG.A obj, Attributes attributes)
+   private void  parseAttributesA(SVGBase.A obj, Attributes attributes)
    {
       for (int i=0; i<attributes.getLength(); i++)
       {
@@ -1376,7 +1368,7 @@ class SVGParserImpl implements SVGParser
 
       if (currentElement == null)
          throw new SVGParseException("Invalid document. Root element must be <svg>");
-      SVG.Use  obj = new SVG.Use();
+      SVGBase.Use  obj = new SVGBase.Use();
       obj.document = svgDocument;
       obj.parent = currentElement;
       parseAttributesCore(obj, attributes);
@@ -1389,7 +1381,7 @@ class SVGParserImpl implements SVGParser
    }
 
 
-   private void  parseAttributesUse(SVG.Use obj, Attributes attributes) throws SVGParseException
+   private void  parseAttributesUse(SVGBase.Use obj, Attributes attributes) throws SVGParseException
    {
       for (int i=0; i<attributes.getLength(); i++)
       {
@@ -1433,7 +1425,7 @@ class SVGParserImpl implements SVGParser
 
       if (currentElement == null)
          throw new SVGParseException("Invalid document. Root element must be <svg>");
-      SVG.Image  obj = new SVG.Image();
+      SVGBase.Image  obj = new SVGBase.Image();
       obj.document = svgDocument;
       obj.parent = currentElement;
       parseAttributesCore(obj, attributes);
@@ -1446,7 +1438,7 @@ class SVGParserImpl implements SVGParser
    }
 
 
-   private void  parseAttributesImage(SVG.Image obj, Attributes attributes) throws SVGParseException
+   private void  parseAttributesImage(SVGBase.Image obj, Attributes attributes) throws SVGParseException
    {
       for (int i=0; i<attributes.getLength(); i++)
       {
@@ -1493,7 +1485,7 @@ class SVGParserImpl implements SVGParser
 
       if (currentElement == null)
          throw new SVGParseException("Invalid document. Root element must be <svg>");
-      SVG.Path  obj = new SVG.Path();
+      SVGBase.Path  obj = new SVGBase.Path();
       obj.document = svgDocument;
       obj.parent = currentElement;
       parseAttributesCore(obj, attributes);
@@ -1505,7 +1497,7 @@ class SVGParserImpl implements SVGParser
    }
 
 
-   private void  parseAttributesPath(SVG.Path obj, Attributes attributes) throws SVGParseException
+   private void  parseAttributesPath(SVGBase.Path obj, Attributes attributes) throws SVGParseException
    {
       for (int i=0; i<attributes.getLength(); i++)
       {
@@ -1537,7 +1529,7 @@ class SVGParserImpl implements SVGParser
 
       if (currentElement == null)
          throw new SVGParseException("Invalid document. Root element must be <svg>");
-      SVG.Rect  obj = new SVG.Rect();
+      SVGBase.Rect  obj = new SVGBase.Rect();
       obj.document = svgDocument;
       obj.parent = currentElement;
       parseAttributesCore(obj, attributes);
@@ -1549,7 +1541,7 @@ class SVGParserImpl implements SVGParser
    }
 
 
-   private void  parseAttributesRect(SVG.Rect obj, Attributes attributes) throws SVGParseException
+   private void  parseAttributesRect(SVGBase.Rect obj, Attributes attributes) throws SVGParseException
    {
       for (int i=0; i<attributes.getLength(); i++)
       {
@@ -1599,7 +1591,7 @@ class SVGParserImpl implements SVGParser
 
       if (currentElement == null)
          throw new SVGParseException("Invalid document. Root element must be <svg>");
-      SVG.Circle  obj = new SVG.Circle();
+      SVGBase.Circle  obj = new SVGBase.Circle();
       obj.document = svgDocument;
       obj.parent = currentElement;
       parseAttributesCore(obj, attributes);
@@ -1611,7 +1603,7 @@ class SVGParserImpl implements SVGParser
    }
 
 
-   private void  parseAttributesCircle(SVG.Circle obj, Attributes attributes) throws SVGParseException
+   private void  parseAttributesCircle(SVGBase.Circle obj, Attributes attributes) throws SVGParseException
    {
       for (int i=0; i<attributes.getLength(); i++)
       {
@@ -1646,7 +1638,7 @@ class SVGParserImpl implements SVGParser
 
       if (currentElement == null)
          throw new SVGParseException("Invalid document. Root element must be <svg>");
-      SVG.Ellipse  obj = new SVG.Ellipse();
+      SVGBase.Ellipse  obj = new SVGBase.Ellipse();
       obj.document = svgDocument;
       obj.parent = currentElement;
       parseAttributesCore(obj, attributes);
@@ -1658,7 +1650,7 @@ class SVGParserImpl implements SVGParser
    }
 
 
-   private void  parseAttributesEllipse(SVG.Ellipse obj, Attributes attributes) throws SVGParseException
+   private void  parseAttributesEllipse(SVGBase.Ellipse obj, Attributes attributes) throws SVGParseException
    {
       for (int i=0; i<attributes.getLength(); i++)
       {
@@ -1698,7 +1690,7 @@ class SVGParserImpl implements SVGParser
 
       if (currentElement == null)
          throw new SVGParseException("Invalid document. Root element must be <svg>");
-      SVG.Line  obj = new SVG.Line();
+      SVGBase.Line  obj = new SVGBase.Line();
       obj.document = svgDocument;
       obj.parent = currentElement;
       parseAttributesCore(obj, attributes);
@@ -1710,7 +1702,7 @@ class SVGParserImpl implements SVGParser
    }
 
 
-   private void  parseAttributesLine(SVG.Line obj, Attributes attributes) throws SVGParseException
+   private void  parseAttributesLine(SVGBase.Line obj, Attributes attributes) throws SVGParseException
    {
       for (int i=0; i<attributes.getLength(); i++)
       {
@@ -1746,7 +1738,7 @@ class SVGParserImpl implements SVGParser
 
       if (currentElement == null)
          throw new SVGParseException("Invalid document. Root element must be <svg>");
-      SVG.PolyLine  obj = new SVG.PolyLine();
+      SVGBase.PolyLine  obj = new SVGBase.PolyLine();
       obj.document = svgDocument;
       obj.parent = currentElement;
       parseAttributesCore(obj, attributes);
@@ -1761,7 +1753,7 @@ class SVGParserImpl implements SVGParser
    /*
     *  Parse the "points" attribute. Used by both <polyline> and <polygon>.
     */
-   private void  parseAttributesPolyLine(SVG.PolyLine obj, Attributes attributes, String tag) throws SVGParseException
+   private void  parseAttributesPolyLine(SVGBase.PolyLine obj, Attributes attributes, String tag) throws SVGParseException
    {
       for (int i=0; i<attributes.getLength(); i++)
       {
@@ -1803,7 +1795,7 @@ class SVGParserImpl implements SVGParser
 
       if (currentElement == null)
          throw new SVGParseException("Invalid document. Root element must be <svg>");
-      SVG.Polygon  obj = new SVG.Polygon();
+      SVGBase.Polygon  obj = new SVGBase.Polygon();
       obj.document = svgDocument;
       obj.parent = currentElement;
       parseAttributesCore(obj, attributes);
@@ -1825,7 +1817,7 @@ class SVGParserImpl implements SVGParser
 
       if (currentElement == null)
          throw new SVGParseException("Invalid document. Root element must be <svg>");
-      SVG.Text  obj = new SVG.Text();
+      SVGBase.Text  obj = new SVGBase.Text();
       obj.document = svgDocument;
       obj.parent = currentElement;
       parseAttributesCore(obj, attributes);
@@ -1874,9 +1866,9 @@ class SVGParserImpl implements SVGParser
 
       if (currentElement == null)
          throw new SVGParseException("Invalid document. Root element must be <svg>");
-      if (!(currentElement instanceof SVG.TextContainer))
+      if (!(currentElement instanceof SVGBase.TextContainer))
          throw new SVGParseException("Invalid document. <tspan> elements are only valid inside <text> or other <tspan> elements.");
-      SVG.TSpan  obj = new SVG.TSpan();
+      SVGBase.TSpan  obj = new SVGBase.TSpan();
       obj.document = svgDocument;
       obj.parent = currentElement;
       parseAttributesCore(obj, attributes);
@@ -1902,9 +1894,9 @@ class SVGParserImpl implements SVGParser
 
       if (currentElement == null)
          throw new SVGParseException("Invalid document. Root element must be <svg>");
-      if (!(currentElement instanceof SVG.TextContainer))
+      if (!(currentElement instanceof SVGBase.TextContainer))
          throw new SVGParseException("Invalid document. <tref> elements are only valid inside <text> or <tspan> elements.");
-      SVG.TRef  obj = new SVG.TRef();
+      SVGBase.TRef  obj = new SVGBase.TRef();
       obj.document = svgDocument;
       obj.parent = currentElement;
       parseAttributesCore(obj, attributes);
@@ -1919,7 +1911,7 @@ class SVGParserImpl implements SVGParser
    }
 
 
-   private void  parseAttributesTRef(SVG.TRef obj, Attributes attributes)
+   private void  parseAttributesTRef(SVGBase.TRef obj, Attributes attributes)
    {
       for (int i=0; i<attributes.getLength(); i++)
       {
@@ -1948,7 +1940,7 @@ class SVGParserImpl implements SVGParser
 
       if (currentElement == null)
          throw new SVGParseException("Invalid document. Root element must be <svg>");
-      SVG.Switch  obj = new SVG.Switch();
+      SVGBase.Switch  obj = new SVGBase.Switch();
       obj.document = svgDocument;
       obj.parent = currentElement;
       parseAttributesCore(obj, attributes);
@@ -1960,7 +1952,7 @@ class SVGParserImpl implements SVGParser
    }
 
 
-   private void  parseAttributesConditional(SVG.SvgConditional obj, Attributes attributes)
+   private void  parseAttributesConditional(SVGBase.SvgConditional obj, Attributes attributes)
    {
       for (int i=0; i<attributes.getLength(); i++)
       {
@@ -2001,7 +1993,7 @@ class SVGParserImpl implements SVGParser
 
       if (currentElement == null)
          throw new SVGParseException("Invalid document. Root element must be <svg>");
-      SVG.Symbol  obj = new SVG.Symbol();
+      SVGBase.Symbol  obj = new SVGBase.Symbol();
       obj.document = svgDocument;
       obj.parent = currentElement;
       parseAttributesCore(obj, attributes);
@@ -2023,7 +2015,7 @@ class SVGParserImpl implements SVGParser
 
       if (currentElement == null)
          throw new SVGParseException("Invalid document. Root element must be <svg>");
-      SVG.Marker  obj = new SVG.Marker();
+      SVGBase.Marker  obj = new SVGBase.Marker();
       obj.document = svgDocument;
       obj.parent = currentElement;
       parseAttributesCore(obj, attributes);
@@ -2036,7 +2028,7 @@ class SVGParserImpl implements SVGParser
    }
 
 
-   private void  parseAttributesMarker(SVG.Marker obj, Attributes attributes) throws SVGParseException
+   private void  parseAttributesMarker(SVGBase.Marker obj, Attributes attributes) throws SVGParseException
    {
       for (int i=0; i<attributes.getLength(); i++)
       {
@@ -2092,7 +2084,7 @@ class SVGParserImpl implements SVGParser
 
       if (currentElement == null)
          throw new SVGParseException("Invalid document. Root element must be <svg>");
-      SVG.SvgLinearGradient  obj = new SVG.SvgLinearGradient();
+      SVGBase.SvgLinearGradient  obj = new SVGBase.SvgLinearGradient();
       obj.document = svgDocument;
       obj.parent = currentElement;
       parseAttributesCore(obj, attributes);
@@ -2104,7 +2096,7 @@ class SVGParserImpl implements SVGParser
    }
 
 
-   private void  parseAttributesGradient(SVG.GradientElement obj, Attributes attributes) throws SVGParseException
+   private void  parseAttributesGradient(SVGBase.GradientElement obj, Attributes attributes) throws SVGParseException
    {
       for (int i=0; i<attributes.getLength(); i++)
       {
@@ -2144,7 +2136,7 @@ class SVGParserImpl implements SVGParser
    }
 
 
-   private void  parseAttributesLinearGradient(SVG.SvgLinearGradient obj, Attributes attributes) throws SVGParseException
+   private void  parseAttributesLinearGradient(SVGBase.SvgLinearGradient obj, Attributes attributes) throws SVGParseException
    {
       for (int i=0; i<attributes.getLength(); i++)
       {
@@ -2180,7 +2172,7 @@ class SVGParserImpl implements SVGParser
 
       if (currentElement == null)
          throw new SVGParseException("Invalid document. Root element must be <svg>");
-      SVG.SvgRadialGradient  obj = new SVG.SvgRadialGradient();
+      SVGBase.SvgRadialGradient  obj = new SVGBase.SvgRadialGradient();
       obj.document = svgDocument;
       obj.parent = currentElement;
       parseAttributesCore(obj, attributes);
@@ -2192,7 +2184,7 @@ class SVGParserImpl implements SVGParser
    }
 
 
-   private void  parseAttributesRadialGradient(SVG.SvgRadialGradient obj, Attributes attributes) throws SVGParseException
+   private void  parseAttributesRadialGradient(SVGBase.SvgRadialGradient obj, Attributes attributes) throws SVGParseException
    {
       for (int i=0; i<attributes.getLength(); i++)
       {
@@ -2233,9 +2225,9 @@ class SVGParserImpl implements SVGParser
 
       if (currentElement == null)
          throw new SVGParseException("Invalid document. Root element must be <svg>");
-      if (!(currentElement instanceof SVG.GradientElement))
+      if (!(currentElement instanceof SVGBase.GradientElement))
          throw new SVGParseException("Invalid document. <stop> elements are only valid inside <linearGradient> or <radialGradient> elements.");
-      SVG.Stop  obj = new SVG.Stop();
+      SVGBase.Stop  obj = new SVGBase.Stop();
       obj.document = svgDocument;
       obj.parent = currentElement;
       parseAttributesCore(obj, attributes);
@@ -2246,7 +2238,7 @@ class SVGParserImpl implements SVGParser
    }
 
 
-   private void  parseAttributesStop(SVG.Stop obj, Attributes attributes) throws SVGParseException
+   private void  parseAttributesStop(SVGBase.Stop obj, Attributes attributes) throws SVGParseException
    {
       for (int i=0; i<attributes.getLength(); i++)
       {
@@ -2299,7 +2291,7 @@ class SVGParserImpl implements SVGParser
 
       if (currentElement == null)
          throw new SVGParseException("Invalid document. Root element must be <svg>");
-      SVG.SolidColor  obj = new SVG.SolidColor();
+      SVGBase.SolidColor  obj = new SVGBase.SolidColor();
       obj.document = svgDocument;
       obj.parent = currentElement;
       parseAttributesCore(obj, attributes);
@@ -2319,7 +2311,7 @@ class SVGParserImpl implements SVGParser
 
       if (currentElement == null)
          throw new SVGParseException("Invalid document. Root element must be <svg>");
-      SVG.ClipPath  obj = new SVG.ClipPath();
+      SVGBase.ClipPath  obj = new SVGBase.ClipPath();
       obj.document = svgDocument;
       obj.parent = currentElement;
       parseAttributesCore(obj, attributes);
@@ -2332,7 +2324,7 @@ class SVGParserImpl implements SVGParser
    }
 
 
-   private void  parseAttributesClipPath(SVG.ClipPath obj, Attributes attributes) throws SVGParseException
+   private void  parseAttributesClipPath(SVGBase.ClipPath obj, Attributes attributes) throws SVGParseException
    {
       for (int i=0; i<attributes.getLength(); i++)
       {
@@ -2366,7 +2358,7 @@ class SVGParserImpl implements SVGParser
 
       if (currentElement == null)
          throw new SVGParseException("Invalid document. Root element must be <svg>");
-      SVG.TextPath  obj = new SVG.TextPath();
+      SVGBase.TextPath  obj = new SVGBase.TextPath();
       obj.document = svgDocument;
       obj.parent = currentElement;
       parseAttributesCore(obj, attributes);
@@ -2382,7 +2374,7 @@ class SVGParserImpl implements SVGParser
    }
 
 
-   private void  parseAttributesTextPath(SVG.TextPath obj, Attributes attributes) throws SVGParseException
+   private void  parseAttributesTextPath(SVGBase.TextPath obj, Attributes attributes) throws SVGParseException
    {
       for (int i=0; i<attributes.getLength(); i++)
       {
@@ -2413,7 +2405,7 @@ class SVGParserImpl implements SVGParser
 
       if (currentElement == null)
          throw new SVGParseException("Invalid document. Root element must be <svg>");
-      SVG.Pattern  obj = new SVG.Pattern();
+      SVGBase.Pattern  obj = new SVGBase.Pattern();
       obj.document = svgDocument;
       obj.parent = currentElement;
       parseAttributesCore(obj, attributes);
@@ -2426,7 +2418,7 @@ class SVGParserImpl implements SVGParser
    }
 
 
-   private void  parseAttributesPattern(SVG.Pattern obj, Attributes attributes) throws SVGParseException
+   private void  parseAttributesPattern(SVGBase.Pattern obj, Attributes attributes) throws SVGParseException
    {
       for (int i=0; i<attributes.getLength(); i++)
       {
@@ -2491,7 +2483,7 @@ class SVGParserImpl implements SVGParser
 
       if (currentElement == null)
          throw new SVGParseException("Invalid document. Root element must be <svg>");
-      SVG.View  obj = new SVG.View();
+      SVGBase.View  obj = new SVGBase.View();
       obj.document = svgDocument;
       obj.parent = currentElement;
       parseAttributesCore(obj, attributes);
@@ -2512,7 +2504,7 @@ class SVGParserImpl implements SVGParser
 
       if (currentElement == null)
          throw new SVGParseException("Invalid document. Root element must be <svg>");
-      SVG.Mask  obj = new SVG.Mask();
+      SVGBase.Mask  obj = new SVGBase.Mask();
       obj.document = svgDocument;
       obj.parent = currentElement;
       parseAttributesCore(obj, attributes);
@@ -2524,7 +2516,7 @@ class SVGParserImpl implements SVGParser
    }
 
 
-   private void  parseAttributesMask(SVG.Mask obj, Attributes attributes) throws SVGParseException
+   private void  parseAttributesMask(SVGBase.Mask obj, Attributes attributes) throws SVGParseException
    {
       for (int i=0; i<attributes.getLength(); i++)
       {
@@ -2569,396 +2561,6 @@ class SVGParserImpl implements SVGParser
                break;
          }
       }
-   }
-
-
-   //=========================================================================
-   // String tokeniser
-   //=========================================================================
-
-
-   static class TextScanner
-   {
-      final String  input;
-      int           position = 0;
-      int           inputLength;
-
-      private  final NumberParser  numberParser = new NumberParser();
-
-
-      TextScanner(String input)
-      {
-         this.input = input.trim();
-         this.inputLength = this.input.length();
-      }
-
-      /**
-       * Returns true if we have reached the end of the input.
-       */
-      boolean  empty()
-      {
-         return (position == inputLength);
-      }
-
-      boolean  isWhitespace(int c)
-      {
-         return (c==' ' || c=='\n' || c=='\r' || c =='\t');
-      }
-
-      void  skipWhitespace()
-      {
-         while (position < inputLength) {
-            if (!isWhitespace(input.charAt(position)))
-               break;
-            position++;
-         }
-      }
-
-      boolean  isEOL(int c)
-      {
-         return (c=='\n' || c=='\r');
-      }
-
-      // Skip the sequence: <space>*(<comma><space>)?
-      // Returns true if we found a comma in there.
-      boolean  skipCommaWhitespace()
-      {
-         skipWhitespace();
-         if (position == inputLength)
-            return false;
-         if (!(input.charAt(position) == ','))
-            return false;
-         position++;
-         skipWhitespace();
-         return true;
-      }
-
-
-      float  nextFloat()
-      {
-         float  val = numberParser.parseNumber(input, position, inputLength);
-         if (!Float.isNaN(val))
-            position = numberParser.getEndPos();
-         return val;
-      }
-
-      /*
-       * Scans for a comma-whitespace sequence with a float following it.
-       * If found, the float is returned. Otherwise null is returned and
-       * the scan position left as it was.
-       */
-      float  possibleNextFloat()
-      {
-         skipCommaWhitespace();
-         float  val = numberParser.parseNumber(input, position, inputLength);
-         if (!Float.isNaN(val))
-            position = numberParser.getEndPos();
-         return val;
-      }
-
-      /*
-       * Scans for comma-whitespace sequence with a float following it.
-       * But only if the provided 'lastFloat' (representing the last coord
-       * scanned was non-null (ie parsed correctly).
-       */
-      float  checkedNextFloat(float lastRead)
-      {
-         if (Float.isNaN(lastRead)) {
-            return Float.NaN;
-         }
-         skipCommaWhitespace();
-         return nextFloat();
-      }
-
-      float  checkedNextFloat(Boolean lastRead)
-      {
-         if (lastRead == null) {
-            return Float.NaN;
-         }
-         skipCommaWhitespace();
-         return nextFloat();
-      }
-
-      /*
-      public Integer  nextInteger()
-      {
-         IntegerParser  ip = IntegerParser.parseInt(input, position, inputLength);
-         if (ip == null)
-            return null;
-         position = ip.getEndPos();
-         return ip.value();
-      }
-      */
-
-      /*
-       * Returns the char at the current position and advances the pointer.
-       */
-      Integer  nextChar()
-      {
-         if (position == inputLength)
-            return null;
-         return (int) input.charAt(position++);
-      }
-
-      Length  nextLength()
-      {
-         float  scalar = nextFloat();
-         if (Float.isNaN(scalar))
-            return null;
-         Unit  unit = nextUnit();
-         if (unit == null)
-            return new Length(scalar, Unit.px);
-         else
-            return new Length(scalar, unit);
-      }
-
-      /*
-       * Scan for a 'flag'. A flag is a '0' or '1' digit character.
-       */
-      Boolean  nextFlag()
-      {
-         if (position == inputLength)
-            return null;
-         char  ch = input.charAt(position);
-         if (ch == '0' || ch == '1') {
-            position++;
-            return (ch == '1');
-         }
-         return null;
-      }
-
-      /*
-       * Like checkedNextFloat, but reads a flag (see path definition parser)
-       */
-      Boolean  checkedNextFlag(Object lastRead)
-      {
-         if (lastRead == null) {
-            return null;
-         }
-         skipCommaWhitespace();
-         return nextFlag();
-      }
-
-      boolean  consume(char ch)
-      {
-         boolean  found = (position < inputLength && input.charAt(position) == ch);
-         if (found)
-            position++;
-         return found;
-      }
-
-
-      boolean  consume(String str)
-      {
-         int  len = str.length();
-         boolean  found = (position <= (inputLength - len) && input.substring(position,position+len).equals(str));
-         if (found)
-            position += len;
-         return found;
-      }
-
-
-      /*
-       * Skip the current char and peek at the char in the following position.
-       */
-      int  advanceChar()
-      {
-         if (position == inputLength)
-            return -1;
-         position++;
-         if (position < inputLength)
-            return input.charAt(position);
-         else
-            return -1;
-      }
-
-
-      /*
-       * Scans the input starting immediately at 'position' for the next token.
-       * A token is a sequence of characters terminating at a whitespace character.
-       * Note that this routine only checks for whitespace characters.  Use nextToken(char)
-       * if token might end with another character.
-       */
-      String  nextToken()
-      {
-         return nextToken(' ', false);
-      }
-
-      /*
-       * Scans the input starting immediately at 'position' for the next token.
-       * A token is a sequence of characters terminating at either a whitespace character
-       * or the supplied terminating character.
-       */
-      String  nextToken(char terminator)
-      {
-         return nextToken(terminator, false);
-      }
-
-      /*
-       * Scans the input starting immediately at 'position' for the next token.
-       * A token is a sequence of characters terminating at either a the supplied terminating
-       * character.  Whitespaces are allowed.
-       */
-      String  nextTokenWithWhitespace(char terminator)
-      {
-         return nextToken(terminator, true);
-      }
-
-      /*
-       * Scans the input starting immediately at 'position' for the next token.
-       * A token is a sequence of characters terminating at either the supplied terminating
-       * character, or (optionally) a whitespace character.
-       */
-      String  nextToken(char terminator, boolean allowWhitespace)
-      {
-         if (empty())
-            return null;
-
-         int  ch = input.charAt(position);
-         if ((!allowWhitespace && isWhitespace(ch)) || ch == terminator)
-            return null;
-         
-         int  start = position;
-         ch = advanceChar();
-         while (ch != -1) {
-            if (ch == terminator)
-               break;
-            if (!allowWhitespace && isWhitespace(ch))
-               break;
-            ch = advanceChar();
-         }
-         return input.substring(start, position);
-      }
-
-
-      /*
-       * Scans the input starting immediately at 'position' looking for a continuous
-       * sequence of ASCII letters. Terminates at any non-letter.
-       */
-      String  nextWord()
-      {
-         if (empty())
-            return null;
-         int  start = position;
-
-         int  ch = input.charAt(position);
-         if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z'))
-         {
-            ch = advanceChar();
-            while ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z'))
-               ch = advanceChar();
-            return input.substring(start, position);
-         }
-         position = start;
-         return null;
-      }
-
-
-      /*
-       * Scans the input starting immediately at 'position' for the a sequence
-       * of letter characters terminated by an open bracket.  The function
-       * name is returned.
-       */
-      String  nextFunction()
-      {
-         if (empty())
-            return null;
-         int  start = position;
-
-         int  ch = input.charAt(position);
-         while ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z'))
-            ch = advanceChar();
-         int end = position;
-         while (isWhitespace(ch))
-            ch = advanceChar();
-         if (ch == '(') {
-            position++;
-            return input.substring(start, end);
-         }
-         position = start;
-         return null;
-      }
-
-      /*
-       * Get the next few chars. Mainly used for error messages.
-       */
-      String  ahead()
-      {
-         int start = position;
-         while (!empty() && !isWhitespace(input.charAt(position)))
-            position++;
-         String  str = input.substring(start, position);
-         position = start;
-         return str;
-      }
-
-      Unit  nextUnit()
-      {
-         if (empty())
-            return null;
-         int  ch = input.charAt(position);
-         if (ch == '%') {
-            position++;
-            return Unit.percent;
-         }
-         if (position > (inputLength - 2))
-            return null;
-         try {
-            Unit  result = Unit.valueOf(input.substring(position, position + 2).toLowerCase(Locale.US));
-            position +=2;
-            return result;
-         } catch (IllegalArgumentException e) {
-            return null;
-         }
-      }
-
-      /*
-       * Check whether the next character is a letter.
-       */
-      boolean  hasLetter()
-      {
-         if (position == inputLength)
-            return false;
-         char  ch = input.charAt(position);
-         return ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z'));
-      }
-
-      /*
-       * Extract a quoted string from the input.
-       */
-      String  nextQuotedString()
-      {
-         if (empty())
-            return null;
-         int  start = position;
-         int  ch = input.charAt(position);
-         int  endQuote = ch;
-         if (ch != '\'' && ch!='"')
-            return null;
-         ch = advanceChar();
-         while (ch != -1 && ch != endQuote)
-            ch = advanceChar();
-         if (ch == -1) {
-            position = start;
-            return null;
-         }
-         position++;
-         return input.substring(start+1, position-1);
-      }
-
-      /*
-       * Return the remaining input as a string.
-       */
-      String  restOfText()
-      {
-         if (empty())
-            return null;
-
-         int  start = position;
-         position = inputLength;
-         return input.substring(start);
-      }
-
    }
 
 
@@ -3018,7 +2620,7 @@ class SVGParserImpl implements SVGParser
             default:
                if (obj.baseStyle == null)
                   obj.baseStyle = new Style();
-               processStyleProperty(obj.baseStyle, attributes.getLocalName(i), attributes.getValue(i).trim(), true);
+               Style.processStyleProperty(obj.baseStyle, attributes.getLocalName(i), attributes.getValue(i).trim(), true);
                break;
          }
       }
@@ -3050,309 +2652,14 @@ class SVGParserImpl implements SVGParser
          {
             if (obj.style == null)
                obj.style = new Style();
-            processStyleProperty(obj.style, propertyName, propertyValue, false);
+            Style.processStyleProperty(obj.style, propertyName, propertyValue, false);
             scan.skipWhitespace();
          }
       }
    }
 
 
-   static void  processStyleProperty(Style style, String localName, String val, boolean isFromAttribute)
-   {
-      if (val.length() == 0) { // The spec doesn't say how to handle empty style attributes.
-         return;               // Our strategy is just to ignore them.
-      }
-      if (val.equals("inherit"))
-         return;
-
-      switch (SVGAttr.fromString(localName))
-      {
-         case fill:
-            style.fill = parsePaintSpecifier(val);
-            if (style.fill != null)
-               style.specifiedFlags |= SVG.SPECIFIED_FILL;
-            break;
-
-         case fill_rule:
-            style.fillRule = parseFillRule(val);
-            if (style.fillRule != null)
-               style.specifiedFlags |= SVG.SPECIFIED_FILL_RULE;
-            break;
-
-         case fill_opacity:
-            style.fillOpacity = parseOpacity(val);
-            if (style.fillOpacity != null)
-               style.specifiedFlags |= SVG.SPECIFIED_FILL_OPACITY;
-            break;
-
-         case stroke:
-            style.stroke = parsePaintSpecifier(val);
-            if (style.stroke != null)
-               style.specifiedFlags |= SVG.SPECIFIED_STROKE;
-            break;
-
-         case stroke_opacity:
-            style.strokeOpacity = parseOpacity(val);
-            if (style.strokeOpacity != null)
-               style.specifiedFlags |= SVG.SPECIFIED_STROKE_OPACITY;
-            break;
-
-         case stroke_width:
-            try {
-               style.strokeWidth = parseLength(val);
-               style.specifiedFlags |= SVG.SPECIFIED_STROKE_WIDTH;
-            } catch (SVGParseException e) {
-               // Do nothing
-            }
-            break;
-
-         case stroke_linecap:
-            style.strokeLineCap = parseStrokeLineCap(val);
-            if (style.strokeLineCap != null)
-               style.specifiedFlags |= SVG.SPECIFIED_STROKE_LINECAP;
-            break;
-
-         case stroke_linejoin:
-            style.strokeLineJoin = parseStrokeLineJoin(val);
-            if (style.strokeLineJoin != null)
-               style.specifiedFlags |= SVG.SPECIFIED_STROKE_LINEJOIN;
-            break;
-
-         case stroke_miterlimit:
-            try {
-               style.strokeMiterLimit = parseFloat(val);
-               style.specifiedFlags |= SVG.SPECIFIED_STROKE_MITERLIMIT;
-            } catch (SVGParseException e) {
-               // Do nothing
-            }
-            break;
-
-         case stroke_dasharray:
-            if (NONE.equals(val)) {
-               style.strokeDashArray = null;
-               style.specifiedFlags |= SVG.SPECIFIED_STROKE_DASHARRAY;
-               break;
-            }
-            style.strokeDashArray = parseStrokeDashArray(val);
-            if (style.strokeDashArray != null)
-               style.specifiedFlags |= SVG.SPECIFIED_STROKE_DASHARRAY;
-            break;
-
-         case stroke_dashoffset:
-            try {
-               style.strokeDashOffset = parseLength(val);
-               style.specifiedFlags |= SVG.SPECIFIED_STROKE_DASHOFFSET;
-            } catch (SVGParseException e) {
-               // Do nothing
-            }
-            break;
-
-         case opacity:
-            style.opacity = parseOpacity(val);
-            style.specifiedFlags |= SVG.SPECIFIED_OPACITY;
-            break;
-
-         case color:
-            style.color = parseColour(val);
-            style.specifiedFlags |= SVG.SPECIFIED_COLOR;
-            break;
-
-         case font:
-            parseFont(style, val);
-            break;
-
-         case font_family:
-            style.fontFamily = parseFontFamily(val);
-            if (style.fontFamily != null)
-               style.specifiedFlags |= SVG.SPECIFIED_FONT_FAMILY;
-            break;
-
-         case font_size:
-            style.fontSize = parseFontSize(val);
-            if (style.fontSize != null)
-               style.specifiedFlags |= SVG.SPECIFIED_FONT_SIZE;
-            break;
-
-         case font_weight:
-            style.fontWeight = parseFontWeight(val);
-            if (style.fontWeight != null)
-               style.specifiedFlags |= SVG.SPECIFIED_FONT_WEIGHT;
-            break;
-
-         case font_style:
-            style.fontStyle = parseFontStyle(val);
-            if (style.fontStyle != null)
-               style.specifiedFlags |= SVG.SPECIFIED_FONT_STYLE;
-            break;
-
-         case text_decoration:
-            style.textDecoration = parseTextDecoration(val);
-            if (style.textDecoration != null)
-               style.specifiedFlags |= SVG.SPECIFIED_TEXT_DECORATION;
-            break;
-
-         case direction:
-            style.direction = parseTextDirection(val);
-            if (style.direction != null)
-               style.specifiedFlags |= SVG.SPECIFIED_DIRECTION;
-            break;
-
-         case text_anchor:
-            style.textAnchor = parseTextAnchor(val);
-            if (style.textAnchor != null)
-               style.specifiedFlags |= SVG.SPECIFIED_TEXT_ANCHOR;
-            break;
-
-         case overflow:
-            style.overflow = parseOverflow(val);
-            if (style.overflow != null)
-               style.specifiedFlags |= SVG.SPECIFIED_OVERFLOW;
-            break;
-
-         case marker:
-            style.markerStart = parseFunctionalIRI(val, localName);
-            style.markerMid = style.markerStart;
-            style.markerEnd = style.markerStart;
-            style.specifiedFlags |= (SVG.SPECIFIED_MARKER_START | SVG.SPECIFIED_MARKER_MID | SVG.SPECIFIED_MARKER_END);
-            break;
-
-         case marker_start:
-            style.markerStart = parseFunctionalIRI(val, localName);
-            style.specifiedFlags |= SVG.SPECIFIED_MARKER_START;
-            break;
-
-         case marker_mid:
-            style.markerMid = parseFunctionalIRI(val, localName);
-            style.specifiedFlags |= SVG.SPECIFIED_MARKER_MID;
-            break;
-
-         case marker_end:
-            style.markerEnd = parseFunctionalIRI(val, localName);
-            style.specifiedFlags |= SVG.SPECIFIED_MARKER_END;
-            break;
-
-         case display:
-            if (val.indexOf('|') >= 0 || !VALID_DISPLAY_VALUES.contains('|'+val+'|'))
-               break;
-            style.display = !val.equals(NONE);
-            style.specifiedFlags |= SVG.SPECIFIED_DISPLAY;
-            break;
-
-         case visibility:
-            if (val.indexOf('|') >= 0 || !VALID_VISIBILITY_VALUES.contains('|'+val+'|'))
-               break;
-            style.visibility = val.equals("visible");
-            style.specifiedFlags |= SVG.SPECIFIED_VISIBILITY;
-            break;
-
-         case stop_color:
-            if (val.equals(CURRENTCOLOR)) {
-               style.stopColor = CurrentColor.getInstance();
-            } else {
-               style.stopColor = parseColour(val);
-            }
-            style.specifiedFlags |= SVG.SPECIFIED_STOP_COLOR;
-            break;
-
-         case stop_opacity:
-            style.stopOpacity = parseOpacity(val);
-            style.specifiedFlags |= SVG.SPECIFIED_STOP_OPACITY;
-            break;
-
-         case clip:
-            style.clip = parseClip(val);
-            if (style.clip != null)
-               style.specifiedFlags |= SVG.SPECIFIED_CLIP;
-            break;
-
-         case clip_path:
-            style.clipPath = parseFunctionalIRI(val, localName);
-            style.specifiedFlags |= SVG.SPECIFIED_CLIP_PATH;
-            break;
-
-         case clip_rule:
-            style.clipRule = parseFillRule(val);
-            style.specifiedFlags |= SVG.SPECIFIED_CLIP_RULE;
-            break;
-
-         case mask:
-            style.mask = parseFunctionalIRI(val, localName);
-            style.specifiedFlags |= SVG.SPECIFIED_MASK;
-            break;
-
-         case solid_color:
-            // SVG 1.2 Tiny
-            if (!isFromAttribute)
-               break;
-            if (val.equals(CURRENTCOLOR)) {
-               style.solidColor = CurrentColor.getInstance();
-            } else {
-               style.solidColor = parseColour(val);
-            }
-            style.specifiedFlags |= SVG.SPECIFIED_SOLID_COLOR;
-            break;
-
-         case solid_opacity:
-            // SVG 1.2 Tiny
-            if (!isFromAttribute)
-               break;
-            style.solidOpacity = parseOpacity(val);
-            style.specifiedFlags |= SVG.SPECIFIED_SOLID_OPACITY;
-            break;
-
-         case viewport_fill:
-            // SVG 1.2 Tiny
-            if (val.equals(CURRENTCOLOR)) {
-               style.viewportFill = CurrentColor.getInstance();
-            } else {
-               style.viewportFill = parseColour(val);
-            }
-            style.specifiedFlags |= SVG.SPECIFIED_VIEWPORT_FILL;
-            break;
-
-         case viewport_fill_opacity:
-            // SVG 1.2 Tiny
-            style.viewportFillOpacity = parseOpacity(val);
-            style.specifiedFlags |= SVG.SPECIFIED_VIEWPORT_FILL_OPACITY;
-            break;
-
-         case vector_effect:
-            if (isFromAttribute)
-               break;
-            style.vectorEffect = parseVectorEffect(val);
-            if (style.vectorEffect != null)
-               style.specifiedFlags |= SVG.SPECIFIED_VECTOR_EFFECT;
-            break;
-
-         case image_rendering:
-            style.imageRendering = parseRenderQuality(val);
-            if (style.imageRendering != null)
-               style.specifiedFlags |= SVG.SPECIFIED_IMAGE_RENDERING;
-            break;
-
-         case isolation:
-            if (isFromAttribute)
-               break;
-            style.isolation = parseIsolation(val);
-            if (style.isolation != null)
-               style.specifiedFlags |= SVG.SPECIFIED_ISOLATION;
-            break;
-
-         case mix_blend_mode:
-            if (isFromAttribute)
-               break;
-            style.mixBlendMode = CSSBlendMode.fromString(val);
-            if (style.mixBlendMode != null)
-               style.specifiedFlags |= SVG.SPECIFIED_MIX_BLEND_MODE;
-            break;
-
-         default:
-            break;
-      }
-   }
-
-
-   private void  parseAttributesViewBox(SVG.SvgViewBoxContainer obj, Attributes attributes) throws SVGParseException
+   private void  parseAttributesViewBox(SVGBase.SvgViewBoxContainer obj, Attributes attributes) throws SVGParseException
    {
       for (int i=0; i<attributes.getLength(); i++)
       {
@@ -3372,7 +2679,7 @@ class SVGParserImpl implements SVGParser
    }
 
 
-   private void  parseAttributesTransform(SVG.HasTransform obj, Attributes attributes) throws SVGParseException
+   private void  parseAttributesTransform(SVGBase.HasTransform obj, Attributes attributes) throws SVGParseException
    {
       for (int i=0; i<attributes.getLength(); i++)
       {
@@ -3581,7 +2888,7 @@ class SVGParserImpl implements SVGParser
    /*
     * Parse a generic float value.
     */
-   private static float  parseFloat(String val) throws SVGParseException
+   static float  parseFloat(String val) throws SVGParseException
    {
       int  len = val.length();
       if (len == 0)
@@ -3604,7 +2911,7 @@ class SVGParserImpl implements SVGParser
    /*
     * Parse an opacity value (a float clamped to the range 0..1).
     */
-   private static Float  parseOpacity(String val)
+   static Float  parseOpacity(String val)
    {
       try {
          float  o = parseFloat(val);
@@ -3638,54 +2945,23 @@ class SVGParserImpl implements SVGParser
       if (height < 0)
          throw new SVGParseException("Invalid viewBox. height cannot be negative");
 
-      return new SVG.Box(minX, minY, width, height);
+      return new SVGBase.Box(minX, minY, width, height);
    }
 
 
    /*
     * Parse a preserveAspectRation attribute
     */
-   private static void  parsePreserveAspectRatio(SVG.SvgPreserveAspectRatioContainer obj, String val) throws SVGParseException
+   private static void  parsePreserveAspectRatio(SVGBase.SvgPreserveAspectRatioContainer obj, String val) throws SVGParseException
    {
-      obj.preserveAspectRatio = parsePreserveAspectRatio(val);
-   }
-
-
-   static PreserveAspectRatio  parsePreserveAspectRatio(String val) throws SVGParseException
-   {
-      TextScanner scan = new TextScanner(val);
-      scan.skipWhitespace();
-
-      String  word = scan.nextToken();
-      if ("defer".equals(word)) {    // Ignore defer keyword
-         scan.skipWhitespace();
-         word = scan.nextToken();
-      }
-
-      PreserveAspectRatio.Alignment  align = AspectRatioKeywords.get(word);
-      PreserveAspectRatio.Scale      scale = null;
-
-      scan.skipWhitespace();
-
-      if (!scan.empty()) {
-         String meetOrSlice = scan.nextToken();
-         switch (meetOrSlice) {
-            case "meet":
-               scale = PreserveAspectRatio.Scale.meet; break;
-            case "slice":
-               scale = PreserveAspectRatio.Scale.slice; break;
-            default:
-               throw new SVGParseException("Invalid preserveAspectRatio definition: " + val);
-         }
-      }
-      return new PreserveAspectRatio(align, scale);
+      obj.preserveAspectRatio = PreserveAspectRatio.of(val);
    }
 
 
    /*
     * Parse a paint specifier such as in the fill and stroke attributes.
     */
-   private static SvgPaint parsePaintSpecifier(String val)
+   static SvgPaint parsePaintSpecifier(String val)
    {
       if (val.startsWith("url("))
       {
@@ -3726,11 +3002,11 @@ class SVGParserImpl implements SVGParser
    /*
     * Parse a colour definition.
     */
-   private static Colour  parseColour(String val)
+   static Colour  parseColour(String val)
    {
       if (val.charAt(0) == '#')
       {
-         IntegerParser  ip = IntegerParser.parseHex(val, 1, val.length());
+         IntegerParser ip = IntegerParser.parseHex(val, 1, val.length());
          if (ip == null) {
             return Colour.BLACK;
          }
@@ -3933,7 +3209,7 @@ class SVGParserImpl implements SVGParser
 
    // Parse a font attribute
    // [ [ <'font-style'> || <'font-variant'> || <'font-weight'> ]? <'font-size'> [ / <'line-height'> ]? <'font-family'> ] | caption | icon | menu | message-box | small-caption | status-bar | inherit
-   private static void  parseFont(Style style, String val)
+   static void  parseFont(Style style, String val)
    {
       Integer          fontWeight = null;
       Style.FontStyle  fontStyle = null;
@@ -3998,12 +3274,12 @@ class SVGParserImpl implements SVGParser
       style.fontSize = fontSize;
       style.fontWeight = (fontWeight == null) ? Style.FONT_WEIGHT_NORMAL : fontWeight;
       style.fontStyle = (fontStyle == null) ? Style.FontStyle.Normal : fontStyle;
-      style.specifiedFlags |= (SVG.SPECIFIED_FONT_FAMILY | SVG.SPECIFIED_FONT_SIZE | SVG.SPECIFIED_FONT_WEIGHT | SVG.SPECIFIED_FONT_STYLE);
+      style.specifiedFlags |= (Style.SPECIFIED_FONT_FAMILY | Style.SPECIFIED_FONT_SIZE | Style.SPECIFIED_FONT_WEIGHT | Style.SPECIFIED_FONT_STYLE);
    }
 
 
    // Parse a font family list
-   private static List<String>  parseFontFamily(String val)
+   static List<String>  parseFontFamily(String val)
    {
       List<String> fonts = null;
       TextScanner  scan = new TextScanner(val);
@@ -4026,7 +3302,7 @@ class SVGParserImpl implements SVGParser
 
 
    // Parse a font size keyword or numerical value
-   private static Length  parseFontSize(String val)
+   static Length  parseFontSize(String val)
    {
       try {
          Length  size = FontSizeKeywords.get(val);
@@ -4040,14 +3316,14 @@ class SVGParserImpl implements SVGParser
 
 
    // Parse a font weight keyword or numerical value
-   private static Integer  parseFontWeight(String val)
+   static Integer  parseFontWeight(String val)
    {
       return FontWeightKeywords.get(val);
    }
 
 
    // Parse a font style keyword
-   private static Style.FontStyle  parseFontStyle(String val)
+   static Style.FontStyle  parseFontStyle(String val)
    {
       // Italic is probably the most common, so test that first :)
       switch (val)
@@ -4061,7 +3337,7 @@ class SVGParserImpl implements SVGParser
 
 
    // Parse a text decoration keyword
-   private static TextDecoration  parseTextDecoration(String val)
+   static TextDecoration  parseTextDecoration(String val)
    {
       switch (val)
       {
@@ -4076,7 +3352,7 @@ class SVGParserImpl implements SVGParser
 
 
    // Parse a text decoration keyword
-   private static TextDirection  parseTextDirection(String val)
+   static TextDirection  parseTextDirection(String val)
    {
       switch (val)
       {
@@ -4088,7 +3364,7 @@ class SVGParserImpl implements SVGParser
 
 
    // Parse fill rule
-   private static Style.FillRule  parseFillRule(String val)
+   static Style.FillRule  parseFillRule(String val)
    {
       if ("nonzero".equals(val))
          return Style.FillRule.NonZero;
@@ -4099,7 +3375,7 @@ class SVGParserImpl implements SVGParser
 
 
    // Parse stroke-linecap
-   private static Style.LineCap  parseStrokeLineCap(String val)
+   static Style.LineCap  parseStrokeLineCap(String val)
    {
       if ("butt".equals(val))
          return Style.LineCap.Butt;
@@ -4112,7 +3388,7 @@ class SVGParserImpl implements SVGParser
 
 
    // Parse stroke-linejoin
-   private static Style.LineJoin  parseStrokeLineJoin(String val)
+   static Style.LineJoin  parseStrokeLineJoin(String val)
    {
       if ("miter".equals(val))
          return Style.LineJoin.Miter;
@@ -4125,7 +3401,7 @@ class SVGParserImpl implements SVGParser
 
 
    // Parse stroke-dasharray
-   private static Length[]  parseStrokeDashArray(String val)
+   static Length[]  parseStrokeDashArray(String val)
    {
       TextScanner scan = new TextScanner(val);
       scan.skipWhitespace();
@@ -4165,7 +3441,7 @@ class SVGParserImpl implements SVGParser
 
 
    // Parse a text anchor keyword
-   private static Style.TextAnchor  parseTextAnchor(String val)
+   static Style.TextAnchor  parseTextAnchor(String val)
    {
       switch (val)
       {
@@ -4178,7 +3454,7 @@ class SVGParserImpl implements SVGParser
 
 
    // Parse a text anchor keyword
-   private static Boolean  parseOverflow(String val)
+   static Boolean  parseOverflow(String val)
    {
       switch (val)
       {
@@ -4195,7 +3471,7 @@ class SVGParserImpl implements SVGParser
 
 
    // Parse CSS clip shape (always a rect())
-   private static CSSClipRect  parseClip(String val)
+   static CSSClipRect  parseClip(String val)
    {
       if ("auto".equals(val))
          return null;
@@ -4231,7 +3507,7 @@ class SVGParserImpl implements SVGParser
 
 
    // Parse a vector effect keyword
-   private static VectorEffect  parseVectorEffect(String val)
+   static VectorEffect  parseVectorEffect(String val)
    {
       switch (val)
       {
@@ -4243,7 +3519,7 @@ class SVGParserImpl implements SVGParser
 
 
    // Parse a rendering quality property
-   private static RenderQuality  parseRenderQuality(String val)
+   static RenderQuality  parseRenderQuality(String val)
    {
       switch (val)
       {
@@ -4256,7 +3532,7 @@ class SVGParserImpl implements SVGParser
 
 
    // Parse a isolation property
-   private static Isolation  parseIsolation(String val)
+   static Isolation  parseIsolation(String val)
    {
       switch (val)
       {
@@ -4271,7 +3547,7 @@ class SVGParserImpl implements SVGParser
 
 
    // Parse the string that defines a path.
-   protected static SVG.PathDefinition  parsePath(String val)
+   protected static SVGBase.PathDefinition  parsePath(String val)
    {
       TextScanner  scan = new TextScanner(val);
 
@@ -4282,7 +3558,7 @@ class SVGParserImpl implements SVGParser
       float   rx,ry, xAxisRotation;
       Boolean largeArcFlag, sweepFlag;
 
-      SVG.PathDefinition  path = new SVG.PathDefinition();
+      SVGBase.PathDefinition  path = new SVGBase.PathDefinition();
 
       if (scan.empty())
          return path;
@@ -4584,7 +3860,7 @@ class SVGParserImpl implements SVGParser
    }
 
 
-   private static String  parseFunctionalIRI(String val, String attrName)
+   static String  parseFunctionalIRI(String val, String attrName)
    {
       if (val.equals(NONE))
          return null;

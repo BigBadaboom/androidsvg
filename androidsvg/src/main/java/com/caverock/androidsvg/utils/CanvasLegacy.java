@@ -1,4 +1,4 @@
-package com.caverock.androidsvg;
+package com.caverock.androidsvg.utils;
 
 import android.graphics.Canvas;
 
@@ -9,8 +9,8 @@ import java.lang.reflect.Method;
  * so this helper classes uses reflection to access the API on older devices.
  */
 @SuppressWarnings("JavaReflectionMemberAccess")
-class CanvasLegacy {
-    static final int MATRIX_SAVE_FLAG;
+public class CanvasLegacy {
+    public static final int MATRIX_SAVE_FLAG;
 
     private static final Method SAVE;
 
@@ -23,7 +23,7 @@ class CanvasLegacy {
         }
     }
 
-    static void save(Canvas canvas, int saveFlags) {
+    public static void save(Canvas canvas, int saveFlags) {
         try {
             SAVE.invoke(canvas, saveFlags);
         } catch (Throwable e) {

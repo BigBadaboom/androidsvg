@@ -16,6 +16,11 @@
 
 package com.caverock.androidsvg;
 
+import com.caverock.androidsvg.utils.TextScanner;
+
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * The PreserveAspectRatio class tells the renderer how to scale and position the
  * SVG document in the current viewport.  It is roughly equivalent to the
@@ -37,6 +42,9 @@ public class PreserveAspectRatio
 {
    private final Alignment  alignment;
    private final Scale      scale;
+
+   private static final Map<String, Alignment> aspectRatioKeywords = new HashMap<>(10);
+
 
    /**
     * Draw document at its natural position and scale.
@@ -186,6 +194,20 @@ public class PreserveAspectRatio
    }
 
 
+   static {
+      aspectRatioKeywords.put("none", PreserveAspectRatio.Alignment.none);
+      aspectRatioKeywords.put("xMinYMin", PreserveAspectRatio.Alignment.xMinYMin);
+      aspectRatioKeywords.put("xMidYMin", PreserveAspectRatio.Alignment.xMidYMin);
+      aspectRatioKeywords.put("xMaxYMin", PreserveAspectRatio.Alignment.xMaxYMin);
+      aspectRatioKeywords.put("xMinYMid", PreserveAspectRatio.Alignment.xMinYMid);
+      aspectRatioKeywords.put("xMidYMid", PreserveAspectRatio.Alignment.xMidYMid);
+      aspectRatioKeywords.put("xMaxYMid", PreserveAspectRatio.Alignment.xMaxYMid);
+      aspectRatioKeywords.put("xMinYMax", PreserveAspectRatio.Alignment.xMinYMax);
+      aspectRatioKeywords.put("xMidYMax", PreserveAspectRatio.Alignment.xMidYMax);
+      aspectRatioKeywords.put("xMaxYMax", PreserveAspectRatio.Alignment.xMaxYMax);
+   }
+
+
    /*
     * Private constructor
     */
@@ -205,7 +227,7 @@ public class PreserveAspectRatio
    public static PreserveAspectRatio  of(String value)
    {
       try {
-         return SVGParserImpl.parsePreserveAspectRatio(value);
+         return parsePreserveAspectRatio(value);
       } catch (SVGParseException e) {
          throw new IllegalArgumentException(e.getMessage());
       }
@@ -253,4 +275,38 @@ public class PreserveAspectRatio
    {
       return alignment + " " + scale;
    }
+
+
+
+
+   private static PreserveAspectRatio  parsePreserveAspectRatio(String val) throws SVGParseException
+   {
+      TextScanner scan = new TextScanner(val);
+      scan.skipWhitespace();
+
+      String  word = scan.nextToken();
+      if ("defer".equals(word)) {    // Ignore defer keyword
+         scan.skipWhitespace();
+         word = scan.nextToken();
+      }
+
+      PreserveAspectRatio.Alignment  align = aspectRatioKeywords.get(word);
+      PreserveAspectRatio.Scale      scale = null;
+
+      scan.skipWhitespace();
+
+      if (!scan.empty()) {
+         String meetOrSlice = scan.nextToken();
+         switch (meetOrSlice) {
+            case "meet":
+               scale = PreserveAspectRatio.Scale.meet; break;
+            case "slice":
+               scale = PreserveAspectRatio.Scale.slice; break;
+            default:
+               throw new SVGParseException("Invalid preserveAspectRatio definition: " + val);
+         }
+      }
+      return new PreserveAspectRatio(align, scale);
+   }
+
 }

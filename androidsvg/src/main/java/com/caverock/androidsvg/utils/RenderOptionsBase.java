@@ -14,15 +14,18 @@
    limitations under the License.
 */
 
-package com.caverock.androidsvg;
+package com.caverock.androidsvg.utils;
 
 import android.graphics.Canvas;
 
-import com.caverock.androidsvg.utils.RenderOptionsBase;
+import com.caverock.androidsvg.PreserveAspectRatio;
+import com.caverock.androidsvg.RenderOptions;
+import com.caverock.androidsvg.SVG;
+import com.caverock.androidsvg.utils.SVGBase.Box;
 
 /**
  * A fluent builder class that creates a render configuration object for the
- * {@link SVG#renderToCanvas(Canvas,RenderOptions)} and {@link SVG#renderToPicture(int,int,RenderOptions)} methods.
+ * {@link SVG#renderToCanvas(Canvas, RenderOptions)} and {@link SVG#renderToPicture(int,int, RenderOptions)} methods.
  *
  * <h3>Example usage</h3>
  *
@@ -37,16 +40,23 @@ import com.caverock.androidsvg.utils.RenderOptionsBase;
  * @since 1.3
  */
 
-public class RenderOptions extends RenderOptionsBase
+public class RenderOptionsBase
 {
+   String               css = null;
+   //String             id = null;
+   PreserveAspectRatio  preserveAspectRatio = null;
+   String               targetId = null;
+   SVGBase.Box              viewBox = null;
+   String               viewId = null;
+   SVGBase.Box              viewPort = null;
+
 
    /**
     * Create a new <code>RenderOptions</code> instance.  You can choose to use either this constructor,
     * or <code>new RenderOptions.create()</code>.  Both are equivalent.
     */
-   public RenderOptions()
+   public RenderOptionsBase()
    {
-      super();
    }
 
 
@@ -54,9 +64,9 @@ public class RenderOptions extends RenderOptionsBase
     * Create a new <code>RenderOptions</code> instance.  This is just an alternative to <code>new RenderOptions()</code>.
     * @return new instance of this class.
     */
-   public static RenderOptions  create()
+   public static RenderOptionsBase create()
    {
-      return new RenderOptions();
+      return new RenderOptionsBase();
    }
 
 
@@ -64,9 +74,17 @@ public class RenderOptions extends RenderOptionsBase
     * Creates a copy of the given <code>RenderOptions</code> object.
     * @param other the object to copy
     */
-   public RenderOptions(RenderOptions other)
+   public RenderOptionsBase(RenderOptionsBase other)
    {
-      super(other);
+      if (other == null)
+         return;
+      this.css = other.css;
+      //this.id = other.id;
+      this.preserveAspectRatio = other.preserveAspectRatio;
+      this.viewBox = other.viewBox;
+      this.viewId = other.viewId;
+      this.viewPort = other.viewPort;
+      this.targetId = other.targetId;
    }
 
    /**
@@ -75,9 +93,10 @@ public class RenderOptions extends RenderOptionsBase
     * @param css CSS rules to apply
     * @return this same <code>RenderOptions</code> instance
     */
-   public RenderOptions  css(String css)
+   public RenderOptionsBase css(String css)
    {
-      return (RenderOptions) super.css(css);
+      this.css = css;
+      return this;
    }
 
 
@@ -87,7 +106,7 @@ public class RenderOptions extends RenderOptionsBase
     */
    public boolean hasCss()
    {
-      return super.hasCss();
+      return this.css != null && this.css.trim().length() > 0;
    }
 
 
@@ -99,9 +118,10 @@ public class RenderOptions extends RenderOptionsBase
     * @return this same <code>RenderOptions</code> instance
     */
    @SuppressWarnings("UnusedReturnValue")
-   public RenderOptions  preserveAspectRatio(PreserveAspectRatio preserveAspectRatio)
+   public RenderOptionsBase preserveAspectRatio(PreserveAspectRatio preserveAspectRatio)
    {
-      return (RenderOptions) super.preserveAspectRatio(preserveAspectRatio);
+      this.preserveAspectRatio = preserveAspectRatio;
+      return this;
    }
 
 
@@ -111,7 +131,7 @@ public class RenderOptions extends RenderOptionsBase
     */
    public boolean hasPreserveAspectRatio()
    {
-      return super.hasPreserveAspectRatio();
+      return this.preserveAspectRatio != null;
    }
 
 
@@ -125,9 +145,10 @@ public class RenderOptions extends RenderOptionsBase
     * @param viewId the id attribute of the view that should be used for rendering
     * @return this same <code>RenderOptions</code> instance
     */
-   public RenderOptions  view(String viewId)
+   public RenderOptionsBase view(String viewId)
    {
-      return (RenderOptions) super.view(viewId);
+      this.viewId = viewId;
+      return this;
    }
 
 
@@ -137,7 +158,7 @@ public class RenderOptions extends RenderOptionsBase
     */
    public boolean hasView()
    {
-      return super.hasView();
+      return this.viewId != null;
    }
 
 
@@ -153,9 +174,10 @@ public class RenderOptions extends RenderOptionsBase
     * @param height The height of the viewBox
     * @return this same <code>RenderOptions</code> instance
     */
-   public RenderOptions  viewBox(float minX, float minY, float width, float height)
+   public RenderOptionsBase viewBox(float minX, float minY, float width, float height)
    {
-      return (RenderOptions) super.viewBox(minX, minY, width, height);
+      this.viewBox = new Box(minX, minY, width, height);
+      return this;
    }
 
 
@@ -165,7 +187,7 @@ public class RenderOptions extends RenderOptionsBase
     */
    public boolean hasViewBox()
    {
-      return super.hasViewBox();
+      return this.viewBox != null;
    }
 
 
@@ -180,9 +202,10 @@ public class RenderOptions extends RenderOptionsBase
     * @param height The height of the viewport
     * @return this same <code>RenderOptions</code> instance
     */
-   public RenderOptions  viewPort(float minX, float minY, float width, float height)
+   public RenderOptionsBase viewPort(float minX, float minY, float width, float height)
    {
-      return (RenderOptions) super.viewPort(minX, minY, width, height);
+      this.viewPort = new Box(minX, minY, width, height);
+      return this;
    }
 
 
@@ -192,7 +215,7 @@ public class RenderOptions extends RenderOptionsBase
     */
    public boolean hasViewPort()
    {
-      return super.hasViewPort();
+      return this.viewPort != null;
    }
 
 
@@ -203,9 +226,10 @@ public class RenderOptions extends RenderOptionsBase
     * @param targetId the id attribute of an element
     * @return this same <code>RenderOptions</code> instance
     */
-   public RenderOptions  target(String targetId)
+   public RenderOptionsBase target(String targetId)
    {
-      return (RenderOptions) super.target(targetId);
+      this.targetId = targetId;
+      return this;
    }
 
 
@@ -215,7 +239,7 @@ public class RenderOptions extends RenderOptionsBase
     */
    public boolean hasTarget()
    {
-      return super.hasTarget();
+      return this.targetId != null;
    }
 
 

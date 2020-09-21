@@ -14,20 +14,20 @@
    limitations under the License.
 */
 
-package com.caverock.androidsvg;
+package com.caverock.androidsvg.utils;
 
 /*
  * Thrown by the CSS parser if a problem is found while parsing a CSS file.
  */
 
-class CSSParseException extends Exception
+public class CSSParseException extends Exception
 {
-   CSSParseException(String msg)
+   public CSSParseException(String msg)
    {
       super(msg);
    }
 
-   CSSParseException(String msg, Exception cause)
+   public CSSParseException(String msg, Exception cause)
    {
       super(msg, cause);
    }

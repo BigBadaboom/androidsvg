@@ -14,7 +14,11 @@
    limitations under the License.
 */
 
-package com.caverock.androidsvg;
+package com.caverock.androidsvg.utils;
+
+import com.caverock.androidsvg.SVG;
+import com.caverock.androidsvg.SVGExternalFileResolver;
+import com.caverock.androidsvg.SVGParseException;
 
 import java.io.InputStream;
 
@@ -23,7 +27,7 @@ interface SVGParser
     /**
      * Try to parse the stream contents to an {@link SVG} instance.
      */
-    SVG parseStream(InputStream is) throws SVGParseException;
+    SVGBase parseStream(InputStream is) throws SVGParseException;
 
     /**
      * Tells the parser whether to allow the expansion of internal entities.

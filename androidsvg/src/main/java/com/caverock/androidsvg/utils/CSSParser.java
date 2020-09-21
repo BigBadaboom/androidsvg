@@ -14,14 +14,15 @@
    limitations under the License.
 */
 
-package com.caverock.androidsvg;
+package com.caverock.androidsvg.utils;
 
 import android.util.Log;
 
-import com.caverock.androidsvg.SVG.SvgContainer;
-import com.caverock.androidsvg.SVG.SvgElementBase;
-import com.caverock.androidsvg.SVG.SvgObject;
-import com.caverock.androidsvg.SVGParserImpl.TextScanner;
+import com.caverock.androidsvg.BuildConfig;
+import com.caverock.androidsvg.SVGExternalFileResolver;
+import com.caverock.androidsvg.utils.SVGBase.SvgContainer;
+import com.caverock.androidsvg.utils.SVGBase.SvgElementBase;
+import com.caverock.androidsvg.utils.SVGBase.SvgObject;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,14 +35,14 @@ import java.util.Map;
  * A very simple CSS parser that is not entirely compliant with the CSS spec but
  * hopefully parses almost all the CSS we are likely to strike in an SVG file.
  */
-class CSSParser
+public class CSSParser
 {
    private static final String  TAG = "CSSParser";
 
    static final String  CSS_MIME_TYPE = "text/css";
 
-   private static final String  ID = "id";
-   private static final String  CLASS = "class";
+   static final String  ID = "id";
+   static final String  CLASS = "class";
 
    private static final int SPECIFICITY_ID_ATTRIBUTE             = 1000000;
    private static final int SPECIFICITY_ATTRIBUTE_OR_PSEUDOCLASS = 1000;
@@ -71,14 +72,14 @@ class CSSParser
       tv           // deprecated
    }
 
-   private enum Combinator
+   enum Combinator
    {
       DESCENDANT,  // E F
       CHILD,       // E > F
       FOLLOWS      // E + F
    }
 
-   private enum AttribOp
+   enum AttribOp
    {
       EXISTS,     // *[foo]
       EQUALS,     // *[foo=bar]
@@ -87,7 +88,7 @@ class CSSParser
    }
 
    // Supported SVG attributes
-   private enum  PseudoClassIdents
+   enum  PseudoClassIdents
    {
       target,
       root,
@@ -160,7 +161,7 @@ class CSSParser
       }
    }
 
-   private static class SimpleSelector
+   static class SimpleSelector
    {
       Combinator         combinator;
       String             tag;       // null means "*"
@@ -216,7 +217,7 @@ class CSSParser
       }
    }
 
-   static class  Ruleset
+   public static class  Ruleset
    {
       private List<Rule>  rules = null;
 
@@ -236,7 +237,7 @@ class CSSParser
          rules.add(rule);
       }
 
-      void  addAll(Ruleset rules)
+      public void  addAll(Ruleset rules)
       {
          if (rules.rules == null)
             return;
@@ -247,12 +248,12 @@ class CSSParser
          }
       }
 
-      List<Rule>  getRules()
+      public List<Rule>  getRules()
       {
          return this.rules;
       }
 
-      boolean  isEmpty()
+      public boolean  isEmpty()
       {
          return this.rules == null || this.rules.isEmpty();
       }
@@ -265,7 +266,7 @@ class CSSParser
       /*
        * Remove all rules that were added from a given Source.
        */
-      void  removeFromSource(Source sourceToBeRemoved)
+      public void  removeFromSource(Source sourceToBeRemoved)
       {
          if (this.rules == null)
             return;
@@ -289,20 +290,20 @@ class CSSParser
    }
 
 
-   enum  Source
+   public enum  Source
    {
       Document,
       RenderOptions
    }
 
 
-   static class  Rule
+   public static class  Rule
    {
       final Selector   selector;
-      final SVG.Style  style;
+      final Style      style;
       final Source     source;
       
-      Rule(Selector selector, SVG.Style style, Source source)
+      Rule(Selector selector, Style style, Source source)
       {
          this.selector = selector;
          this.style = style;
@@ -317,7 +318,7 @@ class CSSParser
    }
 
 
-   private static class Selector
+   static class Selector
    {
       List<SimpleSelector>  simpleSelectors = null;
       int                   specificity = 0;
@@ -439,677 +440,6 @@ class CSSParser
          Log.d(TAG, String.format(format, args));
    }
    */
-
-
-   //==============================================================================
-   
-   
-   static class CSSTextScanner extends TextScanner
-   {
-      CSSTextScanner(String input)
-      {
-         super(input.replaceAll("(?s)/\\*.*?\\*/", ""));  // strip all block comments
-      }
-
-      /*
-       * Scans for a CSS 'ident' identifier.
-       */
-      String  nextIdentifier()
-      {
-         int  end = scanForIdentifier();
-         if (end == position)
-            return null;
-         String result = input.substring(position, end);
-         position = end;
-         return result;
-      }
-
-
-      // ident-token:
-      //   start-char rest-char*
-      //   - start-char rest-char*
-      //   -- rest-char*
-      //
-      // Where:
-      //   start-char: a-z A-Z _ or escape or non-ASCII
-      //   rest-char: a-z A-Z 0-9 _ - or escape non-ASCII
-      //   escape:  (not yet implemented)
-      //     \ char
-      //     \ hexdigit{1-6}
-      //     \ hexdigit{1-6} whitespace
-      //   non-ASCII: >= U+0080
-      //   whitespace: (space or \t or newline)+
-      //   newline: \n or \r\n or \r or \f
-
-      private int  scanForIdentifier()
-      {
-         if (empty())
-            return position;
-         int  start = position;
-         int  lastValidPos = position;
-
-         int  ch = input.charAt(position);
-         if (ch == '-')
-            ch = advanceChar();
-         // start-char
-         if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (ch == '-') || (ch == '_') || (ch >= 0x80))
-         {
-            ch = advanceChar();
-            // rest-char
-            while ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || (ch == '-') || (ch == '_') || (ch >= 0x80)) {
-               ch = advanceChar();
-            }
-            lastValidPos = position;
-         }
-         position = start;
-         return lastValidPos;
-      }
-
-
-      /*
-       * Parse a simpleSelectors group (eg. E, F, G). In many/most cases there will be only one entry.
-       */
-      private List<Selector>  nextSelectorGroup() throws CSSParseException
-      {
-         if (empty())
-            return null;
-
-         ArrayList<Selector>  selectorGroup = new ArrayList<>(1);
-         Selector             selector = new Selector();
-
-         while (!empty())
-         {
-            if (nextSimpleSelector(selector))
-            {
-               // If there is a comma, keep looping, otherwise break
-               if (!skipCommaWhitespace())
-                  continue;  // if not a comma, go back and check for next part of simpleSelectors
-               selectorGroup.add(selector);
-               selector = new Selector();
-            }
-            else
-               break;
-         }
-         if (!selector.isEmpty())
-            selectorGroup.add(selector);
-         return selectorGroup;
-      }
-
-
-      /*
-       * Scans for a CSS 'simple simpleSelectors'.
-       * Returns true if it found one.
-       * Returns false if there was an error or the input is empty.
-       */
-      boolean  nextSimpleSelector(Selector selector) throws CSSParseException
-      {
-         if (empty())
-            return false;
-
-         int             start = position;
-         Combinator      combinator = null;
-         SimpleSelector  selectorPart = null;
-
-         if (!selector.isEmpty())
-         {
-            if (consume('>')) {
-               combinator = Combinator.CHILD;
-               skipWhitespace();
-            } else if (consume('+')) {
-               combinator = Combinator.FOLLOWS;
-               skipWhitespace();
-            }
-         }
-
-         if (consume('*')) {
-            selectorPart = new SimpleSelector(combinator, null);
-         } else {
-            String tag = nextIdentifier();
-            if (tag != null) {
-               selectorPart = new SimpleSelector(combinator, tag);
-               selector.addedElement();
-            }
-         }
-
-         while (!empty())
-         {
-            if (consume('.'))
-            {
-               // ".foo" is equivalent to *[class="foo"]
-               if (selectorPart == null)
-                  selectorPart = new SimpleSelector(combinator, null);
-               String  value = nextIdentifier();
-               if (value == null)
-                  throw new CSSParseException("Invalid \".class\" simpleSelectors");
-               selectorPart.addAttrib(CLASS, AttribOp.EQUALS, value);
-               selector.addedAttributeOrPseudo();
-               continue;
-            }
-
-            if (consume('#'))
-            {
-               // "#foo" is equivalent to *[id="foo"]
-               if (selectorPart == null)
-                  selectorPart = new SimpleSelector(combinator, null);
-               String  value = nextIdentifier();
-               if (value == null)
-                  throw new CSSParseException("Invalid \"#id\" simpleSelectors");
-               selectorPart.addAttrib(ID, AttribOp.EQUALS, value);
-               selector.addedIdAttribute();
-               continue;
-            }
-
-            // Now check for attribute selection and pseudo selectors
-            if (consume('['))
-            {
-               if (selectorPart == null)
-                  selectorPart = new SimpleSelector(combinator, null);
-               skipWhitespace();
-               String  attrName = nextIdentifier();
-               String  attrValue = null;
-               if (attrName == null)
-                  throw new CSSParseException("Invalid attribute simpleSelectors");
-               skipWhitespace();
-               AttribOp  op = null;
-               if (consume('='))
-                  op = AttribOp.EQUALS;
-               else if (consume("~="))
-                  op = AttribOp.INCLUDES;
-               else if (consume("|="))
-                  op = AttribOp.DASHMATCH;
-               if (op != null) {
-                  skipWhitespace();
-                  attrValue = nextAttribValue();
-                  if (attrValue == null)
-                     throw new CSSParseException("Invalid attribute simpleSelectors");
-                  skipWhitespace();
-               }
-               if (!consume(']'))
-                  throw new CSSParseException("Invalid attribute simpleSelectors");
-               selectorPart.addAttrib(attrName, (op == null) ? AttribOp.EXISTS : op, attrValue);
-               selector.addedAttributeOrPseudo();
-               continue;
-            }
-
-            if (consume(':'))
-            {
-               if (selectorPart == null)
-                  selectorPart = new SimpleSelector(combinator, null);
-               parsePseudoClass(selector, selectorPart);
-               continue;
-            }
-
-            break;
-         }
-
-         if (selectorPart != null)
-         {
-            selector.add(selectorPart);
-            return true;
-         }
-
-         // Otherwise 'fail'
-         position = start;
-         return false;
-      }
-
-
-      private static class  AnPlusB
-      {
-         final public int a;
-         final public int b;
-
-         AnPlusB(int a, int b) {
-            this.a = a;
-            this.b = b;
-         }
-      }
-
-
-      private AnPlusB  nextAnPlusB()
-      {
-         if (empty())
-            return null;
-
-         int  start = position;
-
-         if (!consume('('))
-           return null;
-         skipWhitespace();
-
-         AnPlusB  result;
-         if (consume("odd"))
-            result = new AnPlusB(2, 1);
-         else if (consume("even"))
-            result = new AnPlusB(2, 0);
-         else
-         {
-            // Parse an expression of the form +An+B
-            // First check for an optional leading sign
-            int  aSign = 1,
-                 bSign = 1;
-            if (consume('+')) {
-               // do nothing
-            } else if (consume('-')) {
-               bSign = -1;
-            }
-            // Then an integer
-            IntegerParser  a = null,
-                           b = IntegerParser.parseInt(input, position, inputLength, false);
-            if (b != null)
-               position = b.getEndPos();
-            // If an 'n' is next then that last part was the 'a' part. Now check for the 'b' part.
-            if (consume('n') || consume('N')) {
-               a = (b != null) ? b : new IntegerParser(1, position);
-               aSign = bSign;
-               b = null;
-               bSign = 1;
-               skipWhitespace();
-               // Check for the sign for the b part
-               boolean  hasB = consume('+');
-               if (!hasB) {
-                  hasB = consume('-');
-                  if (hasB)
-                     bSign = -1;
-               }
-               // If there was a sign, then the b integer should follow next
-               if (hasB) {
-                  skipWhitespace();
-                  b = IntegerParser.parseInt(input, position, inputLength, false);
-                  if (b != null) {
-                     position = b.getEndPos();
-                  } else {
-                     position = start;
-                     return null;
-                  }
-               }
-            }
-            // Construct the result in anticipation that we will get the end bracket next
-            result = new AnPlusB((a == null) ? 0 : aSign * a.value(),
-                                 (b == null) ? 0 : bSign * b.value());
-         }
-
-         skipWhitespace();
-         if (consume(')'))
-           return result;
-
-         position = start;
-         return null;
-      }
-
-
-      /*
-       * Parse a list of identifiers from a pseudo class parameter set.
-       * Eg. for :lang(en)
-       */
-      private List<String>  nextIdentListParam()
-      {
-         if (empty())
-            return null;
-
-         int                start = position;
-         ArrayList<String>  result = null;
-
-         if (!consume('('))
-           return null;
-         skipWhitespace();
-
-         do {
-            String ident = nextIdentifier();
-            if (ident == null) {
-               position = start;
-               return null;
-            }
-            if (result == null)
-               result = new ArrayList<>();
-            result.add(ident);
-            skipWhitespace();
-         } while (skipCommaWhitespace());
-
-         if (consume(')'))
-           return result;
-
-         position = start;
-         return null;
-      }
-
-
-      /*
-       * Parse a simpleSelectors group inside a pair of brackets.  For the :not pseudo class.
-       */
-      private List<Selector>  nextPseudoNotParam() throws CSSParseException
-      {
-         if (empty())
-            return null;
-
-         int  start = position;
-
-         if (!consume('('))
-           return null;
-         skipWhitespace();
-
-         // Parse the parameter contents
-         List<Selector>  result = nextSelectorGroup();
-
-         if (result == null) {
-            position = start;
-            return null;
-         }
-
-         if (!consume(')')) {
-            position = start;
-            return null;
-         }
-
-         // Nesting a :not() pseudo class within a :not() is not allowed.
-         for (Selector selector: result) {
-            if (selector.simpleSelectors == null)
-               break;
-            for (SimpleSelector simpleSelector: selector.simpleSelectors) {
-               if (simpleSelector.pseudos == null)
-                  break;
-               for (PseudoClass pseudo: simpleSelector.pseudos) {
-                  if (pseudo instanceof PseudoClassNot)
-                     return null;
-               }
-            }
-         }
-
-         return result;
-      }
-
-
-      /*
-       * Parse a pseudo class (such as ":first-child")
-       */
-      private void  parsePseudoClass(Selector selector, SimpleSelector selectorPart) throws CSSParseException
-      {
-         // skip pseudo
-//         int     pseudoStart = position;
-         String  ident = nextIdentifier();
-         if (ident == null)
-            throw new CSSParseException("Invalid pseudo class");
-
-         PseudoClass        pseudo;
-         PseudoClassIdents  identEnum = PseudoClassIdents.fromString(ident);
-         switch (identEnum)
-         {
-            case first_child:
-               pseudo = new PseudoClassAnPlusB(0, 1, true, false, null);
-               selector.addedAttributeOrPseudo();
-               break;
-
-            case last_child:
-               pseudo = new PseudoClassAnPlusB(0, 1, false, false, null);
-               selector.addedAttributeOrPseudo();
-               break;
-
-            case only_child:
-               pseudo = new PseudoClassOnlyChild(false, null);
-               selector.addedAttributeOrPseudo();
-               break;
-
-            case first_of_type:
-               pseudo = new PseudoClassAnPlusB(0, 1, true, true, selectorPart.tag);
-               selector.addedAttributeOrPseudo();
-               break;
-
-            case last_of_type:
-               pseudo = new PseudoClassAnPlusB(0, 1, false, true, selectorPart.tag);
-               selector.addedAttributeOrPseudo();
-               break;
-
-            case only_of_type:
-               pseudo = new PseudoClassOnlyChild(true, selectorPart.tag);
-               selector.addedAttributeOrPseudo();
-               break;
-
-            case root:
-               pseudo = new PseudoClassRoot();
-               selector.addedAttributeOrPseudo();
-               break;
-
-            case empty:
-               pseudo = new PseudoClassEmpty();
-               selector.addedAttributeOrPseudo();
-               break;
-
-            case nth_child:
-            case nth_last_child:
-            case nth_of_type:
-            case nth_last_of_type:
-               boolean fromStart = identEnum == PseudoClassIdents.nth_child || identEnum == PseudoClassIdents.nth_of_type;
-               boolean ofType    = identEnum == PseudoClassIdents.nth_of_type || identEnum == PseudoClassIdents.nth_last_of_type;
-               AnPlusB  ab = nextAnPlusB();
-               if (ab == null)
-                  throw new CSSParseException("Invalid or missing parameter section for pseudo class: " + ident);
-               pseudo = new PseudoClassAnPlusB(ab.a, ab.b, fromStart, ofType, selectorPart.tag);
-               selector.addedAttributeOrPseudo();
-               break;
-
-            case not:
-               List<Selector>  notSelectorGroup = nextPseudoNotParam();
-               if (notSelectorGroup == null)
-                  throw new CSSParseException("Invalid or missing parameter section for pseudo class: " + ident);
-               pseudo = new PseudoClassNot(notSelectorGroup);
-               selector.specificity = ((PseudoClassNot) pseudo).getSpecificity();
-               break;
-
-            case target:
-               //TODO
-               pseudo = new PseudoClassTarget();
-               selector.addedAttributeOrPseudo();
-               break;
-
-            case lang:
-               List<String>  langs = nextIdentListParam();
-               pseudo = new PseudoClassNotSupported(ident);
-               selector.addedAttributeOrPseudo();
-               break;
-
-            case link:
-            case visited:
-            case hover:
-            case active:
-            case focus:
-            case enabled:
-            case disabled:
-            case checked:
-            case indeterminate:
-               pseudo = new PseudoClassNotSupported(ident);
-               selector.addedAttributeOrPseudo();
-               break;
-
-            default:
-               throw new CSSParseException("Unsupported pseudo class: " + ident);
-         }
-
-//         selectorPart.addPseudo(input.substring(pseudoStart, position));
-         selectorPart.addPseudo(pseudo);
-//         simpleSelectors.addedAttributeOrPseudo();
-      }
-
-
-      /*
-       * The value (bar) part of "[foo="bar"]".
-       */
-      private String  nextAttribValue()
-      {
-         if (empty())
-            return null;
-
-         String  result = nextQuotedString();
-         if (result != null)
-            return result;
-         return nextIdentifier();
-      }
-
-      /*
-       * Scans for a CSS property value.
-       */
-      String  nextPropertyValue()
-      {
-         if (empty())
-            return null;
-         int  start = position;
-         int  lastValidPos = position;
-
-         int  ch = input.charAt(position);
-         while (ch != -1 && ch != ';' && ch != '}' && ch != '!' && !isEOL(ch)) {
-            if (!isWhitespace(ch))  // don't include an spaces at the end
-               lastValidPos = position + 1;
-            ch = advanceChar();
-         }
-         if (position > start)
-            return input.substring(start, lastValidPos);
-         position = start;
-         return null;
-      }
-
-      /*
-       * Scans for a string token
-       */
-      String  nextCSSString()
-      {
-         if (empty())
-            return null;
-         int  ch = input.charAt(position);
-         int  endQuote = ch;
-         if (ch != '\'' && ch != '"')
-            return null;
-
-         StringBuilder  sb = new StringBuilder();
-         position++;
-         ch = nextChar();
-         while (ch != -1 && ch != endQuote)
-         {
-            if (ch == '\\') {
-              // Escaped char sequence
-               ch = nextChar();
-               if (ch == -1)    // EOF: do nothing
-                  continue;
-               if (ch == '\n' || ch == '\r' || ch == '\f') {  // a CSS newline
-                  ch = nextChar();
-                  continue;     // Newline: consume it
-               }
-               int  hc = hexChar(ch);
-               if (hc != -1) {
-                  int  codepoint = hc;
-                  for (int i=1; i<=5; i++) {
-                     ch = nextChar();
-                     hc = hexChar(ch);
-                     if (hc == -1)
-                        break;
-                     codepoint = codepoint * 16 + hc;
-                  }
-                  sb.append((char) codepoint);
-                  continue;
-               }
-               // Other chars just unescape to themselves
-               // Fall through to append
-            }
-            sb.append((char) ch);
-            ch = nextChar();
-         }
-         return sb.toString();
-      }
-
-
-      private int  hexChar(int ch)
-      {
-         if (ch >= '0' && ch <= '9')
-            return (ch - (int)'0');
-         if (ch >= 'A' && ch <= 'F')
-            return (ch - (int)'A') + 10;
-         if (ch >= 'a' && ch <= 'f')
-            return (ch - (int)'a') + 10;
-         return -1;
-      }
-
-
-      /*
-       * Scans for a url("...")
-       * Called a <url> in the CSS spec.
-       */
-      String  nextURL()
-      {
-         if (empty())
-            return null;
-         int  start = position;
-         if (!consume("url("))
-            return null;
-
-         skipWhitespace();
-
-         String url = nextCSSString();
-         if (url == null)
-            url = nextLegacyURL();  // legacy quote-less url(...).  Called a <url-token> in the CSS3 spec.
-
-         if (url == null) {
-            position = start;
-            return null;
-         }
-
-         skipWhitespace();
-
-         if (empty() || consume(")"))
-            return url;
-
-         position = start;
-         return null;
-      }
-
-
-      /*
-       * Scans for a legacy URL string
-       * See nextURLToken().
-       */
-      String  nextLegacyURL()
-      {
-         StringBuilder  sb = new StringBuilder();
-
-         while (!empty())
-         {
-            int  ch = input.charAt(position);
-
-            if (ch == '\'' || ch == '"' || ch == '(' || ch == ')' || isWhitespace(ch) || Character.isISOControl(ch))
-               break;
-
-            position++;
-            if (ch == '\\')
-            {
-               if (empty())    // EOF: do nothing
-                  continue;
-               // Escaped char sequence
-               ch = input.charAt(position++);
-               if (ch == '\n' || ch == '\r' || ch == '\f') {  // a CSS newline
-                  continue;     // Newline: consume it
-               }
-               int  hc = hexChar(ch);
-               if (hc != -1) {
-                  int  codepoint = hc;
-                  for (int i=1; i<=5; i++) {
-                     if (empty())
-                        break;
-                     hc = hexChar( input.charAt(position) );
-                     if (hc == -1)  // Not a hex char
-                        break;
-                     position++;
-                     codepoint = codepoint * 16 + hc;
-                  }
-                  sb.append((char) codepoint);
-                  continue;
-               }
-               // Other chars just unescape to themselves
-               // Fall through to append
-            }
-            sb.append((char) ch);
-         }
-         if (sb.length() == 0)
-            return null;
-         return sb.toString();
-      }
-   }
 
 
    //==============================================================================
@@ -1250,7 +580,7 @@ class CSSParser
       catch (CSSParseException e)
       {
          Log.e(TAG, "CSS parser terminated early due to error: " + e.getMessage());
-         if (LibConfig.DEBUG)
+         if (BuildConfig.DEBUG)
             Log.e(TAG,"Stacktrace:", e);
       }
       return ruleset;
@@ -1265,7 +595,7 @@ class CSSParser
          if (!scan.consume('{'))
             throw new CSSParseException("Malformed rule block: expected '{'");
          scan.skipWhitespace();
-         SVG.Style  ruleStyle = parseDeclarations(scan);
+         Style  ruleStyle = parseDeclarations(scan);
          scan.skipWhitespace();
          for (Selector selector: selectors) {
             ruleset.add( new Rule(selector, ruleStyle, source) );
@@ -1280,9 +610,9 @@ class CSSParser
 
 
    // Parse a list of CSS declarations
-   private SVG.Style  parseDeclarations(CSSTextScanner scan) throws CSSParseException
+   private Style  parseDeclarations(CSSTextScanner scan) throws CSSParseException
    {
-      SVG.Style  ruleStyle = new SVG.Style();
+      Style  ruleStyle = new Style();
       do {
          String propertyName = scan.nextIdentifier();
          scan.skipWhitespace();
@@ -1304,7 +634,7 @@ class CSSParser
          }
          scan.consume(';');
          // TODO: support CSS only values such as "inherit"
-         SVGParserImpl.processStyleProperty(ruleStyle, propertyName, propertyValue, false);
+         Style.processStyleProperty(ruleStyle, propertyName, propertyValue, false);
          scan.skipWhitespace();
       } while (!scan.empty() && !scan.consume('}'));
       return ruleStyle;
@@ -1517,13 +847,13 @@ class CSSParser
    //==============================================================================
 
 
-   private interface  PseudoClass
+   interface  PseudoClass
    {
       boolean  matches(RuleMatchContext ruleMatchContext, SvgElementBase obj);
    }
 
 
-   private static class  PseudoClassAnPlusB  implements PseudoClass
+   static class  PseudoClassAnPlusB  implements PseudoClass
    {
       private final int      a;
       private final int      b;
@@ -1592,7 +922,7 @@ class CSSParser
    }
 
 
-   private static class  PseudoClassOnlyChild  implements PseudoClass
+   static class  PseudoClassOnlyChild  implements PseudoClass
    {
       private final boolean  isOfType;
       private final String   nodeName;  // The node name for when isOfType is true
@@ -1638,7 +968,7 @@ class CSSParser
    }
 
 
-   private static class  PseudoClassRoot  implements PseudoClass
+   static class  PseudoClassRoot  implements PseudoClass
    {
       @Override
       public boolean matches(RuleMatchContext ruleMatchContext, SvgElementBase obj)
@@ -1655,7 +985,7 @@ class CSSParser
    }
 
 
-   private static class  PseudoClassEmpty  implements PseudoClass
+   static class  PseudoClassEmpty  implements PseudoClass
    {
       @Override
       public boolean matches(RuleMatchContext ruleMatchContext, SvgElementBase obj)
@@ -1680,7 +1010,7 @@ class CSSParser
    }
 
 
-   private static class  PseudoClassNot  implements PseudoClass
+   static class  PseudoClassNot  implements PseudoClass
    {
       private final List<Selector>  selectorGroup;
 
@@ -1721,7 +1051,7 @@ class CSSParser
    }
 
 
-   private static class  PseudoClassTarget  implements PseudoClass
+   static class  PseudoClassTarget  implements PseudoClass
    {
       @Override
       public boolean matches(RuleMatchContext ruleMatchContext, SvgElementBase obj)
@@ -1741,7 +1071,7 @@ class CSSParser
    }
 
 
-   private static class  PseudoClassNotSupported  implements PseudoClass
+   static class  PseudoClassNotSupported  implements PseudoClass
    {
       private final String  clazz;
 

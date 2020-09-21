@@ -24,12 +24,12 @@ import org.xml.sax.SAXException;
 
 public class SVGParseException extends SAXException
 {
-   SVGParseException(String msg)
+   public SVGParseException(String msg)
    {
       super(msg);
    }
 
-   SVGParseException(String msg, Exception cause)
+   public SVGParseException(String msg, Exception cause)
    {
       super(msg, cause);
    }

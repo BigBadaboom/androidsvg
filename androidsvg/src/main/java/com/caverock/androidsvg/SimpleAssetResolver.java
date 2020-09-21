@@ -24,10 +24,14 @@ import java.nio.charset.Charset;
 import java.util.HashSet;
 import java.util.Set;
 
+import android.annotation.TargetApi;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Typeface;
+import android.graphics.Typeface.Builder;
+import android.os.Build;
+import android.text.TextUtils;
 import android.util.Log;
 
 
@@ -92,10 +96,25 @@ public class SimpleAssetResolver extends SVGExternalFileResolver
       {
          return Typeface.createFromAsset(assetManager, fontFamily + ".otf");
       }
-      catch (RuntimeException e)
+      catch (RuntimeException e) {}
+
+      // That failed, so try ".ttc" (Truetype collection), if supported on this version of Android
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
       {
-         return null;
+         try
+         {
+            Builder builder = new Builder(assetManager, fontFamily + ".ttc");
+            // Get the first font file in the collection
+            builder.setTtcIndex(0);
+            return builder.build();
+         }
+         catch (RuntimeException e)
+         {
+            Log.e(TAG, "Couldn't read \"" + fontFamily + ".ttc\" file", e);
+            return null;
+         }
       }
+      return null;
    }
 
 
