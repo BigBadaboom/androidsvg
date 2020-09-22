@@ -16,13 +16,10 @@
 
 package com.caverock.androidsvg.utils;
 
-import android.text.TextUtils;
-import android.util.Log;
-
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /*
  * Keeps a list of font feature settings and their values.
@@ -44,9 +41,6 @@ public class CSSFontFeatureSettings
    private static final String  TOKEN_ERROR = "ERR";
 
    // For font-kerning
-   private static FontFeatureEntry  KERNING_ON = null;
-   private static FontFeatureEntry  KERNING_OFF = null;
-
    public static final String FEATURE_KERN = "kern";
 
    // For font-variant-ligatures
@@ -139,8 +133,7 @@ public class CSSFontFeatureSettings
    public static final String FEATURE_RUBY = "ruby";
 
 
-   private final List<FontFeatureEntry>  settings;
-//   private final HashMap<String, Integer>  settings;
+   private final HashMap<String, Integer>  settings;
 
 
    private static class FontFeatureEntry {
@@ -151,70 +144,65 @@ public class CSSFontFeatureSettings
          this.name = name;
          this.val = val;
       }
-
-      @Override
-      public String  toString() {
-         return "\"" + name + "\" " + val;
-      }
    }
 
 
    static {
       LIGATURES_NORMAL = new CSSFontFeatureSettings();
-      LIGATURES_NORMAL.settings.add(new FontFeatureEntry(FEATURE_LIGA, VALUE_ON));
-      LIGATURES_NORMAL.settings.add(new FontFeatureEntry(FEATURE_CLIG, VALUE_ON));
-      LIGATURES_NORMAL.settings.add(new FontFeatureEntry(FEATURE_DLIG, VALUE_OFF));
-      LIGATURES_NORMAL.settings.add(new FontFeatureEntry(FEATURE_HLIG, VALUE_OFF));
-      LIGATURES_NORMAL.settings.add(new FontFeatureEntry(FEATURE_CALT, VALUE_ON));
+      LIGATURES_NORMAL.settings.put(FEATURE_LIGA, VALUE_ON);
+      LIGATURES_NORMAL.settings.put(FEATURE_CLIG, VALUE_ON);
+      LIGATURES_NORMAL.settings.put(FEATURE_DLIG, VALUE_OFF);
+      LIGATURES_NORMAL.settings.put(FEATURE_HLIG, VALUE_OFF);
+      LIGATURES_NORMAL.settings.put(FEATURE_CALT, VALUE_ON);
 
       POSITION_ALL_OFF = new CSSFontFeatureSettings();
-      POSITION_ALL_OFF.settings.add(new FontFeatureEntry(FEATURE_SUBS, VALUE_OFF));
-      POSITION_ALL_OFF.settings.add(new FontFeatureEntry(FEATURE_SUPS, VALUE_OFF));
+      POSITION_ALL_OFF.settings.put(FEATURE_SUBS, VALUE_OFF);
+      POSITION_ALL_OFF.settings.put(FEATURE_SUPS, VALUE_OFF);
 
       CAPS_ALL_OFF = new CSSFontFeatureSettings();
-      CAPS_ALL_OFF.settings.add(new FontFeatureEntry(FEATURE_SMCP, VALUE_OFF));
-      CAPS_ALL_OFF.settings.add(new FontFeatureEntry(FEATURE_C2SC, VALUE_OFF));
-      CAPS_ALL_OFF.settings.add(new FontFeatureEntry(FEATURE_PCAP, VALUE_OFF));
-      CAPS_ALL_OFF.settings.add(new FontFeatureEntry(FEATURE_C2PC, VALUE_OFF));
-      CAPS_ALL_OFF.settings.add(new FontFeatureEntry(FEATURE_UNIC, VALUE_OFF));
-      CAPS_ALL_OFF.settings.add(new FontFeatureEntry(FEATURE_TITL, VALUE_OFF));
+      CAPS_ALL_OFF.settings.put(FEATURE_SMCP, VALUE_OFF);
+      CAPS_ALL_OFF.settings.put(FEATURE_C2SC, VALUE_OFF);
+      CAPS_ALL_OFF.settings.put(FEATURE_PCAP, VALUE_OFF);
+      CAPS_ALL_OFF.settings.put(FEATURE_C2PC, VALUE_OFF);
+      CAPS_ALL_OFF.settings.put(FEATURE_UNIC, VALUE_OFF);
+      CAPS_ALL_OFF.settings.put(FEATURE_TITL, VALUE_OFF);
 
       NUMERIC_ALL_OFF = new CSSFontFeatureSettings();
-      NUMERIC_ALL_OFF.settings.add(new FontFeatureEntry(FEATURE_LNUM, VALUE_OFF));
-      NUMERIC_ALL_OFF.settings.add(new FontFeatureEntry(FEATURE_ONUM, VALUE_OFF));
-      NUMERIC_ALL_OFF.settings.add(new FontFeatureEntry(FEATURE_PNUM, VALUE_OFF));
-      NUMERIC_ALL_OFF.settings.add(new FontFeatureEntry(FEATURE_TNUM, VALUE_OFF));
-      NUMERIC_ALL_OFF.settings.add(new FontFeatureEntry(FEATURE_FRAC, VALUE_OFF));
-      NUMERIC_ALL_OFF.settings.add(new FontFeatureEntry(FEATURE_AFRC, VALUE_OFF));
-      NUMERIC_ALL_OFF.settings.add(new FontFeatureEntry(FEATURE_ORDN, VALUE_OFF));
-      NUMERIC_ALL_OFF.settings.add(new FontFeatureEntry(FEATURE_ZERO, VALUE_OFF));
+      NUMERIC_ALL_OFF.settings.put(FEATURE_LNUM, VALUE_OFF);
+      NUMERIC_ALL_OFF.settings.put(FEATURE_ONUM, VALUE_OFF);
+      NUMERIC_ALL_OFF.settings.put(FEATURE_PNUM, VALUE_OFF);
+      NUMERIC_ALL_OFF.settings.put(FEATURE_TNUM, VALUE_OFF);
+      NUMERIC_ALL_OFF.settings.put(FEATURE_FRAC, VALUE_OFF);
+      NUMERIC_ALL_OFF.settings.put(FEATURE_AFRC, VALUE_OFF);
+      NUMERIC_ALL_OFF.settings.put(FEATURE_ORDN, VALUE_OFF);
+      NUMERIC_ALL_OFF.settings.put(FEATURE_ZERO, VALUE_OFF);
 
       EAST_ASIAN_ALL_OFF = new CSSFontFeatureSettings();
-      EAST_ASIAN_ALL_OFF.settings.add(new FontFeatureEntry(FEATURE_JP78, VALUE_OFF));
-      EAST_ASIAN_ALL_OFF.settings.add(new FontFeatureEntry(FEATURE_JP83, VALUE_OFF));
-      EAST_ASIAN_ALL_OFF.settings.add(new FontFeatureEntry(FEATURE_JP90, VALUE_OFF));
-      EAST_ASIAN_ALL_OFF.settings.add(new FontFeatureEntry(FEATURE_JP04, VALUE_OFF));
-      EAST_ASIAN_ALL_OFF.settings.add(new FontFeatureEntry(FEATURE_SMPL, VALUE_OFF));
-      EAST_ASIAN_ALL_OFF.settings.add(new FontFeatureEntry(FEATURE_TRAD, VALUE_OFF));
-      EAST_ASIAN_ALL_OFF.settings.add(new FontFeatureEntry(FEATURE_FWID, VALUE_OFF));
-      EAST_ASIAN_ALL_OFF.settings.add(new FontFeatureEntry(FEATURE_PWID, VALUE_OFF));
-      EAST_ASIAN_ALL_OFF.settings.add(new FontFeatureEntry(FEATURE_RUBY, VALUE_OFF));
+      EAST_ASIAN_ALL_OFF.settings.put(FEATURE_JP78, VALUE_OFF);
+      EAST_ASIAN_ALL_OFF.settings.put(FEATURE_JP83, VALUE_OFF);
+      EAST_ASIAN_ALL_OFF.settings.put(FEATURE_JP90, VALUE_OFF);
+      EAST_ASIAN_ALL_OFF.settings.put(FEATURE_JP04, VALUE_OFF);
+      EAST_ASIAN_ALL_OFF.settings.put(FEATURE_SMPL, VALUE_OFF);
+      EAST_ASIAN_ALL_OFF.settings.put(FEATURE_TRAD, VALUE_OFF);
+      EAST_ASIAN_ALL_OFF.settings.put(FEATURE_FWID, VALUE_OFF);
+      EAST_ASIAN_ALL_OFF.settings.put(FEATURE_PWID, VALUE_OFF);
+      EAST_ASIAN_ALL_OFF.settings.put(FEATURE_RUBY, VALUE_OFF);
    }
 
 
    public CSSFontFeatureSettings()
    {
-      this.settings = new ArrayList<>();
+      this.settings = new HashMap<>();
    }
 
-   private CSSFontFeatureSettings(List<FontFeatureEntry> initialMap)
+   private CSSFontFeatureSettings(HashMap<String, Integer> initialMap)
    {
       this.settings = initialMap;
    }
 
    public CSSFontFeatureSettings(CSSFontFeatureSettings other)
    {
-      this.settings = new ArrayList<>(other.settings);
+      this.settings = new HashMap<>(other.settings);
    }
 
 
@@ -222,45 +210,16 @@ public class CSSFontFeatureSettings
    {
       if (featureSettings == null)
          return;
-      for (FontFeatureEntry entry: featureSettings.settings) {
-         applySetting(entry);
-      }
-   }
-
-
-   private void  applySetting(FontFeatureEntry entry)
-   {
-      removeIfPresent(entry);
-      this.settings.add(entry);
-   }
-
-
-   private void  removeIfPresent(FontFeatureEntry entry)
-   {
-      Iterator<FontFeatureEntry>  iter = this.settings.iterator();
-      while (iter.hasNext()) {
-         FontFeatureEntry  existing = iter.next();
-         if (existing.name.equals(entry.name)) {
-            iter.remove();
-            return;
-         }
-      }
+      this.settings.putAll(featureSettings.settings);
    }
 
 
    public void  applyKerning(Style.FontKerning kern)
    {
-      if (kern == Style.FontKerning.none ) {
-         if (KERNING_OFF == null) {
-            KERNING_OFF = new FontFeatureEntry(FEATURE_KERN, VALUE_OFF);
-         }
-         applySetting(KERNING_OFF);
-      } else {
-         if (KERNING_ON == null) {
-            KERNING_ON = new FontFeatureEntry(FEATURE_KERN, VALUE_ON);
-         }
-         applySetting(KERNING_ON);
-      }
+      if (kern == Style.FontKerning.none )
+         this.settings.put(FEATURE_KERN, VALUE_OFF);
+      else
+         this.settings.put(FEATURE_KERN, VALUE_ON);
    }
 
 
@@ -273,7 +232,16 @@ public class CSSFontFeatureSettings
    @Override
    public String toString()
    {
-      return TextUtils.join(", ", this.settings);
+      StringBuilder  sb = new StringBuilder();
+      for (Map.Entry<String, Integer> entry: this.settings.entrySet()) {
+         if (sb.length() > 0)
+            sb.append(',');
+         sb.append('"');
+         sb.append(entry.getKey());
+         sb.append("\" ");
+         sb.append(entry.getValue());
+      }
+      return sb.toString();
    }
 
 
@@ -300,7 +268,7 @@ public class CSSFontFeatureSettings
          FontFeatureEntry  entry = nextFeatureEntry(scan);
          if (entry == null)
             return null;
-         result.settings.add(entry);
+         result.settings.put(entry.name, entry.val);
          scan.skipCommaWhitespace();
       }
       return result;
@@ -463,38 +431,32 @@ public class CSSFontFeatureSettings
 
       switch (containsWhich(tokens, FONT_VARIANT_DISCRETIONARY_LIGATURES, FONT_VARIANT_NO_DISCRETIONARY_LIGATURES))
       {
-         case 1: result.addSetting(FEATURE_DLIG, VALUE_ON); break;
-         case 2: result.addSetting(FEATURE_DLIG, VALUE_OFF); break;
+         case 1: result.settings.put(FEATURE_DLIG, VALUE_ON); break;
+         case 2: result.settings.put(FEATURE_DLIG, VALUE_OFF); break;
          case 3: return false;
       }
 
       switch (containsWhich(tokens, FONT_VARIANT_HISTORICAL_LIGATURES, FONT_VARIANT_NO_HISTORICAL_LIGATURES))
       {
-         case 1: result.addSetting(FEATURE_HLIG, VALUE_ON); break;
-         case 2: result.addSetting(FEATURE_HLIG, VALUE_OFF); break;
+         case 1: result.settings.put(FEATURE_HLIG, VALUE_ON); break;
+         case 2: result.settings.put(FEATURE_HLIG, VALUE_OFF); break;
          case 3: return false;
       }
 
       switch (containsWhich(tokens, FONT_VARIANT_CONTEXTUAL_LIGATURES, FONT_VARIANT_NO_CONTEXTUAL_LIGATURES))
       {
-         case 1: result.addSetting(FEATURE_CALT, VALUE_ON); break;
-         case 2: result.addSetting(FEATURE_CALT, VALUE_OFF); break;
+         case 1: result.settings.put(FEATURE_CALT, VALUE_ON); break;
+         case 2: result.settings.put(FEATURE_CALT, VALUE_OFF); break;
          case 3: return false;
       }
       return true;
    }
 
 
-   private void  addSetting(String feature1, int onOrOff)
-   {
-      applySetting(new FontFeatureEntry(feature1, onOrOff));
-   }
-
-
    private void  addSettings(String feature1, String feature2, int onOrOff)
    {
-      applySetting(new FontFeatureEntry(feature1, onOrOff));
-      applySetting(new FontFeatureEntry(feature2, onOrOff));
+      this.settings.put(feature1, onOrOff);
+      this.settings.put(feature2, onOrOff);
    }
 
 
@@ -507,8 +469,8 @@ public class CSSFontFeatureSettings
       CSSFontFeatureSettings  result = new CSSFontFeatureSettings(CAPS_ALL_OFF);
       switch (val)
       {
-         case FONT_VARIANT_SUB:    result.addSetting(FEATURE_SUBS, VALUE_ON); break;
-         case FONT_VARIANT_SUPER:  result.addSetting(FEATURE_SUPS, VALUE_ON); break;
+         case FONT_VARIANT_SUB:    result.settings.put(FEATURE_SUBS, VALUE_ON); break;
+         case FONT_VARIANT_SUPER:  result.settings.put(FEATURE_SUPS, VALUE_ON); break;
          default:                  return null;
       }
       return result;
@@ -521,8 +483,8 @@ public class CSSFontFeatureSettings
    {
       switch (containsWhich(tokens, FONT_VARIANT_SUB, FONT_VARIANT_SUPER))
       {
-         case 1: result.addSetting(FEATURE_SUBS, VALUE_ON); break;
-         case 2: result.addSetting(FEATURE_SUPS, VALUE_OFF); break;
+         case 1: result.settings.put(FEATURE_SUBS, VALUE_ON); break;
+         case 2: result.settings.put(FEATURE_SUPS, VALUE_OFF); break;
          case 3: return false;
       }
       return true;
@@ -543,12 +505,12 @@ public class CSSFontFeatureSettings
    {
       switch (val)
       {
-         case FONT_VARIANT_SMALL_CAPS:      result.addSetting(FEATURE_SMCP, VALUE_ON); break;
+         case FONT_VARIANT_SMALL_CAPS:      result.settings.put(FEATURE_SMCP, VALUE_ON); break;
          case FONT_VARIANT_ALL_SMALL_CAPS:  result.addSettings(FEATURE_SMCP, FEATURE_C2SC, VALUE_ON); break;
-         case FONT_VARIANT_PETITE_CAPS:     result.addSetting(FEATURE_PCAP, VALUE_ON); break;
+         case FONT_VARIANT_PETITE_CAPS:     result.settings.put(FEATURE_PCAP, VALUE_ON); break;
          case FONT_VARIANT_ALL_PETITE_CAPS: result.addSettings(FEATURE_PCAP, FEATURE_C2PC, VALUE_ON); break;
-         case FONT_VARIANT_UNICASE:         result.addSetting(FEATURE_UNIC, VALUE_ON); break;
-         case FONT_VARIANT_TITLING_CAPS:    result.addSetting(FEATURE_TITL, VALUE_ON); break;
+         case FONT_VARIANT_UNICASE:         result.settings.put(FEATURE_UNIC, VALUE_ON); break;
+         case FONT_VARIANT_TITLING_CAPS:    result.settings.put(FEATURE_TITL, VALUE_ON); break;
          default:                           return false;
       }
       return true;
@@ -602,34 +564,34 @@ public class CSSFontFeatureSettings
    {
       switch (containsWhich(tokens, FONT_VARIANT_LINING_NUMS, FONT_VARIANT_OLDSTYLE_NUMS))
       {
-         case 1: result.addSetting(FEATURE_LNUM, VALUE_ON); break;
-         case 2: result.addSetting(FEATURE_ONUM, VALUE_ON); break;
+         case 1: result.settings.put(FEATURE_LNUM, VALUE_ON); break;
+         case 2: result.settings.put(FEATURE_ONUM, VALUE_ON); break;
          case 3: return false;
       }
 
       switch (containsWhich(tokens, FONT_VARIANT_PROPORTIONAL_NUMS, FONT_VARIANT_TABULAR_NUMS))
       {
-         case 1: result.addSetting(FEATURE_PNUM, VALUE_ON); break;
-         case 2: result.addSetting(FEATURE_TNUM, VALUE_ON); break;
+         case 1: result.settings.put(FEATURE_PNUM, VALUE_ON); break;
+         case 2: result.settings.put(FEATURE_TNUM, VALUE_ON); break;
          case 3: return false;
       }
 
       switch (containsWhich(tokens, FONT_VARIANT_DIAGONAL_FRACTIONS, FONT_VARIANT_STACKED_FRACTIONS))
       {
-         case 1: result.addSetting(FEATURE_FRAC, VALUE_ON); break;
-         case 2: result.addSetting(FEATURE_AFRC, VALUE_ON); break;
+         case 1: result.settings.put(FEATURE_FRAC, VALUE_ON); break;
+         case 2: result.settings.put(FEATURE_AFRC, VALUE_ON); break;
          case 3: return false;
       }
 
       switch (containsOnce(tokens, FONT_VARIANT_ORDINAL))
       {
-         case 1: result.addSetting(FEATURE_ORDN, VALUE_ON); break;
+         case 1: result.settings.put(FEATURE_ORDN, VALUE_ON); break;
          case 2: return false;
       }
 
       switch (containsOnce(tokens, FONT_VARIANT_SLASHED_ZERO))
       {
-         case 1: result.addSetting(FEATURE_ZERO, VALUE_ON); break;
+         case 1: result.settings.put(FEATURE_ZERO, VALUE_ON); break;
          case 2: return false;
       }
 
@@ -646,7 +608,6 @@ public class CSSFontFeatureSettings
     */
    static CSSFontFeatureSettings  parseEastAsian(String val)
    {
-/**/Log.d("TEST", "**** pEA val="+val);
       if (val.equals(FONT_VARIANT_NORMAL))
           return EAST_ASIAN_ALL_OFF;
 
@@ -671,37 +632,33 @@ public class CSSFontFeatureSettings
    {
       String which = containsOneOf(tokens, FONT_VARIANT_JIS78, FONT_VARIANT_JIS83, FONT_VARIANT_JIS90,
                                            FONT_VARIANT_JIS04, FONT_VARIANT_SIMPLIFIED, FONT_VARIANT_TRADITIONAL);
-/**/Log.d("TEST", "**** pEA: which="+which);
       if (which != null)
       {
          switch (which)
          {
-            case FONT_VARIANT_JIS78:       result.addSetting(FEATURE_JP78, VALUE_ON); break;
-            case FONT_VARIANT_JIS83:       result.addSetting(FEATURE_JP83, VALUE_ON); break;
-            case FONT_VARIANT_JIS90:       result.addSetting(FEATURE_JP90, VALUE_ON); break;
-            case FONT_VARIANT_JIS04:       result.addSetting(FEATURE_JP04, VALUE_ON); break;
-            case FONT_VARIANT_SIMPLIFIED:  result.addSetting(FEATURE_SMPL, VALUE_ON); break;
-            case FONT_VARIANT_TRADITIONAL: result.addSetting(FEATURE_TRAD, VALUE_ON); break;
+            case FONT_VARIANT_JIS78:       result.settings.put(FEATURE_JP78, VALUE_ON); break;
+            case FONT_VARIANT_JIS83:       result.settings.put(FEATURE_JP83, VALUE_ON); break;
+            case FONT_VARIANT_JIS90:       result.settings.put(FEATURE_JP90, VALUE_ON); break;
+            case FONT_VARIANT_JIS04:       result.settings.put(FEATURE_JP04, VALUE_ON); break;
+            case FONT_VARIANT_SIMPLIFIED:  result.settings.put(FEATURE_SMPL, VALUE_ON); break;
+            case FONT_VARIANT_TRADITIONAL: result.settings.put(FEATURE_TRAD, VALUE_ON); break;
             case TOKEN_ERROR:              return false;  // more than one, or duplicate, found
          }
       }
-/**/Log.d("TEST", "**** pEA: result="+result);
 
       switch (containsWhich(tokens, FONT_VARIANT_FULL_WIDTH, FONT_VARIANT_PROPORTIONAL_WIDTH))
       {
-         case 1: result.addSetting(FEATURE_FWID, VALUE_ON); break;
-         case 2: result.addSetting(FEATURE_PWID, VALUE_ON); break;
+         case 1: result.settings.put(FEATURE_FWID, VALUE_ON); break;
+         case 2: result.settings.put(FEATURE_PWID, VALUE_ON); break;
          case 3: return false;
       }
 
-/**/Log.d("TEST", "**** pEA: check ruby");
       switch (containsOnce(tokens, FONT_VARIANT_RUBY))
       {
-         case 1: result.addSetting(FEATURE_RUBY, VALUE_ON); break;
+         case 1: result.settings.put(FEATURE_RUBY, VALUE_ON); break;
          case 2: return false;
       }
 
-/**/Log.d("TEST", "**** pEA: returning true");
       return true;
    }
 
@@ -722,14 +679,14 @@ public class CSSFontFeatureSettings
    {
       // See: https://www.w3.org/TR/css-fonts-3/#default-features
       CSSFontFeatureSettings result = new CSSFontFeatureSettings();
-      result.settings.add(new FontFeatureEntry("rlig", VALUE_ON));
-      result.settings.add(new FontFeatureEntry("liga", VALUE_ON));
-      result.settings.add(new FontFeatureEntry("clig", VALUE_ON));
-      result.settings.add(new FontFeatureEntry("calt", VALUE_ON));
-      result.settings.add(new FontFeatureEntry("locl", VALUE_ON));
-      result.settings.add(new FontFeatureEntry("ccmp", VALUE_ON));
-      result.settings.add(new FontFeatureEntry("mark", VALUE_ON));
-      result.settings.add(new FontFeatureEntry("mkmk", VALUE_ON));
+      result.settings.put("rlig", VALUE_ON);
+      result.settings.put("liga", VALUE_ON);
+      result.settings.put("clig", VALUE_ON);
+      result.settings.put("calt", VALUE_ON);
+      result.settings.put("locl", VALUE_ON);
+      result.settings.put("ccmp", VALUE_ON);
+      result.settings.put("mark", VALUE_ON);
+      result.settings.put("mkmk", VALUE_ON);
       // TODO FIXME  also enable "vert" for vertical runs in complex scripts
       return result;
    }
@@ -741,11 +698,11 @@ public class CSSFontFeatureSettings
       if (LIGATURES_ALL_OFF != null)
          return;
       CSSFontFeatureSettings result = new CSSFontFeatureSettings();
-      result.settings.add(new FontFeatureEntry("liga", VALUE_OFF));
-      result.settings.add(new FontFeatureEntry("clig", VALUE_OFF));
-      result.settings.add(new FontFeatureEntry("dlig", VALUE_OFF));
-      result.settings.add(new FontFeatureEntry("hlig", VALUE_OFF));
-      result.settings.add(new FontFeatureEntry("calt", VALUE_OFF));
+      result.settings.put("liga", VALUE_OFF);
+      result.settings.put("clig", VALUE_OFF);
+      result.settings.put("dlig", VALUE_OFF);
+      result.settings.put("hlig", VALUE_OFF);
+      result.settings.put("calt", VALUE_OFF);
       LIGATURES_ALL_OFF = result;
    }
 
@@ -755,8 +712,8 @@ public class CSSFontFeatureSettings
       // common and contextual ligatures ON; discretionary  and historical ligatures OFF
       if (POSITION_ALL_OFF == null) {
          CSSFontFeatureSettings result = new CSSFontFeatureSettings();
-         result.settings.add(new FontFeatureEntry(FEATURE_SUBS, VALUE_OFF));
-         result.settings.add(new FontFeatureEntry(FEATURE_SUPS, VALUE_OFF));
+         result.settings.put(FEATURE_SUBS, VALUE_OFF);
+         result.settings.put(FEATURE_SUPS, VALUE_OFF);
          this.POSITION_ALL_OFF = result;
       }
    }
