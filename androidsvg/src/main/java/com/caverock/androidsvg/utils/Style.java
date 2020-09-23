@@ -741,11 +741,9 @@ public class  Style implements Cloneable
             break;
 
          case font_variant_east_asian:
-/**/Log.d("TEST", "east-asian");
             if (isFromAttribute)
                break;
             style.fontVariantEastAsian = CSSFontFeatureSettings.parseEastAsian(val);
-/**/Log.d("TEST", "style.fontVariantEastAsian="+style.fontVariantEastAsian);
             if (style.fontVariantEastAsian != null)
                style.specifiedFlags |= SPECIFIED_FONT_VARIANT_EAST_ASIAN;
             break;

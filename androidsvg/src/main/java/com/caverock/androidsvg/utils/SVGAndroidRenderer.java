@@ -2581,7 +2581,7 @@ public class SVGAndroidRenderer
                               | Style.SPECIFIED_FONT_KERNING))
       {
          String  fontFeatureSettings = state.fontFeatureSet.toString();
-/**/Log.d(TAG, "**** FFS = "+fontFeatureSettings);
+         debug(TAG, "fontFeatureSettings = "+fontFeatureSettings);
          state.fillPaint.setFontFeatureSettings(fontFeatureSettings);
          state.strokePaint.setFontFeatureSettings(fontFeatureSettings);
       }

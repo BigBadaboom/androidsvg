@@ -27,6 +27,7 @@ import java.util.Map;
 public class CSSFontFeatureSettings
 {
    public static final CSSFontFeatureSettings  FONT_FEATURE_SETTINGS_NORMAL = makeDefaultSettings();
+   public static final CSSFontFeatureSettings  ERROR = new CSSFontFeatureSettings((HashMap<String, Integer>) null);
 
    private static final String  FONT_VARIANT_NORMAL = "normal";
    private static final String  FONT_VARIANT_AUTO = "auto";
@@ -402,54 +403,55 @@ public class CSSFontFeatureSettings
          return LIGATURES_ALL_OFF;
       }
 
-      ensureLigaturesNone();
-      CSSFontFeatureSettings  result = new CSSFontFeatureSettings(LIGATURES_ALL_OFF);
-
       List<String>  tokens = extractTokensAsList(val);
-      if (tokens == null)
+      if (tokens == null)  // No tokens found
          return null;
 
-      if (!parseVariantLigaturesSpecial(result, tokens))
-         return null;
+      ensureLigaturesNone();
+      CSSFontFeatureSettings  result = parseVariantLigaturesSpecial(tokens);
 
-      // Unrecognised tokens remain?
-      if (tokens.size() > 0)
+      // If nothing found, or duplicate keywords found, or tokens left over, then we have an error
+      if (result == null || result == ERROR || tokens.size() > 0)
          return null;
 
       return result;
    }
 
 
-   private static boolean  parseVariantLigaturesSpecial(CSSFontFeatureSettings result, List<String> tokens)
+   private static CSSFontFeatureSettings  parseVariantLigaturesSpecial(List<String> tokens)
    {
+      ensureLigaturesNone();
+      CSSFontFeatureSettings  result = new CSSFontFeatureSettings(LIGATURES_ALL_OFF);
+      boolean                 found = false;
+
       switch (containsWhich(tokens, FONT_VARIANT_COMMON_LIGATURES, FONT_VARIANT_NO_COMMON_LIGATURES))
       {
-         case 1: result.addSettings(FEATURE_CLIG, FEATURE_LIGA, VALUE_ON); break;
-         case 2: result.addSettings(FEATURE_CLIG, FEATURE_LIGA, VALUE_OFF); break;
-         case 3: return false;
+         case 1: result.addSettings(FEATURE_CLIG, FEATURE_LIGA, VALUE_ON); found = true; break;
+         case 2: result.addSettings(FEATURE_CLIG, FEATURE_LIGA, VALUE_OFF); found = true; break;
+         case 3: return ERROR;
       }
 
       switch (containsWhich(tokens, FONT_VARIANT_DISCRETIONARY_LIGATURES, FONT_VARIANT_NO_DISCRETIONARY_LIGATURES))
       {
-         case 1: result.settings.put(FEATURE_DLIG, VALUE_ON); break;
-         case 2: result.settings.put(FEATURE_DLIG, VALUE_OFF); break;
-         case 3: return false;
+         case 1: result.settings.put(FEATURE_DLIG, VALUE_ON); found = true; break;
+         case 2: result.settings.put(FEATURE_DLIG, VALUE_OFF); found = true; break;
+         case 3: return ERROR;
       }
 
       switch (containsWhich(tokens, FONT_VARIANT_HISTORICAL_LIGATURES, FONT_VARIANT_NO_HISTORICAL_LIGATURES))
       {
-         case 1: result.settings.put(FEATURE_HLIG, VALUE_ON); break;
-         case 2: result.settings.put(FEATURE_HLIG, VALUE_OFF); break;
-         case 3: return false;
+         case 1: result.settings.put(FEATURE_HLIG, VALUE_ON); found = true; break;
+         case 2: result.settings.put(FEATURE_HLIG, VALUE_OFF); found = true; break;
+         case 3: return ERROR;
       }
 
       switch (containsWhich(tokens, FONT_VARIANT_CONTEXTUAL_LIGATURES, FONT_VARIANT_NO_CONTEXTUAL_LIGATURES))
       {
-         case 1: result.settings.put(FEATURE_CALT, VALUE_ON); break;
-         case 2: result.settings.put(FEATURE_CALT, VALUE_OFF); break;
-         case 3: return false;
+         case 1: result.settings.put(FEATURE_CALT, VALUE_ON); found = true; break;
+         case 2: result.settings.put(FEATURE_CALT, VALUE_OFF); found = true; break;
+         case 3: return ERROR;
       }
-      return true;
+      return found ? result : null;
    }
 
 
@@ -466,7 +468,7 @@ public class CSSFontFeatureSettings
       if (val.equals(FONT_VARIANT_NORMAL))
          return POSITION_ALL_OFF;
 
-      CSSFontFeatureSettings  result = new CSSFontFeatureSettings(CAPS_ALL_OFF);
+      CSSFontFeatureSettings  result = new CSSFontFeatureSettings(POSITION_ALL_OFF);
       switch (val)
       {
          case FONT_VARIANT_SUB:    result.settings.put(FEATURE_SUBS, VALUE_ON); break;
@@ -479,15 +481,18 @@ public class CSSFontFeatureSettings
 
    // Used only by parseFontVariant()
    // Only looks for the values unique to this property
-   private static boolean  parseVariantPositionSpecial(CSSFontFeatureSettings result, List<String> tokens)
+   private static CSSFontFeatureSettings  parseVariantPositionSpecial(List<String> tokens)
    {
+      CSSFontFeatureSettings  result = new CSSFontFeatureSettings(POSITION_ALL_OFF);
+      boolean                 found = false;
+
       switch (containsWhich(tokens, FONT_VARIANT_SUB, FONT_VARIANT_SUPER))
       {
-         case 1: result.settings.put(FEATURE_SUBS, VALUE_ON); break;
-         case 2: result.settings.put(FEATURE_SUPS, VALUE_OFF); break;
-         case 3: return false;
+         case 1: result.settings.put(FEATURE_SUBS, VALUE_ON); found = true; break;
+         case 2: result.settings.put(FEATURE_SUPS, VALUE_ON); found = true; break;
+         case 3: return ERROR;
       }
-      return true;
+      return found ? result : null;
    }
 
 
@@ -519,14 +524,19 @@ public class CSSFontFeatureSettings
 
    // Used only by parseFontVariant()
    // Only looks for the values unique to this property
-   private static boolean  parseVariantCapsSpecial(CSSFontFeatureSettings result, List<String> tokens)
+   private static CSSFontFeatureSettings  parseVariantCapsSpecial(List<String> tokens)
    {
+      CSSFontFeatureSettings  result = new CSSFontFeatureSettings(CAPS_ALL_OFF);
+
       String which = containsOneOf(tokens, FONT_VARIANT_SMALL_CAPS, FONT_VARIANT_ALL_SMALL_CAPS, FONT_VARIANT_PETITE_CAPS,
                                            FONT_VARIANT_ALL_PETITE_CAPS, FONT_VARIANT_UNICASE, FONT_VARIANT_TITLING_CAPS);
-      if (which == null || which.equals(TOKEN_ERROR))
-         return false;
+      if (which == TOKEN_ERROR)
+         return ERROR;
+      if (which == null)
+         return null;
 
-      return setCapsFeature(result, which);
+      setCapsFeature(result, which);
+      return result;
    }
 
 
@@ -547,55 +557,55 @@ public class CSSFontFeatureSettings
       if (tokens == null)
          return null;
 
-      CSSFontFeatureSettings  result = new CSSFontFeatureSettings(NUMERIC_ALL_OFF);
+      CSSFontFeatureSettings  result = parseVariantNumericSpecial(tokens);
 
-      if (!parseVariantNumericSpecial(result, tokens))
-         return null;
-
-      // Unrecognised tokens remain?
-      if (tokens.size() > 0)
+      // If nothing found, or duplicate keywords found, or tokens left over, then we have an error
+      if (result == null || result == ERROR || tokens.size() > 0)
          return null;
 
       return result;
    }
 
 
-   private static boolean  parseVariantNumericSpecial(CSSFontFeatureSettings result, List<String> tokens)
+   private static CSSFontFeatureSettings  parseVariantNumericSpecial(List<String> tokens)
    {
+      CSSFontFeatureSettings  result = new CSSFontFeatureSettings(NUMERIC_ALL_OFF);
+      boolean                 found = false;
+
       switch (containsWhich(tokens, FONT_VARIANT_LINING_NUMS, FONT_VARIANT_OLDSTYLE_NUMS))
       {
-         case 1: result.settings.put(FEATURE_LNUM, VALUE_ON); break;
-         case 2: result.settings.put(FEATURE_ONUM, VALUE_ON); break;
-         case 3: return false;
+         case 1: result.settings.put(FEATURE_LNUM, VALUE_ON); found = true; break;
+         case 2: result.settings.put(FEATURE_ONUM, VALUE_ON); found = true; break;
+         case 3: return ERROR;
       }
 
       switch (containsWhich(tokens, FONT_VARIANT_PROPORTIONAL_NUMS, FONT_VARIANT_TABULAR_NUMS))
       {
-         case 1: result.settings.put(FEATURE_PNUM, VALUE_ON); break;
-         case 2: result.settings.put(FEATURE_TNUM, VALUE_ON); break;
-         case 3: return false;
+         case 1: result.settings.put(FEATURE_PNUM, VALUE_ON); found = true; break;
+         case 2: result.settings.put(FEATURE_TNUM, VALUE_ON); found = true; break;
+         case 3: return ERROR;
       }
 
       switch (containsWhich(tokens, FONT_VARIANT_DIAGONAL_FRACTIONS, FONT_VARIANT_STACKED_FRACTIONS))
       {
-         case 1: result.settings.put(FEATURE_FRAC, VALUE_ON); break;
-         case 2: result.settings.put(FEATURE_AFRC, VALUE_ON); break;
-         case 3: return false;
+         case 1: result.settings.put(FEATURE_FRAC, VALUE_ON); found = true; break;
+         case 2: result.settings.put(FEATURE_AFRC, VALUE_ON); found = true; break;
+         case 3: return ERROR;
       }
 
       switch (containsOnce(tokens, FONT_VARIANT_ORDINAL))
       {
-         case 1: result.settings.put(FEATURE_ORDN, VALUE_ON); break;
-         case 2: return false;
+         case 1: result.settings.put(FEATURE_ORDN, VALUE_ON); found = true; break;
+         case 2: return ERROR;
       }
 
       switch (containsOnce(tokens, FONT_VARIANT_SLASHED_ZERO))
       {
-         case 1: result.settings.put(FEATURE_ZERO, VALUE_ON); break;
-         case 2: return false;
+         case 1: result.settings.put(FEATURE_ZERO, VALUE_ON); found = true; break;
+         case 2: return ERROR;
       }
 
-      return true;
+      return found ? result : null;
    }
 
 
@@ -615,21 +625,21 @@ public class CSSFontFeatureSettings
       if (tokens == null)
          return null;
 
-      CSSFontFeatureSettings  result = new CSSFontFeatureSettings(EAST_ASIAN_ALL_OFF);
+      CSSFontFeatureSettings  result = parseVariantEastAsianSpecial(tokens);
 
-      if (!parseVariantEastAsianSpecial(result, tokens))
-         return null;
-
-      // Unrecognised tokens remain?
-      if (tokens.size() > 0)
+      // If nothing found, or duplicate keywords found, or tokens left over, then we have an error
+      if (result == null || result == ERROR || tokens.size() > 0)
          return null;
 
       return result;
    }
 
 
-   private static boolean  parseVariantEastAsianSpecial(CSSFontFeatureSettings result, List<String> tokens)
+   private static CSSFontFeatureSettings  parseVariantEastAsianSpecial(List<String> tokens)
    {
+      CSSFontFeatureSettings  result = new CSSFontFeatureSettings(EAST_ASIAN_ALL_OFF);
+      boolean                 found = false;
+
       String which = containsOneOf(tokens, FONT_VARIANT_JIS78, FONT_VARIANT_JIS83, FONT_VARIANT_JIS90,
                                            FONT_VARIANT_JIS04, FONT_VARIANT_SIMPLIFIED, FONT_VARIANT_TRADITIONAL);
       if (which != null)
@@ -642,24 +652,25 @@ public class CSSFontFeatureSettings
             case FONT_VARIANT_JIS04:       result.settings.put(FEATURE_JP04, VALUE_ON); break;
             case FONT_VARIANT_SIMPLIFIED:  result.settings.put(FEATURE_SMPL, VALUE_ON); break;
             case FONT_VARIANT_TRADITIONAL: result.settings.put(FEATURE_TRAD, VALUE_ON); break;
-            case TOKEN_ERROR:              return false;  // more than one, or duplicate, found
+            case TOKEN_ERROR:              return ERROR;  // more than one, or duplicate, found
          }
+         found = true;
       }
 
       switch (containsWhich(tokens, FONT_VARIANT_FULL_WIDTH, FONT_VARIANT_PROPORTIONAL_WIDTH))
       {
-         case 1: result.settings.put(FEATURE_FWID, VALUE_ON); break;
-         case 2: result.settings.put(FEATURE_PWID, VALUE_ON); break;
-         case 3: return false;
+         case 1: result.settings.put(FEATURE_FWID, VALUE_ON); found = true; break;
+         case 2: result.settings.put(FEATURE_PWID, VALUE_ON); found = true; break;
+         case 3: return ERROR;
       }
 
       switch (containsOnce(tokens, FONT_VARIANT_RUBY))
       {
-         case 1: result.settings.put(FEATURE_RUBY, VALUE_ON); break;
-         case 2: return false;
+         case 1: result.settings.put(FEATURE_RUBY, VALUE_ON); found = true; break;
+         case 2: return ERROR;
       }
 
-      return true;
+      return found ? result : null;
    }
 
 
@@ -668,7 +679,96 @@ public class CSSFontFeatureSettings
 
    static void parseFontVariant(Style style, String val)
    {
+      if (val.equals(FONT_VARIANT_NORMAL))
+      {
+         style.fontVariantLigatures = LIGATURES_NORMAL;
+         style.fontVariantPosition = POSITION_ALL_OFF;
+         style.fontVariantCaps = CAPS_ALL_OFF;
+         style.fontVariantNumeric = NUMERIC_ALL_OFF;
+         style.fontVariantEastAsian = EAST_ASIAN_ALL_OFF;
+         style.specifiedFlags |= (Style.SPECIFIED_FONT_VARIANT_LIGATURES | Style.SPECIFIED_FONT_VARIANT_POSITION |
+                                  Style.SPECIFIED_FONT_VARIANT_CAPS | Style.SPECIFIED_FONT_VARIANT_NUMERIC |
+                                  Style.SPECIFIED_FONT_VARIANT_EAST_ASIAN);
+         return;
+      }
+      else if (val.equals(FONT_VARIANT_NONE))
+      {
+         ensureLigaturesNone();
+         style.fontVariantLigatures = LIGATURES_ALL_OFF;
+         style.fontVariantPosition = POSITION_ALL_OFF;
+         style.fontVariantCaps = CAPS_ALL_OFF;
+         style.fontVariantNumeric = NUMERIC_ALL_OFF;
+         style.fontVariantEastAsian = EAST_ASIAN_ALL_OFF;
+         style.specifiedFlags |= (Style.SPECIFIED_FONT_VARIANT_LIGATURES | Style.SPECIFIED_FONT_VARIANT_POSITION |
+                                  Style.SPECIFIED_FONT_VARIANT_CAPS | Style.SPECIFIED_FONT_VARIANT_NUMERIC |
+                                  Style.SPECIFIED_FONT_VARIANT_EAST_ASIAN);
+         return;
+      }
 
+      List<String>  tokens = extractTokensAsList(val);
+      if (tokens == null)
+         return;
+
+      CSSFontFeatureSettings  ligatures = parseVariantLigaturesSpecial(tokens);
+      if (ligatures == ERROR)
+         return;
+
+      CSSFontFeatureSettings  position = null;
+      if (tokens.size() > 0) {
+         position = parseVariantPositionSpecial(tokens);
+         if (position == ERROR)
+            return;
+      }
+
+      CSSFontFeatureSettings  caps = null;
+      if (tokens.size() > 0) {
+         caps = parseVariantCapsSpecial(tokens);
+         if (caps == ERROR)
+            return;
+      }
+
+      CSSFontFeatureSettings  numeric = null;
+      if (tokens.size() > 0) {
+         numeric = parseVariantNumericSpecial(tokens);
+         if (numeric == ERROR)
+            return;
+      }
+
+      CSSFontFeatureSettings  eastAsian = null;
+      if (tokens.size() > 0) {
+         eastAsian = parseVariantEastAsianSpecial(tokens);
+         if (eastAsian == ERROR)
+            return;
+      }
+
+      //if (tokens.size() > 0)  // Tokens left over in line?
+      // Ignore them, as they may be CSS Fonts 4 keywords, for example.
+
+      // We found some good keywords in this value
+      if (ligatures != null) {
+         style.fontVariantLigatures = ligatures;
+         style.specifiedFlags |= Style.SPECIFIED_FONT_VARIANT_LIGATURES;
+      }
+
+      if (position != null) {
+         style.fontVariantPosition = position;
+         style.specifiedFlags |= Style.SPECIFIED_FONT_VARIANT_POSITION;
+      }
+
+      if (caps != null) {
+         style.fontVariantCaps = caps;
+         style.specifiedFlags |= Style.SPECIFIED_FONT_VARIANT_CAPS;
+      }
+
+      if (numeric != null) {
+         style.fontVariantNumeric = numeric;
+         style.specifiedFlags |= Style.SPECIFIED_FONT_VARIANT_NUMERIC;
+      }
+
+      if (eastAsian != null) {
+         style.fontVariantEastAsian = eastAsian;
+         style.specifiedFlags |= Style.SPECIFIED_FONT_VARIANT_EAST_ASIAN;
+      }
    }
 
 
