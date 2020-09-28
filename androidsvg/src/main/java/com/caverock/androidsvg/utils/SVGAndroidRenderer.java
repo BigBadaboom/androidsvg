@@ -43,7 +43,6 @@ import android.util.Log;
 
 import com.caverock.androidsvg.BuildConfig;
 import com.caverock.androidsvg.PreserveAspectRatio;
-import com.caverock.androidsvg.RenderOptions;
 import com.caverock.androidsvg.SVGExternalFileResolver;
 import com.caverock.androidsvg.utils.SVGBase.Box;
 import com.caverock.androidsvg.utils.SVGBase.Circle;
@@ -106,6 +105,7 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.Stack;
 
+
 /*
  * The rendering part of AndroidSVG.
  */
@@ -118,6 +118,7 @@ public class SVGAndroidRenderer
    private static final boolean  SUPPORTS_STROKED_UNDERLINES = Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1;
    private static final boolean  SUPPORTS_PATH_OP = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT;
    private static final boolean  SUPPORTS_PAINT_FONT_FEATURE_SETTINGS = Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP;
+   private static final boolean  SUPPORTS_PAINT_FONT_VARIATION_SETTINGS = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O;
    private static final boolean  SUPPORTS_BLEND_MODE = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q;  // Android 10
 
 
@@ -162,7 +163,8 @@ public class SVGAndroidRenderer
       final Paint    fillPaint;
       final Paint    strokePaint;
 
-      final CSSFontFeatureSettings  fontFeatureSet;
+      final CSSFontFeatureSettings    fontFeatureSet;
+      final CSSFontVariationSettings  fontVariationSet;
 
 
       @TargetApi(Build.VERSION_CODES.LOLLIPOP)
@@ -185,6 +187,7 @@ public class SVGAndroidRenderer
          strokePaint.setTypeface(Typeface.DEFAULT);
 
          fontFeatureSet = new CSSFontFeatureSettings();
+         fontVariationSet = new CSSFontVariationSettings();
 
          style = Style.getDefaultStyle();
       }
@@ -201,6 +204,7 @@ public class SVGAndroidRenderer
             viewBox = new Box(copy.viewBox);
          spacePreserve = copy.spacePreserve;
          fontFeatureSet = new CSSFontFeatureSettings(copy.fontFeatureSet);
+         fontVariationSet = new CSSFontVariationSettings(copy.fontVariationSet);
          try
          {
             style = (Style) copy.style.clone();
@@ -892,7 +896,7 @@ public class SVGAndroidRenderer
    @TargetApi(Build.VERSION_CODES.Q)
    private void  setBlendMode(Paint paint)
    {
-      debug(TAG,"Setting blend mode to "+state.style.mixBlendMode);
+      debug("Setting blend mode to "+state.style.mixBlendMode);
       switch (state.style.mixBlendMode)
       {
          case multiply:    paint.setBlendMode(BlendMode.MULTIPLY); break;
@@ -989,7 +993,7 @@ public class SVGAndroidRenderer
                   continue ChildLoop;
             }
          }
-         // Check formats (MIME types)
+         // Check fonts
          Set<String>  reqfonts = condObj.getRequiredFonts();
          if (reqfonts != null) {
             if (reqfonts.isEmpty() || externalFileResolver == null)
@@ -2423,6 +2427,25 @@ public class SVGAndroidRenderer
          }
          state.fillPaint.setTypeface(font);
          state.strokePaint.setTypeface(font);
+
+         // Just in case this is a variable font, let's also set the fontVariationSettings
+         // In order to get the desired font weight and style
+         if (SUPPORTS_PAINT_FONT_VARIATION_SETTINGS) {
+            if (isSpecified(style, Style.SPECIFIED_FONT_WEIGHT))
+               state.fontVariationSet.addSetting(CSSFontVariationSettings.VARIATION_WEIGHT, state.style.fontWeight);
+            if (isSpecified(style, Style.SPECIFIED_FONT_STYLE)) {
+               if (state.style.fontStyle == FontStyle.Italic) {
+                  state.fontVariationSet.addSetting(CSSFontVariationSettings.VARIATION_ITALIC, CSSFontVariationSettings.VARIATION_ITALIC_VALUE_ON);
+                  // Add oblique as well - as a fallback in case it has not "ital" axis
+                  state.fontVariationSet.addSetting(CSSFontVariationSettings.VARIATION_OBLIQUE, CSSFontVariationSettings.VARIATION_OBLIQUE_VALUE_ON);
+               }
+               else if (state.style.fontStyle == FontStyle.Oblique)
+                  state.fontVariationSet.addSetting(CSSFontVariationSettings.VARIATION_OBLIQUE, CSSFontVariationSettings.VARIATION_OBLIQUE_VALUE_ON);
+            }
+            String  fontVariationSettings = state.fontVariationSet.toString();
+            state.fillPaint.setFontVariationSettings(fontVariationSettings);
+            state.strokePaint.setFontVariationSettings(fontVariationSettings);
+         }
       }
 
       if (isSpecified(style, Style.SPECIFIED_TEXT_DECORATION))
@@ -2581,9 +2604,21 @@ public class SVGAndroidRenderer
                               | Style.SPECIFIED_FONT_KERNING))
       {
          String  fontFeatureSettings = state.fontFeatureSet.toString();
-         debug(TAG, "fontFeatureSettings = "+fontFeatureSettings);
+         debug("fontFeatureSettings = "+fontFeatureSettings);
          state.fillPaint.setFontFeatureSettings(fontFeatureSettings);
          state.strokePaint.setFontFeatureSettings(fontFeatureSettings);
+      }
+
+      if (SUPPORTS_PAINT_FONT_VARIATION_SETTINGS && isSpecified(style, Style.SPECIFIED_FONT_VARIATION_SETTINGS))
+      {
+         state.style.fontVariationSettings = style.fontVariationSettings;
+         state.fontVariationSet.applySettings(style.fontVariationSettings);
+
+         String  fontVariationSettings = (state.fontVariationSet != null) ? state.fontVariationSet.toString() : null;
+         debug("fontVariationSettings = "+fontVariationSettings);
+
+         state.fillPaint.setFontVariationSettings(fontVariationSettings);
+         state.strokePaint.setFontVariationSettings(fontVariationSettings);
       }
 
       if (isSpecified(style, Style.SPECIFIED_WRITING_MODE))

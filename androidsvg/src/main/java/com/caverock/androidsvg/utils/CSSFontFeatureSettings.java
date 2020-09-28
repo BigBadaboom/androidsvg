@@ -237,9 +237,9 @@ public class CSSFontFeatureSettings
       for (Map.Entry<String, Integer> entry: this.settings.entrySet()) {
          if (sb.length() > 0)
             sb.append(',');
-         sb.append('"');
+         sb.append("'");
          sb.append(entry.getKey());
-         sb.append("\" ");
+         sb.append("' ");
          sb.append(entry.getValue());
       }
       return sb.toString();
@@ -256,7 +256,7 @@ public class CSSFontFeatureSettings
     * Format is: <feature-tag-value>[comma-wsp <feature-tag-value>]*
     *            <feature-tag-value> = <string> [ <integer> | on | off ]?
     */
-   public static CSSFontFeatureSettings  parseFontFeatureSettings(String val)
+   static CSSFontFeatureSettings  parseFontFeatureSettings(String val)
    {
       CSSFontFeatureSettings  result = new CSSFontFeatureSettings();
 

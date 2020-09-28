@@ -92,16 +92,17 @@ public class  Style implements Cloneable
    Isolation     isolation;
    CSSBlendMode  mixBlendMode;
 
-   FontKerning              fontKerning;
-   CSSFontFeatureSettings   fontVariantLigatures;
-   CSSFontFeatureSettings   fontVariantPosition;
-   CSSFontFeatureSettings   fontVariantCaps;
-   CSSFontFeatureSettings   fontVariantNumeric;
-   CSSFontFeatureSettings   fontVariantEastAsian;
-   CSSFontFeatureSettings   fontFeatureSettings;
-   WritingMode              writingMode;
-   GlypOrientationVertical  glyphOrientationVertical;
-   TextOrientation          textOrientation;
+   FontKerning               fontKerning;
+   CSSFontFeatureSettings    fontVariantLigatures;
+   CSSFontFeatureSettings    fontVariantPosition;
+   CSSFontFeatureSettings    fontVariantCaps;
+   CSSFontFeatureSettings    fontVariantNumeric;
+   CSSFontFeatureSettings    fontVariantEastAsian;
+   CSSFontFeatureSettings    fontFeatureSettings;
+   CSSFontVariationSettings  fontVariationSettings;
+   WritingMode               writingMode;
+   GlypOrientationVertical   glyphOrientationVertical;
+   TextOrientation           textOrientation;
 
 
    static final int  FONT_WEIGHT_NORMAL = 400;
@@ -159,6 +160,7 @@ public class  Style implements Cloneable
    static final long SPECIFIED_GLYPH_ORIENTATION_VERTICAL = (1L<<47);
    static final long SPECIFIED_TEXT_ORIENTATION           = (1L<<48);
    static final long SPECIFIED_FONT_KERNING               = (1L<<49);
+   static final long SPECIFIED_FONT_VARIATION_SETTINGS    = (1L<<50);
 
    private static final long SPECIFIED_ALL = 0xffffffffffffffffL;
 
@@ -367,6 +369,7 @@ public class  Style implements Cloneable
       def.fontVariantNumeric =  CSSFontFeatureSettings.NUMERIC_ALL_OFF;
       def.fontVariantEastAsian =  CSSFontFeatureSettings.EAST_ASIAN_ALL_OFF;
       def.fontFeatureSettings = CSSFontFeatureSettings.FONT_FEATURE_SETTINGS_NORMAL;
+      def.fontVariationSettings = null;
       def.writingMode = WritingMode.horizontal_tb;
       def.glyphOrientationVertical = GlypOrientationVertical.auto;
       def.textOrientation = TextOrientation.mixed;
@@ -754,6 +757,14 @@ public class  Style implements Cloneable
             style.fontFeatureSettings = CSSFontFeatureSettings.parseFontFeatureSettings(val);
             if (style.fontFeatureSettings != null)
                style.specifiedFlags |= SPECIFIED_FONT_FEATURE_SETTINGS;
+            break;
+
+         case font_variation_settings:
+            if (isFromAttribute)
+               break;
+            style.fontVariationSettings = CSSFontVariationSettings.parseFontVariationSettings(val);
+            if (style.fontVariationSettings != null)
+               style.specifiedFlags |= SPECIFIED_FONT_VARIATION_SETTINGS;
             break;
 
          /*

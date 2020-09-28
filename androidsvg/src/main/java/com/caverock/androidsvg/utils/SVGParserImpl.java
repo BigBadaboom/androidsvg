@@ -271,6 +271,7 @@ class SVGParserImpl implements SVGParser
       font_variant_caps,           // @since 1.5
       font_variant_numeric,        // @since 1.5
       font_variant_east_asian,     // @since 1.5
+      font_variation_settings,     // @since 1.5
       glyph_orientation_vertical,  // @since 1.5
       gradientTransform,
       gradientUnits,
@@ -598,7 +599,7 @@ class SVGParserImpl implements SVGParser
       try
       {
          if (FORCE_SAX_ON_EARLY_ANDROIDS) {
-            debug(TAG,"Forcing SAX parser for this version of Android");
+            debug("Forcing SAX parser for this version of Android");
             parseUsingSAX(is);
             return svgDocument;
          }
@@ -619,7 +620,7 @@ class SVGParserImpl implements SVGParser
             if (preamble.contains("<!ENTITY ")) {
                // Found something that looks like an entity definition.
                // So we'll use the SAX parser which supports them.
-               debug(TAG,"Switching to SAX parser to process entities");
+               debug("Switching to SAX parser to process entities");
                parseUsingSAX(is);
                return svgDocument;
             }
@@ -1197,7 +1198,7 @@ class SVGParserImpl implements SVGParser
 
    private void  dumpNode(SVGBase.SvgObject elem, String indent)
    {
-      debug(TAG, indent+elem);
+      debug(indent+elem);
       if (elem instanceof SVGBase.SvgConditionalContainer) {
          indent = indent+"  ";
          for (SVGBase.SvgObject child: ((SVGBase.SvgConditionalContainer) elem).children) {
