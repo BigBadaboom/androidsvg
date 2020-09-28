@@ -34,7 +34,7 @@ public class ArcTo
       List<String> ops = ((MockCanvas) Shadow.extract(canvas)).getOperations();
       //System.out.println(String.join(",", ops));
       assertEquals(6, ops.size());
-      assertEquals("drawPath('M 163.63701 412.02103 C 151.5 466.03125 139.375 520.0156 127.32401 574.021', Paint(f:ANTI_ALIAS|LINEAR_TEXT|SUBPIXEL_TEXT h:OFF s:FILL color:#ff000000 ts:16 tf:android.graphics.Typeface@0))", ops.get(3));
+      assertEquals("drawPath('M 163.63701 412.02103 C 151.5 466.03125 139.375 520.0156 127.32401 574.021', Paint(f:ANTI_ALIAS|LINEAR_TEXT|SUBPIXEL_TEXT; h:OFF; s:FILL; color:#ff000000; ts:16; tf:android.graphics.Typeface@0))", ops.get(3));
    }
 
 
@@ -54,7 +54,7 @@ public class ArcTo
       List<String> ops = ((MockCanvas) Shadow.extract(canvas)).getOperations();
       //System.out.println(String.join(",", ops));
       assertEquals(6, ops.size());
-      assertEquals("drawPath('M 422.77603 332.65903 C 415.15625 323.8125 407.53125 314.96875 399.92102 306.101', Paint(f:ANTI_ALIAS|LINEAR_TEXT|SUBPIXEL_TEXT h:OFF s:FILL color:#ff000000 ts:16 tf:android.graphics.Typeface@0))", ops.get(3));
+      assertEquals("drawPath('M 422.77603 332.65903 C 415.15625 323.8125 407.53125 314.96875 399.92102 306.101', Paint(f:ANTI_ALIAS|LINEAR_TEXT|SUBPIXEL_TEXT; h:OFF; s:FILL; color:#ff000000; ts:16; tf:android.graphics.Typeface@0))", ops.get(3));
 
    }
 }

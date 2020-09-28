@@ -174,7 +174,7 @@ public class ParseTest
       MockCanvas    mock = Shadow.extract(bmcanvas);
       List<String>  ops = mock.getOperations();
       //System.out.println(String.join(",", ops));
-      assertEquals("drawPath('M 0 0 L 10 0 L 10 10 L 0 10 L 0 0 Z', Paint(f:ANTI_ALIAS|LINEAR_TEXT|SUBPIXEL_TEXT h:OFF s:FILL ts:16 tf:android.graphics.Typeface@0 color:#ff008000))", ops.get(4));
+      assertEquals("drawPath('M 0 0 L 10 0 L 10 10 L 0 10 L 0 0 Z', Paint(f:ANTI_ALIAS|LINEAR_TEXT|SUBPIXEL_TEXT; h:OFF; s:FILL; ts:16; tf:android.graphics.Typeface@0; color:#ff008000))", ops.get(4));
 
 
       // Test that A elements are being visited properly while rendering
@@ -190,7 +190,7 @@ public class ParseTest
 
       ops = mock.getOperations();
       //System.out.println(String.join(",", ops));
-      assertEquals("drawPath('M 0 0 L 10 0 L 10 10 L 0 10 L 0 0 Z', Paint(f:ANTI_ALIAS|LINEAR_TEXT|SUBPIXEL_TEXT h:OFF s:FILL ts:16 tf:android.graphics.Typeface@0 color:#ff008000))", ops.get(4));
+      assertEquals("drawPath('M 0 0 L 10 0 L 10 10 L 0 10 L 0 0 Z', Paint(f:ANTI_ALIAS|LINEAR_TEXT|SUBPIXEL_TEXT; h:OFF; s:FILL; ts:16; tf:android.graphics.Typeface@0; color:#ff008000))", ops.get(4));
    }
 
 

@@ -986,7 +986,7 @@ public class SVGBase
    //===============================================================================
 
 
-   SVGBase.Svg  getRootElement()
+   public SVGBase.Svg  getRootElement()
    {
       return rootElement;
    }
@@ -1505,7 +1505,7 @@ public class SVGBase
    }
 
 
-   static class Svg extends SvgViewBoxContainer
+   public static class Svg extends SvgViewBoxContainer
    {
       Length  x;
       Length  y;

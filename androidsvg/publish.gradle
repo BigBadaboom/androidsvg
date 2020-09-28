@@ -132,7 +132,7 @@ publishing {
 
 task sourcesJar(type: Jar) {
     from android.sourceSets.main.java.srcDirs
-    archiveClassifier = 'sources'
+    classifier 'sources'
 }
 
 task javadoc(type: Javadoc) {
@@ -148,7 +148,7 @@ task javadoc(type: Javadoc) {
 }
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
-    archiveClassifier = 'javadoc'
+    classifier 'javadoc'
     from javadoc.getDestinationDir()
 }
 
@@ -167,7 +167,7 @@ task libraryJar(type: Jar, dependsOn: 'compileReleaseJavaWithJavac') {
         }
     }
 
-    archiveFileName = "${artifactIdJAR}-${version}.jar"
+    archiveName "${artifactIdJAR}-${version}.jar"
 }
 
 signing {

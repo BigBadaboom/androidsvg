@@ -37,6 +37,8 @@ public class MockPaint
    private static final String TEXTSIZE = "textSize";
    private static final String TYPEFACE = "typeface";
    private static final String UNDERLINETEXT = "underlineText";
+   private static final String FONTFEATURES = "fontFeatures";
+   private static final String FONTVARIATION = "fontVariation";
 
    private LinkedHashMap<String, String> settings = new LinkedHashMap<>();
 
@@ -80,25 +82,6 @@ public class MockPaint
       if (flags != 0)
          settings.put(FLAGS, "f:" + genFlagsVal(flags));
    }
-
-   private String  genFlagsVal(int flags)
-   {
-      List<String> f = new LinkedList<>();
-      for (int b=0; b<= 31; b++) {
-         int m = 1 << b;
-         if ((flags & m) != 0) {
-            switch (m) {
-               case Paint.ANTI_ALIAS_FLAG: f.add("ANTI_ALIAS"); break;
-               case Paint.LINEAR_TEXT_FLAG: f.add("LINEAR_TEXT"); break;
-               case Paint.SUBPIXEL_TEXT_FLAG: f.add("SUBPIXEL_TEXT"); break;
-               case Paint.FILTER_BITMAP_FLAG: f.add("FILTER_BITMAP"); break;
-               default: f.add(String.valueOf(b)); break;
-            }
-         }
-      }
-      return String.join("|", f);
-   }
-
 
    @Implementation
    public void setHinting(int hinting)
@@ -179,13 +162,27 @@ public class MockPaint
          settings.put(UNDERLINETEXT, "<u>");
    }
 
+   @Implementation
+   public void setFontFeatureSettings(String features)
+   {
+      settings.remove(FONTFEATURES);
+      settings.put(FONTFEATURES, "ff:" + features);
+   }
+
+   @Implementation
+   public void setFontVariationSettings(String variation)
+   {
+      settings.remove(FONTVARIATION);
+      settings.put(FONTVARIATION, "fv:" + variation);
+   }
+
 
    //-----------------------------------------------------------------------------------------------
 
 
    String  getDescription()
    {
-      return "Paint(" + String.join(" ", settings.values()) + ")";
+      return "Paint(" + String.join("; ", settings.values()) + ")";
    }
 
    private static String  num(float f)
@@ -201,6 +198,24 @@ public class MockPaint
       BigDecimal bd = new BigDecimal(Float.toString(value));
       bd = bd.setScale(places, RoundingMode.HALF_UP);
       return bd.floatValue();
+   }
+
+   private String  genFlagsVal(int flags)
+   {
+      List<String> f = new LinkedList<>();
+      for (int b=0; b<= 31; b++) {
+         int m = 1 << b;
+         if ((flags & m) != 0) {
+            switch (m) {
+               case Paint.ANTI_ALIAS_FLAG: f.add("ANTI_ALIAS"); break;
+               case Paint.LINEAR_TEXT_FLAG: f.add("LINEAR_TEXT"); break;
+               case Paint.SUBPIXEL_TEXT_FLAG: f.add("SUBPIXEL_TEXT"); break;
+               case Paint.FILTER_BITMAP_FLAG: f.add("FILTER_BITMAP"); break;
+               default: f.add(String.valueOf(b)); break;
+            }
+         }
+      }
+      return String.join("|", f);
    }
 
 }

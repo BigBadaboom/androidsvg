@@ -127,7 +127,7 @@ public class MockCanvas
    @Implementation
    public void  drawText(String text, float x, float y, Paint paint)
    {
-      this.operations.add(String.format(Locale.US, "drawText(\"%s\", %s, %s, %s)", text, num(x), num(y), paintToStr(paint)));
+      this.operations.add(String.format(Locale.US, "drawText('%s', %s, %s, %s)", text, num(x), num(y), paintToStr(paint)));
    }
 
    @Implementation
@@ -201,6 +201,13 @@ public class MockCanvas
    }
 
    @Implementation
+   public int  saveLayer(RectF bounds, Paint paint, int saveFlags)
+   {
+      this.operations.add(String.format(Locale.US, "saveLayer(%s, %s, %x)", bounds, paintToStr(paint), saveFlags));
+      return internalSave(saveFlags);  // Not accurate, but enough for testing for now.
+   }
+
+   @Implementation
    public int  saveLayerAlpha(RectF bounds, int alpha, int saveFlags)
    {
       this.operations.add(String.format(Locale.US, "saveLayerAlpha(%s, %d, %x)", bounds, alpha, saveFlags));
@@ -241,7 +248,7 @@ public class MockCanvas
 
    private static String  paintToStr(Paint paint)
    {
-      return ((MockPaint) Shadow.extract(paint)).getDescription();
+      return (paint == null) ? "null" : ((MockPaint) Shadow.extract(paint)).getDescription();
    }
 
 
@@ -252,7 +259,7 @@ public class MockCanvas
    String  paintProp(int opsIndex, String propName)
    {
       String   op = operations.get(opsIndex);
-      Pattern  re = Pattern.compile("[(\\s]" + propName + ":([^\\s)]*)");
+      Pattern  re = Pattern.compile("[(\\s]" + propName + ":([^;)]*)");
       Matcher  m = re.matcher(op);
       return m.find() ? m.group(1) : "NO "+propName;
    }

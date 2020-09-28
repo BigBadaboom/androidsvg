@@ -732,4 +732,11 @@ public class SVG
    }
 
 
+   //===============================================================================================
+
+
+   SVGBase.Svg  getRootElement()
+   {
+      return base.getRootElement();
+   }
 }
