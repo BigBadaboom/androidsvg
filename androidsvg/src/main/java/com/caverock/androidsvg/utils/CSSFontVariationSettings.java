@@ -13,6 +13,7 @@ public class CSSFontVariationSettings
    static final String  VARIATION_WEIGHT = "wght";
    static final String  VARIATION_ITALIC = "ital";
    static final String  VARIATION_OBLIQUE = "slnt";
+   static final String  VARIATION_WIDTH = "wdth";
 
    static final Float  VARIATION_ITALIC_VALUE_ON = 1f;
    static final Float  VARIATION_OBLIQUE_VALUE_ON = -14f;  // -14 degrees

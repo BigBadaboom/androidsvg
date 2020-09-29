@@ -80,9 +80,9 @@ public class SimpleAssetResolver extends SVGExternalFileResolver
     * For the font name "Foo", first the file "Foo.ttf" will be tried and if that fails, "Foo.otf".
     */
    @Override
-   public Typeface  resolveFont(String fontFamily, int fontWeight, String fontStyle)
+   public Typeface  resolveFont(String fontFamily, int fontWeight, String fontStyle, float fontStretch)
    {
-      Log.i(TAG, "resolveFont("+fontFamily+","+fontWeight+","+fontStyle+")");
+      Log.i(TAG, "resolveFont('"+fontFamily+"',"+fontWeight+",'"+fontStyle+"',"+fontStretch+")");
 
       // Try font name with suffix ".ttf"
       try
@@ -101,19 +101,12 @@ public class SimpleAssetResolver extends SVGExternalFileResolver
       // That failed, so try ".ttc" (Truetype collection), if supported on this version of Android
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
       {
-         try
-         {
-            Builder builder = new Builder(assetManager, fontFamily + ".ttc");
-            // Get the first font file in the collection
-            builder.setTtcIndex(0);
-            return builder.build();
-         }
-         catch (RuntimeException e)
-         {
-            Log.e(TAG, "Couldn't read \"" + fontFamily + ".ttc\" file", e);
-            return null;
-         }
+         Builder builder = new Builder(assetManager, fontFamily + ".ttc");
+         // Get the first font file in the collection
+         builder.setTtcIndex(0);
+         return builder.build();
       }
+
       return null;
    }
 

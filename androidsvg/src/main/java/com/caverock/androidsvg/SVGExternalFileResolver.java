@@ -56,13 +56,29 @@ public class SVGExternalFileResolver
     * <p>
     * Note that AndroidSVG does not attempt to cache Typeface references.  If you want
     * them cached, for speed or memory reasons, you should do so yourself.
-    * 
-    * @param fontFamily Font family as specified in a font-family style attribute.
-    * @param fontWeight Font weight as specified in a font-weight style attribute.
-    * @param fontStyle  Font style as specified in a font-style style attribute.
+    * <p>
+    * If you return are using Android O or later, and return a variable Truetype or Opentype font,
+    * then AndroidSVG will automatically set the weight, stretch and oblique slant for you. Note that
+    * it is quite rare for variable fonts to include the italic variant. Commonly, there will be two
+    * files, one with the regular glyphs and one with the italic ones.  In those cases, use the
+    * {code fontStyle} parameter to choose between those two font files, and leave AndroidSVG to do
+    * the rest.
+    * <p>
+    * Note: Prior to version 1.5 of AndroidSVG, this method did not take a {@code fontStretch}
+    * parameter.  Also, as of 1.5, the {@code fontStyle} parameter will now pass lower-case style
+    * names that match the CSS {@code font-style} values. For example "italic". Prior to 1.5, you
+    * would have received "Italic" (capital 'I') instead.
+    *
+    * @param fontFamily Font family name, as specified in a font-family style attribute.
+    * @param fontWeight Font weight as specified in a font-weight style attribute (100 - 900).
+    * @param fontStyle  Font style as specified in a font-style style attribute ("normal",
+    *                   "italic", "oblique").
+    * @param fontStretch  Font stretch as specified in a font-stretch style attribute. It is treated
+    *                     as a percentage value, where 100 maps to "normal". The typical range is
+    *                     between 50 ("ultra-condensed") and 200 ("ultra-expanded").
     * @return an Android Typeface instance, or null
     */
-   public Typeface  resolveFont(String fontFamily, int fontWeight, String fontStyle)
+   public Typeface  resolveFont(String fontFamily, int fontWeight, String fontStyle, float fontStretch)
    {
       return null;
    }

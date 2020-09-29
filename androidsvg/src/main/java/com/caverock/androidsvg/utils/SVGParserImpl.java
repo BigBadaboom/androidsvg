@@ -261,8 +261,9 @@ class SVGParserImpl implements SVGParser
       font_family,
       font_feature_settings,
       font_size,
-      font_weight,
+      font_stretch,                // @since 1.5
       font_style,
+      font_weight,
       // font_size_adjust, font_stretch,
       font_kerning,                // @since 1.5
       font_variant,                // @since 1.5
@@ -565,6 +566,25 @@ class SVGParserImpl implements SVGParser
 
       static Integer get(String fontWeight) {
          return fontWeightKeywords.get(fontWeight);
+      }
+   }
+
+   private static class FontStretchKeywords {
+      private static final Map<String, Float> fontStretchKeywords = new HashMap<>(9);
+      static {
+         fontStretchKeywords.put("ultra-condensed", 50f);
+         fontStretchKeywords.put("extra-condensed", 62.5f);
+         fontStretchKeywords.put("condensed", 75f);
+         fontStretchKeywords.put("semi-condensed", 87.5f);
+         fontStretchKeywords.put("normal", Style.FONT_STRETCH_NORMAL);
+         fontStretchKeywords.put("semi-expanded", 112.5f);
+         fontStretchKeywords.put("expanded", 125f);
+         fontStretchKeywords.put("extra-expanded", 150f);
+         fontStretchKeywords.put("ultra-expanded", 200f);
+      }
+
+      static Float get(String fontStretch) {
+         return fontStretchKeywords.get(fontStretch);
       }
    }
 
@@ -3274,7 +3294,7 @@ class SVGParserImpl implements SVGParser
       style.fontFamily = parseFontFamily(scan.restOfText());
       style.fontSize = fontSize;
       style.fontWeight = (fontWeight == null) ? Style.FONT_WEIGHT_NORMAL : fontWeight;
-      style.fontStyle = (fontStyle == null) ? Style.FontStyle.Normal : fontStyle;
+      style.fontStyle = (fontStyle == null) ? Style.FontStyle.normal : fontStyle;
       style.specifiedFlags |= (Style.SPECIFIED_FONT_FAMILY | Style.SPECIFIED_FONT_SIZE | Style.SPECIFIED_FONT_WEIGHT | Style.SPECIFIED_FONT_STYLE);
    }
 
@@ -3323,15 +3343,35 @@ class SVGParserImpl implements SVGParser
    }
 
 
+   // Parse a font stretch keyword or numerical value
+   static Float  parseFontStretch(String val)
+   {
+      Float  result = FontStretchKeywords.get(val);
+      if (result == null) {
+         // Check for a percentage value
+         TextScanner  scan = new TextScanner(val);
+         result = scan.nextFloat();
+         if (!scan.consume('%'))
+            return null;
+         scan.skipWhitespace();
+         if (!scan.empty())
+            return null;
+         if (result < 0)
+            return null;
+      }
+      return result;
+   }
+
+
    // Parse a font style keyword
    static Style.FontStyle  parseFontStyle(String val)
    {
       // Italic is probably the most common, so test that first :)
       switch (val)
       {
-         case "italic":  return Style.FontStyle.Italic;
-         case "normal":  return Style.FontStyle.Normal;
-         case "oblique": return Style.FontStyle.Oblique;
+         case "italic":  return Style.FontStyle.italic;
+         case "normal":  return Style.FontStyle.normal;
+         case "oblique": return Style.FontStyle.oblique;
          default:        return null;
       }
    }

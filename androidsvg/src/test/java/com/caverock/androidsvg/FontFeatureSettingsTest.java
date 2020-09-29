@@ -73,8 +73,39 @@ public class FontFeatureSettingsTest
 
       //List<String>  ops = ((MockCanvas) Shadow.extract(canvas)).getOperations();
       //System.out.println(String.join(",", ops));
-      assertEquals("'slnt' -14,'wght' 100",
+      assertEquals("'wdth' 100,'slnt' -14,'wght' 100",
                     mock.paintProp(3, "fv"));
+   }
+
+   //-----------------------------------------------------------------------------------------------
+
+   @Test
+   public void fontStretch() throws SVGParseException
+   {
+      String  test = "<svg>\n" +
+                     "  <text style=\"font-stretch: ultra-condensed\">Test\n" +
+                     "  <tspan style=\"font-stretch: normal\">Test</tspan></text>\n" +
+                     "  <text style=\"font-stretch: ultra-expanded\">Test</text>\n" +
+                     "  <text style=\"font-stretch: 80%\">Test</text>\n" +
+                     "  <text style=\"font-stretch: 66\">Test</text>\n" +
+                     "  <text style=\"font-stretch: -10%\">Test</text>\n" +
+                     "</svg>";
+      SVG  svg = SVG.getFromString(test);
+
+      Bitmap bm1 = Bitmap.createBitmap(200, 200, Bitmap.Config.ARGB_8888);
+      Canvas canvas = new Canvas(bm1);
+      svg.renderToCanvas(canvas);
+
+      MockCanvas    mock = ((MockCanvas) Shadow.extract(canvas));
+
+      //List<String>  ops = ((MockCanvas) Shadow.extract(canvas)).getOperations();
+      //System.out.println(String.join(",", ops));
+      assertEquals("'wdth' 50,'wght' 400", mock.paintProp(5, "fv"));
+      assertEquals("'wdth' 100,'wght' 400", mock.paintProp(7, "fv"));
+      assertEquals("'wdth' 200,'wght' 400", mock.paintProp(11, "fv"));
+      assertEquals("'wdth' 80,'wght' 400", mock.paintProp(14, "fv"));
+      assertEquals("'wdth' 100,'wght' 400", mock.paintProp(17, "fv"));
+      assertEquals("'wdth' 100,'wght' 400", mock.paintProp(20, "fv"));
    }
 
    //-----------------------------------------------------------------------------------------------

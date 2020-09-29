@@ -999,7 +999,7 @@ public class SVGAndroidRenderer
             if (reqfonts.isEmpty() || externalFileResolver == null)
                continue;
             for (String fontName: reqfonts) {
-               if (externalFileResolver.resolveFont(fontName, state.style.fontWeight, String.valueOf(state.style.fontStyle)) == null)
+               if (externalFileResolver.resolveFont(fontName, state.style.fontWeight, String.valueOf(state.style.fontStyle), state.style.fontStretch) == null)
                   continue ChildLoop;
             }
          }
@@ -2393,9 +2393,9 @@ public class SVGAndroidRenderer
       if (isSpecified(style, Style.SPECIFIED_FONT_WEIGHT))
       {
          // Font weights are 100,200...900
-         if (style.fontWeight == Style.FONT_WEIGHT_LIGHTER && state.style.fontWeight > 100)
+         if (style.fontWeight == Style.FONT_WEIGHT_LIGHTER && state.style.fontWeight > Style.FONT_WEIGHT_MIN)
             state.style.fontWeight -= 100;
-         else if (style.fontWeight == Style.FONT_WEIGHT_BOLDER && state.style.fontWeight < 900)
+         else if (style.fontWeight == Style.FONT_WEIGHT_BOLDER && state.style.fontWeight < Style.FONT_WEIGHT_MAX)
             state.style.fontWeight += 100;
          else
             state.style.fontWeight = style.fontWeight;
@@ -2406,8 +2406,14 @@ public class SVGAndroidRenderer
          state.style.fontStyle = style.fontStyle;
       }
 
+      if (isSpecified(style, Style.SPECIFIED_FONT_STRETCH))
+      {
+         // Typical font stretch values are 50...200 (percent)
+         state.style.fontStretch = style.fontStretch;
+      }
+
       // If typeface, weight or style has changed, update the paint typeface
-      if (isSpecified(style, Style.SPECIFIED_FONT_FAMILY | Style.SPECIFIED_FONT_WEIGHT | Style.SPECIFIED_FONT_STYLE))
+      if (isSpecified(style, Style.SPECIFIED_FONT_FAMILY | Style.SPECIFIED_FONT_WEIGHT | Style.SPECIFIED_FONT_STYLE | Style.SPECIFIED_FONT_STRETCH))
       {
          Typeface  font = null;
 
@@ -2415,7 +2421,7 @@ public class SVGAndroidRenderer
             for (String fontName: state.style.fontFamily) {
                font = checkGenericFont(fontName, state.style.fontWeight, state.style.fontStyle);
                if (font == null && externalFileResolver != null) {
-                  font = externalFileResolver.resolveFont(fontName, state.style.fontWeight, String.valueOf(state.style.fontStyle));
+                  font = externalFileResolver.resolveFont(fontName, state.style.fontWeight, String.valueOf(state.style.fontStyle), state.style.fontStretch);
                }
                if (font != null)
                   break;
@@ -2434,14 +2440,17 @@ public class SVGAndroidRenderer
             if (isSpecified(style, Style.SPECIFIED_FONT_WEIGHT))
                state.fontVariationSet.addSetting(CSSFontVariationSettings.VARIATION_WEIGHT, state.style.fontWeight);
             if (isSpecified(style, Style.SPECIFIED_FONT_STYLE)) {
-               if (state.style.fontStyle == FontStyle.Italic) {
+               if (state.style.fontStyle == FontStyle.italic) {
                   state.fontVariationSet.addSetting(CSSFontVariationSettings.VARIATION_ITALIC, CSSFontVariationSettings.VARIATION_ITALIC_VALUE_ON);
                   // Add oblique as well - as a fallback in case it has not "ital" axis
                   state.fontVariationSet.addSetting(CSSFontVariationSettings.VARIATION_OBLIQUE, CSSFontVariationSettings.VARIATION_OBLIQUE_VALUE_ON);
                }
-               else if (state.style.fontStyle == FontStyle.Oblique)
+               else if (state.style.fontStyle == FontStyle.oblique)
                   state.fontVariationSet.addSetting(CSSFontVariationSettings.VARIATION_OBLIQUE, CSSFontVariationSettings.VARIATION_OBLIQUE_VALUE_ON);
             }
+            if (isSpecified(style, Style.SPECIFIED_FONT_STRETCH))
+               state.fontVariationSet.addSetting(CSSFontVariationSettings.VARIATION_WIDTH, state.style.fontStretch);
+
             String  fontVariationSettings = state.fontVariationSet.toString();
             state.fillPaint.setFontVariationSettings(fontVariationSettings);
             state.strokePaint.setFontVariationSettings(fontVariationSettings);
@@ -2662,7 +2671,7 @@ public class SVGAndroidRenderer
       Typeface font = null;
       int      typefaceStyle;
 
-      boolean  italic = (fontStyle == Style.FontStyle.Italic);
+      boolean  italic = (fontStyle == Style.FontStyle.italic);
       typefaceStyle = (fontWeight > 500) ? (italic ? Typeface.BOLD_ITALIC : Typeface.BOLD)
                                          : (italic ? Typeface.ITALIC : Typeface.NORMAL);
 

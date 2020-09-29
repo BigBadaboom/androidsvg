@@ -56,6 +56,7 @@ public class  Style implements Cloneable
    Length          fontSize;
    Integer         fontWeight;
    FontStyle       fontStyle;
+   Float           fontStretch;
    TextDecoration  textDecoration;
    TextDirection   direction;
 
@@ -105,10 +106,15 @@ public class  Style implements Cloneable
    TextOrientation           textOrientation;
 
 
+   static final int  FONT_WEIGHT_MIN = 100;
    static final int  FONT_WEIGHT_NORMAL = 400;
    static final int  FONT_WEIGHT_BOLD = 700;
+   static final int  FONT_WEIGHT_MAX = 900;
    static final int  FONT_WEIGHT_LIGHTER = -1;
    static final int  FONT_WEIGHT_BOLDER = +1;
+
+   static final float  FONT_STRETCH_NORMAL = 100f;
+
 
    static final long SPECIFIED_FILL                       = (1<<0);
    static final long SPECIFIED_FILL_RULE                  = (1<<1);
@@ -161,6 +167,7 @@ public class  Style implements Cloneable
    static final long SPECIFIED_TEXT_ORIENTATION           = (1L<<48);
    static final long SPECIFIED_FONT_KERNING               = (1L<<49);
    static final long SPECIFIED_FONT_VARIATION_SETTINGS    = (1L<<50);
+   static final long SPECIFIED_FONT_STRETCH               = (1L<<51);
 
    private static final long SPECIFIED_ALL = 0xffffffffffffffffL;
 
@@ -187,9 +194,9 @@ public class  Style implements Cloneable
 
    public enum FontStyle
    {
-      Normal,
-      Italic,
-      Oblique
+      normal,
+      italic,
+      oblique
    }
 
    public enum TextAnchor
@@ -339,7 +346,8 @@ public class  Style implements Cloneable
       def.fontFamily = null;
       def.fontSize = new Length(12, Unit.pt);
       def.fontWeight = FONT_WEIGHT_NORMAL;
-      def.fontStyle = FontStyle.Normal;
+      def.fontStyle = FontStyle.normal;
+      def.fontStretch = FONT_STRETCH_NORMAL;
       def.textDecoration = TextDecoration.None;
       def.direction = TextDirection.LTR;
       def.textAnchor = TextAnchor.Start;
@@ -536,6 +544,12 @@ public class  Style implements Cloneable
             style.fontStyle = SVGParserImpl.parseFontStyle(val);
             if (style.fontStyle != null)
                style.specifiedFlags |= SPECIFIED_FONT_STYLE;
+            break;
+
+         case font_stretch:
+            style.fontStretch = SVGParserImpl.parseFontStretch(val);
+            if (style.fontStretch != null)
+               style.specifiedFlags |= SPECIFIED_FONT_STRETCH;
             break;
 
          case text_decoration:
