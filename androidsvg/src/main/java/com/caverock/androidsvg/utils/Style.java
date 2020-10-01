@@ -106,10 +106,10 @@ public class  Style implements Cloneable
    TextOrientation           textOrientation;
 
 
-   static final int  FONT_WEIGHT_MIN = 100;
+   static final int  FONT_WEIGHT_MIN = 1;
    static final int  FONT_WEIGHT_NORMAL = 400;
    static final int  FONT_WEIGHT_BOLD = 700;
-   static final int  FONT_WEIGHT_MAX = 900;
+   static final int  FONT_WEIGHT_MAX = 1000;
    static final int  FONT_WEIGHT_LIGHTER = -1;
    static final int  FONT_WEIGHT_BOLDER = +1;
 
@@ -169,7 +169,14 @@ public class  Style implements Cloneable
    static final long SPECIFIED_FONT_VARIATION_SETTINGS    = (1L<<50);
    static final long SPECIFIED_FONT_STRETCH               = (1L<<51);
 
-   private static final long SPECIFIED_ALL = 0xffffffffffffffffL;
+   // Flags for the settings that are applied to reset the root style
+   private static final long SPECIFIED_RESET = 0xffffffffffffffffL &
+                           ~(SPECIFIED_FONT_VARIANT_LIGATURES  |
+                             SPECIFIED_FONT_VARIANT_POSITION   |
+                             SPECIFIED_FONT_VARIANT_CAPS       |
+                             SPECIFIED_FONT_VARIANT_NUMERIC    |
+                             SPECIFIED_FONT_VARIANT_EAST_ASIAN |
+                             SPECIFIED_FONT_VARIATION_SETTINGS);
 
 
    public enum FillRule
@@ -328,8 +335,7 @@ public class  Style implements Cloneable
    static Style  getDefaultStyle()
    {
       Style  def = new Style();
-      def.specifiedFlags = SPECIFIED_ALL;
-      //def.inheritFlags = 0;
+
       def.fill = Colour.BLACK;
       def.fillRule = FillRule.NonZero;
       def.fillOpacity = 1f;
@@ -381,6 +387,10 @@ public class  Style implements Cloneable
       def.writingMode = WritingMode.horizontal_tb;
       def.glyphOrientationVertical = GlypOrientationVertical.auto;
       def.textOrientation = TextOrientation.mixed;
+
+      def.specifiedFlags = SPECIFIED_RESET;
+      //def.inheritFlags = 0;
+
       return def;
    }
 

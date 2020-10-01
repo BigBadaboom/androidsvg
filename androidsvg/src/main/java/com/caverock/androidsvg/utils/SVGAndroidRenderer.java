@@ -1518,6 +1518,8 @@ public class SVGAndroidRenderer
       if (!display())
          return;
 
+      selectTypefaceAndFontStyling();
+
       if (obj.transform != null)
          canvas.concat(obj.transform);
 
@@ -1554,6 +1556,55 @@ public class SVGAndroidRenderer
 
       if (compositing)
          popLayer(obj);
+   }
+
+
+   private void selectTypefaceAndFontStyling()
+   {
+      Typeface  font = null;
+
+      if (state.style.fontFamily != null && document != null) {
+         for (String fontName: state.style.fontFamily) {
+            font = checkGenericFont(fontName, state.style.fontWeight, state.style.fontStyle);
+            if (font == null && externalFileResolver != null) {
+               font = externalFileResolver.resolveFont(fontName, state.style.fontWeight, String.valueOf(state.style.fontStyle), state.style.fontStretch);
+            }
+            if (font != null)
+               break;
+         }
+      }
+      if (font == null) {
+         // Fall back to default font
+         font = checkGenericFont(DEFAULT_FONT_FAMILY, state.style.fontWeight, state.style.fontStyle);
+      }
+      state.fillPaint.setTypeface(font);
+      state.strokePaint.setTypeface(font);
+
+      // Just in case this is a variable font, let's also set the fontVariationSettings
+      // In order to get the desired font weight and style
+      if (SUPPORTS_PAINT_FONT_VARIATION_SETTINGS) {
+         state.fontVariationSet.addSetting(CSSFontVariationSettings.VARIATION_WEIGHT, state.style.fontWeight);
+         if (state.style.fontStyle == FontStyle.italic) {
+            state.fontVariationSet.addSetting(CSSFontVariationSettings.VARIATION_ITALIC, CSSFontVariationSettings.VARIATION_ITALIC_VALUE_ON);
+            // Add oblique as well - as a fallback in case it has not "ital" axis
+            state.fontVariationSet.addSetting(CSSFontVariationSettings.VARIATION_OBLIQUE, CSSFontVariationSettings.VARIATION_OBLIQUE_VALUE_ON);
+         }
+         else if (state.style.fontStyle == FontStyle.oblique)
+            state.fontVariationSet.addSetting(CSSFontVariationSettings.VARIATION_OBLIQUE, CSSFontVariationSettings.VARIATION_OBLIQUE_VALUE_ON);
+         state.fontVariationSet.addSetting(CSSFontVariationSettings.VARIATION_WIDTH, state.style.fontStretch);
+
+         String  fontVariationSettings = state.fontVariationSet.toString();
+         debug("fontVariationSettings = "+fontVariationSettings);
+         state.fillPaint.setFontVariationSettings(fontVariationSettings);
+         state.strokePaint.setFontVariationSettings(fontVariationSettings);
+      }
+
+      if (SUPPORTS_PAINT_FONT_FEATURE_SETTINGS) {
+         String  fontFeatureSettings = state.fontFeatureSet.toString();
+         debug("fontFeatureSettings = "+fontFeatureSettings);
+         state.fillPaint.setFontFeatureSettings(fontFeatureSettings);
+         state.strokePaint.setFontFeatureSettings(fontFeatureSettings);
+      }
    }
 
 
@@ -1667,6 +1718,8 @@ public class SVGAndroidRenderer
 
          if (display())
          {
+            selectTypefaceAndFontStyling();
+
             // Get the first coordinate pair from the lists in the x and y properties.
             float    x=0, y=0, dx=0, dy=0;
             boolean  specifiedX = (tspan.x != null && tspan.x.size() > 0);
@@ -1756,6 +1809,8 @@ public class SVGAndroidRenderer
          return;
       if (!visible())
          return;
+
+      selectTypefaceAndFontStyling();
 
       SvgObject  ref = obj.document.resolveIRI(obj.href);
       if (ref == null)
@@ -2412,51 +2467,6 @@ public class SVGAndroidRenderer
          state.style.fontStretch = style.fontStretch;
       }
 
-      // If typeface, weight or style has changed, update the paint typeface
-      if (isSpecified(style, Style.SPECIFIED_FONT_FAMILY | Style.SPECIFIED_FONT_WEIGHT | Style.SPECIFIED_FONT_STYLE | Style.SPECIFIED_FONT_STRETCH))
-      {
-         Typeface  font = null;
-
-         if (state.style.fontFamily != null && document != null) {
-            for (String fontName: state.style.fontFamily) {
-               font = checkGenericFont(fontName, state.style.fontWeight, state.style.fontStyle);
-               if (font == null && externalFileResolver != null) {
-                  font = externalFileResolver.resolveFont(fontName, state.style.fontWeight, String.valueOf(state.style.fontStyle), state.style.fontStretch);
-               }
-               if (font != null)
-                  break;
-            }
-         }
-         if (font == null) {
-            // Fall back to default font
-            font = checkGenericFont(DEFAULT_FONT_FAMILY, state.style.fontWeight, state.style.fontStyle);
-         }
-         state.fillPaint.setTypeface(font);
-         state.strokePaint.setTypeface(font);
-
-         // Just in case this is a variable font, let's also set the fontVariationSettings
-         // In order to get the desired font weight and style
-         if (SUPPORTS_PAINT_FONT_VARIATION_SETTINGS) {
-            if (isSpecified(style, Style.SPECIFIED_FONT_WEIGHT))
-               state.fontVariationSet.addSetting(CSSFontVariationSettings.VARIATION_WEIGHT, state.style.fontWeight);
-            if (isSpecified(style, Style.SPECIFIED_FONT_STYLE)) {
-               if (state.style.fontStyle == FontStyle.italic) {
-                  state.fontVariationSet.addSetting(CSSFontVariationSettings.VARIATION_ITALIC, CSSFontVariationSettings.VARIATION_ITALIC_VALUE_ON);
-                  // Add oblique as well - as a fallback in case it has not "ital" axis
-                  state.fontVariationSet.addSetting(CSSFontVariationSettings.VARIATION_OBLIQUE, CSSFontVariationSettings.VARIATION_OBLIQUE_VALUE_ON);
-               }
-               else if (state.style.fontStyle == FontStyle.oblique)
-                  state.fontVariationSet.addSetting(CSSFontVariationSettings.VARIATION_OBLIQUE, CSSFontVariationSettings.VARIATION_OBLIQUE_VALUE_ON);
-            }
-            if (isSpecified(style, Style.SPECIFIED_FONT_STRETCH))
-               state.fontVariationSet.addSetting(CSSFontVariationSettings.VARIATION_WIDTH, state.style.fontStretch);
-
-            String  fontVariationSettings = state.fontVariationSet.toString();
-            state.fillPaint.setFontVariationSettings(fontVariationSettings);
-            state.strokePaint.setFontVariationSettings(fontVariationSettings);
-         }
-      }
-
       if (isSpecified(style, Style.SPECIFIED_TEXT_DECORATION))
       {
          state.style.textDecoration = style.textDecoration;
@@ -2607,27 +2617,10 @@ public class SVGAndroidRenderer
          state.fontFeatureSet.applySettings(style.fontFeatureSettings);
       }
 
-      if (SUPPORTS_PAINT_FONT_FEATURE_SETTINGS &&
-          isSpecified(style, Style.SPECIFIED_FONT_FEATURE_SETTINGS | Style.SPECIFIED_FONT_VARIANT_LIGATURES | Style.SPECIFIED_FONT_VARIANT_POSITION
-                              | Style.SPECIFIED_FONT_VARIANT_CAPS | Style.SPECIFIED_FONT_VARIANT_NUMERIC | Style.SPECIFIED_FONT_VARIANT_EAST_ASIAN
-                              | Style.SPECIFIED_FONT_KERNING))
-      {
-         String  fontFeatureSettings = state.fontFeatureSet.toString();
-         debug("fontFeatureSettings = "+fontFeatureSettings);
-         state.fillPaint.setFontFeatureSettings(fontFeatureSettings);
-         state.strokePaint.setFontFeatureSettings(fontFeatureSettings);
-      }
-
       if (SUPPORTS_PAINT_FONT_VARIATION_SETTINGS && isSpecified(style, Style.SPECIFIED_FONT_VARIATION_SETTINGS))
       {
          state.style.fontVariationSettings = style.fontVariationSettings;
          state.fontVariationSet.applySettings(style.fontVariationSettings);
-
-         String  fontVariationSettings = (state.fontVariationSet != null) ? state.fontVariationSet.toString() : null;
-         debug("fontVariationSettings = "+fontVariationSettings);
-
-         state.fillPaint.setFontVariationSettings(fontVariationSettings);
-         state.strokePaint.setFontVariationSettings(fontVariationSettings);
       }
 
       if (isSpecified(style, Style.SPECIFIED_WRITING_MODE))
