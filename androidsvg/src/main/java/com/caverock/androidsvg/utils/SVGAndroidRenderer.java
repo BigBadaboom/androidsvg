@@ -2447,11 +2447,28 @@ public class SVGAndroidRenderer
 
       if (isSpecified(style, Style.SPECIFIED_FONT_WEIGHT))
       {
-         // Font weights are 100,200...900
-         if (style.fontWeight == Style.FONT_WEIGHT_LIGHTER && state.style.fontWeight > Style.FONT_WEIGHT_MIN)
-            state.style.fontWeight -= 100;
-         else if (style.fontWeight == Style.FONT_WEIGHT_BOLDER && state.style.fontWeight < Style.FONT_WEIGHT_MAX)
-            state.style.fontWeight += 100;
+         // Font weights are 0..1000
+         // Relative weight rules from CSS-Fonts-4: https://www.w3.org/TR/css-fonts-4/#relative-weights
+         if (style.fontWeight == Style.FONT_WEIGHT_LIGHTER)
+         {
+            float fw = state.style.fontWeight;
+            if (fw >= 100f && fw < 550f)
+               state.style.fontWeight = 100f;
+            else if (fw >= 550f && fw < 750f)
+               state.style.fontWeight = 400f;
+            else if (fw >= 750f)
+               state.style.fontWeight = 700f;
+         }
+         else if (style.fontWeight == Style.FONT_WEIGHT_BOLDER)
+         {
+            float fw = state.style.fontWeight;
+            if (fw < 350f)
+               state.style.fontWeight = 400f;
+            else if (fw >= 350f && fw < 550f)
+               state.style.fontWeight = 700f;
+            else if (fw >= 550f && fw < 900f)
+               state.style.fontWeight = 900f;
+         }
          else
             state.style.fontWeight = style.fontWeight;
       }
@@ -2659,14 +2676,14 @@ public class SVGAndroidRenderer
    }
 
 
-   private Typeface  checkGenericFont(String fontName, Integer fontWeight, FontStyle fontStyle)
+   private Typeface  checkGenericFont(String fontName, Float fontWeight, FontStyle fontStyle)
    {
       Typeface font = null;
       int      typefaceStyle;
 
       boolean  italic = (fontStyle == Style.FontStyle.italic);
-      typefaceStyle = (fontWeight > 500) ? (italic ? Typeface.BOLD_ITALIC : Typeface.BOLD)
-                                         : (italic ? Typeface.ITALIC : Typeface.NORMAL);
+      typefaceStyle = (fontWeight >= Style.FONT_WEIGHT_BOLD) ? (italic ? Typeface.BOLD_ITALIC : Typeface.BOLD)
+                                                             : (italic ? Typeface.ITALIC : Typeface.NORMAL);
 
       switch (fontName) {
          case "serif":

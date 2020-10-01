@@ -54,7 +54,7 @@ public class  Style implements Cloneable
 
    List<String>    fontFamily;
    Length          fontSize;
-   Integer         fontWeight;
+   Float           fontWeight;
    FontStyle       fontStyle;
    Float           fontStretch;
    TextDecoration  textDecoration;
@@ -106,13 +106,14 @@ public class  Style implements Cloneable
    TextOrientation           textOrientation;
 
 
-   static final int  FONT_WEIGHT_MIN = 1;
-   static final int  FONT_WEIGHT_NORMAL = 400;
-   static final int  FONT_WEIGHT_BOLD = 700;
-   static final int  FONT_WEIGHT_MAX = 1000;
-   static final int  FONT_WEIGHT_LIGHTER = -1;
-   static final int  FONT_WEIGHT_BOLDER = +1;
+   static final float  FONT_WEIGHT_MIN = 1f;
+   static final float  FONT_WEIGHT_NORMAL = 400f;
+   static final float  FONT_WEIGHT_BOLD = 700f;
+   static final float  FONT_WEIGHT_MAX = 1000f;
+   static final float  FONT_WEIGHT_LIGHTER = Float.MIN_VALUE;
+   static final float  FONT_WEIGHT_BOLDER = Float.MAX_VALUE;
 
+   static final float  FONT_STRETCH_MIN = 0f;
    static final float  FONT_STRETCH_NORMAL = 100f;
 
 

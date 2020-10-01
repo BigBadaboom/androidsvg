@@ -80,7 +80,7 @@ public class SimpleAssetResolver extends SVGExternalFileResolver
     * For the font name "Foo", first the file "Foo.ttf" will be tried and if that fails, "Foo.otf".
     */
    @Override
-   public Typeface  resolveFont(String fontFamily, int fontWeight, String fontStyle, float fontStretch)
+   public Typeface  resolveFont(String fontFamily, float fontWeight, String fontStyle, float fontStretch)
    {
       Log.i(TAG, "resolveFont('"+fontFamily+"',"+fontWeight+",'"+fontStyle+"',"+fontStretch+")");
 

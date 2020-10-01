@@ -70,7 +70,7 @@ public class SVGExternalFileResolver
     * would have received "Italic" (capital 'I') instead.
     *
     * @param fontFamily Font family name, as specified in a font-family style attribute.
-    * @param fontWeight Font weight as specified in a font-weight style attribute (100 - 900).
+    * @param fontWeight Font weight as specified in a font-weight style attribute (typically 100 - 900).
     * @param fontStyle  Font style as specified in a font-style style attribute ("normal",
     *                   "italic", "oblique").
     * @param fontStretch  Font stretch as specified in a font-stretch style attribute. It is treated
@@ -78,7 +78,7 @@ public class SVGExternalFileResolver
     *                     between 50 ("ultra-condensed") and 200 ("ultra-expanded").
     * @return an Android Typeface instance, or null
     */
-   public Typeface  resolveFont(String fontFamily, int fontWeight, String fontStyle, float fontStretch)
+   public Typeface  resolveFont(String fontFamily, float fontWeight, String fontStyle, float fontStretch)
    {
       return null;
    }

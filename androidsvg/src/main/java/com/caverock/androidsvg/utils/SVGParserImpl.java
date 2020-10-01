@@ -547,24 +547,15 @@ class SVGParserImpl implements SVGParser
    }
 
    private static class FontWeightKeywords {
-      private static final Map<String, Integer> fontWeightKeywords = new HashMap<>(13);
+      private static final Map<String, Float> fontWeightKeywords = new HashMap<>(4);
       static {
          fontWeightKeywords.put("normal", Style.FONT_WEIGHT_NORMAL);
          fontWeightKeywords.put("bold", Style.FONT_WEIGHT_BOLD);
          fontWeightKeywords.put("bolder", Style.FONT_WEIGHT_BOLDER);
          fontWeightKeywords.put("lighter", Style.FONT_WEIGHT_LIGHTER);
-         fontWeightKeywords.put("100", 100);
-         fontWeightKeywords.put("200", 200);
-         fontWeightKeywords.put("300", 300);
-         fontWeightKeywords.put("400", 400);
-         fontWeightKeywords.put("500", 500);
-         fontWeightKeywords.put("600", 600);
-         fontWeightKeywords.put("700", 700);
-         fontWeightKeywords.put("800", 800);
-         fontWeightKeywords.put("900", 900);
       }
 
-      static Integer get(String fontWeight) {
+      static Float get(String fontWeight) {
          return fontWeightKeywords.get(fontWeight);
       }
    }
@@ -3232,7 +3223,7 @@ class SVGParserImpl implements SVGParser
    // [ [ <'font-style'> || <'font-variant'> || <'font-weight'> ]? <'font-size'> [ / <'line-height'> ]? <'font-family'> ] | caption | icon | menu | message-box | small-caption | status-bar | inherit
    static void  parseFont(Style style, String val)
    {
-      Integer          fontWeight = null;
+      Float            fontWeight = null;
       Style.FontStyle  fontStyle = null;
       String           fontVariant = null;
 
@@ -3337,9 +3328,20 @@ class SVGParserImpl implements SVGParser
 
 
    // Parse a font weight keyword or numerical value
-   static Integer  parseFontWeight(String val)
+   static Float  parseFontWeight(String val)
    {
-      return FontWeightKeywords.get(val);
+      Float  result = FontWeightKeywords.get(val);
+      if (result == null) {
+         // Check for a number
+         TextScanner  scan = new TextScanner(val);
+         result = scan.nextFloat();
+         scan.skipWhitespace();
+         if (!scan.empty())
+            return null;
+         if (result < Style.FONT_WEIGHT_MIN || result > Style.FONT_WEIGHT_MAX)
+            return null;   // Invalid
+      }
+      return result;
    }
 
 
@@ -3356,8 +3358,8 @@ class SVGParserImpl implements SVGParser
          scan.skipWhitespace();
          if (!scan.empty())
             return null;
-         if (result < 0)
-            return null;
+         if (result < Style.FONT_STRETCH_MIN)
+            return null;   // Invalid
       }
       return result;
    }
