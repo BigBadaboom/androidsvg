@@ -378,6 +378,7 @@ public class  Style implements Cloneable
       def.imageRendering = RenderQuality.auto;
       def.isolation = Isolation.auto;
       def.mixBlendMode = CSSBlendMode.normal;
+      def.fontKerning = FontKerning.auto;
       def.fontVariantLigatures = CSSFontFeatureSettings.LIGATURES_NORMAL;
       def.fontVariantPosition = CSSFontFeatureSettings.POSITION_ALL_OFF;
       def.fontVariantCaps =  CSSFontFeatureSettings.CAPS_ALL_OFF;
@@ -530,6 +531,8 @@ public class  Style implements Cloneable
             break;
 
          case font:
+            if (isFromAttribute)
+               break;
             SVGParserImpl.parseFont(style, val);
             break;
 

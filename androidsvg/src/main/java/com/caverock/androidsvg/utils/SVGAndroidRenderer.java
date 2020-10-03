@@ -2598,6 +2598,12 @@ public class SVGAndroidRenderer
          state.fontFeatureSet.applyKerning(style.fontKerning);
       }
 
+      if (isSpecified(style, Style.SPECIFIED_FONT_FEATURE_SETTINGS))
+      {
+         state.style.fontFeatureSettings = style.fontFeatureSettings;
+         state.fontFeatureSet.applySettings(style.fontFeatureSettings);
+      }
+
       if (isSpecified(style, Style.SPECIFIED_FONT_VARIANT_LIGATURES))
       {
          state.style.fontVariantLigatures = style.fontVariantLigatures;
@@ -2626,12 +2632,6 @@ public class SVGAndroidRenderer
       {
          state.style.fontVariantEastAsian = style.fontVariantEastAsian;
          state.fontFeatureSet.applySettings(style.fontVariantEastAsian);
-      }
-
-      if (isSpecified(style, Style.SPECIFIED_FONT_FEATURE_SETTINGS))
-      {
-         state.style.fontFeatureSettings = style.fontFeatureSettings;
-         state.fontFeatureSet.applySettings(style.fontFeatureSettings);
       }
 
       if (SUPPORTS_PAINT_FONT_VARIATION_SETTINGS && isSpecified(style, Style.SPECIFIED_FONT_VARIATION_SETTINGS))

@@ -558,6 +558,10 @@ class SVGParserImpl implements SVGParser
       static Float get(String fontWeight) {
          return fontWeightKeywords.get(fontWeight);
       }
+
+      static boolean contains(String fontStretch) {
+         return fontWeightKeywords.containsKey(fontStretch);
+      }
    }
 
    private static class FontStretchKeywords {
@@ -576,6 +580,10 @@ class SVGParserImpl implements SVGParser
 
       static Float get(String fontStretch) {
          return fontStretchKeywords.get(fontStretch);
+      }
+
+      static boolean contains(String fontStretch) {
+         return fontStretchKeywords.containsKey(fontStretch);
       }
    }
 
@@ -1209,7 +1217,9 @@ class SVGParserImpl implements SVGParser
 
    private void  dumpNode(SVGBase.SvgObject elem, String indent)
    {
-      debug(indent+elem);
+      if (!BuildConfig.DEBUG)
+         return;
+      Log.d(TAG, indent+elem);
       if (elem instanceof SVGBase.SvgConditionalContainer) {
          indent = indent+"  ";
          for (SVGBase.SvgObject child: ((SVGBase.SvgConditionalContainer) elem).children) {
@@ -3226,9 +3236,13 @@ class SVGParserImpl implements SVGParser
       Float            fontWeight = null;
       Style.FontStyle  fontStyle = null;
       String           fontVariant = null;
+      Float            fontStretch = null;
+      Boolean          fontVariantSmallCaps = null;
+
+      final String  NORMAL = "normal";
 
       // Start by checking for the fixed size standard system font names (which we don't support)
-      if (!"|caption|icon|menu|message-box|small-caption|status-bar|".contains('|'+val+'|'))
+      if ("|caption|icon|menu|message-box|small-caption|status-bar|".contains('|'+val+'|'))
          return;
          
       // First part: style/variant/weight (opt - one or more)
@@ -3242,12 +3256,13 @@ class SVGParserImpl implements SVGParser
             return;
          if (fontWeight != null && fontStyle != null)
             break;
-         if (item.equals("normal"))  // indeterminate which of these this refers to
+         if (item.equals(NORMAL))  {
+            // indeterminate right now which of these this refers to
             continue;
-         if (fontWeight == null) {
+         }
+         if (fontWeight == null && FontWeightKeywords.contains(item)) {
             fontWeight = FontWeightKeywords.get(item);
-            if (fontWeight != null)
-               continue;
+            continue;
          }
          if (fontStyle == null) {
             fontStyle = parseFontStyle(item);
@@ -3255,14 +3270,18 @@ class SVGParserImpl implements SVGParser
                continue;
          }
          // Must be a font-variant keyword?
-         if (fontVariant == null && item.equals("small-caps")) {
-            fontVariant = item;
+         if (fontVariantSmallCaps == null && item.equals(CSSFontFeatureSettings.FONT_VARIANT_SMALL_CAPS)) {
+            fontVariantSmallCaps = true;
+            continue;
+         }
+         if (fontStretch == null && FontStretchKeywords.contains(item)) {
+            fontStretch = FontStretchKeywords.get(item);
             continue;
          }
          // Not any of these. Break and try next section
          break;
       }
-      
+
       // Second part: font size (reqd) and line-height (opt)
       Length  fontSize = parseFontSize(item);
 
@@ -3283,10 +3302,25 @@ class SVGParserImpl implements SVGParser
       
       // Third part: font family
       style.fontFamily = parseFontFamily(scan.restOfText());
+
       style.fontSize = fontSize;
       style.fontWeight = (fontWeight == null) ? Style.FONT_WEIGHT_NORMAL : fontWeight;
       style.fontStyle = (fontStyle == null) ? Style.FontStyle.normal : fontStyle;
-      style.specifiedFlags |= (Style.SPECIFIED_FONT_FAMILY | Style.SPECIFIED_FONT_SIZE | Style.SPECIFIED_FONT_WEIGHT | Style.SPECIFIED_FONT_STYLE);
+      style.fontStretch = (fontStretch == null) ? Style.FONT_STRETCH_NORMAL : fontStretch;
+      style.fontKerning = Style.FontKerning.auto;
+      style.fontVariantLigatures = CSSFontFeatureSettings.LIGATURES_NORMAL;
+      style.fontVariantPosition = CSSFontFeatureSettings.POSITION_ALL_OFF;
+      style.fontVariantCaps = CSSFontFeatureSettings.CAPS_ALL_OFF;
+      if (fontVariantSmallCaps == Boolean.TRUE)
+         style.fontVariantCaps = CSSFontFeatureSettings.makeSmallCaps();
+      style.fontVariantNumeric =  CSSFontFeatureSettings.NUMERIC_ALL_OFF;
+      style.fontVariantEastAsian =  CSSFontFeatureSettings.EAST_ASIAN_ALL_OFF;
+      style.fontFeatureSettings = CSSFontFeatureSettings.FONT_FEATURE_SETTINGS_NORMAL;
+      style.fontVariationSettings = null;
+
+      style.specifiedFlags |= (Style.SPECIFIED_FONT_FAMILY | Style.SPECIFIED_FONT_SIZE | Style.SPECIFIED_FONT_WEIGHT | Style.SPECIFIED_FONT_STYLE | Style.SPECIFIED_FONT_STRETCH |
+                               Style.SPECIFIED_FONT_KERNING | Style.SPECIFIED_FONT_VARIANT_LIGATURES | Style.SPECIFIED_FONT_VARIANT_POSITION | Style.SPECIFIED_FONT_VARIANT_CAPS |
+                               Style.SPECIFIED_FONT_VARIANT_NUMERIC | Style.SPECIFIED_FONT_VARIANT_EAST_ASIAN | Style.SPECIFIED_FONT_FEATURE_SETTINGS | Style.SPECIFIED_FONT_VARIATION_SETTINGS);
    }
 
 

@@ -29,7 +29,7 @@ public class CSSFontFeatureSettings
    public static final CSSFontFeatureSettings  FONT_FEATURE_SETTINGS_NORMAL = makeDefaultSettings();
    public static final CSSFontFeatureSettings  ERROR = new CSSFontFeatureSettings((HashMap<String, Integer>) null);
 
-   private static final String  FONT_VARIANT_NORMAL = "normal";
+   static final String  FONT_VARIANT_NORMAL = "normal";
    private static final String  FONT_VARIANT_AUTO = "auto";
    private static final String  FONT_VARIANT_NONE = "none";
 
@@ -73,9 +73,10 @@ public class CSSFontFeatureSettings
    private static final String  FEATURE_SUPS = "sups";
 
    // For font-variant-caps
-   static CSSFontFeatureSettings  CAPS_ALL_OFF = null;
+   static CSSFontFeatureSettings          CAPS_ALL_OFF = null;
+   private static CSSFontFeatureSettings  CAPS_SMALL_CAPS = null;
 
-   private static final String  FONT_VARIANT_SMALL_CAPS = "small-caps";
+   static final String  FONT_VARIANT_SMALL_CAPS = "small-caps";
    private static final String  FONT_VARIANT_ALL_SMALL_CAPS = "all-small-caps";
    private static final String  FONT_VARIANT_PETITE_CAPS = "petite-caps";
    private static final String  FONT_VARIANT_ALL_PETITE_CAPS = "all-petite-caps";
@@ -818,4 +819,19 @@ public class CSSFontFeatureSettings
       }
    }
 
+
+   // Used when parsing the CSS "font" shortcut property
+   static CSSFontFeatureSettings  makeSmallCaps()
+   {
+      if (CAPS_SMALL_CAPS == null) {
+         CAPS_SMALL_CAPS = new CSSFontFeatureSettings();
+         CAPS_SMALL_CAPS.settings.put(FEATURE_SMCP, VALUE_ON);
+         CAPS_SMALL_CAPS.settings.put(FEATURE_C2SC, VALUE_OFF);
+         CAPS_SMALL_CAPS.settings.put(FEATURE_PCAP, VALUE_OFF);
+         CAPS_SMALL_CAPS.settings.put(FEATURE_C2PC, VALUE_OFF);
+         CAPS_SMALL_CAPS.settings.put(FEATURE_UNIC, VALUE_OFF);
+         CAPS_SMALL_CAPS.settings.put(FEATURE_TITL, VALUE_OFF);
+      }
+      return CAPS_SMALL_CAPS;
+   }
 }
