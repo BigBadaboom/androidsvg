@@ -1204,6 +1204,8 @@ public class SVGBase
       final float  value;
       final Unit   unit;
 
+      final static Length  ZERO = new Length(0f);
+
       public Length(float value, Unit unit)
       {
          this.value = value;

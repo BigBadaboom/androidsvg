@@ -105,6 +105,9 @@ public class  Style implements Cloneable
    GlypOrientationVertical   glyphOrientationVertical;
    TextOrientation           textOrientation;
 
+   Length     letterSpacing;
+   Length     wordSpacing;
+
 
    static final float  FONT_WEIGHT_MIN = 1f;
    static final float  FONT_WEIGHT_NORMAL = 400f;
@@ -169,6 +172,8 @@ public class  Style implements Cloneable
    static final long SPECIFIED_FONT_KERNING               = (1L<<49);
    static final long SPECIFIED_FONT_VARIATION_SETTINGS    = (1L<<50);
    static final long SPECIFIED_FONT_STRETCH               = (1L<<51);
+   static final long SPECIFIED_LETTER_SPACING             = (1L<<52);
+   static final long SPECIFIED_WORD_SPACING               = (1L<<53);
 
    // Flags for the settings that are applied to reset the root style
    private static final long SPECIFIED_RESET = 0xffffffffffffffffL &
@@ -347,7 +352,7 @@ public class  Style implements Cloneable
       def.strokeLineJoin = LineJoin.Miter;
       def.strokeMiterLimit = 4f;
       def.strokeDashArray = null;
-      def.strokeDashOffset = new Length(0f);
+      def.strokeDashOffset = Length.ZERO;
       def.opacity = 1f;
       def.color = Colour.BLACK; // currentColor defaults to black
       def.fontFamily = null;
@@ -386,6 +391,8 @@ public class  Style implements Cloneable
       def.fontVariantEastAsian =  CSSFontFeatureSettings.EAST_ASIAN_ALL_OFF;
       def.fontFeatureSettings = CSSFontFeatureSettings.FONT_FEATURE_SETTINGS_NORMAL;
       def.fontVariationSettings = null;
+      def.letterSpacing = Length.ZERO;
+      def.wordSpacing = Length.ZERO;
       def.writingMode = WritingMode.horizontal_tb;
       def.glyphOrientationVertical = GlypOrientationVertical.auto;
       def.textOrientation = TextOrientation.mixed;
@@ -793,6 +800,18 @@ public class  Style implements Cloneable
             style.fontVariationSettings = CSSFontVariationSettings.parseFontVariationSettings(val);
             if (style.fontVariationSettings != null)
                style.specifiedFlags |= SPECIFIED_FONT_VARIATION_SETTINGS;
+            break;
+
+         case letter_spacing:
+            style.letterSpacing = SVGParserImpl.parseLetterOrWordSpacing(val);
+            if (style.letterSpacing != null)
+               style.specifiedFlags |= SPECIFIED_LETTER_SPACING;
+            break;
+
+         case word_spacing:
+            style.wordSpacing = SVGParserImpl.parseLetterOrWordSpacing(val);
+            if (style.wordSpacing != null)
+               style.specifiedFlags |= SPECIFIED_WORD_SPACING;
             break;
 
          /*

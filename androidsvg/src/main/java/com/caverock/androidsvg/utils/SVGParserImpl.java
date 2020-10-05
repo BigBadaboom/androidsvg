@@ -280,7 +280,8 @@ class SVGParserImpl implements SVGParser
       href,
       // id,
       image_rendering,
-      isolation,   // @since 1.5
+      isolation,       // @since 1.5
+      letter_spacing,  // @since 1.5
       marker,
       marker_start, marker_mid, marker_end,
       markerHeight, markerUnits, markerWidth,
@@ -324,6 +325,7 @@ class SVGParserImpl implements SVGParser
       version,
       viewBox,
       width,
+      word_spacing,  // @since 1.5
       writing_mode,  // @since 1.5
       x, y,
       x1, y1,
@@ -3577,7 +3579,7 @@ class SVGParserImpl implements SVGParser
    private static Length parseLengthOrAuto(TextScanner scan)
    {
       if (scan.consume("auto"))
-         return new Length(0f);
+         return Length.ZERO;
 
       return scan.nextLength();
    }
@@ -3616,6 +3618,22 @@ class SVGParserImpl implements SVGParser
          case "auto":    return Isolation.auto;
          case "isolate": return Style.Isolation.isolate;
          default:        return null;
+      }
+   }
+
+
+   static Length  parseLetterOrWordSpacing(String val)
+   {
+      if ("normal".equals(val))
+         return Length.ZERO;
+      else {
+         try {
+            Length result = parseLength(val);
+            // Percent units were removed in SVG2 and are treated as an error.
+            return (result.unit == Unit.percent) ? null : result;
+         } catch (SVGParseException e) {
+            return null;
+         }
       }
    }
 

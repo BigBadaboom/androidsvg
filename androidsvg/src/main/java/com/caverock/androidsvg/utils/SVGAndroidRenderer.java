@@ -118,8 +118,10 @@ public class SVGAndroidRenderer
    private static final boolean  SUPPORTS_STROKED_UNDERLINES = Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1;
    private static final boolean  SUPPORTS_PATH_OP = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT;
    private static final boolean  SUPPORTS_PAINT_FONT_FEATURE_SETTINGS = Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP;
+   private static final boolean  SUPPORTS_PAINT_LETTER_SPACING = Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP;
    private static final boolean  SUPPORTS_PAINT_FONT_VARIATION_SETTINGS = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O;
-   private static final boolean  SUPPORTS_BLEND_MODE = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q;  // Android 10
+   private static final boolean  SUPPORTS_BLEND_MODE = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q;          // Android 10
+   private static final boolean  SUPPORTS_PAINT_WORD_SPACING = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q;
 
 
    private final Canvas   canvas;
@@ -1636,10 +1638,13 @@ public class SVGAndroidRenderer
 
          if (visible())
          {
+            // Android/Skia divides letterspacing and puts half before and after each letter.
+            // We need to readjust initial text X position to counter that.
+            float letterspacingAdj = SUPPORTS_PAINT_LETTER_SPACING ? state.style.letterSpacing.floatValue(SVGAndroidRenderer.this) / 2 : 0;
             if (state.hasFill)
-               canvas.drawText(text, x, y, state.fillPaint);
+               canvas.drawText(text, x - letterspacingAdj, y, state.fillPaint);
             if (state.hasStroke)
-               canvas.drawText(text, x, y, state.strokePaint);
+               canvas.drawText(text, x - letterspacingAdj, y, state.strokePaint);
          }
 
          // Update the current text position
@@ -1866,10 +1871,13 @@ public class SVGAndroidRenderer
       {
          if (visible())
          {
+            // Android/Skia divides letterspacing and puts half before and after each letter.
+            // We need to readjust initial text X position to counter that.
+            float letterspacingAdj = SUPPORTS_PAINT_LETTER_SPACING ? state.style.letterSpacing.floatValue(SVGAndroidRenderer.this) / 2 : 0;
             if (state.hasFill)
-               canvas.drawTextOnPath(text, path, x, y, state.fillPaint);
+               canvas.drawTextOnPath(text, path, x - letterspacingAdj, y, state.fillPaint);
             if (state.hasStroke)
-               canvas.drawTextOnPath(text, path, x, y, state.strokePaint);
+               canvas.drawTextOnPath(text, path, x - letterspacingAdj, y, state.strokePaint);
          }
 
          // Update the current text position
@@ -2654,6 +2662,26 @@ public class SVGAndroidRenderer
       {
          state.style.textOrientation = style.textOrientation;
       }
+
+      if (isSpecified(style, Style.SPECIFIED_LETTER_SPACING))
+      {
+         state.style.letterSpacing = style.letterSpacing;
+         if (SUPPORTS_PAINT_LETTER_SPACING) {
+            // Note: Paint.setLetterSpacing() takes a value in ems.
+            state.fillPaint.setLetterSpacing(style.letterSpacing.floatValue(this) / getCurrentFontSize());
+            state.strokePaint.setLetterSpacing(style.letterSpacing.floatValue(this) / getCurrentFontSize());
+         }
+      }
+
+      if (isSpecified(style, Style.SPECIFIED_WORD_SPACING))
+      {
+         state.style.wordSpacing = style.wordSpacing;
+         if (SUPPORTS_PAINT_WORD_SPACING) {
+            state.fillPaint.setWordSpacing(style.wordSpacing.floatValue(this));
+            state.strokePaint.setWordSpacing(style.wordSpacing.floatValue(this));
+         }
+      }
+
    }
 
 
