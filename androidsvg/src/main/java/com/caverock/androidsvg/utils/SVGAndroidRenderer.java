@@ -1399,8 +1399,9 @@ public class SVGAndroidRenderer
       if (obj.transform != null)
          canvas.concat(obj.transform);
 
-      int  numPoints = obj.points.length;
-      if (numPoints < 2)
+      int  numPoints = (obj.points != null) ? obj.points.length : 0;
+      if (numPoints < 2 ||     // pointless
+          numPoints % 2 == 1)  // error
          return;
 
       Path  path = makePathAndBoundingBox(obj);
@@ -1427,8 +1428,7 @@ public class SVGAndroidRenderer
 
    private List<MarkerVector>  calculateMarkerPositions(PolyLine obj)
    {
-      int  numPoints = obj.points.length; 
-
+      int  numPoints = (obj.points != null) ? obj.points.length : 0;
       if (numPoints < 2)
          return null;
 
@@ -1484,7 +1484,7 @@ public class SVGAndroidRenderer
       if (obj.transform != null)
          canvas.concat(obj.transform);
 
-      int  numPoints = obj.points.length;
+      int  numPoints = (obj.points != null) ? obj.points.length : 0;
       if (numPoints < 2)
          return;
 
@@ -4310,6 +4310,9 @@ public class SVGAndroidRenderer
       else
          return;
 
+      if (path == null)  // For safety, or object has an error
+         return;
+
       checkForClipPath(obj);
 
       combinedPath.setFillType(getClipRuleFromState());
@@ -4574,12 +4577,26 @@ public class SVGAndroidRenderer
    {
       Path  path = new Path();
 
-      path.moveTo(obj.points[0], obj.points[1]);
-      for (int i=2; i<obj.points.length; i+=2) {
-         path.lineTo(obj.points[i], obj.points[i+1]);
+      int  numPoints = (obj.points != null) ? obj.points.length : 0;
+      // Odd number of points is an error
+      if (numPoints % 2 != 0)
+         return null;
+
+      if (numPoints > 0)
+      {
+         int  i = 0;
+         while (numPoints >= 2)
+         {
+            if (i == 0)
+               path.moveTo(obj.points[i], obj.points[i+1]);
+            else
+               path.lineTo(obj.points[i], obj.points[i+1]);
+            i += 2;
+            numPoints -= 2;
+         }
+         if (obj instanceof Polygon)
+            path.close();
       }
-      if (obj instanceof Polygon)
-         path.close();
 
       if (obj.boundingBox == null) {
          obj.boundingBox = calculatePathBounds(path);
