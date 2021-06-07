@@ -25,6 +25,7 @@ import com.caverock.androidsvg.utils.SVGBase.SvgElementBase;
 import com.caverock.androidsvg.utils.SVGBase.SvgObject;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -692,9 +693,11 @@ public class CSSParser
       List<SvgContainer> ancestors = new ArrayList<>();
       SvgContainer  parent = obj.parent;
       while (parent != null) {
-         ancestors.add(0, parent);
+         ancestors.add(parent);
          parent = ((SvgObject) parent).parent;
       }
+
+      Collections.reverse(ancestors);
       
       int  ancestorsPos = ancestors.size() - 1;
 
