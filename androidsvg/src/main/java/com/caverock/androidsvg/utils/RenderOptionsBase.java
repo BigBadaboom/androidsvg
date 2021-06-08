@@ -43,6 +43,7 @@ import com.caverock.androidsvg.utils.SVGBase.Box;
 public class RenderOptionsBase
 {
    String               css = null;
+   CSSParser.Ruleset    cssRuleset = null;
    //String             id = null;
    PreserveAspectRatio  preserveAspectRatio = null;
    String               targetId = null;
@@ -79,6 +80,7 @@ public class RenderOptionsBase
       if (other == null)
          return;
       this.css = other.css;
+      this.cssRuleset = other.cssRuleset;
       //this.id = other.id;
       this.preserveAspectRatio = other.preserveAspectRatio;
       this.viewBox = other.viewBox;
@@ -99,6 +101,18 @@ public class RenderOptionsBase
       return this;
    }
 
+   /**
+    * Specifies some already parsed CSS Ruleset that will be applied during render in
+    * addition toany specified in the file itself.
+    * @param cssRuleset CSS rules to apply
+    * @return this same <code>RenderOptions</code> instance
+    */
+   public RenderOptionsBase cssRuleset(CSSParser.Ruleset cssRuleset)
+   {
+      this.cssRuleset = cssRuleset;
+      return this;
+   }
+
 
    /**
     * Returns true if this RenderOptions instance has had CSS set with {@code css()}.
@@ -107,6 +121,16 @@ public class RenderOptionsBase
    public boolean hasCss()
    {
       return this.css != null && this.css.trim().length() > 0;
+   }
+
+
+   /**
+    * Returns true if this RenderOptions instance has had CSS Ruleset set with {@code cssRuleset()}.
+    * @return true if this RenderOptions instance has had CSS Ruleset set
+    */
+   public boolean hasCssRuleset()
+   {
+      return this.cssRuleset != null;
    }
 
 
