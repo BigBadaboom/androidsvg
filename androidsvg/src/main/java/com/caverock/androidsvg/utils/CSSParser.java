@@ -25,6 +25,7 @@ import com.caverock.androidsvg.utils.SVGBase.SvgElementBase;
 import com.caverock.androidsvg.utils.SVGBase.SvgObject;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -688,23 +689,23 @@ public class CSSParser
     */
    static boolean  ruleMatch(RuleMatchContext ruleMatchContext, Selector selector, SvgElementBase obj)
    {
+      // Check the most common case first as a shortcut.
+      if (selector.size() == 1)
+         return selectorMatch(ruleMatchContext, selector.get(0), obj);
+
       // Build the list of ancestor objects
       List<SvgContainer> ancestors = new ArrayList<>();
       SvgContainer  parent = obj.parent;
       while (parent != null) {
-         ancestors.add(0, parent);
+         ancestors.add(parent);
          parent = ((SvgObject) parent).parent;
       }
-      
-      int  ancestorsPos = ancestors.size() - 1;
 
-      // Check the most common case first as a shortcut.
-      if (selector.size() == 1)
-         return selectorMatch(ruleMatchContext, selector.get(0), ancestors, ancestorsPos, obj);
+      Collections.reverse(ancestors);
       
       // We start at the last part of the simpleSelectors and loop back through the parts
       // Get the next simpleSelectors part
-      return ruleMatch(ruleMatchContext, selector, selector.size() - 1, ancestors, ancestorsPos, obj);
+      return ruleMatch(ruleMatchContext, selector, selector.size() - 1, ancestors, ancestors.size() - 1, obj);
    }
 
 
@@ -713,7 +714,7 @@ public class CSSParser
       // We start at the last part of the simpleSelectors and loop back through the parts
       // Get the next simpleSelectors part
       SimpleSelector  sel = selector.get(selPartPos);
-      if (!selectorMatch(ruleMatchContext, sel, ancestors, ancestorsPos, obj))
+      if (!selectorMatch(ruleMatchContext, sel, obj))
          return false;
 
       // Selector part matched, check its combinator
@@ -749,7 +750,7 @@ public class CSSParser
       SimpleSelector  sel = selector.get(selPartPos);
       SvgElementBase  obj = (SvgElementBase) ancestors.get(ancestorsPos);
 
-      if (!selectorMatch(ruleMatchContext, sel, ancestors, ancestorsPos, obj))
+      if (!selectorMatch(ruleMatchContext, sel, obj))
          return false;
 
       // Selector part matched, check its combinator
@@ -796,7 +797,7 @@ public class CSSParser
    }
 
 
-   private static boolean selectorMatch(RuleMatchContext ruleMatchContext, SimpleSelector sel, List<SvgContainer> ancestors, int ancestorsPos, SvgElementBase obj)
+   private static boolean selectorMatch(RuleMatchContext ruleMatchContext, SimpleSelector sel, SvgElementBase obj)
    {
       // Check tag name. tag==null means tag is "*" which matches everything.
       if (sel.tag != null && !sel.tag.equals(obj.getNodeName().toLowerCase(Locale.US)))
