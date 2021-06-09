@@ -28,7 +28,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Locale;
 import java.util.Map;
 
@@ -226,15 +228,19 @@ public class CSSParser
       void  add(Rule rule)
       {
          if (this.rules == null)
-            this.rules = new ArrayList<>();
-         for (int i = 0; i < rules.size(); i++)
-         {
-            Rule  nextRule = rules.get(i);
+            this.rules = new LinkedList<>();
+
+         ListIterator<Rule> iter = this.rules.listIterator();
+         while (iter.hasNext()) {
+            int   i        = iter.nextIndex();
+            Rule  nextRule = iter.next();
+
             if (nextRule.selector.specificity > rule.selector.specificity) {
                rules.add(i, rule);
                return;
             }
          }
+
          rules.add(rule);
       }
 
@@ -243,7 +249,7 @@ public class CSSParser
          if (rules.rules == null)
             return;
          if (this.rules == null)
-            this.rules = new ArrayList<>(rules.rules.size());
+            this.rules = new LinkedList<>();
          for (Rule rule: rules.rules) {
             this.add(rule);
          }
