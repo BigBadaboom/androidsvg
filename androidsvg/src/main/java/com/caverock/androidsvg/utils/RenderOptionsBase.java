@@ -99,12 +99,14 @@ public class RenderOptionsBase
    public RenderOptionsBase css(CSS css)
    {
       this.cssRuleset = css.cssRuleset;
+      this.css = null;
       return this;
    }
 
    public RenderOptionsBase css(String css)
    {
       this.css = css;
+      this.cssRuleset = null;
       return this;
    }
 

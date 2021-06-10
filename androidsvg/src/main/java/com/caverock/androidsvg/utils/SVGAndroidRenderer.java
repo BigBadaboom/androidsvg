@@ -339,9 +339,7 @@ public class SVGAndroidRenderer
          if (renderOptions.css != null) {
             CSSParser parser = new CSSParser(CSSParser.Source.RenderOptions, externalFileResolver);
             document.addCSSRules(parser.parse(renderOptions.css));
-         }
-
-         if (renderOptions.cssRuleset != null) {
+         } else if (renderOptions.cssRuleset != null) {
             document.addCSSRules(renderOptions.cssRuleset);
          }
       }
