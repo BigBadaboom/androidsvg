@@ -386,13 +386,13 @@ public class CSSParser
    }
 
 
-   public CSSParser(Source source, SVGExternalFileResolver externalFileResolver)
+   CSSParser(Source source, SVGExternalFileResolver externalFileResolver)
    {
       this(MediaType.screen, source, externalFileResolver);
    }
 
 
-   public CSSParser(MediaType rendererMediaType, Source source, SVGExternalFileResolver externalFileResolver)
+   CSSParser(MediaType rendererMediaType, Source source, SVGExternalFileResolver externalFileResolver)
    {
       this.deviceMediaType = rendererMediaType;
       this.source = source;
@@ -400,7 +400,7 @@ public class CSSParser
    }
 
 
-   public Ruleset  parse(String sheet)
+   Ruleset  parse(String sheet)
    {
       CSSTextScanner  scan = new CSSTextScanner(sheet);
       scan.skipWhitespace();

@@ -336,11 +336,14 @@ public class SVGAndroidRenderer
       }
 
       if (renderOptions.hasCss()) {
-            CSSParser  parser = new CSSParser(CSSParser.Source.RenderOptions, externalFileResolver);
+         if (renderOptions.css != null) {
+            CSSParser parser = new CSSParser(CSSParser.Source.RenderOptions, externalFileResolver);
             document.addCSSRules(parser.parse(renderOptions.css));
-      }
-      if (renderOptions.hasCssRuleset()) {
-         document.addCSSRules(renderOptions.cssRuleset);
+         }
+
+         if (renderOptions.cssRuleset != null) {
+            document.addCSSRules(renderOptions.cssRuleset);
+         }
       }
       if (renderOptions.hasTarget()) {
          this.ruleMatchContext = new CSSParser.RuleMatchContext();

@@ -18,7 +18,6 @@ package com.caverock.androidsvg;
 
 import android.graphics.Canvas;
 
-import com.caverock.androidsvg.utils.CSSParser;
 import com.caverock.androidsvg.utils.RenderOptionsBase;
 
 /**
@@ -73,7 +72,7 @@ public class RenderOptions extends RenderOptionsBase
 
    /**
     * Specifies some additional CSS rules that will be applied during render in addition to
-    * any specified in the file itself.
+    * any specified in the file itself. CSS will be parsed during SVG render.
     * @param css CSS rules to apply
     * @return this same <code>RenderOptions</code> instance
     */
@@ -84,14 +83,14 @@ public class RenderOptions extends RenderOptionsBase
 
 
    /**
-    * Specifies some already parsed CSS Ruleset that will be applied during render in
-    * addition toany specified in the file itself.
-    * @param cssRuleset CSS rules to apply
+    * Specifies some additional CSS that will be applied during render in
+    * addition to any specified in the file itself.
+    * @param css CSS rules to apply
     * @return this same <code>RenderOptions</code> instance
     */
-   public RenderOptions  cssRuleset(CSSParser.Ruleset cssRuleset)
+   public RenderOptions  css(CSS css)
    {
-      return (RenderOptions) super.cssRuleset(cssRuleset);
+      return (RenderOptions) super.css(css);
    }
 
 
