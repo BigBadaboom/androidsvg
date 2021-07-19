@@ -27,6 +27,7 @@ import com.caverock.androidsvg.utils.SVGBase;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -738,5 +739,9 @@ public class SVG
    SVGBase.Svg  getRootElement()
    {
       return base.getRootElement();
+   }
+
+   Collection<SVGBase.SvgObject> getElementsAt(float x, float y) {
+      return base.getElementsAt(x, y, true);
    }
 }

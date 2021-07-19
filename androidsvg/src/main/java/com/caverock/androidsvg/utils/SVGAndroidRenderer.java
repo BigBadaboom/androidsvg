@@ -422,6 +422,10 @@ public class SVGAndroidRenderer
          render((Text) obj);
       }
 
+      if(obj instanceof SvgElementBase && ((SvgElementBase) obj).id != null){
+         document.putElementById(((SvgElementBase) obj).id, (SvgElementBase) obj);
+      }
+
       // Restore state
       statePop();
    }
