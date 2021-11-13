@@ -613,7 +613,7 @@ public class SVG
    @SuppressWarnings({"WeakerAccess", "unused"})
    public float  getDocumentHeight()
    {
-      return base.getDocumentHeight();
+      return base.getDocumentWidth();
    }
 
 
