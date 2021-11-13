@@ -18,15 +18,12 @@ package com.caverock.androidsvg.utils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Pattern;
 
 public class CSSTextScanner extends TextScanner
 {
-   static final Pattern PATTERN_BLOCK_COMMENTS = Pattern.compile("(?s)/\\*.*?\\*/");
-
    public CSSTextScanner(String input)
    {
-      super(PATTERN_BLOCK_COMMENTS.matcher(input).replaceAll(""));  // strip all block comments
+      super(input.replaceAll("(?s)/\\*.*?\\*/", ""));  // strip all block comments
    }
 
    /*

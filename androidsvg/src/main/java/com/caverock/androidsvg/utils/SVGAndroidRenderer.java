@@ -123,12 +123,6 @@ public class SVGAndroidRenderer
    private static final boolean  SUPPORTS_BLEND_MODE = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q;          // Android 10
    private static final boolean  SUPPORTS_PAINT_WORD_SPACING = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q;
 
-   private static final java.util.regex.Pattern PATTERN_TABS_OR_LINE_BREAKS = java.util.regex.Pattern.compile("[\\n\\t]");
-   private static final java.util.regex.Pattern PATTERN_TABS = java.util.regex.Pattern.compile("\\t");
-   private static final java.util.regex.Pattern PATTERN_LINE_BREAKS = java.util.regex.Pattern.compile("\\n");
-   private static final java.util.regex.Pattern PATTERN_START_SPACES = java.util.regex.Pattern.compile("^\\s+");
-   private static final java.util.regex.Pattern PATTERN_END_SPACES = java.util.regex.Pattern.compile("\\s+$");
-   private static final java.util.regex.Pattern PATTERN_DOUBLE_SPACES = java.util.regex.Pattern.compile("\\s{2,}");
 
    private final Canvas   canvas;
    private final float    dpi;    // dots per inch. Needed for accurate conversion of length values that have real world units, such as "cm".
@@ -2028,21 +2022,22 @@ public class SVGAndroidRenderer
 
    //==============================================================================
 
+
    // Process the text string according to the xml:space rules
    private String  textXMLSpaceTransform(String text, boolean isFirstChild, boolean isLastChild)
    {
       if (state.spacePreserve)  // xml:space = "preserve"
-         return PATTERN_TABS_OR_LINE_BREAKS.matcher(text).replaceAll(" ");
+         return text.replaceAll("[\\n\\t]", " ");
 
       // xml:space = "default"
-      text = PATTERN_TABS.matcher(text).replaceAll("");
-      text = PATTERN_LINE_BREAKS.matcher(text).replaceAll(" ");
+      text = text.replaceAll("\\n", "");
+      text = text.replaceAll("\\t", " ");
       //text = text.trim();
       if (isFirstChild)
-         text = PATTERN_START_SPACES.matcher(text).replaceAll("");
+         text = text.replaceAll("^\\s+",  "");
       if (isLastChild)
-         text = PATTERN_END_SPACES.matcher(text).replaceAll("");
-      return PATTERN_DOUBLE_SPACES.matcher(text).replaceAll(" ");
+         text = text.replaceAll("\\s+$",  "");
+      return text.replaceAll("\\s{2,}", " ");
    }
 
 
