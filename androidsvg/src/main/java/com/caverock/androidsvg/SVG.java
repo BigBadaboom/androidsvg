@@ -241,7 +241,7 @@ public class SVG
     *
     * <p>
     * <em>Note: prior to release 1.3, this was an instance method of (@code SVG}.  In 1.3, it was
-    * changed to a static method so that users can resolve external references to CSSS files while
+    * changed to a static method so that users can resolve external references to CSS files while
     * the SVG is being parsed.</em>
     * </p>
     * 
