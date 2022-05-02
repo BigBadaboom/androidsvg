@@ -123,6 +123,12 @@ public class SVGAndroidRenderer
    private static final boolean  SUPPORTS_BLEND_MODE = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q;          // Android 10
    private static final boolean  SUPPORTS_PAINT_WORD_SPACING = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q;
 
+   private static final java.util.regex.Pattern PATTERN_TABS_OR_LINE_BREAKS = java.util.regex.Pattern.compile("[\\n\\t]");
+   private static final java.util.regex.Pattern PATTERN_TABS = java.util.regex.Pattern.compile("\\t");
+   private static final java.util.regex.Pattern PATTERN_LINE_BREAKS = java.util.regex.Pattern.compile("\\n");
+   private static final java.util.regex.Pattern PATTERN_START_SPACES = java.util.regex.Pattern.compile("^\\s+");
+   private static final java.util.regex.Pattern PATTERN_END_SPACES = java.util.regex.Pattern.compile("\\s+$");
+   private static final java.util.regex.Pattern PATTERN_DOUBLE_SPACES = java.util.regex.Pattern.compile("\\s{2,}");
 
    private final Canvas   canvas;
    private final float    dpi;    // dots per inch. Needed for accurate conversion of length values that have real world units, such as "cm".
@@ -336,8 +342,12 @@ public class SVGAndroidRenderer
       }
 
       if (renderOptions.hasCss()) {
-         CSSParser  parser = new CSSParser(CSSParser.Source.RenderOptions, externalFileResolver);
-         document.addCSSRules(parser.parse(renderOptions.css));
+         if (renderOptions.css != null) {
+            CSSParser parser = new CSSParser(CSSParser.Source.RenderOptions, externalFileResolver);
+            document.addCSSRules(parser.parse(renderOptions.css));
+         } else if (renderOptions.cssRuleset != null) {
+            document.addCSSRules(renderOptions.cssRuleset);
+         }
       }
       if (renderOptions.hasTarget()) {
          this.ruleMatchContext = new CSSParser.RuleMatchContext();
@@ -2018,22 +2028,21 @@ public class SVGAndroidRenderer
 
    //==============================================================================
 
-
    // Process the text string according to the xml:space rules
    private String  textXMLSpaceTransform(String text, boolean isFirstChild, boolean isLastChild)
    {
       if (state.spacePreserve)  // xml:space = "preserve"
-         return text.replaceAll("[\\n\\t]", " ");
+         return PATTERN_TABS_OR_LINE_BREAKS.matcher(text).replaceAll(" ");
 
       // xml:space = "default"
-      text = text.replaceAll("\\n", "");
-      text = text.replaceAll("\\t", " ");
+      text = PATTERN_TABS.matcher(text).replaceAll("");
+      text = PATTERN_LINE_BREAKS.matcher(text).replaceAll(" ");
       //text = text.trim();
       if (isFirstChild)
-         text = text.replaceAll("^\\s+",  "");
+         text = PATTERN_START_SPACES.matcher(text).replaceAll("");
       if (isLastChild)
-         text = text.replaceAll("\\s+$",  "");
-      return text.replaceAll("\\s{2,}", " ");
+         text = PATTERN_END_SPACES.matcher(text).replaceAll("");
+      return PATTERN_DOUBLE_SPACES.matcher(text).replaceAll(" ");
    }
 
 

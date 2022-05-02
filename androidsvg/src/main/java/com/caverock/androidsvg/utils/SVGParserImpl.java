@@ -63,6 +63,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -88,6 +89,8 @@ class SVGParserImpl implements SVGParser
    // nextToken() method. Also, they throw an exception when calling setFeature().
    // So for simplicity, we'll just force the use of the SAX parser on Androids < 15.
    private static final boolean FORCE_SAX_ON_EARLY_ANDROIDS = (android.os.Build.VERSION.SDK_INT < 15);
+
+   private static final Pattern PATTERN_BLOCK_COMMENTS = Pattern.compile("/\\*.*?\\*/");
 
    // <?xml-stylesheet> attribute names and values
    public static final String  XML_STYLESHEET_ATTR_TYPE = "type";
@@ -785,6 +788,9 @@ class SVGParserImpl implements SVGParser
                   int[] startAndLength = new int[2];
                   char[] text = parser.getTextCharacters(startAndLength);
                   text(text, startAndLength[0], startAndLength[1]);
+                  break;
+               case XmlPullParser.ENTITY_REF:
+                  text(parser.getText());
                   break;
                case XmlPullParser.CDSECT:
                   text(parser.getText());
@@ -2656,7 +2662,7 @@ class SVGParserImpl implements SVGParser
     */
    private static void  parseStyle(SvgElementBase obj, String style)
    {
-      CSSTextScanner  scan = new CSSTextScanner(style.replaceAll("/\\*.*?\\*/", ""));  // regex strips block comments
+      CSSTextScanner  scan = new CSSTextScanner(PATTERN_BLOCK_COMMENTS.matcher(style).replaceAll(""));  // regex strips block comments
 
       while (!scan.empty())
       {

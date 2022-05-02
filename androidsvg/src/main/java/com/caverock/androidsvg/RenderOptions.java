@@ -69,13 +69,26 @@ public class RenderOptions extends RenderOptionsBase
       super(other);
    }
 
+
    /**
     * Specifies some additional CSS rules that will be applied during render in addition to
-    * any specified in the file itself.
+    * any specified in the file itself. CSS will be parsed during SVG render.
     * @param css CSS rules to apply
     * @return this same <code>RenderOptions</code> instance
     */
    public RenderOptions  css(String css)
+   {
+      return (RenderOptions) super.css(css);
+   }
+
+
+   /**
+    * Specifies some additional CSS that will be applied during render in
+    * addition to any specified in the file itself.
+    * @param css CSS rules to apply
+    * @return this same <code>RenderOptions</code> instance
+    */
+   public RenderOptions  css(CSS css)
    {
       return (RenderOptions) super.css(css);
    }

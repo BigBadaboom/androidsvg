@@ -18,6 +18,7 @@ package com.caverock.androidsvg.utils;
 
 import android.graphics.Canvas;
 
+import com.caverock.androidsvg.CSS;
 import com.caverock.androidsvg.PreserveAspectRatio;
 import com.caverock.androidsvg.RenderOptions;
 import com.caverock.androidsvg.SVG;
@@ -43,6 +44,7 @@ import com.caverock.androidsvg.utils.SVGBase.Box;
 public class RenderOptionsBase
 {
    String               css = null;
+   CSSParser.Ruleset    cssRuleset = null;
    //String             id = null;
    PreserveAspectRatio  preserveAspectRatio = null;
    String               targetId = null;
@@ -79,6 +81,7 @@ public class RenderOptionsBase
       if (other == null)
          return;
       this.css = other.css;
+      this.cssRuleset = other.cssRuleset;
       //this.id = other.id;
       this.preserveAspectRatio = other.preserveAspectRatio;
       this.viewBox = other.viewBox;
@@ -88,17 +91,24 @@ public class RenderOptionsBase
    }
 
    /**
-    * Specifies some additional CSS rules that will be applied during render in addition to
-    * any specified in the file itself.
+    * Specifies some already parsed CSS that will be applied during render in
+    * addition to any specified in the file itself.
     * @param css CSS rules to apply
     * @return this same <code>RenderOptions</code> instance
     */
-   public RenderOptionsBase css(String css)
+   public RenderOptionsBase css(CSS css)
    {
-      this.css = css;
+      this.cssRuleset = css.cssRuleset;
+      this.css = null;
       return this;
    }
 
+   public RenderOptionsBase css(String css)
+   {
+      this.css = css;
+      this.cssRuleset = null;
+      return this;
+   }
 
    /**
     * Returns true if this RenderOptions instance has had CSS set with {@code css()}.
@@ -106,7 +116,7 @@ public class RenderOptionsBase
     */
    public boolean hasCss()
    {
-      return this.css != null && this.css.trim().length() > 0;
+      return this.css != null && this.css.trim().length() > 0 || this.cssRuleset != null;
    }
 
 
