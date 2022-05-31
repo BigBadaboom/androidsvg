@@ -3789,6 +3789,7 @@ class SVGParserImpl implements SVGParser
                }
                path.lineTo(x, currentY);
                currentX = lastControlX = x;
+               lastControlY = currentY;
                break;
 
                // Vertical line
@@ -3803,6 +3804,7 @@ class SVGParserImpl implements SVGParser
                   y += currentY;
                }
                path.lineTo(currentX, y);
+               lastControlX = currentX;
                currentY = lastControlY = y;
                break;
 
