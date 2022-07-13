@@ -1866,10 +1866,12 @@ public class SVGBase
 
    static class ClipPath extends Group implements NotDirectlyRendered
    {
+      static final String  NODE_NAME = "clipPath";
+
       Boolean  clipPathUnitsAreUser;
 
       @Override
-      String  getNodeName() { return "clipPath"; }
+      String  getNodeName() { return NODE_NAME; }
    }
 
 

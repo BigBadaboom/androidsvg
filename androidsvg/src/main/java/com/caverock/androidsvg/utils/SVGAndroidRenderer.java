@@ -3985,6 +3985,11 @@ public class SVGAndroidRenderer
          error("ClipPath reference '%s' not found", state.style.clipPath);
          return null;
       }
+      // https://drafts.fxtf.org/css-masking-1/#the-clip-path
+      // If the URI reference is not valid (e.g it points to an object that doesn’t
+      // exist or the object is not a clipPath element), no clipping is applied.
+      if (ref.getNodeName() != ClipPath.NODE_NAME)
+         return null;
 
       ClipPath  clipPath = (ClipPath) ref;
 
@@ -4163,6 +4168,11 @@ public class SVGAndroidRenderer
          error("ClipPath reference '%s' not found", state.style.clipPath);
          return;
       }
+      // https://drafts.fxtf.org/css-masking-1/#the-clip-path
+      // If the URI reference is not valid (e.g it points to an object that doesn’t
+      // exist or the object is not a clipPath element), no clipping is applied.
+      if (ref.getNodeName() != ClipPath.NODE_NAME)
+         return;
 
       ClipPath clipPath = (ClipPath) ref;
 
