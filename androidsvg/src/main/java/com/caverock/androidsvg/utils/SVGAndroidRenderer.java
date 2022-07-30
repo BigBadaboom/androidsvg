@@ -286,9 +286,10 @@ public class SVGAndroidRenderer
 
    /*
     * Get the current view port in user units.
-    *
+    * If a viewBox is in effect, then this will return the viewBox
+    * since a viewBox transform will have already been applied.
     */
-   Box  getCurrentViewPortInUserUnits()
+   Box getEffectiveViewPortInUserUnits()
    {
       if (state.viewBox != null)
          return state.viewBox;
@@ -684,6 +685,7 @@ public class SVGAndroidRenderer
          state.viewBox = obj.viewBox;  // Note: definitely obj.viewBox here. Not viewBox parameter.
       } else {
          canvas.translate(state.viewPort.minX, state.viewPort.minY);
+         state.viewBox = null;
       }
 
       boolean  compositing = pushLayer();
@@ -706,7 +708,7 @@ public class SVGAndroidRenderer
       float  _x = (x != null) ? x.floatValueX(this) : 0f;
       float  _y = (y != null) ? y.floatValueY(this) : 0f;
 
-      Box viewPortUser = getCurrentViewPortInUserUnits();
+      Box viewPortUser = getEffectiveViewPortInUserUnits();
       float  _w = (width != null) ? width.floatValueX(this) : viewPortUser.width;  // default 100%
       float  _h = (height != null) ? height.floatValueY(this) : viewPortUser.height;
 
@@ -2072,6 +2074,7 @@ public class SVGAndroidRenderer
          state.viewBox = obj.viewBox;
       } else {
          canvas.translate(state.viewPort.minX, state.viewPort.minY);
+         state.viewBox = null;
       }
       
       boolean  compositing = pushLayer();
@@ -3607,17 +3610,16 @@ public class SVGAndroidRenderer
       float  _x1,_y1,_x2,_y2;
       if (userUnits)
       {
-          Box  viewPortUser = getCurrentViewPortInUserUnits();
          _x1 = (gradient.x1 != null) ? gradient.x1.floatValueX(this): 0f;
          _y1 = (gradient.y1 != null) ? gradient.y1.floatValueY(this): 0f;
-         _x2 = (gradient.x2 != null) ? gradient.x2.floatValueX(this): viewPortUser.width; // 100%
+         _x2 = (gradient.x2 != null) ? gradient.x2.floatValueX(this): Length.PERCENT_100.floatValueX(this);  // default is 1.0/100%
          _y2 = (gradient.y2 != null) ? gradient.y2.floatValueY(this): 0f;
       }
       else
       {
          _x1 = (gradient.x1 != null) ? gradient.x1.floatValue(this, 1f): 0f;
          _y1 = (gradient.y1 != null) ? gradient.y1.floatValue(this, 1f): 0f;
-         _x2 = (gradient.x2 != null) ? gradient.x2.floatValue(this, 1f): 1f;
+         _x2 = (gradient.x2 != null) ? gradient.x2.floatValue(this, 1f): 1f;  // default is 1.0/100%
          _y2 = (gradient.y2 != null) ? gradient.y2.floatValue(this, 1f): 0f;
       }
 

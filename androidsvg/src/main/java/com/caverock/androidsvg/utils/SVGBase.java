@@ -1205,6 +1205,7 @@ public class SVGBase
       final Unit   unit;
 
       final static Length  ZERO = new Length(0f);
+      final static Length  PERCENT_100 = new Length(100f, Unit.percent);
 
       public Length(float value, Unit unit)
       {
@@ -1243,7 +1244,7 @@ public class SVGBase
             case pc: // 1 pica = 1/6 in
                return value * renderer.getDPI() / 6f;
             case percent:
-               Box  viewPortUser = renderer.getCurrentViewPortInUserUnits();
+               Box  viewPortUser = renderer.getEffectiveViewPortInUserUnits();
                if (viewPortUser == null)
                   return value;  // Undefined in this situation - so just return value to avoid an NPE
                return value * viewPortUser.width / 100f;
@@ -1257,7 +1258,7 @@ public class SVGBase
       float floatValueY(SVGAndroidRenderer renderer)
       {
          if (unit == Unit.percent) {
-            Box  viewPortUser = renderer.getCurrentViewPortInUserUnits();
+            Box  viewPortUser = renderer.getEffectiveViewPortInUserUnits();
             if (viewPortUser == null)
                return value;  // Undefined in this situation - so just return value to avoid an NPE
             return value * viewPortUser.height / 100f;
@@ -1271,7 +1272,7 @@ public class SVGBase
       {
          if (unit == Unit.percent)
          {
-            Box  viewPortUser = renderer.getCurrentViewPortInUserUnits();
+            Box  viewPortUser = renderer.getEffectiveViewPortInUserUnits();
             if (viewPortUser == null)
                return value;  // Undefined in this situation - so just return value to avoid an NPE
             float w = viewPortUser.width;
