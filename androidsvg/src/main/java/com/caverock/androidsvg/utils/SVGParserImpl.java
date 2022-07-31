@@ -254,7 +254,7 @@ class SVGParserImpl implements SVGParser
       cx, cy,
       direction,
       dx, dy,
-      fx, fy,
+      fx, fy, fr,
       d,
       display,
       fill,
@@ -2237,6 +2237,11 @@ class SVGParserImpl implements SVGParser
                break;
             case fy:
                obj.fy = parseLength(val);
+               break;
+            case fr:
+               obj.fr = parseLength(val);
+               if (obj.fr.isNegative())
+                  throw new SVGParseException("Invalid <radialGradient> element. fr cannot be negative");
                break;
             default:
                break;

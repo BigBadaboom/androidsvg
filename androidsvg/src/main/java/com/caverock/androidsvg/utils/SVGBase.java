@@ -1859,6 +1859,7 @@ public class SVGBase
       Length  r;
       Length  fx;
       Length  fy;
+      Length  fr;
 
       @Override
       String  getNodeName() { return "radialGradient"; }

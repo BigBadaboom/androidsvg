@@ -22,6 +22,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.BlendMode;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.DashPathEffect;
@@ -123,6 +124,7 @@ public class SVGAndroidRenderer
    private static final boolean  SUPPORTS_BLEND_MODE = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q;          // Android 10
    private static final boolean  SUPPORTS_PAINT_WORD_SPACING = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q;
    private static final boolean  SUPPORTS_SAVE_LAYER_FLAGLESS = Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP;
+   private static final boolean  SUPPORTS_RADIAL_GRADIENT_WITH_FOCUS = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S;
 
    private static final java.util.regex.Pattern PATTERN_TABS_OR_LINE_BREAKS = java.util.regex.Pattern.compile("[\\n\\t]");
    private static final java.util.regex.Pattern PATTERN_TABS = java.util.regex.Pattern.compile("\\t");
@@ -3735,19 +3737,32 @@ public class SVGAndroidRenderer
       boolean  userUnits = (gradient.gradientUnitsAreUser != null && gradient.gradientUnitsAreUser);
       Paint    paint = isFill ? state.fillPaint : state.strokePaint;
 
-      float  _cx,_cy,_r;
+      float  _cx, _cy, _r,
+             _fx = 0, _fy = 0, _fr = 0;
       if (userUnits)
       {
          Length  fiftyPercent = new Length(50f, Unit.percent);
          _cx = (gradient.cx != null) ? gradient.cx.floatValueX(this): fiftyPercent.floatValueX(this);
          _cy = (gradient.cy != null) ? gradient.cy.floatValueY(this): fiftyPercent.floatValueY(this);
          _r = (gradient.r != null) ? gradient.r.floatValue(this): fiftyPercent.floatValue(this);
+
+         if (SUPPORTS_RADIAL_GRADIENT_WITH_FOCUS) {
+            _fx = (gradient.fx != null) ? gradient.fx.floatValueX(this): _cx;
+            _fy = (gradient.fy != null) ? gradient.fy.floatValueY(this): _cy;
+            _fr = (gradient.fr != null) ? gradient.fr.floatValue(this): 0;
+         }
       }
       else
       {
          _cx = (gradient.cx != null) ? gradient.cx.floatValue(this, 1f): 0.5f;
          _cy = (gradient.cy != null) ? gradient.cy.floatValue(this, 1f): 0.5f;
          _r = (gradient.r != null) ? gradient.r.floatValue(this, 1f): 0.5f;
+
+         if (SUPPORTS_RADIAL_GRADIENT_WITH_FOCUS) {
+            _fx = (gradient.fx != null) ? gradient.fx.floatValue(this, 1f): 0.5f;
+            _fy = (gradient.fy != null) ? gradient.fy.floatValue(this, 1f): 0.5f;
+            _fr = (gradient.fr != null) ? gradient.fr.floatValue(this, 1f): 0;
+         }
       }
       // fx and fy are ignored because Android RadialGradient doesn't support a
       // 'focus' point that is different from cx,cy.
@@ -3782,7 +3797,16 @@ public class SVGAndroidRenderer
          return;
       }
 
-      int[]  colours = new int[numStops];
+      int[]  colours = null;
+      //@ColorLong
+      long[] colourLongs = null;
+
+      if (SUPPORTS_RADIAL_GRADIENT_WITH_FOCUS) {
+         colourLongs = new long[numStops];
+      } else {
+         colours = new int[numStops];
+      }
+
       float[]  positions = new float[numStops];
       int  i = 0;
       float  lastOffset = -1;
@@ -3805,7 +3829,11 @@ public class SVGAndroidRenderer
          Colour col = (Colour) state.style.stopColor;
          if (col == null)
             col = Colour.BLACK;
-         colours[i] = colourWithOpacity(col.colour, state.style.stopOpacity);
+         if (SUPPORTS_RADIAL_GRADIENT_WITH_FOCUS) {
+            colourLongs[i] = Color.pack( colourWithOpacity(col.colour, state.style.stopOpacity) );
+         } else {
+            colours[i] = colourWithOpacity(col.colour, state.style.stopOpacity);
+         }
          i++;
 
          statePop();
@@ -3831,7 +3859,8 @@ public class SVGAndroidRenderer
       statePop();
 
       // Create shader instance
-      RadialGradient  gr = new RadialGradient(_cx, _cy, _r, colours, positions, tileMode); 
+      RadialGradient  gr = SUPPORTS_RADIAL_GRADIENT_WITH_FOCUS ? new RadialGradient(_fx, _fy, _fr, _cx, _cy, _r, colourLongs, positions, tileMode)
+                                                               : new RadialGradient(_cx, _cy, _r, colours, positions, tileMode);
       gr.setLocalMatrix(m);
       paint.setShader(gr);
       paint.setAlpha(clamp255(state.style.fillOpacity));
@@ -3911,6 +3940,8 @@ public class SVGAndroidRenderer
          gradient.fx = grRef.fx;
       if (gradient.fy == null)
          gradient.fy = grRef.fy;
+      if (gradient.fr == null)
+         gradient.fr = grRef.fr;
    }
 
 
