@@ -122,6 +122,7 @@ public class SVGAndroidRenderer
    private static final boolean  SUPPORTS_PAINT_FONT_VARIATION_SETTINGS = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O;
    private static final boolean  SUPPORTS_BLEND_MODE = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q;          // Android 10
    private static final boolean  SUPPORTS_PAINT_WORD_SPACING = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q;
+   private static final boolean  SUPPORTS_SAVE_LAYER_FLAGLESS = Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP;
 
    private static final java.util.regex.Pattern PATTERN_TABS_OR_LINE_BREAKS = java.util.regex.Pattern.compile("[\\n\\t]");
    private static final java.util.regex.Pattern PATTERN_TABS = java.util.regex.Pattern.compile("\\t");
@@ -460,7 +461,7 @@ public class SVGAndroidRenderer
       if (isRootContext) {
          // Root SVG context should be transparent. So we need to saveLayer
          // to avoid background messing with blend modes etc.
-         canvas.saveLayer(null, null, Canvas.ALL_SAVE_FLAG);
+         canvasSaveLayer(canvas, null, null);
       } else {
          canvas.save();
       }
@@ -476,6 +477,23 @@ public class SVGAndroidRenderer
       canvas.restore();
       // Restore style state
       state = stateStack.pop();
+   }
+
+
+   /*
+    * Canvas#saveLayer(bounds, paint, flags) is deprecated in SDK 28 and might be
+    * removed at short notice. As save(flags) was in SDK 28.  So we have created
+    * this method as future-proofing.
+    */
+   private void canvasSaveLayer(Canvas canvas, RectF bounds, Paint paint)
+   {
+      if (SUPPORTS_SAVE_LAYER_FLAGLESS) {
+         // New-style saveLayer() - SDK 21+
+         canvas.saveLayer(bounds, paint);
+      } else {
+         // Old-style saveLayer()
+         CanvasLegacy.saveLayer(canvas, bounds, paint, CanvasLegacy.ALL_SAVE_FLAG);
+      }
    }
 
 
@@ -814,7 +832,7 @@ public class SVGAndroidRenderer
       if (SUPPORTS_BLEND_MODE && state.style.mixBlendMode != CSSBlendMode.normal) {
          setBlendMode(savePaint);
       }
-      canvas.saveLayer(null, savePaint, Canvas.ALL_SAVE_FLAG);
+      canvasSaveLayer(canvas, null, savePaint);
 
       // Save style state
       stateStack.push(state);
@@ -860,7 +878,7 @@ public class SVGAndroidRenderer
          // Final mask gets composited using Porter Duff mode DST_IN
          Paint  maskPaintCombined = new Paint();
          maskPaintCombined.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_IN));
-         canvas.saveLayer(null, maskPaintCombined, Canvas.ALL_SAVE_FLAG);
+         canvasSaveLayer(canvas, null, maskPaintCombined);
 
            // Step 1
            Paint  maskPaint1 = new Paint();
@@ -870,7 +888,7 @@ public class SVGAndroidRenderer
                                                                         0,       0,       0,       0, 0,
                                                                         SVGAndroidRenderer.LUMINANCE_TO_ALPHA_RED, SVGAndroidRenderer.LUMINANCE_TO_ALPHA_GREEN, SVGAndroidRenderer.LUMINANCE_TO_ALPHA_BLUE, 0, 0});
            maskPaint1.setColorFilter(new ColorMatrixColorFilter(luminanceToAlpha));
-           canvas.saveLayer(null, maskPaint1, Canvas.ALL_SAVE_FLAG);   // TODO use real mask bounds
+           canvasSaveLayer(canvas, null, maskPaint1);   // TODO use real mask bounds
 
              // Render the mask content into the step 1 layer
              SvgObject  ref = document.resolveIRI(state.style.mask);
@@ -882,7 +900,7 @@ public class SVGAndroidRenderer
            // Step 2
            Paint  maskPaint2 = new Paint();
            maskPaint2.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_IN));
-           canvas.saveLayer(null, maskPaint2, Canvas.ALL_SAVE_FLAG);
+           canvasSaveLayer(canvas, null, maskPaint2);
 
              // Render the mask content (again) into the step 2 part
              renderMask((Mask) ref, obj, originalObjBBox);
