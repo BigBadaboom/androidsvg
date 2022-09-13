@@ -17,6 +17,66 @@ If you wish to contact the author with feedback on this project, you can email m
 [androidsvgfeedback@gmail.com](mailto:androidsvgfeedback@gmail.com).
 
 
+#### How to use?
+
+- get in path 
+
+```java
+   try {
+
+			File startDir = new File(input);
+			FileInputStream fileInputStream = new FileInputStream(startDir);
+
+			SVG svg = SVG.getFromInputStream(fileInputStream);
+			Drawable drawable = new PictureDrawable(svg.renderToPicture());
+			imageview.setImageDrawable(drawable);
+
+		} catch (IOException d) {
+			d.printStackTrace();
+
+		} catch (SVGParseException s) {
+			s.printStackTrace();
+
+		} catch (Exception exception) {
+
+			exception.printStackTrace();
+		}
+
+```
+
+- get in Asster
+ 
+ ```java 
+    
+    try {
+
+			SVG ss = SVG.getFromAsset(context.getAssets(), input);
+			Drawable d = new PictureDrawable(ss.renderToPicture());
+			imageview.setImageDrawable(d);
+
+		} catch (Exception exn) {
+
+			exn.printStackTrace();
+
+		}
+ 
+ ```
+- get in drawable
+ 
+ 
+ ```java 
+     
+     try{
+			
+			SVG svg = SVG.getFromResource(context.getResources(), R.drawable.mysvg);
+			Drawable dr = new PictureDrawable(svg.renderToPicture());
+			imageview.setImageDrawable(dr);
+			
+		}catch(Exception exception){
+			
+		}
+ ```
+
 ### Using AndroidSVG in your app?
 
 If you have found AndroidSVG useful and are using it in your project, please let me know. I'd love to hear about it!
