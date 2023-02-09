@@ -72,6 +72,10 @@ public class SimpleAssetResolver extends SVGExternalFileResolver
       if (android.os.Build.VERSION.SDK_INT >= 14) {
          supportedFormats.add("image/webp");
       }
+      // .avif supported in 12.0+ (S)
+      if (android.os.Build.VERSION.SDK_INT >= 31) {
+         supportedFormats.add("image/avif");
+      }
    }
 
 
