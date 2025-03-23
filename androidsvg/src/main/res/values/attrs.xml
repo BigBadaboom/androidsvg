@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <declare-styleable name="SVGImageView">
+        <!-- Location of the SVG document. -->
+        <attr name="svg" format="reference|string"/>
+        <attr name="css" format="string"/>
+    </declare-styleable>
+
+</resources>

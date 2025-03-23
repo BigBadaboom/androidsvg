@@ -1,0 +1,175 @@
+// Handles the upload to Sonatype.
+
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
+
+
+def  version = '1.5-SNAPSHOT'
+//version = '1.3-SNAPSHOT'
+
+def  libraryName = 'AndroidSVG'
+def  libraryDescription = 'SVG rendering library for Android.'
+
+def  artifactIdAAR = 'androidsvg'
+def  artifactIdJAR = 'androidsvg-jar'
+def  group = 'com.caverock'
+
+def  developerId = 'BigBadaboom'
+def  developerName = 'Paul LeBeau'
+def  developerEmail = 'androidsvgfeedback@gmail.com'
+
+def  siteUrl = 'https://github.com/BigBadaboom/androidsvg'
+def  gitUrl = 'https://github.com/BigBadaboom/androidsvg.git'
+
+def  licenseName = 'The Apache Software License, Version 2.0'
+def  licenseUrl = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+
+def  releaseRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+def  snapshotRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
+
+
+publishing {
+    repositories {
+        maven {
+            url = version.endsWith('SNAPSHOT') ? snapshotRepoUrl : releaseRepoUrl
+            credentials {
+                // These are set in ~/.gradle/gradle.properties
+                username project.sonatypeUsername
+                password project.sonatypePassword
+            }
+        }
+    }
+
+    publications {
+
+        mavenAAR(MavenPublication) {
+            artifactId = artifactIdAAR
+            groupId = group
+
+            artifact("${buildDir}/outputs/aar/androidsvg-release.aar") {
+                // wrap in a closure because this task isn't defined 'till
+                // the android plugin finishes
+                builtBy { tasks["assembleRelease"] }
+            }
+            afterEvaluate {
+               artifact sourcesJar
+               artifact javadocJar
+            }
+
+            pom {
+                packaging = 'aar'
+
+                name = libraryName
+                description = libraryDescription
+                url = siteUrl
+
+                licenses {
+                    license {
+                        name = licenseName
+                        url = licenseUrl
+                        distribution = 'repo'
+                    }
+                }
+                developers {
+                    developer {
+                        id = developerId
+                        name = developerName
+                        email = developerEmail
+                    }
+                }
+                scm {
+                    connection = gitUrl
+                    developerConnection = gitUrl
+                    url = siteUrl
+                }
+            }
+        }
+
+        mavenJAR(MavenPublication) {
+            artifactId = artifactIdJAR
+            groupId = group
+
+            afterEvaluate {
+               artifact libraryJar
+               artifact sourcesJar
+               artifact javadocJar
+            }
+
+            pom {
+                packaging = 'jar'
+
+                name = libraryName
+                description = libraryDescription
+                url = siteUrl
+
+                licenses {
+                    license {
+                        name = licenseName
+                        url = licenseUrl
+                        distribution = 'repo'
+                    }
+                }
+                developers {
+                    developer {
+                        id = developerId
+                        name = developerName
+                        email = developerEmail
+                    }
+                }
+                scm {
+                    connection = gitUrl
+                    developerConnection = gitUrl
+                    url = siteUrl
+                }
+            }
+        }
+    }
+}
+
+
+tasks.register('sourcesJar', Jar) {
+    from android.sourceSets.main.java.srcDirs
+    archiveClassifier = 'sources'
+}
+
+tasks.register('javadoc', Javadoc) {
+    source = android.sourceSets.main.java.srcDirs
+    destinationDir = new File("$rootProject.projectDir/doc/")
+    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+    options {
+        links "http://docs.oracle.com/javase/7/docs/api/"
+        linksOffline "http://d.android.com/reference", "${android.sdkDirectory}/docs/reference"
+        // Replacement stylesheet for javadocs
+        stylesheetFile = new File(projectDir, "javadoc-stylesheet.css")
+    }
+}
+
+tasks.register('javadocJar', Jar) {
+    dependsOn javadoc
+    archiveClassifier = 'javadoc'
+    from javadoc.getDestinationDir()
+}
+
+tasks.register('libraryJar', Jar) {
+    dependsOn 'compileReleaseJavaWithJavac'
+    from {
+        compileReleaseJavaWithJavac.destinationDir
+    }
+
+    // Add all dependencies except for android.jar to the fat jar
+    from {
+        configurations.compile.findAll {
+            it.getName() != 'android.jar' &&
+                    !it.getName().startsWith('junit')
+        }.collect {
+            it.isDirectory() ? it : zipTree(it)
+        }
+    }
+
+    archiveFileName = "${artifactIdJAR}-${version}.jar"
+}
+
+signing {
+    sign publishing.publications.mavenAAR
+    sign publishing.publications.mavenJAR
+}
