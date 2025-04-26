@@ -1,20 +1,4 @@
-buildscript {
-    repositories {
-        google()
-        jcenter()
-        mavenCentral()
-    }
-
-    dependencies {
-        classpath 'com.android.tools.build:gradle:4.0.1'
-        classpath 'com.github.dcendents:android-maven-gradle-plugin:2.1'
-    }
-}
-
-allprojects {
-    repositories {
-        google()
-        jcenter()
-        maven { url "http://oss.sonatype.org/content/repositories/snapshots/" }
-    }
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+plugins {
+    id 'com.android.library' version '8.9.2' apply false
 }

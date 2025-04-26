@@ -1,33 +1,47 @@
-apply plugin: 'com.android.library'
+plugins {
+    id 'com.android.library'
+}
 
 android {
-    compileSdkVersion 31
-    defaultConfig {
-        minSdkVersion 10
-        targetSdkVersion 31
+    namespace 'com.caverock.androidsvg'
+    compileSdk 35
 
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    defaultConfig {
+        minSdk 19
+        targetSdk 35
+        versionCode 1
+        versionName "1"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
+
+    buildFeatures {
+        buildConfig = true
+    }
+
     buildTypes {
         release {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            minifyEnabled false
         }
     }
-    dependencies {
-        testImplementation 'junit:junit:4.13.2'
-        testImplementation 'org.robolectric:robolectric:3.8'
-    }
-    testOptions {
-        unitTests {
-            includeAndroidResources = true
-        }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 }
 
-apply from: 'publish.gradle'
-
 dependencies {
-    androidTestImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+    //implementation libs.appcompat
+    //implementation libs.material
+
+    testImplementation libs.junit
+    //testImplementation 'org.robolectric:robolectric:4.14.1'
+    testImplementation libs.robolectric
+
+    androidTestImplementation libs.ext.junit
+    //androidTestImplementation libs.espresso.core
 }
