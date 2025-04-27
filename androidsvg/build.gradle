@@ -38,6 +38,7 @@ dependencies {
     //implementation libs.appcompat
     //implementation libs.material
 
+    androidTestImplementation libs.runner
     testImplementation libs.junit
     //testImplementation 'org.robolectric:robolectric:4.14.1'
     testImplementation libs.robolectric
