@@ -18,7 +18,6 @@ package com.caverock.androidsvg;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.os.Build;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -26,13 +25,12 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadow.api.Shadow;
 
-import java.util.List;
-
 import static org.junit.Assert.assertEquals;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(manifest=Config.NONE, sdk = Build.VERSION_CODES.JELLY_BEAN, shadows={MockCanvas.class, MockPath.class, MockPaint.class})
-public class CSS
+//@Config(manifest=Config.NONE, sdk = Build.VERSION_CODES.JELLY_BEAN, shadows={MockCanvas.class, MockPath.class, MockPaint.class})
+@Config(manifest=Config.NONE, shadows={MockCanvas.class, MockPath.class, MockPaint.class})
+public class CSSTest
 {
 /* !important not supported yet
    @Test

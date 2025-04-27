@@ -2,7 +2,6 @@ package com.caverock.androidsvg;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.os.Build;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -15,8 +14,9 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(manifest=Config.NONE, sdk = Build.VERSION_CODES.KITKAT, shadows={MockCanvas.class, MockPath.class, MockPaint.class})
-public class ArcTo
+//@Config(manifest=Config.NONE, sdk = Build.VERSION_CODES.KITKAT, shadows={MockCanvas.class, MockPath.class, MockPaint.class})
+@Config(manifest=Config.NONE, shadows={MockCanvas.class, MockPath.class, MockPaint.class})
+public class ArcToTest
 {
    @Test
    public void  testIssue155() throws SVGParseException
@@ -34,7 +34,7 @@ public class ArcTo
       List<String> ops = ((MockCanvas) Shadow.extract(canvas)).getOperations();
       //System.out.println(String.join(",", ops));
       assertEquals(6, ops.size());
-      assertEquals("drawPath('M 163.63701 412.02103 C 151.5 466.03125 139.375 520.0156 127.32401 574.021', Paint(f:ANTI_ALIAS|LINEAR_TEXT|SUBPIXEL_TEXT; h:OFF; s:FILL; color:#ff000000; ts:16; tf:android.graphics.Typeface@0))", ops.get(3));
+      assertEquals("drawPath('M 163.63701 412.02103 C 151.5 466.03125 139.375 520.0156 127.32401 574.021', Paint(color:#ff000000; f:ANTI_ALIAS|LINEAR_TEXT|SUBPIXEL_TEXT; h:OFF; s:FILL; tf:android.graphics.Typeface@0; ts:16))", ops.get(3));
    }
 
 
@@ -54,7 +54,7 @@ public class ArcTo
       List<String> ops = ((MockCanvas) Shadow.extract(canvas)).getOperations();
       //System.out.println(String.join(",", ops));
       assertEquals(6, ops.size());
-      assertEquals("drawPath('M 422.77603 332.65903 C 415.15625 323.8125 407.53125 314.96875 399.92102 306.101', Paint(f:ANTI_ALIAS|LINEAR_TEXT|SUBPIXEL_TEXT; h:OFF; s:FILL; color:#ff000000; ts:16; tf:android.graphics.Typeface@0))", ops.get(3));
+      assertEquals("drawPath('M 422.77603 332.65903 C 415.15625 323.8125 407.53125 314.96875 399.92102 306.101', Paint(color:#ff000000; f:ANTI_ALIAS|LINEAR_TEXT|SUBPIXEL_TEXT; h:OFF; s:FILL; tf:android.graphics.Typeface@0; ts:16))", ops.get(3));
 
    }
 }

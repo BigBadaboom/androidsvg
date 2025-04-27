@@ -74,7 +74,7 @@ public class MockCanvas
    {
       return this.operations;
    }
-   public  void          clearOperations()
+   public  void  clearOperations()
    {
       this.operations.clear();
    }

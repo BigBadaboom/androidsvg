@@ -18,7 +18,6 @@ package com.caverock.androidsvg;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.os.Build;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -31,8 +30,9 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(manifest=Config.NONE, sdk = Build.VERSION_CODES.KITKAT, shadows={MockCanvas.class, MockPath.class, MockPaint.class})
-public class ClipPaths
+//@Config(manifest=Config.NONE, sdk = Build.VERSION_CODES.KITKAT, shadows={MockCanvas.class, MockPath.class, MockPaint.class})
+@Config(manifest=Config.NONE, shadows={MockCanvas.class, MockPath.class, MockPaint.class})
+public class ClipPathsTest
 {
 
    @Test

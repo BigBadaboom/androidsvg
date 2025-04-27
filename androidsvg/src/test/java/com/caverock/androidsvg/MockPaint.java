@@ -11,9 +11,11 @@ import org.robolectric.shadow.api.Shadow;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 /**
@@ -182,7 +184,9 @@ public class MockPaint
 
    String  getDescription()
    {
-      return "Paint(" + String.join("; ", settings.values()) + ")";
+      // Sort settings for consistent order
+      List<String> _settings = settings.values().stream().sorted().collect(Collectors.toCollection(ArrayList::new));
+      return "Paint(" + String.join("; ", _settings) + ")";
    }
 
    private static String  num(float f)

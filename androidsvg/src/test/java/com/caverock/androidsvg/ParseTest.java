@@ -34,8 +34,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-@Config(manifest=Config.NONE, sdk = Build.VERSION_CODES.JELLY_BEAN, shadows={MockCanvas.class, MockPath.class, MockPaint.class})
 @RunWith(RobolectricTestRunner.class)
+//@Config(manifest=Config.NONE, sdk = Build.VERSION_CODES.JELLY_BEAN, shadows={MockCanvas.class, MockPath.class, MockPaint.class})
+@Config(manifest=Config.NONE, shadows={MockCanvas.class, MockPath.class, MockPaint.class})
 public class ParseTest
 {
    @Test
@@ -174,23 +175,30 @@ public class ParseTest
       MockCanvas    mock = Shadow.extract(bmcanvas);
       List<String>  ops = mock.getOperations();
       //System.out.println(String.join(",", ops));
-      assertEquals("drawPath('M 0 0 L 10 0 L 10 10 L 0 10 L 0 0 Z', Paint(f:ANTI_ALIAS|LINEAR_TEXT|SUBPIXEL_TEXT; h:OFF; s:FILL; ts:16; tf:android.graphics.Typeface@0; color:#ff008000))", ops.get(4));
+      assertEquals("drawPath('M 0 0 L 10 0 L 10 10 L 0 10 L 0 0 Z', Paint(color:#ff008000; f:ANTI_ALIAS|LINEAR_TEXT|SUBPIXEL_TEXT; h:OFF; s:FILL; tf:android.graphics.Typeface@0; ts:16))", ops.get(4));
+   }
 
 
+   @Test
+   public void parseB() throws SVGParseException
+   {
       // Test that A elements are being visited properly while rendering
-      test = "<svg xmlns=\"http://www.w3.org/2000/svg\">" +
+      String  test = "<svg xmlns=\"http://www.w3.org/2000/svg\">" +
              "<a fill=\"green\">" +
              "  <rect width=\"10\" height=\"10\"/>" +
              "</a>" +
              "</svg>";
-      svg = SVG.getFromString(test);
+      SVG  svg = SVG.getFromString(test);
 
-      mock.clearOperations();
+      Bitmap bm = Bitmap.createBitmap(10, 10, Bitmap.Config.ARGB_8888);
+      Canvas bmcanvas = new Canvas(bm);
+
       svg.renderToCanvas(bmcanvas);
 
-      ops = mock.getOperations();
+      MockCanvas    mock = Shadow.extract(bmcanvas);
+      List<String>  ops = mock.getOperations();
       //System.out.println(String.join(",", ops));
-      assertEquals("drawPath('M 0 0 L 10 0 L 10 10 L 0 10 L 0 0 Z', Paint(f:ANTI_ALIAS|LINEAR_TEXT|SUBPIXEL_TEXT; h:OFF; s:FILL; ts:16; tf:android.graphics.Typeface@0; color:#ff008000))", ops.get(4));
+      assertEquals("drawPath('M 0 0 L 10 0 L 10 10 L 0 10 L 0 0 Z', Paint(color:#ff008000; f:ANTI_ALIAS|LINEAR_TEXT|SUBPIXEL_TEXT; h:OFF; s:FILL; tf:android.graphics.Typeface@0; ts:16))", ops.get(4));
    }
 
 
