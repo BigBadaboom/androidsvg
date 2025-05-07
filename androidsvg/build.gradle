@@ -32,9 +32,14 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+    tasks.withType(JavaCompile).configureEach {
+        options.compilerArgs << "-Xlint:deprecation"
+    }
 }
 
 dependencies {
+    implementation libs.annotation.jvm
+
     //implementation libs.appcompat
     //implementation libs.material
 
