@@ -7,6 +7,7 @@ junitVersion = "1.2.1"
 #material = "1.12.0"
 robolectric = "4.14.1"
 runner = "1.6.2"
+annotationJvm = "1.9.1"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -16,6 +17,7 @@ ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitV
 #material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 runner = { module = "androidx.test:runner", version.ref = "runner" }
+annotation-jvm = { group = "androidx.annotation", name = "annotation-jvm", version.ref = "annotationJvm" }
 
 [plugins]
 #android-application = { id = "com.android.application", version.ref = "agp" }
