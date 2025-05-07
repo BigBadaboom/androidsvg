@@ -2401,7 +2401,12 @@ public class SVGAndroidRenderer
       if (isSpecified(style, Style.SPECIFIED_STROKE_WIDTH))
       {
          state.style.strokeWidth = style.strokeWidth;
-         state.strokePaint.setStrokeWidth(state.style.strokeWidth.floatValue(this));
+         // Handle zero stroke widths specially. Spec says they should result in no stroke,
+         // however in Android, a 1px line is rendered for Paint.setStrokeWidth(0).
+         if (!state.style.strokeWidth.isZero())
+           state.strokePaint.setStrokeWidth(state.style.strokeWidth.floatValue(this));
+         else
+           state.hasStroke = false;
       }
 
       if (isSpecified(style, Style.SPECIFIED_STROKE_LINECAP))
