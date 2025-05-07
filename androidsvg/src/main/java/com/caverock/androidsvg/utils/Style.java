@@ -56,7 +56,7 @@ public class  Style implements Cloneable
    Length          fontSize;
    Float           fontWeight;
    FontStyle       fontStyle;
-   Float           fontStretch;
+   Float           fontWidth;
    TextDecoration  textDecoration;
    TextDirection   direction;
 
@@ -116,8 +116,8 @@ public class  Style implements Cloneable
    static final float  FONT_WEIGHT_LIGHTER = Float.MIN_VALUE;
    static final float  FONT_WEIGHT_BOLDER = Float.MAX_VALUE;
 
-   static final float  FONT_STRETCH_MIN = 0f;
-   static final float  FONT_STRETCH_NORMAL = 100f;
+   static final float  FONT_WIDTH_MIN = 0f;
+   static final float  FONT_WIDTH_NORMAL = 100f;
 
 
    static final long SPECIFIED_FILL                       = (1<<0);
@@ -171,18 +171,17 @@ public class  Style implements Cloneable
    static final long SPECIFIED_TEXT_ORIENTATION           = (1L<<48);
    static final long SPECIFIED_FONT_KERNING               = (1L<<49);
    static final long SPECIFIED_FONT_VARIATION_SETTINGS    = (1L<<50);
-   static final long SPECIFIED_FONT_STRETCH               = (1L<<51);
+   static final long SPECIFIED_FONT_WIDTH                 = (1L<<51);
    static final long SPECIFIED_LETTER_SPACING             = (1L<<52);
    static final long SPECIFIED_WORD_SPACING               = (1L<<53);
 
    // Flags for the settings that are applied to reset the root style
-   private static final long SPECIFIED_RESET = 0xffffffffffffffffL &
-                           ~(SPECIFIED_FONT_VARIANT_LIGATURES  |
-                             SPECIFIED_FONT_VARIANT_POSITION   |
-                             SPECIFIED_FONT_VARIANT_CAPS       |
-                             SPECIFIED_FONT_VARIANT_NUMERIC    |
-                             SPECIFIED_FONT_VARIANT_EAST_ASIAN |
-                             SPECIFIED_FONT_VARIATION_SETTINGS);
+   private static final long SPECIFIED_RESET = ~(SPECIFIED_FONT_VARIANT_LIGATURES |
+                                                 SPECIFIED_FONT_VARIANT_POSITION |
+                                                 SPECIFIED_FONT_VARIANT_CAPS |
+                                                 SPECIFIED_FONT_VARIANT_NUMERIC |
+                                                 SPECIFIED_FONT_VARIANT_EAST_ASIAN |
+                                                 SPECIFIED_FONT_VARIATION_SETTINGS);
 
 
    public enum FillRule
@@ -359,7 +358,7 @@ public class  Style implements Cloneable
       def.fontSize = new Length(12, Unit.pt);
       def.fontWeight = FONT_WEIGHT_NORMAL;
       def.fontStyle = FontStyle.normal;
-      def.fontStretch = FONT_STRETCH_NORMAL;
+      def.fontWidth = FONT_WIDTH_NORMAL;
       def.textDecoration = TextDecoration.None;
       def.direction = TextDirection.LTR;
       def.textAnchor = TextAnchor.Start;
@@ -439,8 +438,8 @@ public class  Style implements Cloneable
 
    static void  processStyleProperty(Style style, String localName, String val, boolean isFromAttribute)
    {
-      if (val.length() == 0) { // The spec doesn't say how to handle empty style attributes.
-         return;               // Our strategy is just to ignore them.
+      if (val.isEmpty()) { // The spec doesn't say how to handle empty style attributes.
+         return;           // Our strategy is just to ignore them.
       }
       if (val.equals("inherit"))
          return;
@@ -557,20 +556,51 @@ public class  Style implements Cloneable
 
          case font_weight:
             style.fontWeight = SVGParserImpl.parseFontWeight(val);
-            if (style.fontWeight != null)
+            if (style.fontWeight != null) {
                style.specifiedFlags |= SPECIFIED_FONT_WEIGHT;
+               // Also mirror that setting in the font-variation-settings
+               style.initFontVariationSettings();
+               style.fontVariationSettings.addSetting(CSSFontVariationSettings.VARIATION_WEIGHT, style.fontWeight);
+               style.specifiedFlags |= SPECIFIED_FONT_VARIATION_SETTINGS;
+            }
             break;
 
          case font_style:
-            style.fontStyle = SVGParserImpl.parseFontStyle(val);
-            if (style.fontStyle != null)
+            style.fontStyle = SVGParserImpl.parseFontStyle(val);   // FIXME support oblique-with-angle
+            if (style.fontStyle != null) {
                style.specifiedFlags |= SPECIFIED_FONT_STYLE;
+               // Also mirror that setting in the font-variation-settings.
+               // This can cause double slant with italic fonts.
+               // FIXME *************************
+               if (style.fontStyle == FontStyle.italic || style.fontStyle == FontStyle.oblique) {
+                  // The CSS spec states: If no italic or oblique face is available, oblique faces may be
+                  // synthesized by rendering non-obliqued faces with an artificial obliquing operation.
+                  // Based on that sentiment, we choose to attempt to enable both italics and slant.
+                  // Note that Android does not provide a way to query the available axes of a font, so
+                  // we just have to turn both on and hope we don't get weird results if the font supports
+                  // both axes.  I haven't seen one that does.
+                  style.initFontVariationSettings();
+                  style.fontVariationSettings.addSetting(CSSFontVariationSettings.VARIATION_ITALIC,
+                                                         CSSFontVariationSettings.VARIATION_ITALIC_VALUE_ON);
+                  style.specifiedFlags |= SPECIFIED_FONT_VARIATION_SETTINGS;
+
+                  style.fontVariationSettings.addSetting(CSSFontVariationSettings.VARIATION_SLANT,
+                                                         CSSFontVariationSettings.VARIATION_OBLIQUE_VALUE_ON);
+                  style.specifiedFlags |= SPECIFIED_FONT_VARIATION_SETTINGS;
+               }
+            }
             break;
 
-         case font_stretch:
-            style.fontStretch = SVGParserImpl.parseFontStretch(val);
-            if (style.fontStretch != null)
-               style.specifiedFlags |= SPECIFIED_FONT_STRETCH;
+         case font_stretch:  // legacy name
+         case font_width:
+            style.fontWidth = SVGParserImpl.parseFontWidth(val);
+            if (style.fontWidth != null) {
+               style.specifiedFlags |= SPECIFIED_FONT_WIDTH;
+               // Also mirror that setting in the font-variation-settings
+               style.initFontVariationSettings();
+               style.fontVariationSettings.addSetting(CSSFontVariationSettings.VARIATION_WIDTH, style.fontWidth);
+               style.specifiedFlags |= SPECIFIED_FONT_VARIATION_SETTINGS;
+            }
             break;
 
          case text_decoration:
@@ -797,9 +827,10 @@ public class  Style implements Cloneable
          case font_variation_settings:
             if (isFromAttribute)
                break;
-            style.fontVariationSettings = CSSFontVariationSettings.parseFontVariationSettings(val);
-            if (style.fontVariationSettings != null)
-               style.specifiedFlags |= SPECIFIED_FONT_VARIATION_SETTINGS;
+            style.initFontVariationSettings();
+            CSSFontVariationSettings fvs = CSSFontVariationSettings.parseFontVariationSettings(val);
+            style.fontVariationSettings.applySettings(fvs);
+            style.specifiedFlags |= SPECIFIED_FONT_VARIATION_SETTINGS;
             break;
 
          case letter_spacing:
@@ -839,6 +870,13 @@ public class  Style implements Cloneable
          default:
             break;
       }
+   }
+
+
+   public void initFontVariationSettings()
+   {
+      if (this.fontVariationSettings == null)
+         this.fontVariationSettings = new CSSFontVariationSettings();
    }
 
 }

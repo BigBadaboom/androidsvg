@@ -265,9 +265,10 @@ class SVGParserImpl implements SVGParser
       font_feature_settings,
       font_size,
       font_stretch,                // @since 1.5
+      font_width,                  // @since 1.5
       font_style,
       font_weight,
-      // font_size_adjust, font_stretch,
+      // font_size_adjust
       font_kerning,                // @since 1.5
       font_variant,                // @since 1.5
       font_variant_ligatures,      // @since 1.5
@@ -564,31 +565,31 @@ class SVGParserImpl implements SVGParser
          return fontWeightKeywords.get(fontWeight);
       }
 
-      static boolean contains(String fontStretch) {
-         return fontWeightKeywords.containsKey(fontStretch);
+      static boolean contains(String fontWidth) {
+         return fontWeightKeywords.containsKey(fontWidth);
       }
    }
 
-   private static class FontStretchKeywords {
-      private static final Map<String, Float> fontStretchKeywords = new HashMap<>(9);
+   private static class FontWidthKeywords {
+      private static final Map<String, Float> fontWidthKeywords = new HashMap<>(9);
       static {
-         fontStretchKeywords.put("ultra-condensed", 50f);
-         fontStretchKeywords.put("extra-condensed", 62.5f);
-         fontStretchKeywords.put("condensed", 75f);
-         fontStretchKeywords.put("semi-condensed", 87.5f);
-         fontStretchKeywords.put("normal", Style.FONT_STRETCH_NORMAL);
-         fontStretchKeywords.put("semi-expanded", 112.5f);
-         fontStretchKeywords.put("expanded", 125f);
-         fontStretchKeywords.put("extra-expanded", 150f);
-         fontStretchKeywords.put("ultra-expanded", 200f);
+         fontWidthKeywords.put("ultra-condensed", 50f);
+         fontWidthKeywords.put("extra-condensed", 62.5f);
+         fontWidthKeywords.put("condensed", 75f);
+         fontWidthKeywords.put("semi-condensed", 87.5f);
+         fontWidthKeywords.put("normal", Style.FONT_WIDTH_NORMAL);
+         fontWidthKeywords.put("semi-expanded", 112.5f);
+         fontWidthKeywords.put("expanded", 125f);
+         fontWidthKeywords.put("extra-expanded", 150f);
+         fontWidthKeywords.put("ultra-expanded", 200f);
       }
 
-      static Float get(String fontStretch) {
-         return fontStretchKeywords.get(fontStretch);
+      static Float get(String fontWidth) {
+         return fontWidthKeywords.get(fontWidth);
       }
 
-      static boolean contains(String fontStretch) {
-         return fontStretchKeywords.containsKey(fontStretch);
+      static boolean contains(String fontWidth) {
+         return fontWidthKeywords.containsKey(fontWidth);
       }
    }
 
@@ -3249,7 +3250,7 @@ class SVGParserImpl implements SVGParser
       Float            fontWeight = null;
       Style.FontStyle  fontStyle = null;
       String           fontVariant = null;
-      Float            fontStretch = null;
+      Float            fontWidth = null;
       Boolean          fontVariantSmallCaps = null;
 
       final String  NORMAL = "normal";
@@ -3287,8 +3288,8 @@ class SVGParserImpl implements SVGParser
             fontVariantSmallCaps = true;
             continue;
          }
-         if (fontStretch == null && FontStretchKeywords.contains(item)) {
-            fontStretch = FontStretchKeywords.get(item);
+         if (fontWidth == null && FontWidthKeywords.contains(item)) {
+            fontWidth = FontWidthKeywords.get(item);
             continue;
          }
          // Not any of these. Break and try next section
@@ -3319,7 +3320,7 @@ class SVGParserImpl implements SVGParser
       style.fontSize = fontSize;
       style.fontWeight = (fontWeight == null) ? Style.FONT_WEIGHT_NORMAL : fontWeight;
       style.fontStyle = (fontStyle == null) ? Style.FontStyle.normal : fontStyle;
-      style.fontStretch = (fontStretch == null) ? Style.FONT_STRETCH_NORMAL : fontStretch;
+      style.fontWidth = (fontWidth == null) ? Style.FONT_WIDTH_NORMAL : fontWidth;
       style.fontKerning = Style.FontKerning.auto;
       style.fontVariantLigatures = CSSFontFeatureSettings.LIGATURES_NORMAL;
       style.fontVariantPosition = CSSFontFeatureSettings.POSITION_ALL_OFF;
@@ -3331,7 +3332,7 @@ class SVGParserImpl implements SVGParser
       style.fontFeatureSettings = CSSFontFeatureSettings.FONT_FEATURE_SETTINGS_NORMAL;
       style.fontVariationSettings = null;
 
-      style.specifiedFlags |= (Style.SPECIFIED_FONT_FAMILY | Style.SPECIFIED_FONT_SIZE | Style.SPECIFIED_FONT_WEIGHT | Style.SPECIFIED_FONT_STYLE | Style.SPECIFIED_FONT_STRETCH |
+      style.specifiedFlags |= (Style.SPECIFIED_FONT_FAMILY | Style.SPECIFIED_FONT_SIZE | Style.SPECIFIED_FONT_WEIGHT | Style.SPECIFIED_FONT_STYLE | Style.SPECIFIED_FONT_WIDTH |
                                Style.SPECIFIED_FONT_KERNING | Style.SPECIFIED_FONT_VARIANT_LIGATURES | Style.SPECIFIED_FONT_VARIANT_POSITION | Style.SPECIFIED_FONT_VARIANT_CAPS |
                                Style.SPECIFIED_FONT_VARIANT_NUMERIC | Style.SPECIFIED_FONT_VARIANT_EAST_ASIAN | Style.SPECIFIED_FONT_FEATURE_SETTINGS | Style.SPECIFIED_FONT_VARIATION_SETTINGS);
    }
@@ -3392,10 +3393,10 @@ class SVGParserImpl implements SVGParser
    }
 
 
-   // Parse a font stretch keyword or numerical value
-   static Float  parseFontStretch(String val)
+   // Parse a font width/stretch keyword or numerical value
+   static Float parseFontWidth(String val)
    {
-      Float  result = FontStretchKeywords.get(val);
+      Float  result = FontWidthKeywords.get(val);
       if (result == null) {
          // Check for a percentage value
          TextScanner  scan = new TextScanner(val);
@@ -3405,7 +3406,7 @@ class SVGParserImpl implements SVGParser
          scan.skipWhitespace();
          if (!scan.empty())
             return null;
-         if (result < Style.FONT_STRETCH_MIN)
+         if (result < Style.FONT_WIDTH_MIN)
             return null;   // Invalid
       }
       return result;

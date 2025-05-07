@@ -927,7 +927,7 @@ public class SVGAndroidRenderer
    }
 
 
-   @TargetApi(Build.VERSION_CODES.Q)
+   @androidx.annotation.RequiresApi(Build.VERSION_CODES.Q)
    private void  setBlendMode(Paint paint)
    {
       debug("Setting blend mode to "+state.style.mixBlendMode);
@@ -1033,7 +1033,7 @@ public class SVGAndroidRenderer
             if (reqfonts.isEmpty() || externalFileResolver == null)
                continue;
             for (String fontName: reqfonts) {
-               if (externalFileResolver.resolveFont(fontName, state.style.fontWeight, String.valueOf(state.style.fontStyle), state.style.fontStretch) == null)
+               if (externalFileResolver.resolveFont(fontName, state.style.fontWeight, String.valueOf(state.style.fontStyle), state.style.fontWidth) == null)
                   continue ChildLoop;
             }
          }
@@ -1599,9 +1599,18 @@ public class SVGAndroidRenderer
 
       if (state.style.fontFamily != null && document != null) {
          for (String fontName: state.style.fontFamily) {
+            // Check if this font entry is a generic font specifier
             font = checkGenericFont(fontName, state.style.fontWeight, state.style.fontStyle);
+            // Otherwise, try loading the specified font
             if (font == null && externalFileResolver != null) {
-               font = externalFileResolver.resolveFont(fontName, state.style.fontWeight, String.valueOf(state.style.fontStyle), state.style.fontStretch);
+               font = externalFileResolver.resolveFont(fontName, state.style.fontWeight, String.valueOf(state.style.fontStyle), state.style.fontWidth);
+            }
+            if (font != null) {
+               Log.d("Typeface", fontName + ": wt=" + state.style.fontWeight + " st=" + state.style.fontStyle +
+                          ": style=" + font.getStyle() + " bold=" + font.isBold() + " italic="+font.isItalic());
+               if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                  Log.d("Typeface", "weight=" + font.getWeight() + " sysfont='" + font.getSystemFontFamilyName() + "'");
+               }
             }
             if (font != null)
                break;
@@ -1617,15 +1626,26 @@ public class SVGAndroidRenderer
       // Just in case this is a variable font, let's also set the fontVariationSettings
       // In order to get the desired font weight and style
       if (SUPPORTS_PAINT_FONT_VARIATION_SETTINGS) {
-         state.fontVariationSet.addSetting(CSSFontVariationSettings.VARIATION_WEIGHT, state.style.fontWeight);
-         if (state.style.fontStyle == FontStyle.italic) {
-            state.fontVariationSet.addSetting(CSSFontVariationSettings.VARIATION_ITALIC, CSSFontVariationSettings.VARIATION_ITALIC_VALUE_ON);
-            // Add oblique as well - as a fallback in case it has not "ital" axis
-            state.fontVariationSet.addSetting(CSSFontVariationSettings.VARIATION_OBLIQUE, CSSFontVariationSettings.VARIATION_OBLIQUE_VALUE_ON);
+         // Just in case this is a variable font, mirror the font-weight setting
+         // as a backup, so we can get the weight we want.
+         if (state.style.fontWeight >= Style.FONT_WEIGHT_BOLD && !font.isBold()) {
+            state.fontVariationSet.addSetting(CSSFontVariationSettings.VARIATION_WEIGHT, state.style.fontWeight);
          }
-         else if (state.style.fontStyle == FontStyle.oblique)
-            state.fontVariationSet.addSetting(CSSFontVariationSettings.VARIATION_OBLIQUE, CSSFontVariationSettings.VARIATION_OBLIQUE_VALUE_ON);
-         state.fontVariationSet.addSetting(CSSFontVariationSettings.VARIATION_WIDTH, state.style.fontStretch);
+         // If italic has been specified, enable the 'ital' axis in case this is a
+         // variable font and has one.
+         if (state.style.fontStyle == FontStyle.italic && !font.isItalic()) {
+            state.fontVariationSet.addSetting(CSSFontVariationSettings.VARIATION_ITALIC,
+                                              CSSFontVariationSettings.VARIATION_ITALIC_VALUE_ON);
+         }
+         // If oblique has been specified, enable the 'slnt' axis in case this is a
+         // variable font and has one.
+         if (state.style.fontStyle == FontStyle.oblique && !font.isItalic()) {
+            state.fontVariationSet.addSetting(CSSFontVariationSettings.VARIATION_SLANT,
+                                              CSSFontVariationSettings.VARIATION_OBLIQUE_VALUE_ON);
+         }
+
+         // Apply the CSS font-variation-setting values if there are any
+         state.fontVariationSet.applySettings(state.style.fontVariationSettings);
 
          String  fontVariationSettings = state.fontVariationSet.toString();
          debug("fontVariationSettings = "+fontVariationSettings);
@@ -2492,7 +2512,7 @@ public class SVGAndroidRenderer
          if (style.fontWeight == Style.FONT_WEIGHT_LIGHTER)
          {
             float fw = state.style.fontWeight;
-            if (fw >= 100f && fw < 550f)
+            if (fw >= 100f && fw < 550f)  // FIXME clamp instead of ignoring < 100
                state.style.fontWeight = 100f;
             else if (fw >= 550f && fw < 750f)
                state.style.fontWeight = 400f;
@@ -2518,10 +2538,10 @@ public class SVGAndroidRenderer
          state.style.fontStyle = style.fontStyle;
       }
 
-      if (isSpecified(style, Style.SPECIFIED_FONT_STRETCH))
+      if (isSpecified(style, Style.SPECIFIED_FONT_WIDTH))
       {
          // Typical font stretch values are 50...200 (percent)
-         state.style.fontStretch = style.fontStretch;
+         state.style.fontWidth = style.fontWidth;
       }
 
       if (isSpecified(style, Style.SPECIFIED_TEXT_DECORATION))

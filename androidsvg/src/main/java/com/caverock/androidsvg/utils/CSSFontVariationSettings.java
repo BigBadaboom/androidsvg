@@ -12,7 +12,7 @@ public class CSSFontVariationSettings
 
    static final String  VARIATION_WEIGHT = "wght";
    static final String  VARIATION_ITALIC = "ital";
-   static final String  VARIATION_OBLIQUE = "slnt";
+   static final String  VARIATION_SLANT = "slnt";
    static final String  VARIATION_WIDTH = "wdth";
 
    static final Float  VARIATION_ITALIC_VALUE_ON = 1f;
@@ -99,8 +99,8 @@ public class CSSFontVariationSettings
          if (scan.empty())
             break;
          CSSFontVariationSettings.FontVariationEntry entry = nextFeatureEntry(scan);
-         if (entry == null)
-            return null;
+         if (entry == null || Float.isNaN(entry.val))
+            break;
          result.settings.put(entry.name, entry.val);
          scan.skipCommaWhitespace();
       }
@@ -117,9 +117,7 @@ public class CSSFontVariationSettings
       scan.skipWhitespace();
       if (scan.empty())
         return null;
-      Float  num = scan.nextFloat();
-      if (num == null)
-         return null;
+      float  num = scan.nextFloat();
       return new CSSFontVariationSettings.FontVariationEntry(name, num);
    }
 

@@ -1001,7 +1001,7 @@ public class CSSParser
 
          // temp implementation
          if (obj instanceof SvgContainer)
-           return ((SvgContainer)obj).getChildren().size() == 0;
+           return ((SvgContainer) obj).getChildren().isEmpty();
          else
            return true;
          // FIXME  all SVG graphics elements can have children, although for now we drop and ignore
