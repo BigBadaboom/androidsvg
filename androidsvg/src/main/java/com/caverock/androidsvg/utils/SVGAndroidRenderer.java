@@ -3867,7 +3867,11 @@ public class SVGAndroidRenderer
       // If gradient radius is zero, we instead fill with last stop colour
       if (_r == 0 || numStops == 1) {
          statePop();
-         paint.setColor(colours[numStops - 1]);
+         if (SUPPORTS_RADIAL_GRADIENT_WITH_FOCUS) {
+            paint.setColor(colourLongs[numStops - 1]);
+         } else {
+            paint.setColor(colours[numStops - 1]);
+         }
          return;
       }
 
