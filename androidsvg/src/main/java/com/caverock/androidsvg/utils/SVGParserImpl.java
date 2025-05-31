@@ -642,7 +642,7 @@ class SVGParserImpl implements SVGParser
             String preamble = new String(checkBuf, 0, n);
             // Reset the stream so that the XML parsers can do their job.
             is.reset();
-            if (preamble.contains("<!ENTITY ")) {
+            if (preamble.contains("<!ENTITY ") || preamble.contains("<!ATTLIST ")) {
                // Found something that looks like an entity definition.
                // So we'll use the SAX parser which supports them.
                debug("Switching to SAX parser to process entities");
