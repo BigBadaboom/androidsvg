@@ -35,6 +35,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -2131,6 +2132,11 @@ public class SVGBase
    }
 
 
+   SvgElementBase putElementById(String id, SvgElementBase obj) {
+      return idToElementMap.put(id, obj);
+   }
+
+
    SvgElementBase  getElementById(String id)
    {
       if (id == null || id.length() == 0)
@@ -2194,5 +2200,40 @@ public class SVGBase
       }
    }
 
+   public Collection<SvgObject> getElementsAt(float x, float y, boolean withIdsOnly)
+   {
+      List<SvgObject>  result = new ArrayList<>();
 
+      // Search the object tree for nodes at the given coordinates
+      if(!withIdsOnly){
+         getElementsAt(result, rootElement, x, y);
+      } else {
+         for (SvgElementBase obj: idToElementMap.values()){
+            if(obj instanceof SvgElement && containsCoords((SvgElement) obj, x, y)){
+               result.add((SvgElement) obj);
+            }
+         }
+      }
+      return result;
+   }
+
+
+   private void  getElementsAt(List<SvgObject> result, SvgObject obj, float x, float y)
+   {
+      if (obj instanceof SvgContainer)
+      {
+         for (SvgObject child: ((SvgContainer) obj).getChildren())
+            getElementsAt(result, child, x, y);
+
+      } else if (obj instanceof SvgElement && containsCoords((SvgElement) obj, x, y)) {
+            result.add((SvgElement) obj);
+      }
+   }
+
+   private boolean containsCoords(SvgElement elm, float x, float y){
+      Box box = elm.boundingBox;
+      if (box != null)
+         return (x >= box.minX && x <= box.maxX() && y >= box.minY && y <= box.maxY());
+      else return false;
+   }
 }

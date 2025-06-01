@@ -20,6 +20,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
+import java.util.Collection;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -31,8 +32,11 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
+
+import com.caverock.androidsvg.utils.SVGBase;
 
 /**
  * SVGImageView is a View widget that allows users to include SVG images in their layouts.
@@ -54,6 +58,7 @@ public class SVGImageView extends ImageView
 
    private static Method  setLayerTypeMethod = null;
 
+   private SVGElementClickListener svgElementClickListener;
 
    static {
       try
@@ -328,6 +333,102 @@ public class SVGImageView extends ImageView
 
    //===============================================================================================
 
+   @Override
+   public boolean onTouchEvent(MotionEvent event) {
+      boolean handled = super.onTouchEvent(event);
+
+      if(svgElementClickListener != null && !handled && event.getAction() == MotionEvent.ACTION_DOWN) {
+         ScaleType scaleType = getScaleType();
+         float relativePointerX = event.getX();
+         float relativePointerY = event.getY();
+
+         float svgWidth = this.svg.getDocumentWidth();
+         float svgHeight = this.svg.getDocumentHeight();
+
+         float viewWidth = this.getWidth();
+         float viewHeight = this.getHeight();
+
+         switch (scaleType) {
+            //TODO add support for CENTER_INSIDE, FIT_XY, MATRIX
+            case CENTER:
+               float spacingWidth = viewWidth - svgWidth;
+               float spacingHeight = viewHeight - svgHeight;
+
+               relativePointerX = (event.getX() - spacingWidth/2) / (viewWidth - spacingWidth);
+               relativePointerY = (event.getY() - spacingHeight/2) / (viewHeight - spacingHeight);
+               break;
+
+            case CENTER_CROP:
+               relativePointerX = event.getX() / viewWidth;
+               relativePointerY = event.getY() / viewHeight;
+
+               if (svgWidth / svgHeight < 1) {
+                  float factor = svgWidth / viewWidth;
+                  float spacing = ((factor * viewHeight) - svgHeight) / factor;
+
+                  relativePointerY = (event.getY() - spacing / 2) / (viewHeight - spacing);
+               } else {
+                  float factor = svgHeight / viewHeight;
+                  float spacing = ((factor * viewWidth) - svgWidth) / factor;
+
+                  relativePointerX = (event.getX() - spacing / 2) / (viewWidth - spacing);
+               }
+               break;
+
+            case FIT_START:
+            case FIT_END:
+            case FIT_CENTER:
+               relativePointerX = event.getX() / viewWidth;
+               relativePointerY = event.getY() / viewHeight;
+
+               float spacing;
+               if (svgWidth / svgHeight < 1) {
+                  float factor = svgHeight / viewHeight;
+                  spacing = ((factor * viewWidth) - svgWidth) / factor;
+               } else {
+                  float factor = svgWidth / viewWidth;
+                  spacing = ((factor * viewHeight) - svgHeight) / factor;
+               }
+
+               switch (scaleType) {
+                  case FIT_START:
+                     if (svgWidth / svgHeight < 1) {
+                        relativePointerX = event.getX() / (viewWidth - spacing);
+                     } else {
+                        relativePointerY = event.getY() / (viewHeight - spacing);
+                     }
+                     break;
+                  case FIT_END:
+                     if (svgWidth / svgHeight < 1) {
+                        relativePointerX = (event.getX() - spacing) / (viewWidth - spacing);
+                     } else {
+                        relativePointerY = (event.getY() - spacing) / (viewHeight - spacing);
+                     }
+                     break;
+                  case FIT_CENTER:
+                     if (svgWidth / svgHeight < 1) {
+                        relativePointerX = (event.getX() - spacing / 2) / (viewWidth - spacing);
+                     } else {
+                        relativePointerY = (event.getY() - spacing / 2) / (viewHeight - spacing);
+                     }
+                     break;
+               }
+
+         }
+
+         if (relativePointerX >= 0 && relativePointerX <= 1 &&
+                 relativePointerY >= 0 && relativePointerY <= 1) {
+            Collection<SVGBase.SvgObject> elements = this.svg.getElementsAt(relativePointerX * svgWidth, relativePointerY * svgHeight);
+
+            for (SVGBase.SvgObject element : elements) {
+               svgElementClickListener.onClick(element);
+               handled = true;
+            }
+         }
+      }
+
+      return handled;
+   }
 
    /*
     * Use reflection to call an API 11 method from this library (which is configured with a minSdkVersion of 8)
@@ -358,4 +459,15 @@ public class SVGImageView extends ImageView
       setImageDrawable(new PictureDrawable(picture));
    }
 
+   public SVGElementClickListener getSVGElementClickListener(){
+      return this.svgElementClickListener;
+   }
+
+   public void setSVGElementClickListener(SVGElementClickListener listener){
+      this.svgElementClickListener = listener;
+   }
+
+   public interface SVGElementClickListener {
+      void onClick(SVGBase.SvgObject elementClicked);
+   }
 }
